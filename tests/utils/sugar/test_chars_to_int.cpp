@@ -23,6 +23,32 @@ Author(s): Proxies Team
 
 #include "utils/sugar/chars_to_int.hpp"
 
+namespace
+{
+
+// std::from_chars_result == std::from_chars_result only from C++20
+struct my_from_chars_result
+{
+    char const* ptr;
+    std::errc ec;
+
+    my_from_chars_result(char const* ptr, std::errc ec)
+    : ptr(ptr)
+    , ec(ec)
+    {}
+
+    my_from_chars_result(std::from_chars_result r)
+    : ptr(r.ptr)
+    , ec(r.ec)
+    {}
+
+    bool operator == (my_from_chars_result const& other) const
+    {
+        return ptr == other.ptr && ec == other.ec;
+    }
+};
+
+} // anonymous namespace
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
 template<class T>
@@ -50,22 +76,25 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<chars_to_int_result<T>>
         chars_to_int_result<T> const& value
     ) const
     {
-        REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) << "{" << value.ec << ", " << +value.val << ", \"" << value.ptr << "\"}";
+        REDEMPTION_UT_OSTREAM_PLACEHOLDER(out)
+          << "{" << value.ec << ", " << +value.val << ", \"" << value.ptr << "\"}"
+        ;
     }
 };
 
-// std::from_chars_result == std::from_chars_result only from C++20
-static ut::assertion_result from_chars_result_EQ(std::from_chars_result a, std::from_chars_result b)
+template<>
+struct RED_TEST_PRINT_TYPE_STRUCT_NAME<my_from_chars_result>
 {
-    return ut::create_assertion_result(
-        (a.ptr == b.ptr && a.ec == b.ec), a, " != ", b,
-        [](std::ostream& out, std::from_chars_result r){
-            REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) << "{" << r.ec << ", " << r.ptr << "}";
-        }
-    );
-}
-
-RED_TEST_DISPATCH_COMPARISON_EQ((), (std::from_chars_result), (std::from_chars_result), ::from_chars_result_EQ)
+    void operator()(
+        REDEMPTION_UT_UNUSED_STREAM std::ostream& out,
+        my_from_chars_result const& value
+    ) const
+    {
+        REDEMPTION_UT_OSTREAM_PLACEHOLDER(out)
+          << "{" << value.ec << ", " << value.ptr << ", \"" << value.ptr << "\"}"
+        ;
+    }
+};
 #endif
 
 RED_AUTO_TEST_CASE(TestParseDecimalChars)
@@ -273,48 +302,51 @@ RED_AUTO_TEST_CASE(TestFromDecimalChars)
     char const* s;
     int i = 42;
 
+    using R = my_from_chars_result;
+    using SV = std::string_view;
+
     s = "";
-    RED_CHECK(from_decimal_chars(s, i) == (std::from_chars_result{s, std::errc::invalid_argument}));
+    RED_CHECK(R(from_decimal_chars(s, i)) == R(s, std::errc::invalid_argument));
     RED_CHECK(i == 42);
-    RED_CHECK(from_decimal_chars(std::string_view(s), i) == (std::from_chars_result{s, std::errc::invalid_argument}));
+    RED_CHECK(R(from_decimal_chars(SV(s), i)) == R(s, std::errc::invalid_argument));
     RED_CHECK(i == 42);
 
     s = "-";
-    RED_CHECK(from_decimal_chars(s, i) == (std::from_chars_result{s, std::errc::invalid_argument}));
+    RED_CHECK(R(from_decimal_chars(s, i)) == R(s, std::errc::invalid_argument));
     RED_CHECK(i == 42);
-    RED_CHECK(from_decimal_chars(std::string_view(s), i) == (std::from_chars_result{s, std::errc::invalid_argument}));
+    RED_CHECK(R(from_decimal_chars(SV(s), i)) == R(s, std::errc::invalid_argument));
     RED_CHECK(i == 42);
 
     s = "12345";
-    RED_CHECK(from_decimal_chars(s, i) == (std::from_chars_result{s+5, std::errc()}));
+    RED_CHECK(R(from_decimal_chars(s, i)) == R(s+5, std::errc()));
     RED_CHECK(i == 12345);
     i = 42;
-    RED_CHECK(from_decimal_chars(std::string_view(s), i) == (std::from_chars_result{s+5, std::errc()}));
+    RED_CHECK(R(from_decimal_chars(SV(s), i)) == R(s+5, std::errc()));
     RED_CHECK(i == 12345);
     i = 42;
 
     s = "-12345";
-    RED_CHECK(from_decimal_chars(s, i) == (std::from_chars_result{s+6, std::errc()}));
+    RED_CHECK(R(from_decimal_chars(s, i)) == R(s+6, std::errc()));
     RED_CHECK(i == -12345);
     i = 42;
-    RED_CHECK(from_decimal_chars(std::string_view(s), i) == (std::from_chars_result{s+6, std::errc()}));
+    RED_CHECK(R(from_decimal_chars(SV(s), i)) == R(s+6, std::errc()));
     RED_CHECK(i == -12345);
     i = 42;
 
     s = "12345xabc";
-    RED_CHECK(from_decimal_chars(s, i) == (std::from_chars_result{s+5, std::errc()}));
+    RED_CHECK(R(from_decimal_chars(s, i)) == R(s+5, std::errc()));
     RED_CHECK(i == 12345);
     i = 42;
-    RED_CHECK(from_decimal_chars(std::string_view(s), i) == (std::from_chars_result{s+5, std::errc()}));
+    RED_CHECK(R(from_decimal_chars(SV(s), i)) == R(s+5, std::errc()));
     RED_CHECK(i == 12345);
     // i = 42;
 
     uint32_t u = 42;
 
     s = "1234567890987654321";
-    RED_CHECK(from_decimal_chars(s, u) == (std::from_chars_result{s+19, std::errc::result_out_of_range}));
+    RED_CHECK(R(from_decimal_chars(s, u)) == R(s+19, std::errc::result_out_of_range));
     RED_CHECK(u == 42);
-    RED_CHECK(from_decimal_chars(std::string_view(s), u) == (std::from_chars_result{s+19, std::errc::result_out_of_range}));
+    RED_CHECK(R(from_decimal_chars(SV(s), u)) == R(s+19, std::errc::result_out_of_range));
     RED_CHECK(u == 42);
 }
 
@@ -323,52 +355,55 @@ RED_AUTO_TEST_CASE(TestFromHexadecimalChars)
     char const* s;
     unsigned i = 42;
 
+    using R = my_from_chars_result;
+    using SV = std::string_view;
+
     s = "";
-    RED_CHECK(from_hexadecimal_chars(s, i) == (std::from_chars_result{s, std::errc::invalid_argument}));
+    RED_CHECK(R(from_hexadecimal_chars(s, i)) == R(s, std::errc::invalid_argument));
     RED_CHECK(i == 42);
-    RED_CHECK(from_hexadecimal_chars(std::string_view(s), i) == (std::from_chars_result{s, std::errc::invalid_argument}));
+    RED_CHECK(R(from_hexadecimal_chars(SV(s), i)) == R(s, std::errc::invalid_argument));
     RED_CHECK(i == 42);
 
     s = "-";
-    RED_CHECK(from_hexadecimal_chars(s, i) == (std::from_chars_result{s, std::errc::invalid_argument}));
+    RED_CHECK(R(from_hexadecimal_chars(s, i)) == R(s, std::errc::invalid_argument));
     RED_CHECK(i == 42);
-    RED_CHECK(from_hexadecimal_chars(std::string_view(s), i) == (std::from_chars_result{s, std::errc::invalid_argument}));
+    RED_CHECK(R(from_hexadecimal_chars(SV(s), i)) == R(s, std::errc::invalid_argument));
     RED_CHECK(i == 42);
 
     s = "12345";
-    RED_CHECK(from_hexadecimal_chars(s, i) == (std::from_chars_result{s+5, std::errc()}));
+    RED_CHECK(R(from_hexadecimal_chars(s, i)) == R(s+5, std::errc()));
     RED_CHECK(i == 0x12345);
     i = 42;
-    RED_CHECK(from_hexadecimal_chars(std::string_view(s), i) == (std::from_chars_result{s+5, std::errc()}));
+    RED_CHECK(R(from_hexadecimal_chars(SV(s), i)) == R(s+5, std::errc()));
     RED_CHECK(i == 0x12345);
     i = 42;
 
     s = "-12345";
-    RED_CHECK(from_hexadecimal_chars(s, i) == (std::from_chars_result{s, std::errc::invalid_argument}));
+    RED_CHECK(R(from_hexadecimal_chars(s, i)) == R(s, std::errc::invalid_argument));
     RED_CHECK(i == 42);
-    RED_CHECK(from_hexadecimal_chars(std::string_view(s), i) == (std::from_chars_result{s, std::errc::invalid_argument}));
+    RED_CHECK(R(from_hexadecimal_chars(SV(s), i)) == R(s, std::errc::invalid_argument));
     RED_CHECK(i == 42);
 
     s = "12345xabc";
-    RED_CHECK(from_hexadecimal_chars(s, i) == (std::from_chars_result{s+5, std::errc()}));
+    RED_CHECK(R(from_hexadecimal_chars(s, i)) == R(s+5, std::errc()));
     RED_CHECK(i == 0x12345);
     i = 42;
-    RED_CHECK(from_hexadecimal_chars(std::string_view(s), i) == (std::from_chars_result{s+5, std::errc()}));
+    RED_CHECK(R(from_hexadecimal_chars(SV(s), i)) == R(s+5, std::errc()));
     RED_CHECK(i == 0x12345);
     // i = 42;
 
     uint32_t u = 42;
 
     s = "1234567890987654321";
-    RED_CHECK(from_hexadecimal_chars(s, u) == (std::from_chars_result{s+19, std::errc::result_out_of_range}));
+    RED_CHECK(R(from_hexadecimal_chars(s, u)) == R(s+19, std::errc::result_out_of_range));
     RED_CHECK(u == 42);
-    RED_CHECK(from_hexadecimal_chars(std::string_view(s), u) == (std::from_chars_result{s+19, std::errc::result_out_of_range}));
+    RED_CHECK(R(from_hexadecimal_chars(SV(s), u)) == R(s+19, std::errc::result_out_of_range));
     RED_CHECK(u == 42);
 
     s = "1234567890987654321xabc";
-    RED_CHECK(from_hexadecimal_chars(s, u) == (std::from_chars_result{s+19, std::errc::result_out_of_range}));
+    RED_CHECK(R(from_hexadecimal_chars(s, u)) == R(s+19, std::errc::result_out_of_range));
     RED_CHECK(u == 42);
-    RED_CHECK(from_hexadecimal_chars(std::string_view(s), u) == (std::from_chars_result{s+19, std::errc::result_out_of_range}));
+    RED_CHECK(R(from_hexadecimal_chars(SV(s), u)) == R(s+19, std::errc::result_out_of_range));
     RED_CHECK(u == 42);
 }
 
