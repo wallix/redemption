@@ -24,8 +24,8 @@ import socket
 from socket import gethostname
 from typing import Any, Tuple, Optional, Dict, Union, List
 
-from .utils import collection_has_more, parse_duration
-from .parsers import parse_param, parse_auth, parse_app
+from .utils import collection_has_more
+from .parsers import parse_param, parse_auth, parse_app, parse_duration
 from .proxy_log import RdpProxyLog
 from .addrutils import check_hostname_in_subnet
 from .sesmanconf import TR, SESMANCONF, Sesmsg

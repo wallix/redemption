@@ -5,6 +5,7 @@ from parsers import (parse_account,
                      parse_param,
                      parse_auth,
                      parse_app,
+                     parse_duration,
                      )
 
 class Test_parsers(unittest.TestCase):
@@ -73,3 +74,11 @@ class Test_parsers(unittest.TestCase):
         self.assertEqual(parse_app('aaa@bbb@ccc'), ('aaa', 'bbb', 'ccc'))
         self.assertEqual(parse_app('aaa@bbb'), ('aaa', '', 'bbb'))
         self.assertEqual(parse_app('aaa'), ('', '', 'aaa'))
+
+    def test_parse_duration(self):
+        self.assertEqual(parse_duration(''), 3600)
+        self.assertEqual(parse_duration('x'), 3600)  # invalid format
+        self.assertEqual(parse_duration('0m'), 3600)  # 0 => 3600
+        self.assertEqual(parse_duration('86m'), 86 * 60)
+        self.assertEqual(parse_duration('17h'), 17 * 3600)
+        self.assertEqual(parse_duration('17h86m'), 17 * 3600 + 86 * 60)

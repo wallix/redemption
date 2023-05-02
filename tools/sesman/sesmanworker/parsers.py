@@ -150,3 +150,19 @@ def parse_app(value: str) -> Tuple[str, str, str]:
         if sep:
             return acc, dom, app_name
     return acc_name, '', app_name
+
+
+def parse_duration(duration: str) -> int:
+    """
+    duration format: {hours}h{min}m or {hours}h or {min}m
+    """
+    if duration:
+        mres = re.search(r"(?:(\d+)h)?(?:(\d+)m)?", duration)
+        if mres is not None:
+            d = (
+                60 * 60 * int(mres.group(1) or 0)
+              + 60 * int(mres.group(2) or 0)
+            )
+            return d or 3600
+
+    return 3600

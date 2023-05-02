@@ -1,6 +1,6 @@
 import unittest
 
-from utils import collection_has_more, parse_duration
+from utils import collection_has_more
 
 
 class Test_utils(unittest.TestCase):
@@ -16,11 +16,3 @@ class Test_utils(unittest.TestCase):
         self.assertEqual(next(it), (3, False))
         with self.assertRaises(StopIteration):
             next(it)
-
-    def test_parse_duration(self):
-        self.assertEqual(parse_duration(''), 3600)
-        self.assertEqual(parse_duration('x'), 3600)  # invalid format
-        self.assertEqual(parse_duration('0m'), 3600)  # 0 => 3600
-        self.assertEqual(parse_duration('86m'), 86 * 60)
-        self.assertEqual(parse_duration('17h'), 17 * 3600)
-        self.assertEqual(parse_duration('17h86m'), 17 * 3600 + 86 * 60)
