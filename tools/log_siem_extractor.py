@@ -141,7 +141,7 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
                     text = cppfile_from_dirpath(filename)
                     log6_process(rdp_and_vnc_logs, text)
 
-        elif not dirpath.startswith(f'{src_path}/ftests'):
+        else:
             update(other_logs, log6_process, filenames)
 
     siem_cpp_process(proxy_logs, read_cppfile(f'{src_path}/utils/log_siem.cpp'))

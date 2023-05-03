@@ -121,7 +121,6 @@ ${CLANG_TIDY:=clang-tidy} $fix -checks="$checkers" \
 ]}' \
 -header-filter='.*' \
 $(find src/ -name '*.cpp' \
-    -a -not -path 'src/ftests/*' \
     -a -not -path 'src/keyboard/keylayouts.cpp' \
     -a -not -path 'src/utils/crypto/*' \
     -a -not -name app_path.cpp) \

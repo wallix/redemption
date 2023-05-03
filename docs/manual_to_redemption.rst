@@ -130,7 +130,6 @@ An eye on the internals
     +-- core
     +-- docs
     +-- front
-    +-- ftests
     +-- keyboard
     +-- main
     +-- mod
@@ -326,7 +325,6 @@ Tests
 ::
 
     tests/
-    ftests/
 
 Tests -- both unit and functionnal tests -- are very important to have an idea of the 
 amount of latent bugs of your program, and we are very attached to providing as
@@ -335,8 +333,7 @@ many tests as we can.
 They are very useful for the developper too, because they show parts of the code in use
 thus indicating how to use it and what they should do.
 
-As you may have guessed, unit tests are put in tests/ and it's subdirectories and
-functional tests in ftests. 
+As you may have guessed, unit tests are put in tests/ and it's subdirectories.
 
 We are currently working on providing some coverage data for the project using gcov.
 To have a clear view of wich parts are or aren't tested.

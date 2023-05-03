@@ -316,7 +316,6 @@ includes.add('src/system/' + system_type + '/')
 
 for d in os.listdir('src'):
     if d not in (
-        'ftests',
         'main',
         'lib',
         'system',
