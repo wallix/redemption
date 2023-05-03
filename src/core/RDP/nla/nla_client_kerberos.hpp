@@ -72,10 +72,12 @@ public:
     {
     }
 
+/*
     bool is_empty_user_domain() const
     {
         return (this->username_utf16.empty() && this->domain_utf16.empty());
     }
+*/
 
     bool is_valid() const
     {
@@ -97,6 +99,16 @@ public:
 
     const char * get_kerberos_password() const
     {
+        if (this->password_utf8.data() == nullptr)
+        {
+            return nullptr;
+        }
+
+        if (!this->password_utf8.size())
+        {
+            return "";
+        }
+
         return char_ptr_cast(this->password_utf8.data());
     }
 
@@ -110,30 +122,36 @@ public:
         return file_exist(this->kerberos.keytab_file_path);
     }
 
+/*
     bytes_view get_username_utf8() const
     {
         return this->username_utf8;
     }
+*/
 
     bytes_view get_username_utf16() const
     {
         return this->username_utf16;
     }
 
+/*
     bytes_view get_password_utf8() const
     {
         return this->password_utf8;
     }
+*/
 
     bytes_view get_password_utf16() const
     {
         return this->password_utf16;
     }
 
+/*
     bytes_view get_domain_utf8() const
     {
         return this->domain_utf8;
     }
+*/
 
     bytes_view get_domain_utf16() const
     {
@@ -156,10 +174,9 @@ public:
     {
         if (password)
         {
-            const std::size_t password_length_utf8 = UTF8Len(password);
-            const std::size_t password_length_utf16 = password_length_utf8 << 1;
+            const std::size_t password_length_utf16 = UTF8Len(password) << 1;
 
-            this->password_utf8.assign(password, password + password_length_utf8);
+            this->password_utf8.assign(password, password + ::strlen(char_ptr_cast(password)) + 1);
             this->password_utf16.resize(password_length_utf16);
             UTF8toUTF16({password, std::strlen(char_ptr_cast(password))},
                 this->password_utf16.data(), this->password_utf16.size());

@@ -1818,6 +1818,23 @@ test-run tests/core/RDP/nla/kerberos/test_kerberos :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(MUSL_GETTEXT)
 ;
+test-run tests/core/RDP/nla/kerberos/test_nla_client_kerberos :
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/kerberos/test_nla_client_kerberos.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>gssapi_krb5
+  <library>krb5
+  <library>src/core/error.o
+  <library>src/system/linux/system/i18n/message_translator_gettext.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  $(MUSL_GETTEXT)
+;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message.cpp
 :
@@ -5404,6 +5421,7 @@ alias test_mppc_50 : tests/core/RDP/mppc/test_mppc_50 ;
 alias test_mppc_60 : tests/core/RDP/mppc/test_mppc_60 ;
 alias test_mppc_61 : tests/core/RDP/mppc/test_mppc_61 ;
 alias test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos ;
+alias test_nla_client_kerberos : tests/core/RDP/nla/kerberos/test_nla_client_kerberos ;
 alias test_ntlm_message : tests/core/RDP/nla/ntlm/test_ntlm_message ;
 alias test_credssp : tests/core/RDP/nla/test_credssp ;
 alias test_nla : tests/core/RDP/nla/test_nla ;
@@ -5744,6 +5762,7 @@ alias tests/core/RDP/mppc.norec :
 ;
 alias tests/core/RDP/nla/kerberos.norec :
   tests/core/RDP/nla/kerberos/test_kerberos
+  tests/core/RDP/nla/kerberos/test_nla_client_kerberos
 ;
 alias tests/core/RDP/nla/ntlm.norec :
   tests/core/RDP/nla/ntlm/test_ntlm_message
