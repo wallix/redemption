@@ -24,13 +24,9 @@
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap.hpp"
 #include "mod/internal/widget/login.hpp"
+#include "mod/internal/widget/multiline_borders.hpp"
 #include "utils/theme.hpp"
 
-
-enum {
-    WIDGET_MULTILINE_BORDER_X = 10,
-    WIDGET_MULTILINE_BORDER_Y = 4
-};
 
 WidgetLogin::WidgetLogin(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,

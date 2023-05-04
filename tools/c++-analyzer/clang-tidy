@@ -1,15 +1,49 @@
 #!/usr/bin/env bash
 
 if [[ "$1" = '--help' ]]; then
-  echo "$0 [-fix]"
+  echo "$0 [-fix] [files...]"
   exit 1
 fi
 
-# cppcoreguidelines-pro-type-member-init / hicpp-member-init false positive...
+if (( $# != 0 )); then
+  sources=("$@")
+else
+  unity_build_base="${TMPDIR_TEST:-${TMPDIR:-/tmp}}"
+  cpp_unity1="$unity_build_base/unity_build1.cpp"
+  cpp_unity2="$unity_build_base/unity_build2.cpp"
 
+  find src/ -name '*.cpp' \
+    -a \( -path 'src/main/headlessclient.cpp' -o -not -path 'src/main/*' \) \
+    -a -not -path 'src/capture/ocr/main/*' \
+    -a -not -path 'src/utils/crypto/*' \
+    -a -not -path 'src/keyboard/keylayouts.cpp' \
+    -a -not -path 'src/core/error.cpp' \
+    -a -not -path 'src/utils/log_as_logprint.cpp' \
+    -a -not -path 'src/lib/do_recorder.cpp' \
+  | sed -E 's/^src\/(.*)/#include "\1"/' > "$cpp_unity1"
+
+  echo '
+    #include "core/error.cpp"
+    #include "lib/do_recorder.cpp"
+    #include "main/mwrm3_editor.cpp"
+    #include "utils/log_as_logprint.cpp"
+  ' > "$cpp_unity2"
+
+  sources=(
+    "$cpp_unity1"
+    "$cpp_unity1"
+    src/capture/ocr/main/*.cpp
+    $(find src/main -name '*.cpp' \
+      -a -not -path 'src/main/mwrm3_editor.cpp' \
+      -a -not -path 'src/main/headlessclient.cpp')
+  )
+fi
+
+# cppcoreguidelines-pro-type-member-init / hicpp-member-init false positive...
 fix=
 if [[ "$1" = '-fix' ]]; then
   fix=-fix
+  shift
   checkers='google-readability-namespace-comments,
 hicpp-uppercase-literal-suffix,
 misc-const-correctness,
@@ -119,21 +153,12 @@ ${CLANG_TIDY:=clang-tidy} $fix -checks="$checkers" \
 {key: readability-uppercase-literal-suffix.NewSuffixes, value: L;LL},
 {key: modernize-use-override.IgnoreDestructors, value: true}
 ]}' \
--header-filter='.*' \
-$(find src/ -name '*.cpp' \
-    -a -not -path 'src/keyboard/keylayouts.cpp' \
-    -a -not -path 'src/utils/crypto/*' \
-    -a -not -name app_path.cpp) \
-$(find tests/ -name 'test_*.cpp' \
-    -a -not -path 'tests/core/RDP/caches/test_bmpcache.cpp' \
-    -a -not -path 'tests/mod/vnc/encoder/test_zrle.cpp' \
-    -a -not -path 'tests/utils/test_bitmap.cpp' \
-    -a -not -path 'tests/includes/*' \
-    -a -not -path 'tests/keyboard/*' \
-    -a -not -path 'tests/utils/crypto/*') \
+-header-filter='.*' "${sources[@]}" \
 -- \
 -fsyntax-only \
 -std=c++2a \
+-Wno-macro-redefined \
+-fbracket-depth=512 \
 -I'include' \
 -I'modules/includes' \
 -I'modules/ppocr/includes/mln' \
@@ -146,6 +171,21 @@ $(find tests/ -name 'test_*.cpp' \
 -I'tests/includes/' \
 -DZLIB_CONST \
 -DFIXTURES_PATH='"mypath" /*NOLINT*/' \
+-DRECORD_PATH='"mypath" /*NOLINT*/' \
+-DRECORD_TMP_PATH='"mypath" /*NOLINT*/' \
+-DVIDEO_PATH='"mypath" /*NOLINT*/' \
+-DOCR_PATH='"mypath" /*NOLINT*/' \
+-DPNG_PATH='"mypath" /*NOLINT*/' \
+-DWRM_PATH='"mypath" /*NOLINT*/' \
+-DHASH_PATH='"mypath" /*NOLINT*/' \
+-DLICENSE_PATH='"mypath" /*NOLINT*/' \
+-DCERTIF_PATH='"mypath" /*NOLINT*/' \
+-DPERSISTENT_PATH='"mypath" /*NOLINT*/' \
+-DDRIVE_REDIRECTION_PATH='"mypath" /*NOLINT*/' \
+-DPID_PATH='"mypath" /*NOLINT*/' \
+-DSHARE_PATH='"mypath" /*NOLINT*/' \
+-DCFG_PATH='"mypath" /*NOLINT*/' \
+-DSESSION_DATA_PATH='"mypath" /*NOLINT*/' \
 -DREDEMPTION_DECL_LOG_TEST \
 -DBOOST_AUTO_TEST_MAIN \
 -DBOOST_TEST_DYN_LINK \

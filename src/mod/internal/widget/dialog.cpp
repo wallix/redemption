@@ -25,14 +25,11 @@
 #include "mod/internal/widget/password.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/copy_paste.hpp"
+#include "mod/internal/widget/multiline_borders.hpp"
 #include "utils/theme.hpp"
 #include "keyboard/keymap.hpp"
 #include "gdi/graphic_api.hpp"
 
-enum {
-    WIDGET_MULTILINE_BORDER_X = 10,
-    WIDGET_MULTILINE_BORDER_Y = 4
-};
 
 WidgetDialogBase::WidgetDialogBase(
     gdi::GraphicApi & drawable, Rect widget_rect, Events events,

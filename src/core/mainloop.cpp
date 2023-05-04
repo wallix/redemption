@@ -150,8 +150,6 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 REDEMPTION_DIAGNOSTIC_POP()
 }
 
-}  // namespace
-
 //void reset_signals(void)
 //{
 //    struct sigaction sa;
@@ -183,8 +181,6 @@ REDEMPTION_DIAGNOSTIC_POP()
 //    sigaction(SIGUSR2, &sa, nullptr);
 //}
 
-namespace
-{
     enum SocketType : char
     {
         Ws,

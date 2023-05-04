@@ -20,16 +20,12 @@
  */
 
 #include "mod/internal/widget/wait.hpp"
+#include "mod/internal/widget/multiline_borders.hpp"
 #include "keyboard/keymap.hpp"
 
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
 
-
-enum {
-    WIDGET_MULTILINE_BORDER_X = 10,
-    WIDGET_MULTILINE_BORDER_Y = 4
-};
 
 constexpr unsigned HIDE_BACK_TO_SELECTOR = 0x10000;
 

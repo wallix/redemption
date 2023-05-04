@@ -867,30 +867,27 @@ namespace
     template<class... xs>
     using string_type_fmt = jln::string_c<char_type_fmt<xs>()...>;
 
-    namespace detail
+    template<std::size_t i, class T>
+    struct tuple_elem
     {
-        template<std::size_t i, class T>
-        struct tuple_elem
-        {
-            T value;
-        };
+        T value;
+    };
 
-        template<class... xs>
-        struct tuple : xs... {};
+    template<class... xs>
+    struct tuple_t : xs... {};
 
-        template<class Ints, class... xs>
-        struct tuple_impl;
+    template<class Ints, class... xs>
+    struct tuple_impl;
 
-        template<std::size_t... ints, class... Ts>
-        struct tuple_impl<std::integer_sequence<size_t, ints...>, Ts...>
-        {
-            using type = tuple<tuple_elem<ints, Ts>...>;
-        };
-    } // namespace detail
+    template<std::size_t... ints, class... Ts>
+    struct tuple_impl<std::integer_sequence<size_t, ints...>, Ts...>
+    {
+        using type = tuple_t<tuple_elem<ints, Ts>...>;
+    };
 
     // compatibility C layout
     template<class... xs>
-    using tuple = typename detail::tuple_impl<std::index_sequence_for<xs...>, xs...>::type;
+    using tuple = typename tuple_impl<std::index_sequence_for<xs...>, xs...>::type;
 
     template<class Type, class... Ts>
     struct storage_params
@@ -922,7 +919,7 @@ namespace
     {
         struct type
         {
-            detail::tuple<> storage;
+            tuple_t<> storage;
         };
     };
 

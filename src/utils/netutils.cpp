@@ -779,6 +779,8 @@ zstring_view parse_ip_conntrack(
     //"tcp      6 431979 ESTABLISHED src=2001:0db8:0000:0000::ff00:0042:8329 dst=2a0d:5d40:888:4176:d999:e759:962:19f sport=41971 dport=3389 packets=96 bytes=10739 src=2a0d:356:888:abcd:d999:957e:333:12a dst=2001:0db8:0000:0000::ff00:0042:8329 sport=3389 dport=41971 packets=96 bytes=39071 [ASSURED] mark=0 secmark=0 use=2\n"
 
     using namespace minipeg;
+    // full name for unity build
+    using minipeg::Capture;
 
     Capture in_ip_dest_cap;
 
