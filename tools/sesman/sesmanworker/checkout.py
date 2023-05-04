@@ -18,9 +18,8 @@ from wallixconst.chgpasswd import (
     CRED_DATA_SSH_CERTIFICATE,
 )
 
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any, NamedTuple
 from contextlib import contextmanager
-
 
 
 CRED_DATA_LOGIN = "login"
@@ -48,6 +47,10 @@ KeyType = Tuple[
 
 # TODO AccountType as Enum
 AccountType = Optional[str]
+
+class AccountInfos(NamedTuple):
+    passwords: List[str]
+    login: Optional[str]
 
 
 @contextmanager
@@ -104,7 +107,7 @@ class CheckoutEngine:
                                                            ({}, {}))
         return credentials.get(CRED_TYPE_PASSWORD, [])
 
-    def get_target_privkeys(self, right: RightType):
+    def get_target_privkeys(self, right: RightType) -> List[Tuple[Any, Any, Any]]:
         # Logger().debug("CHECKOUTENGINE get_target_privkeys")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
@@ -129,7 +132,7 @@ class CheckoutEngine:
         return password
 
     def get_scenario_account_infos(self, account_name: str,
-                                   domain_name: str, device_name: str):
+                                   domain_name: str, device_name: str) -> Optional[AccountInfos]:
         # TODO: same as check_account_by_type with 'scenario' account_type
         #       with namedtuple result instead of dict
         # Logger().debug("CHECKOUTENGINE get_scenario_account_infos")
@@ -146,8 +149,7 @@ class CheckoutEngine:
         if not creds:
             return None
         from collections import namedtuple
-        account_infos = namedtuple('account_infos', 'passwords login')
-        return account_infos(
+        return AccountInfos(
             creds.get(CRED_TYPE_PASSWORD, []),
             creds.get(CRED_DATA_LOGIN, None)
         )
@@ -218,7 +220,8 @@ class CheckoutEngine:
         return return_status, infos
 
     def check_account_by_type(self, account_name: str, domain_name: str, device_name: str,
-                              with_ssh_key: bool = False, account_type: AccountType = None):
+                              with_ssh_key: bool = False, account_type: Optional[AccountType] = None
+                              ) -> Optional[Dict[str, Any]]:
         """
         This function retrieve informations (credentials, login)
         of a scenario or password management account specified by its
@@ -427,7 +430,7 @@ class CheckoutEngine:
             self.session_credentials.pop(target_uid, None)
 
     def release_account_by_type(self, acc_name: str, dom_name: str, dev_name: str,
-                                account_type: AccountType = None) -> None:
+                                account_type: Optional[AccountType] = None) -> None:
         # Logger().debug("CHECKOUTENGINE release_account_by_type")
         table_creds = (self.pm_credentials if account_type == 'pm' else
                        self.scenario_credentials)

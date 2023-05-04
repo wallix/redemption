@@ -28,14 +28,14 @@ from wallixconst.account import AM_IL_DOMAIN
 from wallixconst.trace import LOCAL_TRACE_PATH_RDP
 from wallixredis import redis
 from wallixutils import is_cloud_configuration
-from typing import Optional, Union, Tuple, Dict, List, Any
+from typing import Optional, Union, Tuple, Dict, List, Any, Iterable, NamedTuple
 
 from .logtime import logtime_function_pause
 import time
 import socket
 from .wallixauth import Authenticator
 from .challenge import Challenge
-from .checkout import CheckoutEngine
+from .checkout import CheckoutEngine, AccountInfos, AccountType
 from .checkout import (
     APPROVAL_ACCEPTED,
     APPROVAL_REJECTED,
@@ -69,6 +69,33 @@ FINGERPRINT_SHA1 = 0
 FINGERPRINT_MD5 = 1
 FINGERPRINT_MD5_LEN = 16
 FINGERPRINT_SHA1_LEN = 20
+
+RightType = Dict[str, Any]
+Protocols = List[str]
+
+
+class TargetContext:
+    def __init__(self, host=None, dnsname=None, login=None, service=None,
+                 group=None, show=None):
+        self.host = host
+        self.dnsname = dnsname
+        self.login = login
+        self.service = service
+        self.group = group
+        self.show = show
+        self.strict_transparent = False
+
+    def showname(self):
+        return self.show or self.dnsname or self.host
+
+    def is_empty(self):
+        return not (self.host or self.login or self.service or self.group)
+
+
+class AppParams(NamedTuple):
+    program: str
+    params: Optional[str]
+    workingdir: Optional[str]
 
 
 def read_config_file(modulename="sesman",
@@ -346,7 +373,7 @@ class Engine:
                             real_target_device: str,
                             target_context: Optional[TargetContext],
                             passthrough_mode: bool,
-                            protocols: List[str]
+                            protocols: Protocols
                             ) -> Tuple[Optional[str], Optional[TargetContext]]:
         """ Resolve the right target host to use
         target_context.host will contains the target host.
@@ -538,7 +565,7 @@ class Engine:
             Logger().info("Engine NotifyFindProcessInRDPFlow failed: "
                           f"((({traceback.format_exc()})))")
 
-    def get_targets_list(self, group_filter, device_filter, protocol_filter,
+    def get_targets_list(self, group_filter: str, device_filter: str, protocol_filter: str,
                          case_sensitive: bool) -> Tuple[List, bool]:
         fc = (lambda string: string) if case_sensitive else (lambda string: string.lower())
 
@@ -608,7 +635,7 @@ class Engine:
         # Logger().info(f"targets list = {targets}'")
         return targets, item_filtered
 
-    def reset_proxy_rights(self):
+    def reset_proxy_rights(self) -> None:
         """
         Clean current fetched rights
         """
@@ -618,7 +645,7 @@ class Engine:
         self.release_all_target()
         self.reset_target_session()
 
-    def reset_target_session(self):
+    def reset_target_session(self) -> None:
         """
         Clean Target session (if exist) rights and infos
         """
@@ -641,7 +668,7 @@ class Engine:
         self.checktarget_cache = None
         self.checktarget_infos_cache = None
 
-    def proxy_session_logout(self):
+    def proxy_session_logout(self) -> None:
         """
         Clean all information of current authenticated proxy session
         """
@@ -652,7 +679,7 @@ class Engine:
         self.user_cn = None
         self.authenticated = False
 
-    def close_client(self):
+    def close_client(self) -> None:
         if self.wabengine:
             Logger().debug("Engine close_client()")
             with manage_transaction(self.wabengine, close=True):
@@ -661,24 +688,22 @@ class Engine:
             self.wabengine = None
         self.avatar_id = None
 
-    def get_proxy_user_rights(self, protocols, target_device, **kwargs):
+    def get_proxy_user_rights(self, protocols: Protocols, target_device: str) -> List[RightType]:
         Logger().debug(f"** CALL Get_proxy_right ** proto={protocols}, target_device={target_device}")
         with manage_transaction(self.wabengine):
             urights = self.wabengine.get_proxy_user_rights(protocols,
-                                                           target_device,
-                                                           **kwargs)
+                                                           target_device)
         Logger().debug("** END Get_proxy_right **")
         if urights and (type(urights[0]) == str):
             import json
             urights = map(json.loads, urights)
         return urights
 
-    def valid_device_name(self, protocols, target_device):
+    def valid_device_name(self, protocols: Protocols, target_device: str) -> bool:
         try:
             # Logger().debug("** CALL VALIDATOR DEVICE NAME "
             #                f"Get_proxy_right target={target_device} **")
-            prights = self.get_proxy_user_rights(
-                protocols, target_device)
+            prights = self.get_proxy_user_rights(protocols, target_device)
             # Logger().debug("** END VALIDATOR DEVICE NAME Get_proxy_right **")
             if prights:
                 self.proxy_rights = prights
@@ -689,7 +714,7 @@ class Engine:
             pass
         return False
 
-    def _filter_rights(self, target_context):
+    def _filter_rights(self, target_context: Optional[TargetContext]) -> None:
         from collections import defaultdict
         self.rights = self.proxy_rights
         # targets{(account, target)}{domain}[(service, group, right)]
@@ -766,7 +791,7 @@ class Engine:
         if target_context and target_context.strict_transparent:
             self._filter_subnet()
 
-    def _filter_subnet(self):
+    def _filter_subnet(self) -> None:
         # in transparent mode, targets rights are already
         # filtered by a unique host
         filtered_subnet = [dit for dit in self.displaytargets
@@ -774,15 +799,15 @@ class Engine:
         if filtered_subnet:
             self.displaytargets = filtered_subnet
 
-    def filter_app_rights(self, app_rights, account_name, domain_name,
-                          app_name):
+    def filter_app_rights(self, app_rights: Iterable[RightType],
+                          account_name: str, domain_name: str, app_name: str) -> List[RightType]:
         return [r for r in app_rights if (
             r['account_name'] == account_name
             and (not domain_name or r['domain_cn'] == domain_name)
             and r['application_cn'] == app_name)]
 
-    def get_proxy_rights(self, protocols, target_device=None,
-                         target_context=None):
+    def get_proxy_rights(self, protocols: Protocols, target_device: Optional[str] = None,
+                         target_context: Optional[TargetContext] = None) -> None:
         if self.proxy_rights is None:
             try:
                 self.proxy_rights = self.get_proxy_user_rights(
@@ -800,8 +825,8 @@ class Engine:
         self._filter_rights(target_context)
         # Logger().debug(f"** END Filter_rights in {time.time() - start} sec **")
 
-    def _get_target_right_htable(self, target_account, target_device,
-                                 t_htable):
+    def _get_target_right_htable(self, target_account: str, target_device: str,
+                                 t_htable: Dict[str, Any]) -> List[Tuple[Any, Any, Any]]:
         """
         Get target right list from t_htable
         filtered by target_account and target_device
@@ -833,8 +858,8 @@ class Engine:
             results = []
         return results
 
-    def _find_target_right(self, target_account, target_device,
-                           target_service, target_group):
+    def _find_target_right(self, target_account: str, target_device: str,
+                           target_service: str, target_group: str) -> Optional[RightType]:
         try:
             Logger().debug(f"Find target {target_account}@{target_device}:{target_service}:{target_group}")
             results = self._get_target_right_htable(
@@ -867,8 +892,9 @@ class Engine:
                 self.target_right = right
         return right
 
-    def get_target_rights(self, target_login, target_device, target_service,
-                          target_group, target_context=None):
+    def get_target_rights(self, target_login: str, target_device: str, target_service: str,
+                          target_group: str, target_context: Optional[TargetContext] = None
+                          ) -> Tuple[Optional[RightType], str]:
         try:
             self.get_proxy_rights(['SSH', 'TELNET', 'RLOGIN', 'RAWTCPIP'],
                                   target_device=target_device,
@@ -890,8 +916,9 @@ class Engine:
                else f"Invalid target {target_str}\r\n")
         return (None, msg)
 
-    def get_selected_target(self, target_login, target_device, target_service,
-                            target_group, target_context=None):
+    def get_selected_target(self, target_login: str, target_device: str, target_service: str,
+                            target_group: str, target_context: Optional[TargetContext] = None
+                            ) -> Optional[RightType]:
         # Logger().info(
         #     f">>==GET_SELECTED_TARGET {target_device}@{target_login}:{target_service}:{target_group}"
         # )
@@ -900,7 +927,7 @@ class Engine:
         return self._find_target_right(target_login, target_device,
                                        target_service, target_group)
 
-    def get_effective_target(self, selected_target) -> List[Dict[str, Any]]:
+    def get_effective_target(self, selected_target: RightType) -> List[RightType]:
         application = selected_target['application_cn']
         try:
             if application and not self.is_sharing_session(selected_target):
@@ -919,7 +946,8 @@ class Engine:
             Logger().info(f"Engine get_effective_target failed: ((({traceback.format_exc()})))")
         return []
 
-    def secondary_failed(self, reason, wabuser, ip_source, user, host):
+    # NOTE [RDP] unused
+    def secondary_failed(self, reason, wabuser, ip_source, user, host) -> None:
         if self.failed_secondary_set:
             return
         self.failed_secondary_set = True
@@ -933,14 +961,12 @@ class Engine:
             'device': host,
         })
 
-    def get_app_params(self, selected_target, effective_target):
+    def get_app_params(self, selected_target, effective_target) -> Optional[AppParams]:
         # Logger().info("Engine get_app_params: "
         #               "{service_login=} {effective_target=}")
         if self.is_sharing_session(selected_target):
             from collections import namedtuple
             status, infos = self.check_target(selected_target)
-            AppParams = namedtuple('AppParams',
-                                   ['program', 'params', 'workingdir'])
             token = infos.get("shadow_token", {})
             app_params = AppParams("", None, token.get("shadow_id"))
             Logger().info("Engine get_app_params shadow done")
@@ -958,7 +984,7 @@ class Engine:
             Logger().info(f"Engine get_app_params failed: ((({traceback.format_exc()})))")
         return None
 
-    def get_primary_password(self, target_device):
+    def get_primary_password(self, target_device: RightType) -> Optional[str]:
         Logger().debug("Engine get_primary_password ...")
         try:
             password = self.checkout.get_primary_password(target_device)
@@ -970,7 +996,8 @@ class Engine:
                            f" ((({traceback.format_exc()})))")
         return None
 
-    def get_account_infos(self, account_name, domain_name, device_name):
+    def get_account_infos(self, account_name: str,
+                          domain_name: str, device_name: str) -> Optional[AccountInfos]:
         Logger().debug("Engine get_account_infos ...")
         try:
             return self.checkout.get_scenario_account_infos(
@@ -982,9 +1009,9 @@ class Engine:
                            f" {traceback.format_exc()}")
         return None
 
-    def get_account_infos_by_type(self, account_name, domain_name,
-                                  device_name, with_ssh_key=False,
-                                  account_type=None):
+    def get_account_infos_by_type(self, account_name: str, domain_name: str,
+                                  device_name: str, with_ssh_key: bool = False,
+                                  account_type: Optional[AccountType] = None) -> Optional[Dict[str, Any]]:
         try:
             return self.checkout.check_account_by_type(
                 account_name=account_name,
@@ -999,7 +1026,7 @@ class Engine:
                            f" {traceback.format_exc()}")
         return None
 
-    def get_target_passwords(self, target_device):
+    def get_target_passwords(self, target_device: RightType) -> List[str]:
         Logger().debug("Engine get_target_passwords ...")
         try:
             passwords = self.checkout.get_target_passwords(target_device)
@@ -1015,11 +1042,11 @@ class Engine:
             ]
         return passwords
 
-    def get_target_password(self, target_device):
+    def get_target_password(self, target_device: RightType) -> str:
         passwords = self.get_target_passwords(target_device)
         return passwords[0] if passwords else ""
 
-    def get_target_privkeys(self, target_device):
+    def get_target_privkeys(self, target_device: RightType) -> List[Tuple[Any, Any, Any]]:
         Logger().debug("Engine get_target_privkeys ...")
         try:
             return self.checkout.get_target_privkeys(target_device)
@@ -1029,7 +1056,7 @@ class Engine:
                            f" ((({traceback.format_exc()})))")
         return []
 
-    def release_target(self, target_device):
+    def release_target(self, target_device: RightType) -> bool:
         try:
             self.checkout.release_target(target_device)
         except Exception:
@@ -1038,8 +1065,9 @@ class Engine:
                            f" ((({traceback.format_exc()})))")
         return True
 
-    def release_account_by_type(self, account_name, domain_name,
-                                device_name, account_type=None):
+    def release_account_by_type(self, account_name: str, domain_name: str,
+                                device_name: str, account_type: Optional[AccountType] = None
+                                ) -> bool:
         try:
             self.checkout.release_account_by_type(
                 account_name, domain_name, device_name,
@@ -1051,11 +1079,12 @@ class Engine:
                            f" ({traceback.format_exc()})")
         return True
 
-    def release_all_target(self):
+    def release_all_target(self) -> None:
         if self.checkout is not None:
             self.checkout.release_all()
 
-    def start_session(self, auth, pid, effective_login=None, **kwargs):
+    def start_session(self, auth, pid, effective_login=None, **kwargs
+                      ) -> Tuple[Optional[str], Optional[int], str]:
         Logger().debug("**** CALL wabengine START SESSION ")
         error_msg = ""
         try:
@@ -1082,6 +1111,7 @@ class Engine:
         Logger().debug("**** END wabengine START SESSION ")
         return self.session_id, self.start_time, error_msg
 
+    # NOTE [RDP] calls to set_session_status() always initialize diag
     def start_session_ssh(self, target, target_user, hname, host, client_addr,
                           pid, subproto, kill_handler, effective_login=None,
                           **kwargs):
@@ -1699,24 +1729,6 @@ class Engine:
         elif target.get('is_shadow', False):
             sharing_type = "SHADOWING"
         return sharing_type
-
-
-class TargetContext:
-    def __init__(self, host=None, dnsname=None, login=None, service=None,
-                 group=None, show=None):
-        self.host = host
-        self.dnsname = dnsname
-        self.login = login
-        self.service = service
-        self.group = group
-        self.show = show
-        self.strict_transparent = False
-
-    def showname(self):
-        return self.show or self.dnsname or self.host
-
-    def is_empty(self):
-        return not (self.host or self.login or self.service or self.group)
 
 
 class DisplayInfo:
