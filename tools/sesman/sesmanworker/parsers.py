@@ -9,7 +9,7 @@
 import re
 
 from logger import Logger
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict, Any
 
 
 AccoutName = str
@@ -68,7 +68,7 @@ def parse_account(param: Optional[str], replace_dict: Dict[str, str], force_devi
     return parse_param(param, device_name)
 
 
-def resolve_scenario_account(enginei, param: str, force_device: bool = True):
+def resolve_scenario_account(enginei, param: str, force_device: bool = True) -> Dict[str, Any]:
     """
     Get password or login field from scenario account
 

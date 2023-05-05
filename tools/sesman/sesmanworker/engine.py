@@ -85,11 +85,85 @@ class TargetContext:
         self.show = show
         self.strict_transparent = False
 
-    def showname(self):
+    def showname(self) -> str:
         return self.show or self.dnsname or self.host
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return not (self.host or self.login or self.service or self.group)
+
+
+class ProtocolInfo:
+    __slots__ = (
+        "protocol", "subprotocols",
+    )
+
+    def __init__(self, protocol: str, subprotocols: Protocols = []):
+        self.protocol = protocol
+        self.subprotocols = subprotocols
+
+
+class ExtraInfo:
+    __slots__ = (
+        "is_recorded", "is_critical", "has_approval",
+    )
+
+    def __init__(self, is_recorded: bool, is_critical: bool, has_approval: bool):
+        self.is_recorded = is_recorded
+        self.is_critical = is_critical
+        self.has_approval = has_approval
+
+
+class PhysicalTarget:
+    __slots__ = (
+        "device_host", "account_login", "service_port", "device_id",
+        "sharing_host",
+    )
+
+    def __init__(self, device_host: str, account_login: str, service_port: int, device_id: str,
+                 sharing_host: Optional[str] = None):
+        self.device_host = device_host
+        self.account_login = account_login
+        self.service_port = service_port
+        self.device_id = device_id
+        self.sharing_host = sharing_host
+
+
+class LoginInfo:
+    __slots__ = (
+        "account_login", "account_name", "domain_name", "service_name",
+        "target_name", "auth_name", "user_group_name", "target_group_name",
+        "device_host", "service_port", "conn_opts",
+    )
+
+    def __init__(self, account_login: str, account_name: str, domain_name: str, target_name: str,
+                 service_name: str, auth_name: str, user_group_name: str, target_group_name: str,
+                 device_host: str, service_port: int, conn_opts: Dict[str, Any]):
+        self.account_login = account_login
+        self.account_name = account_name
+        self.domain_name = domain_name
+        self.target_name = target_name
+        self.service_name = service_name
+        self.auth_name = auth_name
+        self.user_group_name = user_group_name
+        self.target_group_name = target_group_name
+        self.device_host = device_host
+        self.service_port = service_port
+        self.conn_opts = conn_opts
+
+    def get_target_str(self) -> str:
+        domain_name = f"@{self.domain_name}" if self.domain_name else ''
+        return f"{self.account_name}{domain_name}@{self.target_name}:{self.service_name}:{self.auth_name}"
+
+    def get_target_dict(self) -> Dict[str, str]:
+        return {
+            "user_group": self.user_group_name,
+            "target_group": self.target_group_name,
+            "authorization": self.auth_name,
+            "account": self.account_name,
+            "account_domain": self.domain_name,
+            "device": self.target_name,
+            "service": self.service_name,
+        }
 
 
 class AppParams(NamedTuple):
@@ -539,7 +613,7 @@ class Engine:
             Logger().info("Engine NotifyFindConnectionInRDPFlow failed: "
                           f"((({traceback.format_exc()})))")
 
-    def notify_find_process_rdp(self: str, regex: str, deny: str, app_name: str,
+    def notify_find_process_rdp(self, regex: str, deny: str, app_name: str,
                                 app_cmd_line: str, user_login: str, user: str,
                                 host: str, cn: str, service: str) -> None:
         try:
@@ -826,7 +900,7 @@ class Engine:
         # Logger().debug(f"** END Filter_rights in {time.time() - start} sec **")
 
     def _get_target_right_htable(self, target_account: str, target_device: str,
-                                 t_htable: Dict[str, Any]) -> List[Tuple[Any, Any, Any]]:
+                                 t_htable: Dict[Tuple[str, str], Dict[str, List[Any]]]) -> List[Tuple[Any, Any, Any]]:
         """
         Get target right list from t_htable
         filtered by target_account and target_device
@@ -1174,7 +1248,7 @@ class Engine:
 
         return self.session_id, self.start_time, error_msg
 
-    def update_session_target(self, physical_target, **kwargs):
+    def update_session_target(self, physical_target: RightType, **kwargs) -> None:
         """Update current session with target name.
 
         :param target physical_target: selected target
@@ -1198,7 +1272,7 @@ class Engine:
             Logger().info("Engine update_session_target failed:"
                           f" ((({traceback.format_exc()})))")
 
-    def update_session(self, **kwargs):
+    def update_session(self, **kwargs) -> None:
         """Update current session parameters to base.
 
         :return: None
@@ -1213,7 +1287,7 @@ class Engine:
             Logger().info("Engine update_session failed:"
                           f" ((({traceback.format_exc()})))")
 
-    def sharing_response(self, errcode, errmsg, token, request_id):
+    def sharing_response(self, errcode: int, errmsg: str, token: str, request_id: str) -> None:
         try:
             status = SHADOW_ACCEPTED if errcode == '0' else SHADOW_REJECTED
             with manage_transaction(self.wabengine):
@@ -1226,7 +1300,7 @@ class Engine:
             Logger().info("Engine sharing_response failed:"
                           f" ((({traceback.format_exc()})))")
 
-    def stop_session(self, title="End session"):
+    def stop_session(self, title: str = "End session") -> None:
         try:
             if self.session_id:
                 # Logger().info(
@@ -1256,19 +1330,20 @@ class Engine:
                           f" ((({traceback.format_exc()})))")
         Logger().debug("Engine stop session end")
 
+    # NOTE [RDP] unused
     # RESTRICTIONS
-    def get_all_restrictions(self, auth, proxytype):
+    def get_all_restrictions(self, auth, proxytype) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
         if proxytype == "RDP":
             def matchproto(x):
                 return x == "RDP"
         elif proxytype == "SSH":
             def matchproto(x):
-                return x in ["SSH_SHELL_SESSION",
+                return x in ("SSH_SHELL_SESSION",
                              "SSH_REMOTE_COMMAND",
                              "SSH_SCP_UP",
                              "SSH_SCP_DOWN",
                              "SFTP_SESSION",
-                             "RLOGIN", "TELNET"]
+                             "RLOGIN", "TELNET")
         else:
             return {}, {}
         try:
@@ -1300,7 +1375,7 @@ class Engine:
                           f" ((({traceback.format_exc()})))")
         return (kill_patterns, notify_patterns)
 
-    def get_restrictions(self, auth, proxytype):
+    def get_restrictions(self, auth: RightType, proxytype: str) -> Tuple[Optional[str], Optional[str]]:
         if self.is_sharing_session(auth):
             return None, None
         if proxytype == "RDP":
@@ -1347,8 +1422,9 @@ class Engine:
                           f" ((({traceback.format_exc()})))")
         return (self.pattern_kill, self.pattern_notify)
 
+    # NOTE [RDP] unused
     # RESTRICTIONS: NOTIFIER METHODS
-    def pattern_found_notify(self, action, regex_found, current_line):
+    def pattern_found_notify(self, action, regex_found, current_line: int):
         self.session_diag = f'Restriction pattern detected ({current_line})'
         data = {
             "regexp": regex_found,
@@ -1369,6 +1445,7 @@ class Engine:
         if action.lower() == "kill":
             self.session_result = False
 
+    # NOTE [RDP] unused
     def filesize_limit_notify(self, action, filesize, filename,
                               limit_filesize):
         restrictstr = f"file {filename} > {limit_filesize}"
@@ -1392,6 +1469,7 @@ class Engine:
         if action.lower() == "kill":
             self.session_result = False
 
+    # NOTE [RDP] unused
     def globalsize_limit_notify(self, action, globalsize, limit_globalsize):
         self.session_diag = 'Filesize restriction detected'
         data = {
@@ -1413,6 +1491,7 @@ class Engine:
         if action.lower() == "kill":
             self.session_result = False
 
+    # NOTE [RDP] unused
     def start_tcpip_record(self, selected_target=None, filename=None):
         target = selected_target or self.target_right
         if not target:
@@ -1440,7 +1519,8 @@ class Engine:
         if self.session_record:
             self.session_record.writeraw(data)
 
-    def start_record(self, selected_target=None, filename=None):
+    # NOTE [RDP] unused
+    def start_record(self, selected_target: Optional[RightType] = None, filename: Optional[str] = None) -> bool:
         target = selected_target or self.target_right
         if not target:
             Logger().debug("start_record failed: missing target right")
@@ -1463,12 +1543,14 @@ class Engine:
             return False
         return True
 
-    def record(self, data):
+    # NOTE [RDP] unused
+    def record(self, data) -> None:
         """ Factorized record method to be used if is_recorded == True """
         if self.session_record:
             self.session_record.writeframe(data)
 
-    def stop_record(self):
+    # NOTE [RDP] unused
+    def stop_record(self) -> Optional[str]:
         if self.session_record:
             try:
                 if self.session_record_type == "ttyrec":
@@ -1482,7 +1564,7 @@ class Engine:
             self.session_record = None
         return None
 
-    def write_trace(self, video_path):
+    def write_trace(self, video_path: str) -> Tuple[bool, str]:
         try:
             _status, _error = True, "No error"
             if video_path:
@@ -1502,11 +1584,12 @@ class Engine:
             _status, _error = False, "Exception"
         return _status, _error
 
-    def read_session_parameters(self):
+    def read_session_parameters(self) -> Dict[str, Any]:
         with manage_transaction(self.wabengine):
             return self.wabengine.read_session_parameters(self.session_id)
 
-    def check_target(self, target, request_ticket=None):
+    def check_target(self, target: RightType, request_ticket: Optional[Dict[str, Any]] = None
+                     ) -> Tuple[str, Dict[str, Any]]:
         if self.checktarget_cache == (APPROVAL_ACCEPTED, target['target_uid']):
             # Logger().info("** CALL Check_target SKIPED**")
             return self.checktarget_cache[0], self.checktarget_infos_cache
@@ -1523,21 +1606,22 @@ class Engine:
             # update deconnection_time in right
         return status, infos
 
-    def check_effective_target(self, app_right, effective_target):
+    def check_effective_target(self, app_right: RightType, effective_target: RightType) -> bool:
         target_uid = effective_target['target_uid']
         for r in self.get_effective_target(app_right):
             if r['target_uid'] == target_uid:
                 return True
         return False
 
-    def get_application(self, selected_target=None):
+    def get_application(self, selected_target: Optional[RightType] = None) -> Any:
         target = selected_target or self.target_right
         if not target:
             return None
         return target['application_cn']
 
-    def get_target_protocols(self, selected_target=None):
+    def get_target_protocols(self, selected_target: Optional[RightType] = None) -> Optional[ProtocolInfo]:
         target = selected_target or self.target_right
+        # TODO really possible?
         if not target:
             return None
         proto = target['service_protocol_cn']
@@ -1545,8 +1629,9 @@ class Engine:
         subproto = target['service_subprotocols']
         return ProtocolInfo(proto, subproto)
 
-    def get_target_extra_info(self, selected_target=None):
+    def get_target_extra_info(self, selected_target: Optional[RightType] = None) -> Optional[ExtraInfo]:
         target = selected_target or self.target_right
+        # TODO really possible?
         if not target:
             return None
         is_recorded = target['auth_is_recorded']
@@ -1554,24 +1639,28 @@ class Engine:
         has_approval = target['auth_has_approval']
         return ExtraInfo(is_recorded, is_critical, has_approval)
 
-    def get_deconnection_time(self, selected_target=None):
+    def get_deconnection_time(self, selected_target: Optional[RightType] = None) -> Optional[str]:
         target = selected_target or self.target_right
+        # TODO really possible?
         if not target:
             return None
         if self.is_sharing_session(target):
             return '-'
         return target['deconnection_time']
 
-    def get_server_pubkey_options(self, selected_target=None):
+    # NOTE [RDP] unused
+    def get_server_pubkey_options(self, selected_target: Optional[RightType] = None):
         target = selected_target or self.target_right
+        # TODO really possible?
         if not target:
             return {}
 
         conn_policy_data = self.get_target_conn_options(target)
         return conn_policy_data.get('server_pubkey', {})
 
-    def get_target_auth_methods(self, selected_target=None):
+    def get_target_auth_methods(self, selected_target: Optional[RightType] = None) -> List[str]:
         target = selected_target or self.target_right
+        # TODO really possible?
         if not target:
             return []
         if self.is_sharing_session(target):
@@ -1585,8 +1674,9 @@ class Engine:
             authmethods = []
         return authmethods
 
-    def get_target_conn_options(self, selected_target=None):
+    def get_target_conn_options(self, selected_target: Optional[RightType] = None) -> RightType:
         target = selected_target or self.target_right
+        # TODO really possible?
         if not target:
             return {}
         if self.is_sharing_session(target):
@@ -1600,10 +1690,11 @@ class Engine:
             conn_opts = {}
         return conn_opts
 
-    def get_target_conn_type(self, selected_target=None):
+    def get_target_conn_type(self, selected_target: Optional[RightType] = None) -> str:
         target = selected_target or self.target_right
+        # TODO really possible?
         if not target:
-            return {}
+            return ''
         try:
             conn_type = target.get('connection_policy_type',
                                    target.get('service_protocol_cn'))
@@ -1612,7 +1703,7 @@ class Engine:
             conn_type = "RDP"
         return conn_type
 
-    def get_physical_target_info(self, physical_target):
+    def get_physical_target_info(self, physical_target: RightType) -> PhysicalTarget:
         if self.is_sharing_session(physical_target):
             status, infos = self.check_target(physical_target)
             token = infos.get("shadow_token", {})
@@ -1635,7 +1726,7 @@ class Engine:
             device_id=physical_target['device_uid']
         )
 
-    def get_target_login_info(self, selected_target=None):
+    def get_target_login_info(self, selected_target: Optional[RightType] = None) -> Optional[LoginInfo]:
         target = selected_target or self.target_right
         if not target:
             return None
@@ -1669,7 +1760,7 @@ class Engine:
                          service_port=service_port,
                          conn_opts=conn_opts)
 
-    def get_account_login(self, right, check_in_creds=True):
+    def get_account_login(self, right: RightType, check_in_creds: bool = True) -> str:
         login = right['account_login']
         try:
             domain = right['domain_name']
@@ -1696,10 +1787,11 @@ class Engine:
             return login
         return f"{login}@{domain}"
 
-    def get_scenario_account(self, param, force_device):
+    def get_scenario_account(self, param, force_device) -> Dict[str, Any]:
         from .parsers import resolve_scenario_account
         return resolve_scenario_account(self, param, force_device)
 
+    # NOTE [RDP] unused
     def get_crypto_methods(self):
         class crypto_methods:
             def __init__(self, proxy):
@@ -1712,7 +1804,7 @@ class Engine:
                 return self.proxy.get_trace_encryption_key(name, flag)
         return crypto_methods(self.wabengine)
 
-    def is_sharing_session(self, selected_target=None):
+    def is_sharing_session(self, selected_target: Optional[RightType] = None) -> bool:
         target = selected_target or self.target_right
         return (
             target.get('is_shadow', False)
@@ -1721,7 +1813,7 @@ class Engine:
             or False
         )
 
-    def get_sharing_session_type(self, selected_target=None):
+    def get_sharing_session_type(self, selected_target: Optional[RightType] = None) -> str:
         target = selected_target or self.target_right
         sharing_type = target.get('is_sharing_type')
         if target.get('is_sharing', False):
@@ -1735,8 +1827,8 @@ class DisplayInfo:
     __slots__ = ("target_login", "target_name", "service_name", "protocol",
                  "group", "subprotocols", "service_login", "host")
 
-    def __init__(self, target_login, target_name, service_name,
-                 protocol, group, subproto, host):
+    def __init__(self, target_login: str, target_name: str, service_name: str,
+                 protocol: str, group: str, subproto: Protocols, host: str):
         self.target_login = target_login
         self.target_name = target_name
         self.service_name = service_name
@@ -1746,7 +1838,7 @@ class DisplayInfo:
         self.service_login = f"{self.target_login}@{self.target_name}:{self.service_name}"
         self.host = host
 
-    def get_target_tuple(self):
+    def get_target_tuple(self) -> Tuple[str, str, str, str]:
         return (self.target_login,
                 self.target_name,
                 self.service_name,
@@ -1768,77 +1860,3 @@ SHARING_CONN_POLICY = {
         'keyboard_input_masking_level': 0,
     }
 }
-
-
-class ProtocolInfo:
-    __slots__ = (
-        "protocol", "subprotocols",
-    )
-
-    def __init__(self, protocol, subprotocols=[]):
-        self.protocol = protocol
-        self.subprotocols = subprotocols
-
-
-class ExtraInfo:
-    __slots__ = (
-        "is_recorded", "is_critical", "has_approval",
-    )
-
-    def __init__(self, is_recorded, is_critical, has_approval):
-        self.is_recorded = is_recorded
-        self.is_critical = is_critical
-        self.has_approval = has_approval
-
-
-class PhysicalTarget:
-    __slots__ = (
-        "device_host", "account_login", "service_port", "device_id",
-        "sharing_host",
-    )
-
-    def __init__(self, device_host, account_login, service_port, device_id,
-                 sharing_host=None):
-        self.device_host = device_host
-        self.account_login = account_login
-        self.service_port = service_port
-        self.device_id = device_id
-        self.sharing_host = sharing_host
-
-
-class LoginInfo:
-    __slots__ = (
-        "account_login", "account_name", "domain_name", "service_name",
-        "target_name", "auth_name", "user_group_name", "target_group_name",
-        "device_host", "service_port", "conn_opts",
-    )
-
-    def __init__(self, account_login, account_name, domain_name, target_name,
-                 service_name, auth_name, user_group_name, target_group_name,
-                 device_host, service_port, conn_opts):
-        self.account_login = account_login
-        self.account_name = account_name
-        self.domain_name = domain_name
-        self.target_name = target_name
-        self.service_name = service_name
-        self.auth_name = auth_name
-        self.user_group_name = user_group_name
-        self.target_group_name = target_group_name
-        self.device_host = device_host
-        self.service_port = service_port
-        self.conn_opts = conn_opts
-
-    def get_target_str(self):
-        domain_name = f"@{self.domain_name}" if self.domain_name else ''
-        return f"{self.account_name}{domain_name}@{self.target_name}:{self.service_name}:{self.auth_name}"
-
-    def get_target_dict(self):
-        return {
-            "user_group": self.user_group_name,
-            "target_group": self.target_group_name,
-            "authorization": self.auth_name,
-            "account": self.account_name,
-            "account_domain": self.domain_name,
-            "device": self.target_name,
-            "service": self.service_name,
-        }

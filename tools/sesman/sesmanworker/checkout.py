@@ -154,7 +154,8 @@ class CheckoutEngine:
             creds.get(CRED_DATA_LOGIN, None)
         )
 
-    def check_target(self, right: RightType, request_ticket: Optional[Dict[str, Any]] = None) -> Tuple[str, Dict[str, Any]]:
+    def check_target(self, right: RightType, request_ticket: Optional[Dict[str, Any]] = None
+                     ) -> Tuple[str, Dict[str, Any]]:
         """
         This function check a target:
         It checkout an account and returns the status and infos
