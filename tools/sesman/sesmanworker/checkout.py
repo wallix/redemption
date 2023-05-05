@@ -46,7 +46,7 @@ KeyType = Tuple[
 ]
 
 # TODO AccountType as Enum
-AccountType = Optional[str]
+AccountType = str
 
 class AccountInfos(NamedTuple):
     passwords: List[str]
@@ -285,7 +285,7 @@ class CheckoutEngine:
         }
 
     def _update_creds_with_account_by_type(self, account_name: str, domain_name: str,
-                                           device_name: str, account_type: AccountType = None) -> bool:
+                                           device_name: str, account_type: Optional[AccountType] = None) -> bool:
         """
         This function retrieve account credentials by type (scenario or pm)
         and save them on cache.
@@ -326,7 +326,7 @@ class CheckoutEngine:
             table_creds[account] = (right, creds)
         return True
 
-    def _update_rights_by_type(self, account_type: AccountType = None) -> Optional[List]:
+    def _update_rights_by_type(self, account_type: Optional[AccountType] = None) -> Optional[List]:
         """
         This function retrieve rights by type (scenario or pm)
         and save them on cache.
@@ -366,7 +366,7 @@ class CheckoutEngine:
         return table_rights
 
     def _checkout_account_by_type(self, account_name: str, domain_name: str, device_name: str,
-                                  account_type: AccountType = None) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
+                                  account_type: Optional[AccountType] = None) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
         """
         This function checkout an account by type (scenario or pm)
         It first retrieve the rights allowed for the session
