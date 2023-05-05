@@ -1,3 +1,5 @@
+import traceback
+
 from logger import Logger
 from wabengine.client.checker import Checker
 from wabengine.common.exception import (
@@ -291,7 +293,6 @@ class Authenticator:
             return False
         except Exception:
             self._reset_auth(cancel=False)
-            import traceback
             Logger().info(
                 f"Engine authenticate ({debug_str}) failed: "
                 f"((({traceback.format_exc()})))")
@@ -341,7 +342,6 @@ class Authenticator:
             result = self.auth_x509.is_connected()
             return result
         except Exception:
-            import traceback
             Logger().info("Engine is_x509_connected failed: "
                           f"((({traceback.format_exc()})))")
         return False
@@ -352,7 +352,6 @@ class Authenticator:
             if self.auth_x509 is not None:
                 result = self.auth_x509.is_validated()
         except Exception:
-            import traceback
             Logger().info(f"Engine is_x509_validated failed: ((({traceback.format_exc()})))")
         return result
 
@@ -381,7 +380,6 @@ class Authenticator:
         except LicenseException:
             self.challenge = None
         except Exception:
-            import traceback
             Logger().info("Engine x509_authenticate failed: "
                           f"((({traceback.format_exc()})))")
         return False
@@ -410,7 +408,6 @@ class Authenticator:
                                         no_delay=True)
         except Exception:
             self._reset_auth(cancel=False)
-            import traceback
             Logger().info("Engine mobile_device_authenticate failed: "
                           f"((({traceback.format_exc()})))")
             raise
@@ -428,7 +425,6 @@ class Authenticator:
                                         no_delay=True)
         except Exception:
             self._reset_auth(cancel=False)
-            import traceback
             Logger().info("Engine url_redirect_authenticate failed: "
                           f"((({traceback.format_exc()})))")
             raise
@@ -455,7 +451,6 @@ class Authenticator:
                 return self._authentify(enginei, data, "password")
         except Exception:
             self._reset_auth(cancel=False)
-            import traceback
             Logger().info("Engine password_authenticate failed: "
                           f"((({traceback.format_exc()})))")
             raise
@@ -477,7 +472,6 @@ class Authenticator:
                                         no_delay=True)
         except Exception as a:
             self._reset_auth(cancel=False)
-            import traceback
             Logger().info("Engine passthrough_authenticate failed: "
                           f"{a} ({traceback.format_exc()})")
             raise
@@ -498,7 +492,6 @@ class Authenticator:
                                         no_delay=True)
         except Exception:
             self._reset_auth(cancel=False)
-            import traceback
             Logger().info("Engine gssapi_authenticate failed: "
                           f"((({traceback.format_exc()})))")
             raise
@@ -540,7 +533,6 @@ class Authenticator:
                                         no_delay=True)
         except Exception:
             self._reset_auth(cancel=False)
-            import traceback
             Logger().info("Engine pubkey_authenticate failed: "
                           f"((({traceback.format_exc()})))")
             raise

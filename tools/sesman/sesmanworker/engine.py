@@ -33,6 +33,7 @@ from typing import Optional, Union, Tuple, Dict, List, Any, Iterable, NamedTuple
 from .logtime import logtime_function_pause
 import time
 import socket
+import traceback
 from .wallixauth import Authenticator
 from .challenge import Challenge
 from .checkout import CheckoutEngine, AccountInfos, AccountType
@@ -347,7 +348,6 @@ class Engine:
         try:
             return self.wabengine_conf.get('trace', 'localfile_hashed')
         except Exception:
-            import traceback
             Logger().info("Engine get_trace_type failed: "
                           "configuration file section "
                           "'wabengine', key 'trace', "
@@ -358,7 +358,6 @@ class Engine:
         try:
             self._selector_banner = self.wabengine_conf.get('banner')
         except Exception:
-            import traceback
             Logger().info("Engine get_selector_banner failed: "
                           "configuration file section "
                           "'wabgine', key 'trace', "
@@ -381,7 +380,6 @@ class Engine:
                 Logger().info(f"Engine password_expiration_date={_data[0]}")
                 return True, _data[0]
         except Exception:
-            import traceback
             Logger().info("Engine password_expiration_date failed: "
                           f"((({traceback.format_exc()})))")
         return False, 0
@@ -498,7 +496,6 @@ class Engine:
                                                    show=target_device)
                     target_device = None
                 except Exception:
-                    # import traceback
                     # Logger().info(f"resolve_hostname: ((({traceback.format_exc()})))")
                     Logger().info("target_device is not a hostname")
         return target_device, target_context
@@ -524,7 +521,6 @@ class Engine:
 
             Notify(self.wabengine, CX_EQUIPMENT, notif_data)
         except Exception:
-            import traceback
             Logger().info("Engine NotifyConnectionToCriticalEquipment failed: "
                           f"((({traceback.format_exc()})))")
 
@@ -540,7 +536,6 @@ class Engine:
 
             Notify(self.wabengine, SECONDARY_CX_FAILED, notif_data)
         except Exception:
-            import traceback
             Logger().info("Engine NotifySecondaryConnectionFailed failed: "
                           f"((({traceback.format_exc()})))")
 
@@ -554,7 +549,6 @@ class Engine:
 
             Notify(self.wabengine, FILESYSTEM_FULL, notif_data)
         except Exception:
-            import traceback
             Logger().info("Engine NotifyFilesystemIsFullOrUsedAtXPercent "
                           f"failed: ((({traceback.format_exc()})))")
 
@@ -580,7 +574,6 @@ class Engine:
                 f"{user}@{cn}:{service}:{user_login} ({host})\n"
             )
         except Exception:
-            import traceback
             Logger().info("Engine NotifyFindPatternInRDPFlow failed: "
                           f"((({traceback.format_exc()})))")
 
@@ -609,7 +602,6 @@ class Engine:
                 f"{user}@{cn}:{service}:{user_login} ({host})\n"
             )
         except Exception:
-            import traceback
             Logger().info("Engine NotifyFindConnectionInRDPFlow failed: "
                           f"((({traceback.format_exc()})))")
 
@@ -635,7 +627,6 @@ class Engine:
                 f"{user}@{cn}:{service}:{user_login} ({host})\n"
             )
         except Exception:
-            import traceback
             Logger().info("Engine NotifyFindProcessInRDPFlow failed: "
                           f"((({traceback.format_exc()})))")
 
@@ -783,7 +774,6 @@ class Engine:
                 self.proxy_rights = prights
                 return True
         except Exception:
-            # import traceback
             # Logger().info(f"valid_device_name failed: ((({traceback.format_exc()})))")
             pass
         return False
@@ -888,7 +878,6 @@ class Engine:
                     protocols, target_device)
                 # Logger().debug("** END Get_proxy_right **")
             except Exception:
-                # import traceback
                 # Logger().info(f"traceback = {traceback.format_exc()}")
                 self.proxy_rights = None
                 return
@@ -981,7 +970,6 @@ class Engine:
             Logger().error(f"Bastion account {self.user_cn} couldn't log "
                            f"into {target_login}@{target_device}:{target_service}")
         except Exception:
-            import traceback
             Logger().info(f"traceback = {traceback.format_exc()}")
 
         target_str = f"{target_login}@{target_device}:{target_service} ({target_group})"
@@ -1016,7 +1004,6 @@ class Engine:
                 return [selected_target]
 
         except Exception:
-            import traceback
             Logger().info(f"Engine get_effective_target failed: ((({traceback.format_exc()})))")
         return []
 
@@ -1054,7 +1041,6 @@ class Engine:
                 Logger().info("Engine get_app_params done")
                 return app_params
         except Exception:
-            import traceback
             Logger().info(f"Engine get_app_params failed: ((({traceback.format_exc()})))")
         return None
 
@@ -1065,7 +1051,6 @@ class Engine:
             Logger().debug("Engine get_primary_password done")
             return password
         except Exception:
-            import traceback
             Logger().debug("Engine get_primary_password failed:"
                            f" ((({traceback.format_exc()})))")
         return None
@@ -1078,7 +1063,6 @@ class Engine:
                 account_name, domain_name, device_name
             )
         except Exception:
-            import traceback
             Logger().debug("Engine get_account_infos failed:"
                            f" {traceback.format_exc()}")
         return None
@@ -1095,7 +1079,6 @@ class Engine:
                 account_type=account_type
             )
         except Exception:
-            import traceback
             Logger().debug("Engine get_account_infos_by_type failed:"
                            f" {traceback.format_exc()}")
         return None
@@ -1105,7 +1088,6 @@ class Engine:
         try:
             passwords = self.checkout.get_target_passwords(target_device)
         except Exception:
-            import traceback
             Logger().debug("Engine get_target_passwords failed:"
                            f" ((({traceback.format_exc()})))")
             return []
@@ -1125,7 +1107,6 @@ class Engine:
         try:
             return self.checkout.get_target_privkeys(target_device)
         except Exception:
-            import traceback
             Logger().debug("Engine get_target_privkey failed:"
                            f" ((({traceback.format_exc()})))")
         return []
@@ -1134,7 +1115,6 @@ class Engine:
         try:
             self.checkout.release_target(target_device)
         except Exception:
-            import traceback
             Logger().debug("Engine release_target failed:"
                            f" ((({traceback.format_exc()})))")
         return True
@@ -1148,7 +1128,6 @@ class Engine:
                 account_type=account_type
             )
         except Exception:
-            import traceback
             Logger().debug("Engine checkin_account_by_type failed:"
                            f" ({traceback.format_exc()})")
         return True
@@ -1177,7 +1156,6 @@ class Engine:
             self.session_id, self.start_time, error_msg = \
                 None, None, e.__class__.__name__
         except Exception as e:
-            import traceback
             self.session_id, self.start_time, error_msg = \
                 None, None, e.__class__.__name__
             Logger().info("Engine start_session failed:"
@@ -1215,7 +1193,6 @@ class Engine:
             self.session_id, self.start_time, error_msg = (
                 None, None, e.__class__.__name__)
         except Exception as e:
-            import traceback
             self.session_id, self.start_time, error_msg = (
                 None, None, e.__class__.__name__)
             Logger().info("Engine start_session failed:"
@@ -1268,7 +1245,6 @@ class Engine:
                                                   hosttarget=hosttarget,
                                                   **kwargs)
         except Exception:
-            import traceback
             Logger().info("Engine update_session_target failed:"
                           f" ((({traceback.format_exc()})))")
 
@@ -1283,7 +1259,6 @@ class Engine:
                     self.wabengine.update_session(self.session_id,
                                                   **kwargs)
         except Exception:
-            import traceback
             Logger().info("Engine update_session failed:"
                           f" ((({traceback.format_exc()})))")
 
@@ -1296,7 +1271,6 @@ class Engine:
                     token=token, request_id=request_id
                 )
         except Exception:
-            import traceback
             Logger().info("Engine sharing_response failed:"
                           f" ((({traceback.format_exc()})))")
 
@@ -1325,7 +1299,6 @@ class Engine:
         except SessionAlreadyStopped:
             pass
         except Exception:
-            import traceback
             Logger().info("Engine stop_session failed:"
                           f" ((({traceback.format_exc()})))")
         Logger().debug("Engine stop session end")
@@ -1370,7 +1343,6 @@ class Engine:
         except Exception:
             kill_patterns = {}
             notify_patterns = {}
-            import traceback
             Logger().info("Engine get_restrictions failed:"
                           f" ((({traceback.format_exc()})))")
         return (kill_patterns, notify_patterns)
@@ -1417,7 +1389,6 @@ class Engine:
         except Exception:
             self.pattern_kill = None
             self.pattern_notify = None
-            import traceback
             Logger().info("Engine get_restrictions failed:"
                           f" ((({traceback.format_exc()})))")
         return (self.pattern_kill, self.pattern_notify)
@@ -1509,7 +1480,6 @@ class Engine:
                 self.session_record_type = "pcap"
                 self.session_record.initialize()
         except Exception:
-            import traceback
             Logger().info("Engine start_record failed")
             Logger().debug(f"Engine get_trace_writer failed: {traceback.format_exc()}")
             return False
@@ -1537,7 +1507,6 @@ class Engine:
                 self.session_record_type = "ttyrec"
                 self.session_record.initialize()
         except Exception:
-            import traceback
             Logger().info("Engine start_record failed")
             Logger().debug(f"Engine get_trace_writer failed: {traceback.format_exc()}")
             return False
