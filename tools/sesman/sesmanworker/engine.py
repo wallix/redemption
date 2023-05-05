@@ -1035,7 +1035,7 @@ class Engine:
             'device': host,
         })
 
-    def get_app_params(self, selected_target, effective_target) -> Optional[AppParams]:
+    def get_app_params(self, selected_target: str, effective_target: str) -> Optional[AppParams]:
         # Logger().info("Engine get_app_params: "
         #               "{service_login=} {effective_target=}")
         if self.is_sharing_session(selected_target):
