@@ -47,6 +47,7 @@ from .engine import (LOCAL_TRACE_PATH_RDP,
                      TargetContext,
                      RDP,
                      VNC,
+                     AppParams
                      )
 
 from .logtime import logtimer, Steps as LogSteps, logtime_function_pause
@@ -251,7 +252,7 @@ class Sesman():
         self.proxy_conx = conn
         self.addr = addr
         self.full_path = None  # path + basename (without extension)
-        self.record_filebase = None
+        self.record_filebase = ''
         self.full_log_path = None
 
         self.engine = engine.Engine()
@@ -2707,7 +2708,7 @@ class Sesman():
                     'session_sharing_ttl': sharing_ttl,
                 })
 
-    def check_application(self, effective_target: SharedDict, flags: int, exe_or_file: str) -> SharedDict:
+    def check_application(self, effective_target: SharedDict, flags: str, exe_or_file: str) -> SharedDict:
         kv = {
             'auth_command_rail_exec_flags': flags,
             'auth_command_rail_exec_original_exe_or_file': exe_or_file,
@@ -2763,7 +2764,7 @@ class Sesman():
         kv = self._complete_app_infos(kv, app_right, app_params)
         return kv
 
-    def _complete_app_infos(self, kv: SharedDict, app_right: SharedDict, app_params: SharedDict) -> SharedDict:
+    def _complete_app_infos(self, kv: SharedDict, app_right: SharedDict, app_params: AppParams) -> SharedDict:
         app_login_info = self.engine.get_target_login_info(app_right)
 
         kv['auth_command_rail_exec_exe_or_file'] = app_params.program

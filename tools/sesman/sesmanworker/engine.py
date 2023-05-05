@@ -501,7 +501,7 @@ class Engine:
     def NotifyConnectionToCriticalEquipment(self, protocol: str, user: str,
                                             source: str, ip_source: str,
                                             login: str, device: str, ip: str,
-                                            time: float, url: Optional[str]) -> None:
+                                            time: str, url: Optional[str]) -> None:
         try:
             notif_data = {
                 'protocol': protocol,
@@ -575,7 +575,7 @@ class Engine:
             Logger().info("Engine NotifyFindPatternInRDPFlow failed: "
                           f"((({traceback.format_exc()})))")
 
-    def notify_find_connection_rdp(self, rule: str, deny: str, app_name: str,
+    def notify_find_connection_rdp(self, rule: str, deny: bool, app_name: str,
                                    app_cmd_line: str, dst_addr: str,
                                    dst_port: str, user_login: str, user: str,
                                    host: str, cn: str, service: str) -> None:
@@ -603,7 +603,7 @@ class Engine:
             Logger().info("Engine NotifyFindConnectionInRDPFlow failed: "
                           f"((({traceback.format_exc()})))")
 
-    def notify_find_process_rdp(self, regex: str, deny: str, app_name: str,
+    def notify_find_process_rdp(self, regex: str, deny: bool, app_name: str,
                                 app_cmd_line: str, user_login: str, user: str,
                                 host: str, cn: str, service: str) -> None:
         try:
@@ -629,7 +629,7 @@ class Engine:
                           f"((({traceback.format_exc()})))")
 
     def get_targets_list(self, group_filter: str, device_filter: str, protocol_filter: str,
-                         case_sensitive: bool) -> Tuple[List, bool]:
+                         case_sensitive: bool) -> Tuple[List[Tuple[str, str, str]], bool]:
         fc = (lambda string: string) if case_sensitive else (lambda string: string.lower())
 
         targets = []
@@ -1020,7 +1020,7 @@ class Engine:
             'device': host,
         })
 
-    def get_app_params(self, selected_target: str, effective_target: str) -> Optional[AppParams]:
+    def get_app_params(self, selected_target: RightType, effective_target: RightType) -> Optional[AppParams]:
         # Logger().info("Engine get_app_params: "
         #               "{service_login=} {effective_target=}")
         if self.is_sharing_session(selected_target):
@@ -1260,7 +1260,7 @@ class Engine:
             Logger().info("Engine update_session failed:"
                           f" ((({traceback.format_exc()})))")
 
-    def sharing_response(self, errcode: int, errmsg: str, token: str, request_id: str) -> None:
+    def sharing_response(self, errcode: int, errmsg: str, token: Dict[str, Any], request_id: str) -> None:
         try:
             status = SHADOW_ACCEPTED if errcode == '0' else SHADOW_REJECTED
             with manage_transaction(self.wabengine):
