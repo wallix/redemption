@@ -125,11 +125,8 @@ class CheckoutEngine:
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
                                                            (None, {}))
-        passwords = credentials.get(CRED_TYPE_PASSWORD, [])
-        password = None
-        if passwords:
-            password = passwords[0]
-        return password
+        passwords = credentials.get(CRED_TYPE_PASSWORD)
+        return passwords[0] if passwords else None
 
     def get_scenario_account_infos(self, account_name: str,
                                    domain_name: str, device_name: str) -> Optional[AccountInfos]:
