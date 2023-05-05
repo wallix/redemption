@@ -89,14 +89,14 @@ class CheckoutEngine:
         # Logger().debug("CHECKOUTENGINE get_target_login")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
-                                                           ({}, {}))
+                                                           (None, {}))
         return credentials.get(CRED_DATA_LOGIN)
 
     def get_target_domain(self, right: RightType) -> Optional[str]:
         # Logger().debug("CHECKOUTENGINE get_target_login")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
-                                                           ({}, {}))
+                                                           (None, {}))
         return credentials.get(CRED_DATA_DOMAIN)
 
     def get_target_passwords(self, right: RightType) -> List[str]:
@@ -104,14 +104,14 @@ class CheckoutEngine:
         # Use for password vault or mapping
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
-                                                           ({}, {}))
+                                                           (None, {}))
         return credentials.get(CRED_TYPE_PASSWORD, [])
 
     def get_target_privkeys(self, right: RightType) -> List[Tuple[Any, Any, Any]]:
         # Logger().debug("CHECKOUTENGINE get_target_privkeys")
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
-                                                           ({}, {}))
+                                                           (None, {}))
         return [(cred.get(CRED_DATA_PRIVATE_KEY),
                  cred.get("passphrase"),
                  cred.get(CRED_DATA_SSH_CERTIFICATE))
@@ -124,7 +124,7 @@ class CheckoutEngine:
             return None
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
-                                                           ({}, {}))
+                                                           (None, {}))
         passwords = credentials.get(CRED_TYPE_PASSWORD, [])
         password = None
         if passwords:
@@ -145,10 +145,9 @@ class CheckoutEngine:
         )
         if not res:
             return None
-        right, creds = self.scenario_credentials.get(account, (None, {}))
+        right, creds = self.scenario_credentials.get(account, (None, None))
         if not creds:
             return None
-        from collections import namedtuple
         return AccountInfos(
             creds.get(CRED_TYPE_PASSWORD, []),
             creds.get(CRED_DATA_LOGIN, None)
@@ -203,7 +202,7 @@ class CheckoutEngine:
         return_status = APPROVAL_REJECTED
         if status in STATUS_SUCCESS:
             target_uid = right['target_uid']
-            if self.session_credentials.get(target_uid) is None:
+            if target_uid not in self.session_credentials:
                 creds = infos.get(CRED_INDEX, {})
                 shadow_token = infos.get("shadow_token", {})
                 shadow_pass = shadow_token.get("sharing_pass")
@@ -258,19 +257,18 @@ class CheckoutEngine:
             Logger().debug("check_account_by_type: missing creds")
             return None
 
-        has_password = True if creds.get(CRED_TYPE_PASSWORD) else False
-        has_ssh_key = True if creds.get(CRED_TYPE_SSH_KEY) else False
-
-        if not with_ssh_key and not has_password:
-            Logger().debug("check_account_by_type: missing password")
-            return None
-
-        if not has_password and not has_ssh_key:
-            Logger().debug("check_account_by_type: missing password & ssh key")
-            return None
-
-        passwords = creds.get(CRED_TYPE_PASSWORD) if has_password else None
+        passwords = creds.get(CRED_TYPE_PASSWORD)
         ssh_keys = creds.get(CRED_TYPE_SSH_KEY)
+
+        if not passwords:
+            if not with_ssh_key:
+                Logger().debug("check_account_by_type: missing password")
+                return None
+
+            if not ssh_keys:
+                Logger().debug("check_account_by_type: missing password & ssh key")
+                return None
+
         ssh_key = None
         if ssh_keys:
             cred = ssh_keys[0]
@@ -422,7 +420,7 @@ class CheckoutEngine:
         # Logger().debug("CHECKOUTENGINE release_target")
         target_uid = right['target_uid']
         if target_uid in self.session_credentials:
-            tright, creds = self.session_credentials.get(target_uid, ({}, {}))
+            tright, creds = self.session_credentials[target_uid]
             with manage_transaction(self.engine, 'checkin_account', reraise=False):
                 self.engine.checkin_account(
                     right=tright,
