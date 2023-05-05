@@ -924,9 +924,7 @@ class Sesman():
                 # Wait for confirmation from GUI (or timeout)
                 if not ((self.engine.is_x509_validated()
                          or self.interactive_ask_x509_connection())
-                        and self.engine.x509_authenticate(
-                            self.shared.get('ip_client'),
-                            self.shared.get('ip_target'))):
+                        and self.engine.x509_authenticate()):
                     self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
 
                     return False, TR(Sesmsg.X509_AUTH_REFUSED_BY_USER)

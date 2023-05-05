@@ -269,7 +269,7 @@ class Engine:
         return self.session_result, self.session_diag
 
     # NOTE [RDP] calls to set_session_status() always initialize diag
-    def set_session_status(self, result: Optional[bool] = None, diag: str = '') -> None:
+    def set_session_status(self, diag: str, result: Optional[bool] = None) -> None:
         # Logger().info("Engine set session status : result='{result}', diag='{diag}'")
         if result is not None:
             self.session_result = result
@@ -394,10 +394,8 @@ class Engine:
         return self.authenticator.is_x509_validated()
 
     @logtime_function_pause
-    def x509_authenticate(self, ip_client: Optional[str] = None, ip_server: Optional[str] = None) -> bool:
-        return self.authenticator.x509_authenticate(
-            self, ip_client, ip_server
-        )
+    def x509_authenticate(self) -> bool:
+        return self.authenticator.x509_authenticate(self)
 
     def mobile_device_authenticate(self) -> bool:
         return self.authenticator.mobile_device_authenticate(self)
@@ -1731,10 +1729,7 @@ class Engine:
 
     def get_account_login(self, right: RightType, check_in_creds: bool = True) -> str:
         login = right['account_login']
-        try:
-            domain = right['domain_name']
-        except Exception:
-            domain = ""
+        domain = right.get('domain_name', '')
         if check_in_creds:
             login = (self.checkout.get_target_login(right) or login)
             domain = (self.checkout.get_target_domain(right) or domain)

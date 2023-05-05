@@ -91,11 +91,11 @@ KBDINT_PENDING_STATUS = {
 BANNABLE_STATES = (AuthState.SSH_KEY, AuthState.KERBEROS)
 
 
-def get_auth_priority(auth_state: str) -> Optional[str]:
+def get_auth_priority(auth_state: str) -> str:
     if auth_state == AuthState.KBDINT_CHECK:
-        return None
+        return ''
     expected = EXPECTED_FIRST_COMPAT.get(auth_state)
-    return expected[0] if expected else None
+    return expected[0] if expected else ''
 
 
 class Authenticator:
@@ -142,7 +142,7 @@ class Authenticator:
     def _init_identify(self,
                        ip_source: str,
                        server_ip: str,
-                       login: Optional[str],
+                       login: str,
                        auth_state: str,
                        client_name: str = PROXY_CLIENT) -> bool:
         self._init_client()
@@ -150,7 +150,6 @@ class Authenticator:
         # Conditions to continue
 
         if (self.current_login is not None
-            and login is not None
             and login != self.current_login):
             # login changed
             self._reset_auth()
@@ -369,7 +368,7 @@ class Authenticator:
             )
         return KBDINT_PENDING_STATUS.get(self.auth_state)
 
-    def x509_authenticate(self, enginei, ip_client: Optional[str] = None, ip_server: Optional[str] = None) -> bool:
+    def x509_authenticate(self, enginei) -> bool:
         try:
             enginei.wabengine = self.auth_x509.get_proxy()
             if enginei.wabengine is not None:
