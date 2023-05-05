@@ -22,7 +22,7 @@ from time import time, ctime, mktime
 from datetime import datetime, date
 import socket
 from socket import gethostname
-from typing import Any, Tuple, Optional, Dict, Union, List
+from typing import Any, Tuple, Optional, Dict, Union, List, Iterable
 
 from .parsers import parse_param, parse_auth, parse_app, parse_duration
 from .proxy_log import RdpProxyLog
@@ -46,7 +46,7 @@ from .engine import (LOCAL_TRACE_PATH_RDP,
                      PASSWORD_MAPPING,
                      TargetContext,
                      RDP,
-                     VNC
+                     VNC,
                      )
 
 from .logtime import logtimer, Steps as LogSteps, logtime_function_pause
@@ -227,7 +227,7 @@ SharedDict = Dict[str, Any]
 
 
 class Sesman():
-    def __init__(self, conn, addr):
+    def __init__(self, conn: socket.socket, addr: str):
         try:
             confwab = engine.read_config_file(
                 modulename='sesman',
@@ -2599,7 +2599,7 @@ class Sesman():
             self.shared["session_sharing_invitation_id"] = None
             self.shared["session_sharing_invitation_addr"] = None
 
-    def handle_auth_notify(self, physical_target) -> None:
+    def handle_auth_notify(self, physical_target: SharedDict) -> None:
         if self.shared.get('auth_notify') == 'rail_exec':
             flags = self.shared.get('auth_notify_rail_exec_flags')
             exe_or_file = self.shared.get('auth_notify_rail_exec_exe_or_file')
@@ -2635,7 +2635,10 @@ class Sesman():
         }
         self.engine.update_session(**data_to_update)
 
-    def _fetch_connectionpolicy(self, conn_spec, conn_opts):
+    def _fetch_connectionpolicy(self,
+                                conn_spec: Dict[str, Tuple[str, str, Any]],
+                                conn_opts: Dict[str, Dict[str, Any]]
+                                ) -> Iterable[Tuple[str, Any]]:
         # Logger().info(f"{conn_opts}")
         def get_values(section_name, value_infos):
             values = conn_opts.get(section_name, {})
@@ -2657,7 +2660,7 @@ class Sesman():
             self.check_session_parameters = True
             raise BastionSignal()
 
-    def kill(self):
+    def kill(self) -> None:
         try:
             Logger().info("Closing a RDP/VNC connection")
             self.proxy_conx.close()
@@ -2706,7 +2709,7 @@ class Sesman():
                     'session_sharing_ttl': sharing_ttl,
                 })
 
-    def check_application(self, effective_target, flags, exe_or_file: str) -> SharedDict:
+    def check_application(self, effective_target: SharedDict, flags: int, exe_or_file: str) -> SharedDict:
         kv = {
             'auth_command_rail_exec_flags': flags,
             'auth_command_rail_exec_original_exe_or_file': exe_or_file,
@@ -2762,7 +2765,7 @@ class Sesman():
         kv = self._complete_app_infos(kv, app_right, app_params)
         return kv
 
-    def _complete_app_infos(self, kv: SharedDict, app_right, app_params) -> SharedDict:
+    def _complete_app_infos(self, kv: SharedDict, app_right: SharedDict, app_params: SharedDict) -> SharedDict:
         app_login_info = self.engine.get_target_login_info(app_right)
 
         kv['auth_command_rail_exec_exe_or_file'] = app_params.program
@@ -2810,7 +2813,7 @@ class Sesman():
 
             self.send_data(data_to_send)
 
-    def _load_kerberos_armoring_options(self, conn_opts) -> SharedDict:
+    def _load_kerberos_armoring_options(self, conn_opts: SharedDict) -> SharedDict:
         krb_data = {}
         if 'rdp' in conn_opts:
             rdp_opts = conn_opts.get('rdp', {})
