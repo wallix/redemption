@@ -83,7 +83,7 @@ void WidgetButton::set_text(char const* text)
             this->label_rect.cy = dm.h;
 
             this->set_wh(this->label_rect.cx + (this->border_width * 2 - 1),
-                            this->label_rect.cy + (this->border_width * 2 - 1));
+                         this->label_rect.cy + (this->border_width * 2 - 1));
         }
     }
 }
@@ -93,14 +93,10 @@ void WidgetButton::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         this->draw(
             rect_intersect, this->get_rect(), this->drawable, this->logo, this->has_focus, this->buffer,
             this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
             this->label_rect, this->state, this->border_width, this->font, this->x_text, this->y_text);
-
-        this->drawable.end_update();
     }
 }
 

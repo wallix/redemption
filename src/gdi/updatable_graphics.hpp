@@ -304,12 +304,6 @@ struct UpdatableGraphics : gdi::GraphicApi
         this->has_drawing_event_ = true;
     }
 
-    void begin_update() override
-    {}
-
-    void end_update() override
-    {}
-
 private:
     bool has_drawing_event_ = false;
 };

@@ -60,8 +60,6 @@ void WidgetDelegatedCopy::draw(
     Rect clip, Rect rect, gdi::GraphicApi & drawable,
     Color fg, Color bg, int xicon, int yicon)
 {
-    drawable.begin_update();
-
     const auto color_ctx = gdi::ColorCtx::depth24();
 
     drawable.draw(RDPOpaqueRect(rect, bg), clip, color_ctx);
@@ -89,8 +87,6 @@ void WidgetDelegatedCopy::draw(
     drawRect(rect.x + d, rect.y, rect.cx - d * 2, 3);
     drawRect(rect.x + 2, rect.y + (rect.cy - 6) / 3 + 3, rect.cx - 4, 1);
     drawRect(rect.x + 2, rect.y + (rect.cy - 6) / 3 * 2 + 4, rect.cx - 4, 1);
-
-    drawable.end_update();
 }
 
 Dimension WidgetDelegatedCopy::get_optimal_dim() const

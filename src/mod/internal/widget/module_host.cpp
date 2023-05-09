@@ -540,8 +540,6 @@ void WidgetModuleHost::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         SubRegion region;
 
         region.add_rect(rect_intersect);
@@ -578,8 +576,6 @@ void WidgetModuleHost::rdp_input_invalidate(Rect clip)
         if (this->vscroll_added) {
             this->vscroll.rdp_input_invalidate(rect_intersect);
         }
-
-        this->drawable.end_update();
     }
 }
 
@@ -603,16 +599,4 @@ void WidgetModuleHost::rdp_input_scancode(KbdFlags flags, Scancode scancode, uin
 void WidgetModuleHost::rdp_input_synchronize(KeyLocks locks)
 {
     this->managed_mod->rdp_input_synchronize(locks);
-}
-
-// Widget
-
-void WidgetModuleHost::begin_update()
-{
-    this->drawable.begin_update();
-}
-
-void WidgetModuleHost::end_update()
-{
-    this->drawable.end_update();
 }

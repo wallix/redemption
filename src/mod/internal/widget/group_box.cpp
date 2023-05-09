@@ -43,8 +43,6 @@ void WidgetGroupBox::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         this->draw_inner_free(rect_intersect, this->get_bg_color());
 
         // Box.
@@ -92,8 +90,6 @@ void WidgetGroupBox::rdp_input_invalidate(Rect clip)
 
 
         this->invalidate_children(rect_intersect);
-
-        this->drawable.end_update();
     }
 }
 

@@ -348,9 +348,6 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPColCache   const & /*cache*/) {}
     virtual void draw(RDPBrushCache const & /*cache*/) {}
 
-    virtual void begin_update() {}
-    virtual void end_update() {}
-
     virtual void sync() {}
 
     virtual void cached_pointer(CachePointerIndex cache_idx) = 0;

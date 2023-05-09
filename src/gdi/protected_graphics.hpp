@@ -113,16 +113,6 @@ public:
         this->drawable.set_row(rownum, data);
     }
 
-    void begin_update() override
-    {
-        this->drawable.begin_update();
-    }
-
-    void end_update() override
-    {
-        this->drawable.end_update();
-    }
-
     [[nodiscard]] gdi::GraphicApi & get_graphic_proxy() const
     {
         return this->drawable;

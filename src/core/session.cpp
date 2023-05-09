@@ -840,6 +840,7 @@ private:
             event_manager.execute_events(
                 [](int /*fd*/){ assert(false); return false; },
                 bool(this->verbose & SessionVerbose::Event));
+            front.sync();
 
             if (num) {
                 assert(io_fd_isset(sck, fds));
@@ -854,6 +855,8 @@ private:
             else if (has_tls_pending_data) {
                 front_process(rbuf, front, front_trans, callback);
             }
+
+            front.sync();
 
             if (stop_event()) {
                 return true;
@@ -951,9 +954,13 @@ private:
             assert(front_trans.get_fd() != INVALID_SOCKET);
             assert(auth_trans.get_fd() != INVALID_SOCKET);
 
-            auto loop_state = LoopState::AclSend;
+            auto loop_state = LoopState::Front;
 
             try {
+                front.sync();
+
+                loop_state = LoopState::AclSend;
+
                 acl_serial.send_acl_data();
 
                 loop_state = LoopState::Select;
@@ -1236,6 +1243,9 @@ private:
                         [](int /*fd*/){ return false; },
                         bool(this->verbose & SessionVerbose::Event));
                 }
+                front.sync();
+
+                front.sync();
 
 
                 loop_state = LoopState::BackEvent;
@@ -1493,6 +1503,9 @@ private:
         }
 
         try { acl_serial.send_acl_data(); }
+        catch (...) {}
+
+        try { front.sync(); }
         catch (...) {}
 
         guest_ctx.stop();

@@ -158,20 +158,6 @@ public:
 
     ~RemoteProgramsSessionManager() = default;
 
-    void begin_update() override
-    {
-        if (this->drawable) {
-            this->drawable->begin_update();
-        }
-    }
-
-    void end_update() override
-    {
-        if (this->drawable) {
-            this->drawable->end_update();
-        }
-    }
-
     void disable_graphics_update(bool disable)
     {
         this->graphics_update_disabled = disable;
@@ -612,16 +598,13 @@ private:
         this->disconnect_now_button_clicked = false;
     }
 
-    void splash_screen_draw() {
+    void splash_screen_draw()
+    {
         if (!this->drawable) return;
 
-        this->drawable->begin_update();
-
-        {
-            RDPOpaqueRect order(this->protected_rect, encode_color24()(BLACK));
-
-            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::depth24());
-        }
+        this->drawable->draw(
+            RDPOpaqueRect(this->protected_rect, encode_color24()(BLACK)),
+            this->protected_rect, gdi::ColorCtx::depth24());
 
         {
             Rect rect = this->protected_rect.shrink(1);
@@ -645,20 +628,14 @@ private:
                               gdi::ColorCtx::depth24(),
                               this->protected_rect
                               );
-
-        this->drawable->end_update();
     }
 
     void waiting_screen_draw(WidgetButton::State state) {
         if (!this->drawable) return;
 
-        this->drawable->begin_update();
-
-        {
-            RDPOpaqueRect order(this->protected_rect, encode_color24()(BLACK));
-
-            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::depth24());
-        }
+        this->drawable->draw(
+            RDPOpaqueRect(this->protected_rect, encode_color24()(BLACK)),
+            this->protected_rect, gdi::ColorCtx::depth24());
 
         {
             Rect rect = this->protected_rect.shrink(1);
@@ -720,7 +697,6 @@ private:
                                ytext
                                );
 
-        this->drawable->end_update();
     }
 
     ///////////////////

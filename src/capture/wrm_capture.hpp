@@ -99,7 +99,7 @@ private:
 class GraphicToFile final : public RDPSerializer
 {
     enum {
-        GTF_SIZE_KEYBUF_REC = 1024
+        GTF_SIZE_KEYBUF_REC = 128
     };
 
     CompressionOutTransportBuilder compression_builder;
@@ -109,7 +109,6 @@ class GraphicToFile final : public RDPSerializer
     StaticOutStream<65536> buffer_stream_bitmaps;
 
     MonotonicTimePoint timer;
-    MonotonicTimePoint last_sent_timer {};
     const MonotonicTimePoint start_timer {};
     MonotonicTimePoint monotonic_real_time {};
     RealTimePoint last_real_time {};
@@ -118,10 +117,8 @@ class GraphicToFile final : public RDPSerializer
     uint16_t mouse_y = 0;
     Drawable const& drawable;
 
-
-    uint8_t keyboard_buffer_32_buf[GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)];
     // Extractor
-    OutStream keyboard_buffer_32;
+    StaticOutStream<GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)> keyboard_buffer_32;
 
     const uint8_t wrm_format_version;
 
@@ -155,7 +152,6 @@ public:
     , monotonic_real_time(now)
     , last_real_time(real_now)
     , drawable(drawable_ref)
-    , keyboard_buffer_32(keyboard_buffer_32_buf)
     , wrm_format_version(remote_app ? 5 : (bool(this->compression_builder.get_algorithm()) ? 4 : 3))
     , remote_app(remote_app)
     , rail_window_rect(rail_window_rect)
@@ -198,7 +194,10 @@ public:
 
     void update_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
     {
-        this->sync();
+        if (this->timer == monotonic_time && real_time == last_real_time) {
+            LOG(LOG_DEBUG, "same");
+        }
+        LOG(LOG_DEBUG, "t=%ld  rt=%ld", monotonic_time.time_since_epoch().count(), real_time.time_since_epoch().count());
         this->timestamp(monotonic_time);
         this->monotonic_real_time = monotonic_time;
         this->last_real_time = real_time;
@@ -323,12 +322,10 @@ public:
         payload.out_uint8(/*ignore_time_interval*/ 0);
 
         payload.out_copy_bytes(keyboard_buffer_32.get_produced_bytes());
-        keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
+        keyboard_buffer_32.rewind();
 
         send_wrm_chunk(this->trans, WrmChunkType::TIMESTAMP_OR_RECORD_DELAY, payload.get_offset(), 1);
         this->trans.send(payload.get_produced_bytes());
-
-        this->last_sent_timer = this->timer;
     }
 
     void send_save_state_chunk()
@@ -383,59 +380,47 @@ public:
         this->save_bmp_caches();
         this->save_glyph_caches();
         this->ptr_cached.fill(false);
-        if (this->order_count > 0) {
-            this->send_orders_chunk();
-        }
+        this->send_orders_chunk();
     }
 
-private:
-    void send_elapsed_time()
+    void sync() final
     {
-        if (this->timer >= this->last_sent_timer + std::chrono::seconds(1)) {
-            this->send_timestamp_chunk();
-        }
-    }
-
-protected:
-    void flush_orders() override {
-        if (this->order_count > 0) {
-            this->send_elapsed_time();
-            this->send_orders_chunk();
-        }
-    }
-
-public:
-    void send_orders_chunk()
-    {
-        send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
-        this->trans.send(this->stream_orders.get_produced_bytes());
-        this->order_count = 0;
-        this->stream_orders.rewind();
-    }
-
-protected:
-    void flush_bitmaps() override {
-        if (this->bitmap_count > 0) {
-            this->send_elapsed_time();
-            this->send_bitmaps_chunk();
-        }
-    }
-
-public:
-    void sync() override {
         this->flush_bitmaps();
         this->flush_orders();
     }
 
-    void send_bitmaps_chunk()
+protected:
+    void flush_orders() final
     {
-        send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP2, this->stream_bitmaps.get_offset(), this->bitmap_count);
-        this->trans.send(this->stream_bitmaps.get_produced_bytes());
-        this->bitmap_count = 0;
-        this->stream_bitmaps.rewind();
+        this->send_orders_chunk();
+    }
+
+    void flush_bitmaps() final
+    {
+        this->send_bitmaps_chunk();
     }
 
 private:
+    void send_orders_chunk()
+    {
+        if (this->order_count > 0) {
+            send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
+            this->trans.send(this->stream_orders.get_produced_bytes());
+            this->order_count = 0;
+            this->stream_orders.rewind();
+        }
+    }
+
+    void send_bitmaps_chunk()
+    {
+        if (this->bitmap_count > 0) {
+            send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP2, this->stream_bitmaps.get_offset(), this->bitmap_count);
+            this->trans.send(this->stream_bitmaps.get_produced_bytes());
+            this->bitmap_count = 0;
+            this->stream_bitmaps.rewind();
+        }
+    }
+
     void send_pointer(uint16_t cache_idx, RdpPointerView const& cursor)
     {
         assert(cursor.xor_bits_per_pixel() != BitsPerPixel{0});
@@ -522,7 +507,6 @@ public:
     {
         if (this->timer < now) {
             this->timer = now;
-            this->last_sent_timer = this->timer;
         }
 
         if (this->keyboard_buffer_32.get_offset()) {

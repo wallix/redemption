@@ -265,7 +265,6 @@ void ModWrapper::draw_osd_message(bool disable_by_input)
     // draw osd
 
     gdi::GraphicApi& drawable = this->gfilter.get_graphic_proxy();
-    drawable.begin_update();
 
     auto const bpp = this->client_info.screen_info.bpp;
     auto const color_ctx = gdi::ColorCtx::from_bpp(bpp, this->palette);
@@ -314,8 +313,6 @@ void ModWrapper::draw_osd_message(bool disable_by_input)
     if (this->is_disable_by_input) {
         draw_text(dy + 4, black, this->line_metrics.lines().back().str);
     }
-
-    drawable.end_update();
 }
 
 void ModWrapper::disable_osd(bool redraw)

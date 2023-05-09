@@ -394,13 +394,14 @@ public:
     }
 
 public:
-    void sync() override {
+    void sync() final
+    {
         this->flush_bitmaps();
         this->flush_orders();
     }
 
 protected:
-    void flush_orders() override
+    void flush_orders() final
     {
         if (this->order_count > 0){
             LOG_IF(bool(this->verbose & RDPSerializerVerbose::internal_buffer), LOG_INFO,
@@ -440,7 +441,7 @@ protected:
         }
     }
 
-    void flush_bitmaps() override
+    void flush_bitmaps() final
     {
         if (this->bitmap_count > 0) {
             LOG_IF(bool(this->verbose & RDPSerializerVerbose::internal_buffer), LOG_INFO

@@ -984,7 +984,7 @@ private:
                     case VNC_SC_MSG_FRAMEBUFFER_UPDATE: /* framebuffer update */
                         vnc.frame_buffer_update_ctx.start(vnc.bpp, to_bytes_per_pixel(vnc.bpp));
                         this->state = State::FrameBufferupdate;
-                        return vnc.lib_frame_buffer_update(drawable, buf);
+                        return vnc.lib_frame_buffer_update(buf);
                     case VNC_SC_MSG_SET_COLOUR_MAP_ENTRIES: /* palette */
                         vnc.palette_update_ctx.start();
                         this->state = State::Palette;
@@ -1005,7 +1005,7 @@ private:
                 REDEMPTION_DIAGNOSTIC_POP()
                 break;
 
-            case State::FrameBufferupdate: return vnc.lib_frame_buffer_update(drawable, buf);
+            case State::FrameBufferupdate: return vnc.lib_frame_buffer_update(buf);
             case State::Palette:           return vnc.lib_palette_update(drawable, buf);
             case State::ServerCutText:     return vnc.lib_clip_data(buf);
             }
@@ -1273,18 +1273,16 @@ private:
     };
     FrameBufferUpdateCtx frame_buffer_update_ctx;
 
-    bool lib_frame_buffer_update(gdi::GraphicApi & drawable, Buf64k & buf)
+    bool lib_frame_buffer_update(Buf64k & buf)
     {
-        drawable.begin_update();
         const bool ok = this->frame_buffer_update_ctx.run(buf, *this);
-        drawable.end_update();
         if (!ok) {
             return false;
         }
 
         this->update_screen(Rect(0, 0, this->width, this->height), 1);
         return true;
-    } // lib_frame_buffer_update
+    }
 
     class PaletteUpdateCtx
     {
@@ -1406,9 +1404,7 @@ private:
         }
 
         drawable.set_palette(this->palette_update_ctx.get_palette());
-        drawable.begin_update();
         drawable.draw(RDPColCache(0, this->palette_update_ctx.get_palette()));
-        drawable.end_update();
 
         return true;
     } // lib_palette_update

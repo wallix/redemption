@@ -108,12 +108,6 @@ public:
 
     void rdp_input_synchronize(KeyLocks locks) override;
 
-    // Widget
-
-    void begin_update() override;
-
-    void end_update() override;
-
 private:
     class Impl;
 

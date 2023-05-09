@@ -68,15 +68,11 @@ void WidgetTooltip::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         this->drawable.draw(
             RDPOpaqueRect(this->get_rect(), this->desc.get_bg_color()),
             rect_intersect, gdi::ColorCtx::depth24());
         this->desc.rdp_input_invalidate(rect_intersect);
         this->draw_border(rect_intersect);
-
-        this->drawable.end_update();
     }
 }
 

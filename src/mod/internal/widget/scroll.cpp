@@ -157,8 +157,6 @@ void WidgetScrollBar::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         auto draw_button = [&](Rect const& rect, bool has_focus, char const* button){
             WidgetButton::draw(rect_intersect, rect, this->drawable,
                 false, (this->mouse_down && has_focus), button,
@@ -239,8 +237,6 @@ void WidgetScrollBar::rdp_input_invalidate(Rect clip)
                 draw_rect(this->fg_color, this->cursor_button_rect);
             }
         }
-
-        this->drawable.end_update();
     }
 }
 

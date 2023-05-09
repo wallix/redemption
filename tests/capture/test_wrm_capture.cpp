@@ -199,7 +199,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
     auto st3 = get_stat(wrm3);
     RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n800 600\nnochecksum\n\n\n",
-        wrm1, " 1691 ",
+        wrm1, " 1670 ",
         int_to_decimal_chars(st1.st_mode), ' ',
         int_to_decimal_chars(st1.st_uid), ' ',
         int_to_decimal_chars(st1.st_gid), ' ',
@@ -223,7 +223,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         int_to_decimal_chars(st3.st_ino), ' ',
         int_to_decimal_chars(st3.st_mtim.tv_sec), ' ',
         int_to_decimal_chars(st3.st_ctim.tv_sec), " 1007 1008\n")});
-    RED_TEST_FILE_SIZE(wrm1, 1691);
+    RED_TEST_FILE_SIZE(wrm1, 1670);
     RED_TEST_FILE_SIZE(wrm2, 3553);
     RED_TEST_FILE_SIZE(wrm3, 3508);
 
@@ -238,7 +238,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
         int_to_decimal_chars(st.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000000.wrm"), array_view{str_concat(
-        "v2\n\n\ncapture-000000.wrm 1691 ",
+        "v2\n\n\ncapture-000000.wrm 1670 ",
         int_to_decimal_chars(st1.st_mode), ' ',
         int_to_decimal_chars(st1.st_uid), ' ',
         int_to_decimal_chars(st1.st_gid), ' ',
@@ -288,7 +288,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     auto st3 = get_stat(wrm3);
     RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n800 600\nchecksum\n\n\n",
-        wrm1, " 1691 ",
+        wrm1, " 1670 ",
         int_to_decimal_chars(st1.st_mode), ' ',
         int_to_decimal_chars(st1.st_uid), ' ',
         int_to_decimal_chars(st1.st_gid), ' ',
@@ -296,8 +296,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_decimal_chars(st1.st_ino), ' ',
         int_to_decimal_chars(st1.st_mtim.tv_sec), ' ',
         int_to_decimal_chars(st1.st_ctim.tv_sec), " 1000 1004"
-        " 26de3f301fe3537f6090266e0d5816fce5b0c6f9cac6eeff08ce59489c1f0ddd"
-        " 26de3f301fe3537f6090266e0d5816fce5b0c6f9cac6eeff08ce59489c1f0ddd\n",
+        " 52af63f270ad0d288dd01c2978ebef184a065865b6d7d9c0899517da69ab0b0d"
+        " 52af63f270ad0d288dd01c2978ebef184a065865b6d7d9c0899517da69ab0b0d\n",
         wrm2, " 3553 ",
         int_to_decimal_chars(st2.st_mode), ' ',
         int_to_decimal_chars(st2.st_uid), ' ',
@@ -318,7 +318,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_decimal_chars(st3.st_ctim.tv_sec), " 1007 1008"
         " 38af131a3215a0f0b29217a8bd8d679fa21ed62fa86c30cd452ccbc1ea2dcd34"
         " 38af131a3215a0f0b29217a8bd8d679fa21ed62fa86c30cd452ccbc1ea2dcd34\n")});
-    RED_TEST_FILE_SIZE(wrm1, 1691);
+    RED_TEST_FILE_SIZE(wrm1, 1670);
     RED_TEST_FILE_SIZE(wrm2, 3553);
     RED_TEST_FILE_SIZE(wrm3, 3508);
 
@@ -336,7 +336,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     RED_TEST(hash_content.size() == hash_expected.size() + 65*2);
     RED_TEST(prefix(hash_content, hash_expected.size()) == hash_expected);
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000000.wrm"), array_view{str_concat(
-        "v2\n\n\ncapture-000000.wrm 1691 ",
+        "v2\n\n\ncapture-000000.wrm 1670 ",
         int_to_decimal_chars(st1.st_mode), ' ',
         int_to_decimal_chars(st1.st_uid), ' ',
         int_to_decimal_chars(st1.st_gid), ' ',
@@ -344,8 +344,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_decimal_chars(st1.st_ino), ' ',
         int_to_decimal_chars(st1.st_mtim.tv_sec), ' ',
         int_to_decimal_chars(st1.st_ctim.tv_sec),
-        " 26de3f301fe3537f6090266e0d5816fce5b0c6f9cac6eeff08ce59489c1f0ddd"
-        " 26de3f301fe3537f6090266e0d5816fce5b0c6f9cac6eeff08ce59489c1f0ddd\n")});
+        " 52af63f270ad0d288dd01c2978ebef184a065865b6d7d9c0899517da69ab0b0d"
+        " 52af63f270ad0d288dd01c2978ebef184a065865b6d7d9c0899517da69ab0b0d\n")});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000001.wrm"), array_view{str_concat(
         "v2\n\n\ncapture-000001.wrm 3553 ",
         int_to_decimal_chars(st2.st_mode), ' ',

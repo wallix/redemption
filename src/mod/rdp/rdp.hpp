@@ -2681,23 +2681,17 @@ public:
             REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
             switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
             case FastPath::UpdateType::ORDERS:
-                drawable.begin_update();
                 this->orders.process_orders(
                     stream, true, drawable,
                     this->negociation_result.front_width, this->negociation_result.front_height);
-                drawable.end_update();
                 break;
 
             case FastPath::UpdateType::BITMAP:
-                drawable.begin_update();
                 this->process_bitmap_updates(stream, true, drawable);
-                drawable.end_update();
                 break;
 
             case FastPath::UpdateType::PALETTE:
-                drawable.begin_update();
                 this->process_palette(drawable, stream, true);
-                drawable.end_update();
                 break;
 
             case FastPath::UpdateType::SYNCHRONIZE:
@@ -2892,8 +2886,6 @@ public:
                     if (this->frameInProgress) {
                         // some servers don't send frame end markers, so send acks when we receive
                         // a new frame and the previous one was not acked
-                        drawable.end_update();
-
                         if (this->haveSurfaceFrameAck) {
                             LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
                             uint32_t localLastFrame = this->currentFrameId;
@@ -2908,12 +2900,10 @@ public:
 
                     this->frameInProgress = true;
                     this->currentFrameId = frameId;
-                    drawable.begin_update();
                     break;
                 case SURFACECMD_FRAMEACTION_END:
                     LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
                     this->frameInProgress = false;
-                    drawable.end_update();
 
                     if (this->haveSurfaceFrameAck) {
                         this->send_pdu_type2(
@@ -3270,24 +3260,18 @@ public:
                                         case RDP_UPDATE_ORDERS:
                                             LOG_IF(bool(this->verbose & RDPVerbose::graphics),
                                                 LOG_INFO, "RDP_UPDATE_ORDERS");
-                                            drawable.begin_update();
                                             this->orders.process_orders(sdata.payload, false,
                                                 drawable, this->negociation_result.front_width, this->negociation_result.front_height);
-                                            drawable.end_update();
                                             break;
                                         case RDP_UPDATE_BITMAP:
                                             LOG_IF(bool(this->verbose & RDPVerbose::graphics),
                                                 LOG_INFO, "RDP_UPDATE_BITMAP");
-                                            drawable.begin_update();
                                             this->process_bitmap_updates(sdata.payload, false, drawable);
-                                            drawable.end_update();
                                             break;
                                         case RDP_UPDATE_PALETTE:
                                             LOG_IF(bool(this->verbose & RDPVerbose::graphics),
                                                 LOG_INFO, "RDP_UPDATE_PALETTE");
-                                            drawable.begin_update();
                                             this->process_palette(drawable, sdata.payload, false);
-                                            drawable.end_update();
                                             break;
                                         case RDP_UPDATE_SYNCHRONIZE:
                                             LOG_IF(bool(this->verbose & RDPVerbose::connection),

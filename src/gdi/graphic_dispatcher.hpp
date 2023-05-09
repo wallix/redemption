@@ -320,20 +320,6 @@ struct GraphicDispatcher : GraphicApi
         }
     }
 
-    void begin_update() override
-    {
-        for (auto& gd : gds) {
-            gd->begin_update();
-        }
-    }
-
-    void end_update() override
-    {
-        for (auto& gd : gds) {
-            gd->end_update();
-        }
-    }
-
     void sync() override
     {
         for (auto& gd : gds) {

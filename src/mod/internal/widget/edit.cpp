@@ -185,8 +185,6 @@ void WidgetEdit::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         this->label.rdp_input_invalidate(rect_intersect);
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());
@@ -195,8 +193,6 @@ void WidgetEdit::rdp_input_invalidate(Rect clip)
         else {
             this->draw_border(rect_intersect, this->label.bg_color);
         }
-
-        this->drawable.end_update();
     }
 }
 
@@ -292,8 +288,6 @@ void WidgetEdit::decrement_edit_pos()
 
 void WidgetEdit::update_draw_cursor(Rect old_cursor)
 {
-    this->drawable.begin_update();
-
     if (this->drawall) {
         this->drawall = false;
         this->rdp_input_invalidate(this->get_rect());
@@ -302,8 +296,6 @@ void WidgetEdit::update_draw_cursor(Rect old_cursor)
         this->label.rdp_input_invalidate(old_cursor);
         this->draw_cursor(this->get_cursor_rect());
     }
-
-    this->drawable.end_update();
 }
 
 void WidgetEdit::move_to_last_character()
@@ -462,14 +454,10 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
                     while (this->edit_pos > 0 && this->label.buffer[(this->edit_buffer_pos)-1] != ' ') {
                         rect = rect.disjunct(remove_one_char());
                     }
-                    this->drawable.begin_update();
                     this->rdp_input_invalidate(rect);
-                    this->drawable.end_update();
                 }
                 else {
-                    this->drawable.begin_update();
                     this->rdp_input_invalidate(remove_one_char());
-                    this->drawable.end_update();
                 }
             }
             break;
@@ -513,14 +501,10 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
                             rect = rect.disjunct(remove_one_char());
                         }
                     }
-                    this->drawable.begin_update();
                     this->rdp_input_invalidate(this->get_cursor_rect().disjunct(rect));
-                    this->drawable.end_update();
                 }
                 else {
-                    this->drawable.begin_update();
                     this->rdp_input_invalidate(this->get_cursor_rect().disjunct(remove_one_char()));
-                    this->drawable.end_update();
                 }
             }
             break;
@@ -565,10 +549,8 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
             }
 
             this->set_text("");
-            this->drawable.begin_update();
             this->label.rdp_input_invalidate(this->label.get_rect());
             this->draw_cursor(this->get_cursor_rect());
-            this->drawable.end_update();
             break;
 
         default:

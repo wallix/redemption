@@ -152,8 +152,6 @@ void WidgetEditValid::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         this->editbox->rdp_input_invalidate(rect_intersect);
         if (this->label && this->use_label_) {
             if (this->editbox->num_chars == 0) {
@@ -181,8 +179,6 @@ void WidgetEditValid::rdp_input_invalidate(Rect clip)
             );
             this->draw_border(rect_intersect, this->border_none_color);
         }
-
-        this->drawable.end_update();
     }
 }
 

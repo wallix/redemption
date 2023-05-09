@@ -129,11 +129,9 @@ void WidgetGrid::rdp_input_invalidate(Rect clip)
     Rect const rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
         for (uint16_t row_index = 0; row_index < this->widgets.nb_rows; ++row_index) {
             this->draw_row(row_index, rect_intersect);
         }
-        this->drawable.end_update();
     }
 }
 
@@ -279,23 +277,19 @@ void WidgetGrid::set_selection(uint16_t row_index)
         uint16_t previous_selection_y = this->selection_y;
         this->selection_y = row_index;
 
-        this->drawable.begin_update();
         if (previous_selection_y < this->widgets.nb_rows) {
             this->draw_row(previous_selection_y, this->get_rect());
         }
         if (this->selection_y < this->widgets.nb_rows) {
             this->draw_row(this->selection_y, this->get_rect());
         }
-        this->drawable.end_update();
     }
 }
 
 void WidgetGrid::refresh_selected()
 {
     if (this->selection_y < this->widgets.nb_rows) {
-        this->drawable.begin_update();
         this->draw_row(this->selection_y, this->get_rect());
-        this->drawable.end_update();
     }
 }
 

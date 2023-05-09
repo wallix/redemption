@@ -116,10 +116,6 @@ public:
             override {this->sink.sync();}
     void set_row(std::size_t rownum, bytes_view data)
             override {this->sink.set_row(rownum, data);}
-    void begin_update()
-            override {this->sink.begin_update();}
-    void end_update()
-            override {this->sink.end_update();}
 
     void cached_pointer(gdi::CachePointerIndex cache_idx)
             override { this->sink.cached_pointer(cache_idx); }

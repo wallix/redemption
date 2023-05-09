@@ -947,14 +947,11 @@ void ClientExecute::input_invalidate(const Rect r)
 
     if (!this->channel_) return;
 
-    bool is_updated = false;
-
-    auto draw_area = [this, &r, &is_updated](WindowArea area, auto f){
+    auto draw_area = [this, &r](WindowArea area, auto f){
         if (auto area_rect = Zone::get_zone(area, this->window_rect)
           ; r.has_intersection(area_rect))
         {
             f(area_rect);
-            is_updated = true;
         }
     };
 
@@ -986,10 +983,6 @@ void ClientExecute::input_invalidate(const Rect r)
     draw_area(WindowArea::Close, [&](Rect const& area_rect){
         draw_button_close(this->drawable_, this->font_, area_rect, ButtonStyle::Normal, r);
     });
-
-    if (is_updated) {
-        this->drawable_.sync();
-    }
 }   // input_invalidate
 
 void ClientExecute::adjust_window_to_mod()
@@ -1467,22 +1460,21 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         switch (area) {
             case WindowArea::Mini:
                 draw_button_mini(this->drawable_, this->font_, rect, button_style, rect);
-                return true;
+                break;
 
             case WindowArea::Maxi:
                 draw_button_maxi(this->drawable_, is_maximized, rect, button_style, rect);
-                return true;
+                break;
 
             case WindowArea::Close:
                 draw_button_close(this->drawable_, this->font_, rect, button_style, rect);
-                return true;
+                break;
 
             case WindowArea::Resize:
                 if (this->allow_resize_hosted_desktop_) {
                     draw_button_resize_hosted_desktop(
                         this->drawable_, this->enable_resizing_hosted_desktop_,
                         rect, button_style, rect);
-                    return true;
                 }
                 break;
 
@@ -1501,10 +1493,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             case WindowArea::N:
             case WindowArea::Icon:
             case WindowArea::NUMBER_OF_AREAS_OR_INVALID:
-                return false;
+                break;
         }
-
-        REDEMPTION_UNREACHABLE();
     };
 
     using EventAction = MouseAction::EventAction;
@@ -1584,18 +1574,14 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         case EventAction::Nothing:
         case EventAction::CapturedClick:
             if (this->previous_area != event.area) {
-                bool update = false;
                 auto style
                     = (event.area == this->mouse_action.pressed_mouse_button())
                     ? ButtonStyle::Active
                     : (event.action == EventAction::CapturedClick)
                     ? ButtonStyle::Normal
                     : ButtonStyle::Hover;
-                update |= draw_button(event.area, event.rect, style);
-                update |= draw_button(this->previous_area, this->previous_rect, ButtonStyle::Normal);
-                if (update) {
-                    this->drawable_.sync();
-                }
+                draw_button(event.area, event.rect, style);
+                draw_button(this->previous_area, this->previous_rect, ButtonStyle::Normal);
             }
             break;
 
@@ -1605,8 +1591,6 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             draw_button_resize_hosted_desktop(
                 this->drawable_, this->enable_resizing_hosted_desktop_,
                 event.rect, ButtonStyle::Hover, event.rect);
-
-            this->drawable_.sync();
 
             if (this->enable_resizing_hosted_desktop_) {
                 this->update_widget();
@@ -1622,8 +1606,6 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
             this->drawable_.draw(order);
             this->on_delete_window();
-
-            this->drawable_.sync();
 
             refresh_window_rect(this->mod_, this->window_rect);
 
@@ -1652,7 +1634,6 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             draw_button_close(
                 this->drawable_, this->font_, event.rect,
                 ButtonStyle::Normal, event.rect);
-            this->drawable_.sync();
 
             LOG(LOG_INFO, "ClientExecute::input_mouse: Close by user (Close Box)");
             throw Error(ERR_WIDGET);
@@ -1710,7 +1691,6 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             if (this->previous_area != event.area) {
                 draw_button(this->previous_area, this->previous_rect, ButtonStyle::Normal);
             }
-            this->drawable_.sync();
             break;
 
         case EventAction::UnactiveButton:
@@ -1718,7 +1698,6 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             if (this->previous_area != event.area) {
                 draw_button(this->previous_area, this->previous_rect, ButtonStyle::Normal);
             }
-            this->drawable_.sync();
             break;
 
         default:

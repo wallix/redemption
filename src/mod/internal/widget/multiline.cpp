@@ -61,8 +61,6 @@ void WidgetMultiLine::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         int dy = this->y();
         this->drawable.draw(
             RDPOpaqueRect(rect_intersect, this->bg_color),
@@ -82,8 +80,6 @@ void WidgetMultiLine::rdp_input_invalidate(Rect clip)
                 );
             dy += this->cy_text;
         }
-
-        this->drawable.end_update();
     }
 }
 

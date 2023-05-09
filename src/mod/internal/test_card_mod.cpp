@@ -69,8 +69,6 @@ void TestCardMod::rdp_input_scancode(
 
 void TestCardMod::draw_event()
 {
-    gd.begin_update();
-
     const Rect clip = this->get_screen_rect();
 
     auto const color_ctx = gdi::ColorCtx::depth24();
@@ -159,8 +157,6 @@ void TestCardMod::draw_event()
 
     if (!this->unit_test) {
         //gd.draw(RDPOpaqueRect(this->get_screen_rect(), RED), clip, depth);
-        gd.sync();
-
         Bitmap wab_logo_blue = bitmap_from_file(app_path(AppPath::LoginWabBlue), BLACK);
 
 
@@ -212,6 +208,4 @@ void TestCardMod::draw_event()
         gd.new_pointer(cache_idx, pointer);
         gd.cached_pointer(cache_idx);
     }
-
-    gd.end_update();
 }

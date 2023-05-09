@@ -279,8 +279,6 @@ void WidgetVerticalScrollText::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(rect);
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         auto opaque_rect = [this, &rect_intersect](Rect rect, RDPColor color){
             this->drawable.draw(
                 RDPOpaqueRect(rect, color),
@@ -380,7 +378,5 @@ void WidgetVerticalScrollText::rdp_input_invalidate(Rect clip)
                 dy += this->font.max_height();
             }
         }
-
-        this->drawable.end_update();
     }
 }

@@ -80,14 +80,10 @@ void WidgetLabel::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         this->draw(
             rect_intersect, this->get_rect(), this->drawable, this->buffer,
             this->fg_color, this->bg_color, gdi::ColorCtx::depth24(),
             this->font, this->x_text, this->y_text);
-
-        this->drawable.end_update();
     }
 }
 

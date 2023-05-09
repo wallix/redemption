@@ -287,7 +287,6 @@ std::chrono::seconds WidgetWabClose::refresh_timeleft(std::chrono::seconds remai
         );
 
         Rect old = this->timeleft_value.get_rect();
-        this->drawable.begin_update();
         this->timeleft_value.set_text(nullptr);
         this->rdp_input_invalidate(old);
         this->timeleft_value.set_text(buff);
@@ -296,7 +295,6 @@ std::chrono::seconds WidgetWabClose::refresh_timeleft(std::chrono::seconds remai
         this->timeleft_value.set_wh(dim);
 
         this->rdp_input_invalidate(this->timeleft_value.get_rect());
-        this->drawable.end_update();
 
         this->prev_time = tl;
     }

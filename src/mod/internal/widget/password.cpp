@@ -126,8 +126,6 @@ void WidgetPassword::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         this->masked_text.rdp_input_invalidate(rect_intersect);
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());
@@ -136,8 +134,6 @@ void WidgetPassword::rdp_input_invalidate(Rect clip)
         else {
             this->draw_border(rect_intersect, this->label.bg_color);
         }
-
-        this->drawable.end_update();
     }
 }
 
@@ -147,14 +143,12 @@ void WidgetPassword::update_draw_cursor(Rect old_cursor)
         WidgetEdit::update_draw_cursor(old_cursor);
     }
     else{
-        this->drawable.begin_update();
         this->masked_text.rdp_input_invalidate(old_cursor);
         auto cursort_rect = this->get_cursor_rect();
         auto rect = this->get_rect();
         if (rect.x + 1 < cursort_rect.x && cursort_rect.x < rect.eright()) {
             this->draw_cursor(cursort_rect);
         }
-        this->drawable.end_update();
     }
 }
 

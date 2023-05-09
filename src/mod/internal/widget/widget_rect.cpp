@@ -35,14 +35,10 @@ void WidgetRect::rdp_input_invalidate(Rect clip)
     Rect rect_intersect = clip.intersect(this->get_rect());
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
-
         this->drawable.draw(
             RDPOpaqueRect(rect_intersect, this->color),
             rect_intersect,
             gdi::ColorCtx::depth24()
         );
-
-        this->drawable.end_update();
     }
 }

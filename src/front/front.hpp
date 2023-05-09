@@ -661,8 +661,6 @@ private:
     CryptContext encrypt;
     CryptContext decrypt;
 
-    int order_level = 0;
-
     // TODO vcfg::variables
     Inifile & ini;
     CryptoContext & cctx;
@@ -1467,29 +1465,6 @@ private:
     }
 
 public:
-    void begin_update() override {
-        LOG_IF(bool(this->verbose & Verbose::graphic), LOG_INFO,
-            "Front::begin_update: level=%d", this->order_level);
-        this->order_level++;
-    }
-
-    void end_update() override {
-        LOG_IF(bool(this->verbose & Verbose::graphic), LOG_INFO,
-            "Front::end_update: level=%d", this->order_level);
-        if (this->order_level) {
-            this->order_level--;
-        }
-        else {
-            LOG(LOG_WARNING, "Front::end_update: Unbalanced calls to BeginUpdate/EndUpdate methods");
-        }
-        if (this->state != FRONT_UP_AND_RUNNING) {
-            LOG(LOG_WARNING, "Front::end_update: Front is not up and running.");
-        }
-        if (this->order_level == 0) {
-            this->sync();
-        }
-    }
-
     void disconnect()
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::disconnect");

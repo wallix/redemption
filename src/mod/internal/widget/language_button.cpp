@@ -172,12 +172,10 @@ void LanguageButton::rdp_input_invalidate(Rect clip)
 
     Rect rect_intersect = clip.intersect(Rect(ox, oy, kbd_icon_cx, kbd_icon_cy));
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
         for (auto r : kbd_icon_rects) {
             r.x += ox;
             r.y += oy;
             drawable.draw(RDPOpaqueRect(r, fg_color), rect_intersect, gdi::ColorCtx::depth24());
         }
-        this->drawable.end_update();
     }
 }
