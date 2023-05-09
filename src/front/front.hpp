@@ -1366,8 +1366,7 @@ public:
             LOG(LOG_WARNING, "Front::end_update: Unbalanced calls to BeginUpdate/EndUpdate methods");
         }
         if (this->state != FRONT_UP_AND_RUNNING) {
-            LOG(LOG_ERR, "Front::end_update: Front is not up and running.");
-            throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
+            LOG(LOG_WARNING, "Front::end_update: Front is not up and running.");
         }
         if (this->order_level == 0) {
             this->sync();
