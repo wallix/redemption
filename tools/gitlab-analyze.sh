@@ -5,6 +5,8 @@ cd $(realpath -m "$0/../..")
 
 set -ex
 
+free
+
 typeset -i fast=1
 typeset -i update=0
 for act in "$@" ; do
