@@ -47,6 +47,8 @@ build-project:
 build-analyze:
   stage: build
   needs: []
+  except:
+    - tags
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
