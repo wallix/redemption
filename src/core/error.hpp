@@ -94,7 +94,6 @@
                                                              \
     fv(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK, 8010)           \
     fv(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK, 8012)         \
-    fv(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU, 8016)             \
     fv(ERR_RDP_RESIZE_NOT_AVAILABLE, 8019)                   \
     f(ERR_RDP_SLOWPATH)                                      \
     f(ERR_RDP_FASTPATH)                                      \
