@@ -99,10 +99,10 @@ echo random seed = $BOOST_TEST_RANDOM
 
 build()
 {
-    bjam -q "$@" || {
+    /usr/bin/time --format='%Es - %MK' bjam -q "$@" || {
         local e=$?
         export REDEMPTION_LOG_PRINT=1
-        bjam -q "$@" -j1
+        /usr/bin/time --format='%Es - %MK' bjam -q "$@" -j1
         exit $e
     }
 }
