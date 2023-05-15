@@ -2184,6 +2184,11 @@ class Sesman():
                                 result=False,
                                 diag="Connection failed"
                             )
+                        self.engine.NotifySecondaryConnectionFailed(
+                            self.shared.get('login'),
+                            self.shared.get('ip_client'),
+                            self.shared.get('target_login'),
+                            self._physical_target_host)
                 finally:
                     self.engine.release_target(physical_target)
 
@@ -2419,21 +2424,13 @@ class Sesman():
         if reason == 'CLOSE_SESSION_SUCCESSFUL':
             pass
         elif reason == 'CONNECTION_FAILED':
-            self.engine.NotifySecondaryConnectionFailed(
-                self.shared.get('login'),
-                self.shared.get('ip_client'),
-                self.shared.get('target_login'),
-                self._physical_target_host)
+            pass
         # elif reason == 'CONNECTION_SUCCESSFUL':
         #     pass
         elif reason == 'CONNECT_DEVICE_SUCCESSFUL':
             pass
         elif reason == 'OPEN_SESSION_FAILED':
-            self.engine.NotifySecondaryConnectionFailed(
-                self.shared.get('login'),
-                self.shared.get('ip_client'),
-                self.shared.get('target_login'),
-                self._physical_target_host)
+            pass
         elif reason == 'OPEN_SESSION_SUCCESSFUL':
             pass
         elif reason == 'FILESYSTEM_FULL':
