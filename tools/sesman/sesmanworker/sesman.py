@@ -2242,6 +2242,11 @@ class Sesman():
                     elif not has_more_physical_target:
                         self.engine.set_session_status(
                             result=False, diag="All attempts have failed")
+                        self.engine.NotifySecondaryConnectionFailed(
+                            self.shared.get(u'login'),
+                            self.shared.get(u'ip_client'),
+                            self.shared.get(u'target_login'),
+                            self._physical_target_host)
                 finally:
                     self.engine.release_target(physical_target)
 
@@ -2455,21 +2460,13 @@ class Sesman():
         if reason == u'CLOSE_SESSION_SUCCESSFUL':
             pass
         elif reason == u'CONNECTION_FAILED':
-            self.engine.NotifySecondaryConnectionFailed(
-                self.shared.get(u'login'),
-                self.shared.get(u'ip_client'),
-                self.shared.get(u'target_login'),
-                self._physical_target_host)
+            pass
         elif reason == u'CONNECTION_SUCCESSFUL':
             pass
         elif reason == u'CONNECT_DEVICE_SUCCESSFUL':
             pass
         elif reason == u'OPEN_SESSION_FAILED':
-            self.engine.NotifySecondaryConnectionFailed(
-                self.shared.get(u'login'),
-                self.shared.get(u'ip_client'),
-                self.shared.get(u'target_login'),
-                self._physical_target_host)
+            pass
         elif reason == u'OPEN_SESSION_SUCCESSFUL':
             pass
         elif reason == u'FILESYSTEM_FULL':
