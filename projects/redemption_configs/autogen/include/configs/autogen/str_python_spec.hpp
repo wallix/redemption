@@ -13,6 +13,7 @@ glyph_cache = boolean(default=False)
 # Changing the port number will prevent WALLIX Access Manager from working properly.
 #_iptables
 #_advanced
+#_public
 port = integer(min=0, default=3389)
 
 #_advanced

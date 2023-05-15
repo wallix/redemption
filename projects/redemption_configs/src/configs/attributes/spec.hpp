@@ -187,6 +187,7 @@ namespace spec
             image_in_gui    = 1 << 7,
             external        = 1 << 8,
             restart_service = 1 << 9,
+            public_in_gui   = 1 << 10,
         };
 
         constexpr attr operator | (attr x, attr y) {
@@ -214,6 +215,7 @@ namespace spec
                 | attr::password_in_gui
                 | attr::image_in_gui
                 | attr::restart_service
+                | attr::public_in_gui
             ;
             static_assert(!(bool(v1 & attr::hidden_in_gui) && bool(v2 & in_gui)), "hidden_in_gui is incompatible with *_in_gui values");
             static_assert(!(bool(v2 & attr::hidden_in_gui) && bool(v1 & in_gui)), "hidden_in_gui is incompatible with *_in_gui values");
@@ -240,6 +242,7 @@ namespace spec
         inline constexpr internal::spec_attr_t<internal::attr::image_in_gui>    image_in_gui{};
         inline constexpr internal::spec_attr_t<internal::attr::external>        external{};
         inline constexpr internal::spec_attr_t<internal::attr::restart_service> restart_service{};
+        inline constexpr internal::spec_attr_t<internal::attr::public_in_gui>   public_in_gui{};
 
         inline constexpr auto loggable = log_policy::loggable;
         inline constexpr auto unloggable = log_policy::unloggable;
