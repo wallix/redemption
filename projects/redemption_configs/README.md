@@ -53,7 +53,7 @@ Edit `configs_specs/configs/specs/config_spec.hpp`
 - `iptables_in_gui`
 - `password_in_gui`
 - `external` value not managed by the proxy
-- `public_in_gui`
+- `logged_in_gui`
 
 
 

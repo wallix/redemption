@@ -15,7 +15,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # min = 0
 #_iptables
 #_advanced
-#_public
+#_logged
 #port = 3389
 
 # values: low, medium, high
