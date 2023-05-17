@@ -1336,7 +1336,8 @@ bool RdpNegociation::get_license(InStream & stream)
     if (sec.flags & SEC::SEC_LICENSE_PKT) {
         LIC::RecvFactory flic(sec.payload);
 
-        LOG(LOG_INFO, "RdpNegociation: get_license LIC::RecvFactory::bMsgType=%u", flic.tag);
+        LOG(LOG_INFO, "RdpNegociation: get_license LIC::RecvFactory::bMsgType=%s(%u)",
+            LIC::get_MsgType_name(flic.tag), flic.tag);
 
         switch (flic.tag) {
         case LIC::LICENSE_REQUEST:
@@ -1555,11 +1556,14 @@ bool RdpNegociation::get_license(InStream & stream)
                     "RdpNegociation: Server License Error Message");
 
                 LIC::ErrorAlert_Recv lic(sec.payload);
+                LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO,
+                    "RdpNegociation: Server License Error Message dwErrorCode=%s(%u) dwStateTransition=%s(%u)",
+                    LIC::ValidClientMessage::ErrorCodeToString(lic.validClientMessage.dwErrorCode), lic.validClientMessage.dwErrorCode,
+                    LIC::ValidClientMessage::StateTransitionToString(lic.validClientMessage.dwStateTransition), lic.validClientMessage.dwStateTransition);
+
                 if ((lic.validClientMessage.dwErrorCode != LIC::STATUS_VALID_CLIENT)
                  || (lic.validClientMessage.dwStateTransition != LIC::ST_NO_TRANSITION)){
-                    LOG(LOG_ERR, "RdpNegociation: License Alert: dwErrorCode=%s(%u) dwStateTransition=%s(%u)",
-                        LIC::ValidClientMessage::ErrorCodeToString(lic.validClientMessage.dwErrorCode), lic.validClientMessage.dwErrorCode,
-                        LIC::ValidClientMessage::StateTransitionToString(lic.validClientMessage.dwStateTransition), lic.validClientMessage.dwStateTransition);
+                    LOG(LOG_ERR, "RdpNegociation: An error occurred during the licensing protocol");
                 }
                 r = true;
             }

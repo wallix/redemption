@@ -103,6 +103,25 @@ namespace LIC
         ERROR_ALERT                 = 0xff
     };
 
+    inline static const char* get_MsgType_name(uint8_t bMsgType)
+    {
+        switch (bMsgType)
+        {
+            case LICENSE_REQUEST:               return "LICENSE_REQUEST";
+            case PLATFORM_CHALLENGE:            return "PLATFORM_CHALLENGE";
+            case NEW_LICENSE:                   return "NEW_LICENSE";
+            case UPGRADE_LICENSE:               return "UPGRADE_LICENSE";
+
+            case LICENSE_INFO:                  return "LICENSE_INFO";
+            case NEW_LICENSE_REQUEST:           return "NEW_LICENSE_REQUEST";
+            case PLATFORM_CHALLENGE_RESPONSE:   return "PLATFORM_CHALLENGE_RESPONSE";
+
+            case ERROR_ALERT:                   return "ERROR_ALERT";
+        }
+
+        return "<unknown>";
+    }
+
     enum {
         LICENSE_TAG_USER            = 0x000f,
         LICENSE_TAG_HOST            = 0x0010
@@ -3923,4 +3942,3 @@ namespace LIC
     // version 5.0 and later clients SHOULD advertise support for large (6.5 KB
     // or higher) licenses by setting the detail level to LICENSE_DETAIL_DETAIL
     // (0x0003). The following table lists valid values for this field.
-
