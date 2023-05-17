@@ -5756,6 +5756,9 @@ public:
             LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
 
         uint16_t pointer_idx = stream.in_uint16_le();
+        LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
+            LOG_INFO, "mod_rdp::process_cached_pointer_pdu pointer_idx=%u",
+            pointer_idx);
         drawable.cached_pointer(pointer_idx);
 
         LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
