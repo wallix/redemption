@@ -1569,6 +1569,11 @@ class Sesman():
         tosend["formflag"] = flag
         self.send_data(tosend)
 
+    @staticmethod
+    def _format_internalmod_vscrolltxt(message: str) -> str:
+        message = "\n".join(message.splitlines())
+        return message
+
     def start(self) -> None:
         _status, tries = None, 5
         while _status is None and tries > 0:
@@ -1594,7 +1599,7 @@ class Sesman():
                             message = f"{challenge.message}\n{message}"
                     data_to_send = {
                         'authentication_challenge': echo,
-                        'message': message,
+                        'message': self._format_internalmod_vscrolltxt(message),
                         'module': 'challenge'
                     }
                     self.send_data(data_to_send)

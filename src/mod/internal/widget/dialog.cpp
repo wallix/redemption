@@ -109,7 +109,14 @@ void WidgetDialogBase::move_size_widget(int16_t left, int16_t top, uint16_t widt
     y            += this->title.cy();
     total_height += this->title.cy();
 
-    this->dialog.set_wh(width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2, height / 2);
+    int total_width = (width > 620) ? 600 : width - 20;
+
+    this->dialog.set_wh(
+            this->challenge ?
+                total_width :
+                width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2,
+            height / 2
+        );
     {
         auto dim = this->dialog.get_optimal_dim();
         if (dim.h < this->dialog.cy()) {
@@ -117,17 +124,24 @@ void WidgetDialogBase::move_size_widget(int16_t left, int16_t top, uint16_t widt
         }
     }
 
-    uint16_t total_width = std::max(this->dialog.cx(), this->title.cx());
+    if (!this->challenge) {
+        total_width = std::max(this->dialog.cx(), this->title.cx());
+    }
 
     if (this->link) {
-        this->link->show.set_wh(width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2, height / 2);
+        this->link->show.set_wh(
+                this->challenge ?
+                    total_width :
+                    width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2,
+                height / 2
+            );
 
         auto dim = this->link->show.get_optimal_dim();
         if (dim.h < this->link->show.cy()) {
             this->link->show.set_wh(dim.w, dim.h);
         }
 
-        total_width = std::max(this->link->show.cx(), total_width);
+        total_width = std::max<int>(this->link->show.cx(), total_width);
     }
 
     this->separator.set_wh(total_width, 2);
@@ -181,12 +195,12 @@ void WidgetDialogBase::move_size_widget(int16_t left, int16_t top, uint16_t widt
     if (this->cancel) {
         dim = this->cancel->get_optimal_dim();
         this->cancel->set_wh(dim);
-        this->cancel->set_xy(this->dialog.x() + this->dialog.cx() - (this->cancel->cx() + 10), y);
+        this->cancel->set_xy(this->dialog.x() + total_width - (this->cancel->cx() + 10), y);
 
         this->ok.set_xy(this->cancel->x() - (this->ok.cx() + 10), y);
     }
     else {
-        this->ok.set_xy(this->dialog.x() + this->dialog.cx() - (this->ok.cx() + 10), y);
+        this->ok.set_xy(this->dialog.x() + total_width - (this->ok.cx() + 10), y);
     }
 
     total_height += this->ok.cy();
