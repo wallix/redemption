@@ -136,7 +136,14 @@ void WidgetDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, u
     y            += this->title.cy();
     total_height += this->title.cy();
 
-    this->dialog.set_wh(width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2, height / 2);
+    int total_width = (width > 620) ? 600 : width - 20;
+
+    this->dialog.set_wh(
+            this->challenge ?
+                total_width :
+                width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2,
+            height / 2
+        );
     {
         auto dim = this->dialog.get_optimal_dim();
         if (dim.h < this->dialog.cy()) {
@@ -144,7 +151,9 @@ void WidgetDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, u
         }
     }
 
-    const int total_width = std::max(this->dialog.cx(), this->title.cx());
+    if (!this->challenge) {
+        total_width = std::max(this->dialog.cx(), this->title.cx());
+    }
 
     this->separator.set_wh(total_width, 2);
     this->separator.set_xy(left + (width - total_width) / 2, y + 3);
@@ -174,12 +183,12 @@ void WidgetDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, u
     if (this->cancel) {
         dim = this->cancel->get_optimal_dim();
         this->cancel->set_wh(dim);
-        this->cancel->set_xy(this->dialog.x() + this->dialog.cx() - (this->cancel->cx() + 10), y);
+        this->cancel->set_xy(this->dialog.x() + total_width - (this->cancel->cx() + 10), y);
 
         this->ok.set_xy(this->cancel->x() - (this->ok.cx() + 10), y);
     }
     else {
-        this->ok.set_xy(this->dialog.x() + this->dialog.cx() - (this->ok.cx() + 10), y);
+        this->ok.set_xy(this->dialog.x() + total_width - (this->ok.cx() + 10), y);
     }
 
     total_height += this->ok.cy();
