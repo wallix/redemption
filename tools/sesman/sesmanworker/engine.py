@@ -1543,7 +1543,7 @@ class Engine:
                         trace_type="rdptrc"
                     )
                 trace.initialize()
-                trace.writeframe(f"{video_path}.mwrm")
+                trace.writeframe(f"{video_path}.mwrm".encode("utf8"))
                 self.trace_hash = trace.end()
                 self.session_record_type = "rdptrc"
         except Exception as e:
