@@ -541,12 +541,12 @@ void config_spec_definition(Writer && W)
                 "Fallback password to be used for armoring Kerberos tickets."
             }
         );
-        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"effective_krb_armoring_user"},
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"effective_krb_armoring_user"},
             desc{
                 "Effective username to be used for armoring Kerberos tickets."
             }
         );
-        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, NL, type_<std::string>(), names{"effective_krb_armoring_password"},
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, NL, type_<std::string>(), names{"effective_krb_armoring_password"},
             desc{
                 "Effective password to be used for armoring Kerberos tickets."
             }
@@ -1071,8 +1071,8 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L, type_<ModuleName>(), spec::type_<std::string>(), names{"module"}, set(ModuleName::login));
 
-        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"try_alternate_target"}, set(false));
-        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<bool>(), names{"has_more_target"}, set(false));
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<bool>(), names{"try_alternate_target"}, set(false));
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<bool>(), names{"has_more_target"}, set(false));
 
         W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"proxy_opt"});
 
@@ -1083,8 +1083,8 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"login_message"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"disconnect_reason"});
-        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<bool>(), names{"disconnect_reason_ack"}, set(false));
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"disconnect_reason"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<bool>(), names{"disconnect_reason_ack"}, set(false));
 
         W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), names{"ip_target"});
 
@@ -1105,7 +1105,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"auth_command_rail_exec_account"});
         W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, NL, type_<std::string>(), names{"auth_command_rail_exec_password"});
 
-        W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<std::string>(), names{"session_probe_launch_error_message"});
+        W.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L, type_<std::string>(), names{"session_probe_launch_error_message"});
 
         W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), names{"close_box_extra_message"});
 
