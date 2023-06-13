@@ -10,7 +10,6 @@ back_to_selector_default_sent = {
     'banner_message': '',
     'banner_type': 0,
     'device_id': '',
-    'disconnect_reason': '',
     'duration_max': 0,
     'effective_krb_armoring_password': '',
     'effective_krb_armoring_user': '',

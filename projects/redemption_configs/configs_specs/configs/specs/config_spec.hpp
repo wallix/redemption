@@ -1083,7 +1083,7 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"login_message"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"disconnect_reason"});
+        W.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L, type_<std::string>(), names{"disconnect_reason"});
         W.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L, type_<bool>(), names{"disconnect_reason_ack"}, set(false));
 
         W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), names{"ip_target"});
