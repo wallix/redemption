@@ -419,10 +419,10 @@ namespace sesman
     inline namespace constants
     {
         inline constexpr internal::reset_back_to_selector_t<internal::reset_back_to_selector(true)>
-        no_reset_back_to_selector{};
+        reset_back_to_selector{};
 
         inline constexpr internal::reset_back_to_selector_t<internal::reset_back_to_selector(false)>
-        reset_back_to_selector{};
+        no_reset_back_to_selector{};
     }
 }
 
