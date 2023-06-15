@@ -1859,6 +1859,8 @@ class mod_rdp : public mod_api, public rdp_api, public sespro_api
 
     MonotonicTimePoint::duration session_time_start;
 
+    const bool replace_null_pointer_by_default_pointer;
+
     const bool large_pointer_support;
 
     std::unique_ptr<uint8_t[]> multifragment_update_buffer;
@@ -2002,6 +2004,7 @@ public:
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , lang(mod_rdp_params.lang)
         , session_time_start(events.get_monotonic_time().time_since_epoch())
+        , replace_null_pointer_by_default_pointer(mod_rdp_params.replace_null_pointer_by_default_pointer)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
         , multifragment_update_data({multifragment_update_buffer.get(), 65536})
@@ -2704,7 +2707,10 @@ public:
 
             case FastPath::UpdateType::PTR_NULL:
                 LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer null (Fast)");
-                drawable.cached_pointer(PredefinedPointer::Null);
+                drawable.cached_pointer(this->replace_null_pointer_by_default_pointer
+                    ? PredefinedPointer::SystemNormal
+                    : PredefinedPointer::Null
+                );
                 break;
 
             case FastPath::UpdateType::PTR_DEFAULT:
@@ -4094,12 +4100,12 @@ public:
 
         case RDP_POINTER_SYSTEM:
         {
-            int system_pointer_type = stream.in_uint32_le();
+            uint32_t system_pointer_type = stream.in_uint32_le();
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
                 LOG_INFO, "Process pointer system::RDP_%s_POINTER",
                 (system_pointer_type == RDP_NULL_POINTER) ? "NULL" : "DEFAULT");
 
-            if (system_pointer_type == RDP_NULL_POINTER) {
+            if (!this->replace_null_pointer_by_default_pointer && system_pointer_type == RDP_NULL_POINTER) {
                 drawable.cached_pointer(PredefinedPointer::Null);
             }
             else {

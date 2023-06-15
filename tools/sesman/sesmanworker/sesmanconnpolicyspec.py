@@ -38,6 +38,7 @@ cp_spec = {
         ('mod_rdp:bogus_monitor_layout_treatment', 'bogus_monitor_layout_treatment', False),
         ('mod_rdp:remote_programs_disconnect_message_delay', 'remote_programs_disconnect_message_delay', 3000),
         ('mod_rdp:use_session_probe_to_launch_remote_program', 'use_session_probe_to_launch_remote_program', True),
+        ('mod_rdp:replace_null_pointer_by_default_pointer', 'replace_null_pointer_by_default_pointer', False),
     },
     'protocol': {
         ('protocol:save_session_info_pdu', 'save_session_info_pdu', 1),

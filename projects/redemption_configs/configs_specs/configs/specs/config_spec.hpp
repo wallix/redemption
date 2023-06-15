@@ -534,6 +534,10 @@ void config_spec_definition(Writer && W)
                  desc{"Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed."}, set(3000));
 
         W.member(no_ini_no_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"use_session_probe_to_launch_remote_program"}, desc{"Use Session Probe to launch Remote Program as much as possible."}, set(true));
+
+        W.member(no_ini_no_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"replace_null_pointer_by_default_pointer"},
+            desc{"The use of this feature is not recommended!\n"
+                 "Replace an empty mouse pointer with normal pointer."}, set(false));
     });
 
     W.section("protocol", [&]

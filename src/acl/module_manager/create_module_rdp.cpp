@@ -666,6 +666,7 @@ ModPack create_mod_rdp(
         rap.bypass_legal_notice_timeout = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout>();
     }
 
+    mod_rdp_params.replace_null_pointer_by_default_pointer = ini.get<cfg::mod_rdp::replace_null_pointer_by_default_pointer>();
     mod_rdp_params.large_pointer_support               = ini.get<cfg::globals::large_pointer_support>();
     mod_rdp_params.load_balance_info                   = ini.get<cfg::mod_rdp::load_balance_info>().c_str();
 

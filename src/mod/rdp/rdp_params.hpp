@@ -178,6 +178,8 @@ struct ModRDPParams
 
     bool clean_up_32_bpp_cursor = false;
 
+    bool replace_null_pointer_by_default_pointer = false;
+
     bool large_pointer_support = true;
 
     bool perform_automatic_reconnection = false;

@@ -172,6 +172,11 @@ remote_programs_disconnect_message_delay = integer(min=3000, max=120000, default
 # Use Session Probe to launch Remote Program as much as possible.
 use_session_probe_to_launch_remote_program = boolean(default=True)
 
+# The use of this feature is not recommended!
+# Replace an empty mouse pointer with normal pointer.
+#_advanced
+replace_null_pointer_by_default_pointer = boolean(default=False)
+
 [protocol]
 
 #   0: Windows

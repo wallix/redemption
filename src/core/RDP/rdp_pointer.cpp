@@ -296,7 +296,7 @@ namespace
 //     {
 //     case BitsPerPixel{1}:
 //     {
-//         LOG(LOG_INFO, "debug_show_raw_pointer(): 1 bit par pixel curosor");
+//         LOG(LOG_INFO, "debug_show_raw_pointer(): 1 bit par pixel cursor");
 //
 //         {
 //             const unsigned int src_line_bytes = ::even_pad_length(::nbbytes(width));
@@ -366,7 +366,7 @@ namespace
 //     case BitsPerPixel{24}:
 //     case BitsPerPixel{32}:
 //     {
-//         LOG(LOG_INFO, "debug_show_raw_pointer(): %u bits par pixel curosor", data_bpp);
+//         LOG(LOG_INFO, "debug_show_raw_pointer(): %u bits par pixel cursor", data_bpp);
 //
 //         uint8_t BPP = nb_bytes_per_pixel(data_bpp);
 //         const unsigned int src_xor_line_length_in_byte = width * BPP;
