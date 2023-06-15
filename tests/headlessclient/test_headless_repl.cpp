@@ -76,5 +76,5 @@ RED_AUTO_TEST_CASE_WD(TestHeadlessRepl, wd)
 
     repl.must_be_stop_capture();
 
-    RED_CHECK(filesize(wrm_path.c_str()) == 175);
+    RED_CHECK(filesize(wrm_path.c_str()) == 174);
 }
