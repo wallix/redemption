@@ -194,10 +194,6 @@ public:
 
     void update_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
     {
-        if (this->timer == monotonic_time && real_time == last_real_time) {
-            LOG(LOG_DEBUG, "same");
-        }
-        LOG(LOG_DEBUG, "t=%ld  rt=%ld", monotonic_time.time_since_epoch().count(), real_time.time_since_epoch().count());
         this->timestamp(monotonic_time);
         this->monotonic_real_time = monotonic_time;
         this->last_real_time = real_time;
