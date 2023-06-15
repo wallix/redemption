@@ -105,6 +105,9 @@ cp_spec = {
         u'mod_rdp:krb_armoring_fallback_password': (
             'krb_armoring_fallback_password', u''
         ),
+        u'mod_rdp:replace_null_pointer_by_default_pointer': (
+            'replace_null_pointer_by_default_pointer', False
+        ),
         u'context:rail_disconnect_message_delay': (
             'remote_programs_disconnect_message_delay', 3000
         ),

@@ -582,6 +582,10 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), names{.cpp="session_probe_periodic_task_run_interval", .connpolicy="periodic_task_run_interval"}, set(500));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_pause_if_session_is_disconnected", .connpolicy="pause_if_session_is_disconnected"}, set(false));
+
+        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"replace_null_pointer_by_default_pointer"},
+            desc{"The use of this feature is not recommended!\n"
+                 "Replace an empty mouse pointer with normal pointer."}, set(false));
     });
 
     W.section(names{.cpp="mod_vnc", .connpolicy="vnc"}, [&]

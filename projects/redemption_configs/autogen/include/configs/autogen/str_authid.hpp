@@ -112,6 +112,7 @@ namespace configs
         "mod_rdp:session_probe_process_command_line_retrieve_method"_zv,
         "mod_rdp:session_probe_periodic_task_run_interval"_zv,
         "mod_rdp:session_probe_pause_if_session_is_disconnected"_zv,
+        "mod_rdp:replace_null_pointer_by_default_pointer"_zv,
         "clipboard_up"_zv,
         "clipboard_down"_zv,
         "vnc_server_clipboard_encoding_type"_zv,

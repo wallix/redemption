@@ -20,24 +20,24 @@ namespace configs
         inline constexpr int section2 = 19; /* client */
         inline constexpr int section3 = 21; /* all_target_mod */
         inline constexpr int section4 = 22; /* mod_rdp */
-        inline constexpr int section5 = 102; /* mod_vnc */
-        // inline constexpr int section6 = 110; /* metrics */
-        inline constexpr int section7 = 110; /* file_verification */
-        inline constexpr int section8 = 118; /* file_storage */
-        // inline constexpr int section9 = 119; /* icap_server_down */
-        // inline constexpr int section10 = 119; /* icap_server_up */
-        inline constexpr int section11 = 119; /* mod_replay */
-        // inline constexpr int section12 = 120; /* ocr */
-        inline constexpr int section13 = 120; /* video */
-        inline constexpr int section14 = 124; /* capture */
-        inline constexpr int section15 = 128; /* crypto */
-        // inline constexpr int section16 = 130; /* websocket */
-        // inline constexpr int section17 = 130; /* debug */
-        // inline constexpr int section18 = 130; /* remote_program */
-        inline constexpr int section19 = 130; /* translation */
-        // inline constexpr int section20 = 132; /* internal_mod */
-        inline constexpr int section21 = 132; /* context */
-        // inline constexpr int section22 = 214; /* theme */
+        inline constexpr int section5 = 103; /* mod_vnc */
+        // inline constexpr int section6 = 111; /* metrics */
+        inline constexpr int section7 = 111; /* file_verification */
+        inline constexpr int section8 = 119; /* file_storage */
+        // inline constexpr int section9 = 120; /* icap_server_down */
+        // inline constexpr int section10 = 120; /* icap_server_up */
+        inline constexpr int section11 = 120; /* mod_replay */
+        // inline constexpr int section12 = 121; /* ocr */
+        inline constexpr int section13 = 121; /* video */
+        inline constexpr int section14 = 125; /* capture */
+        inline constexpr int section15 = 129; /* crypto */
+        // inline constexpr int section16 = 131; /* websocket */
+        // inline constexpr int section17 = 131; /* debug */
+        // inline constexpr int section18 = 131; /* remote_program */
+        inline constexpr int section19 = 131; /* translation */
+        // inline constexpr int section20 = 133; /* internal_mod */
+        inline constexpr int section21 = 133; /* context */
+        // inline constexpr int section22 = 215; /* theme */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -2678,6 +2678,23 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 79};
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { false };
+    };
+    /// The use of this feature is not recommended! <br/>
+    /// Replace an empty mouse pointer with normal pointer. <br/>
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: mod_rdp:replace_null_pointer_by_default_pointer <br/>
+    /// default: false <br/>
+    struct mod_rdp::replace_null_pointer_by_default_pointer {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 80};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -5565,6 +5582,7 @@ struct mod_rdp
 , cfg::mod_rdp::bogus_monitor_layout_treatment
 , cfg::mod_rdp::session_probe_process_command_line_retrieve_method
 , cfg::mod_rdp::session_probe_pause_if_session_is_disconnected
+, cfg::mod_rdp::replace_null_pointer_by_default_pointer
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
@@ -5945,6 +5963,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::session_probe_process_command_line_retrieve_method
 , cfg::mod_rdp::session_probe_periodic_task_run_interval
 , cfg::mod_rdp::session_probe_pause_if_session_is_disconnected
+, cfg::mod_rdp::replace_null_pointer_by_default_pointer
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::server_clipboard_encoding_type
@@ -6063,13 +6082,13 @@ using VariablesAclPack = Pack<
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111111111111111111111111111111111111111111110111111111111
 , 0b1111111111111111111111111111101111111111111111111111111111111111
-, 0b1111111111111111111111111111111111111110110111110111111111111100
-, 0b0000000000000000000000000000000000000000001111111111111111011111
+, 0b1111111111111111111111111111111111111101101111101111111111111001
+, 0b0000000000000000000000000000000000000000011111111111111110111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000001000000000000000000000000
+, 0b0000000000000000000000000000000000000010000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

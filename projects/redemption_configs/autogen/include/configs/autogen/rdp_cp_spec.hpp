@@ -164,6 +164,11 @@ krb_armoring_fallback_user = string(default='')
 #_advanced
 krb_armoring_fallback_password = string(default='')
 
+# The use of this feature is not recommended!
+# Replace an empty mouse pointer with normal pointer.
+#_advanced
+replace_null_pointer_by_default_pointer = boolean(default=False)
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (in milliseconds)
 #_advanced
