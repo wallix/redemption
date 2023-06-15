@@ -140,6 +140,9 @@ cfg::mod_rdp::remote_programs_disconnect_message_delay ⇐ mod_rdp:remote_progra
     Delay before showing disconnect message after the last RemoteApp window is closed.
 cfg::mod_rdp::use_session_probe_to_launch_remote_program ⇐ mod_rdp:use_session_probe_to_launch_remote_program   [bool]
     Use Session Probe to launch Remote Program as much as possible.
+cfg::mod_rdp::replace_null_pointer_by_default_pointer ⇐ mod_rdp:replace_null_pointer_by_default_pointer   [bool]
+    The use of this feature is not recommended!
+    Replace an empty mouse pointer with normal pointer.
 
 cfg::session_probe::enable_session_probe ⇐ session_probe:enable_session_probe   [bool]
 cfg::session_probe::use_smart_launcher ⇐ session_probe:use_smart_launcher   [bool]
