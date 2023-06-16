@@ -48,17 +48,9 @@ public:
 
     void cached_pointer(gdi::CachePointerIndex cache_idx) override;
 
-    void begin_update() override
+    void sync() override
     {
-        ++_update_counter;
-    }
-
-    void end_update() override
-    {
-        --_update_counter;
-        if (_update_counter == 0) {
-            update();
-        }
+        update();
     }
 
     using QWidget::resize;
@@ -67,7 +59,6 @@ private:
     RdpInput* _rdp_input = nullptr;
     QPoint _target{0, 0};
 
-    int _update_counter = 0;
     CursorCache _cursor_cache;
     QCursor _shaped_cursor;
 };

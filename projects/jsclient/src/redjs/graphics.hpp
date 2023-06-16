@@ -86,9 +86,6 @@ public:
     void new_pointer(gdi::CachePointerIndex cache_idx, const RdpPointerView & cursor) override;
     void cached_pointer(gdi::CachePointerIndex cache_idx) override;
 
-    void begin_update() override;
-    void end_update() override;
-
     bool resize_canvas(ScreenInfo screen);
 
     void update_pointer_position(uint16_t x, uint16_t y);

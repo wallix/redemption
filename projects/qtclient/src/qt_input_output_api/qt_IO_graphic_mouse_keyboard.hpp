@@ -56,18 +56,8 @@ class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
 
         Graphics(QtIOGraphicMouseKeyboard & self) noexcept : self(self) {}
 
-        void begin_update() override {
-
-            ++this->update_counter;
-        }
-
-        void end_update() override {
-            assert(this->update_counter);
-            --this->update_counter;
-            if (this->update_counter != 0){
-                return;
-            }
-
+        void update_view()
+        {
             if (this->self.config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
                 for (auto& p : this->self.remote_app_screen_map) {
                     if (p.second) {
@@ -117,7 +107,6 @@ class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
         }
 
     private:
-        int update_counter = 0;
         std::array<RdpPointer, gdi::CachePointerIndex::MAX_POINTER_COUNT> pointer_cache;
     };
 
@@ -131,6 +120,11 @@ public:
     , bar(nullptr)
     , graphics(*this)
     {
+    }
+
+    void update_view()
+    {
+        this->graphics.update_view();
     }
 
     gdi::GraphicApi & get_graphics() noexcept

@@ -1103,34 +1103,21 @@ public:
         return ResizeResult::instant_done;
     }
 
-    void begin_update() override {
-        if ((this->config.connected || this->config.is_replaying)) {
-
-            if (this->config.is_recording && !this->config.is_replaying) {
-                this->capture->drawable.begin_update();
-                this->capture->wrm_capture.begin_update();
-                this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y);
-            }
-        }
-    }
-
-
-    void end_update() override {
-        if ((this->config.connected || this->config.is_replaying)) {
-
-            if (this->config.is_recording && !this->config.is_replaying) {
-                this->capture->drawable.end_update();
-                this->capture->wrm_capture.end_update();
-                this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y);
-            }
-        }
-    }
-
-    bool must_be_stop_capture() override {
+    bool must_be_stop_capture() override
+    {
         return false;
     }
 
-    void must_flush_capture() override {}
+    void must_flush_capture() override
+    {
+        if (this->config.connected && this->config.is_recording && !this->config.is_replaying) {
+            this->capture->wrm_capture.periodic_snapshot(
+                MonotonicTimePoint::clock::now(),
+                this->_callback.mouse_data.x,
+                this->_callback.mouse_data.y
+            );
+        }
+    }
 
 private:
     using no_log = std::false_type;

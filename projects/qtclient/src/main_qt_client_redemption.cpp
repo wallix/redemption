@@ -119,6 +119,7 @@ public:
                     try {
                         auto fn = [is_timeout](int /*fd*/){ return !is_timeout; };
                         this->event_manager.execute_events(fn, 0);
+                        this->qt_graphic.update_view();
                     } catch (const Error & e) {
                         const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
                         LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
@@ -186,20 +187,6 @@ public:
             screen_server.width, screen_server.height, screen_server.bpp);
         }
         return this->qt_graphic.server_resize(screen_server);
-    }
-
-    void begin_update() override {
-        if ((this->config.connected || this->config.is_replaying)) {
-            this->qt_graphic.get_graphics().begin_update();
-        }
-        ClientRedemption::begin_update();
-    }
-
-    void end_update() override {
-        if ((this->config.connected || this->config.is_replaying)) {
-            this->qt_graphic.get_graphics().end_update();
-        }
-        ClientRedemption::end_update();
     }
 
     void print_wrm_graphic_stat(const std::string & movie_path) override {

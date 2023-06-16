@@ -52,8 +52,8 @@ time_t ClientConfig::get_movie_time_length(const char * mwrm_filename) {
     MwrmReader mwrm_reader(trans);
     MetaLine meta_line;
 
-    time_t start_time = 0;
-    time_t stop_time = 0;
+    std::chrono::seconds start_time {};
+    std::chrono::seconds stop_time {};
 
     trans.open(mwrm_filename);
     mwrm_reader.read_meta_headers();
@@ -69,7 +69,7 @@ time_t ClientConfig::get_movie_time_length(const char * mwrm_filename) {
         }
     }
 
-    return stop_time - start_time;
+    return (stop_time - start_time).count();
 }
 
 void ClientConfig::openWindowsData(ClientRedemptionConfig & config)  {

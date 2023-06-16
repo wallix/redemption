@@ -703,16 +703,6 @@ void Graphics::cached_pointer(gdi::CachePointerIndex cache_idx)
     emval_call(this->callbacks, jsnames::cached_pointer, cache_idx.cache_index());
 }
 
-void Graphics::begin_update()
-{
-    emval_call(this->callbacks, jsnames::frame_marker, true);
-}
-
-void Graphics::end_update()
-{
-    emval_call(this->callbacks, jsnames::frame_marker, false);
-}
-
 bool Graphics::resize_canvas(ScreenInfo screen)
 {
     this->width = screen.width;
