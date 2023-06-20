@@ -1,10 +1,10 @@
-#!env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Dominique Lafages, Jonathan Poelen
 # Copyright WALLIX 2018
 
 ###############################################################################################
-# script extracting a font from a truetype opensource definition and converting it to the FV2
+# script extracting a font from a truetype opensource definition and converting it to the RBF1
 # format used by ReDemPtion.
 #
 # HINTs:
@@ -28,9 +28,9 @@
 #     * value (4 bytes)
 #     * offsetx (2 bytes)
 #     * offsety (2 bytes)
-#     * abcA (left space)
-#     * abcB (glyph width)
-#     * abcC (right space)
+#     * abcA (left space, 2 bytes)
+#     * abcB (glyph width, 2 bytes)
+#     * abcC (right space, 2 bytes)
 #     * cx (2 bytes)
 #     * cy (2 bytes)
 #     * data (the bitmap representing the sketch of the glyph, one bit by pixel, 0 for
@@ -50,188 +50,260 @@
 #     * '+' for a vertical paddind line of bits
 ###############################################################################################
 
-import PIL.ImageFont as ImageFont
+from PIL.ImageFont import ImageFont, truetype as load_truetype
+from unicodedata import category
+from typing import Any, Iterable, NamedTuple
 
-# import codecs
 import os
-import struct
 import sys
+import struct
 
-if len(sys.argv) > 1 and (sys.argv[1] == '-h' or sys.argv[1] == '--help') or \
-   len(sys.argv) > 2 and (sys.argv[2] == '-h' or sys.argv[2] == '--help'):
-    print(sys.argv[0], '[font_name] [font_size=14]')
-    exit(0)
+BBox = tuple[int, int, int, int]
+Mask = Any
 
-def nbbytes(x):
-    return (x + 7) // 8
 
-def align4(x):
-    return (x+3) & ~3
+global_fontsize = 14
+font_descriptions: Iterable[tuple[int, str, Iterable[str]]] = (
+    (0, "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", ('\u20e3', '\u4e2d',)),
+    # (0, "/usr/share/fonts/truetype/lato/Lato-Light.ttf", ('0x20e3', '0x4e2d',)),
+    (0, "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", ('\u0104', '\u0302', '\U0003134a')),
+    # (0, "/usr/share/fonts/truetype/noto/NotoSansThai-Regular.ttf", ('\u20e3', '\u4e2d',)),
+)
+output = f"{os.path.splitext(os.path.basename(font_descriptions[0][1]))[0]}_{global_fontsize}.rbf"
 
-def count_bit_padding(cx):
-    padding = 8 - cx % 8
-    if padding == 8:
-        padding = 0
-    return padding
-
-# python2: sys.stdout = codecs.getwriter("utf-8")(sys.stdout)
-# sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer)
-
-fontsize = 14
-fontpath = "/usr/share/fonts/truetype/lato/Lato-Light.ttf"
-fontpath2 = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+CHARSET_START = 32
+CHARSET_END = 0x3134b
+# CHARSET_START = 0x20e3
+# CHARSET_END = CHARSET_START + 2
 
 if len(sys.argv) > 1:
-    try:
-        fontsize = int(sys.argv[1])
-    except ValueError:
-        fontpath = sys.argv[1]
-        if len(sys.argv) > 2:
-            try:
-                fontsize = int(sys.argv[2])
-            except ValueError:
-                pass
+    import argparse
+    parser = argparse.ArgumentParser(description='rfb2 font generator')
+    parser.add_argument('-o', '--output', metavar='FILENAME', default=output)
+    parser.add_argument('-r', '--range', nargs=2, type=int, default=(CHARSET_START, CHARSET_END))
+    parser.add_argument('fonts_and_sizes', nargs='*', help='[fontsize [font [size]]...]')
 
-CHARSET_SIZE = 0x4e00
-ichar_gen = range(32, CHARSET_SIZE)
-# ichar_gen = range(32, max(ord('p'),ord('l'),ord('o'),ord('?'))+1)
+    args = parser.parse_args()
 
-freetypefont_ = ImageFont.truetype(fontpath, fontsize)
-fallback_freetypefont = ImageFont.truetype(fontpath2, fontsize)
+    CHARSET_START = int(args.range[0])
+    CHARSET_END = int(args.range[1])
+    output = args.output
 
-unknown_glyph = freetypefont_.getmask("◀", mode="1")
-unknown_glyph_bbox = unknown_glyph.getbbox()
+    if args.fonts_and_sizes:
+        i = 0
+        try:
+            global_fontsize = int(args.fonts_and_sizes[0])
+            i += 1
+        except ValueError:
+            pass
 
-def is_unknown_glyph(mask):
-    if not unknown_glyph:
-        return False
-    bbox1 = mask.getbbox()
-    if bbox1 != unknown_glyph_bbox:
-        return False
-    for iy in range(bbox1[1], bbox1[3]):
-        for ix in range(bbox1[0], bbox1[2]):
-            if mask.getpixel((ix, iy)) != unknown_glyph.getpixel((ix, iy)):
-                return False
-    return True
+        new_font_descriptions = []
+        end = len(args.fonts_and_sizes)
+        while i < end:
+            fontpath = args.fonts_and_sizes[i]
+            i += 1
+            fontsize = 0
+            if i < end:
+                try:
+                    fontsize = int(args.fonts_and_sizes[i])
+                    i += 1
+                except ValueError:
+                    pass
+            new_font_descriptions.append((fontsize, fontpath))
 
-if not is_unknown_glyph(freetypefont_.getmask("▶", mode="1")):
-    unknown_glyph = None
-
-def get_freetypefont_mask(char):
-    mask = freetypefont_.getmask(char, mode="1")
-    if is_unknown_glyph(mask):
-        return (fallback_freetypefont, fallback_freetypefont.getmask(char, mode="1"))
-    return (freetypefont_, mask)
+        if new_font_descriptions:
+            font_descriptions = new_font_descriptions
 
 
-f = open(f"{os.path.splitext(os.path.basename(fontpath))[0]}_{fontsize}.rbf", u'wb')
+def nbbytes(x: int) -> int:
+    return (x + 7) // 8
 
-# Magic number
-f.write(u"RBF1".encode('utf-8'))
+def align4(x: int) -> int:
+    return (x+3) & ~3
 
-# Name of font
-name = freetypefont_.getname()[0].encode('utf-8')
-f.write(name)
-f.write(b'\0'*(max(0,32-len(name))))
+def count_bit_padding(cx: int) -> int:
+    return (8 - cx % 8) % 8
 
-max_height = 0
-total_data_len = 0
-freetypefont_masks = []
-for i in ichar_gen:
-    char = chr(i)
-    freetypefont, mask = get_freetypefont_mask(char)
-    freetypefont_masks.append((freetypefont, mask))
-    bbox = mask.getbbox()
-    if bbox is None:
-        abc = freetypefont.font.getabc(char)
-        total_data_len += align4(nbbytes(int(abc[0]) + int(abc[1]) + int(abc[2])))
-    else:
-        x1 = bbox[0]
-        y1 = bbox[1]
-        x2 = bbox[2]
-        y2 = bbox[3]
+
+class FontInfo(NamedTuple):
+    font: ImageFont
+    unknown_chars: Iterable[tuple[Mask, BBox]]
+    ascent: int
+
+
+class GlyphInfo(NamedTuple):
+    font_info: FontInfo
+    mask: Mask
+    bbox: BBox
+
+
+font_infos: list[FontInfo] = [
+    FontInfo(font := load_truetype(fontpath, fontsize or global_fontsize),
+             (*((mask := font.getmask(uni, mode='1'), mask.getbbox())
+                for uni in unknown_unicode_for_glyphs),),
+             font.getmetrics()[0],
+             )
+    for fontsize, fontpath, unknown_unicode_for_glyphs in font_descriptions
+]
+
+unknown_chars_by_font = (*(
+    (*(GlyphInfo(font_info, mask, bbox)
+       for mask, bbox in font_info.unknown_chars),)
+    for font_info in font_infos
+),)
+replacement_char = GlyphInfo(font_infos[0], mask := font_infos[0].font.getmask('\uFFFD', mode='1'), mask.getbbox())
+
+def find_unknown_char(mask: Mask, bbox: BBox, font_info: FontInfo) -> None | GlyphInfo:
+    for i, (unknown_char, bbox2) in enumerate(font_info.unknown_chars):
+        if bbox == bbox2 and all(mask.getpixel((ix, iy)) == unknown_char.getpixel((ix, iy))
+                                 for iy in range(bbox[1], bbox[3])
+                                 for ix in range(bbox[0], bbox[2])):
+            return unknown_chars_by_font[0][i]
+    return None
+
+def get_font_mask(char: str) -> GlyphInfo:
+    unknown_char = None
+    for font_info in font_infos:
+        mask = font_info.font.getmask(char, mode='1')
+        bbox = mask.getbbox()
+        # is None for spaces
+        if not bbox:
+            bbox = font_info.font.getbbox(char)
+            bbox = (bbox[0], 0, bbox[2], bbox[3] - bbox[1])
+        elif unknown_char := find_unknown_char(mask, bbox, font_info):
+            continue
+        return GlyphInfo(font_info, mask, bbox)
+    return unknown_char
+
+def valid_chr(char: str) -> bool:
+    cat = category(char)
+    general_cat = cat[0]
+    return general_cat != 'C' and (general_cat != 'Z' or cat == 'Zs')
+
+
+ichar_gen = range(CHARSET_START, CHARSET_END)
+
+print(f'Output file: {output}')
+
+with open(output, 'wb') as f:
+    # Magic number
+    f.write("RBF1".encode())
+
+    # Name of font
+    name = font_infos[0].font.getname()[0].encode()
+    if len(name) > 32:
+        name = name[0:32]
+    f.write(name)
+    f.write(b'\0' * (max(0, 32 - len(name))))
+
+    max_ascent = max(font_info.ascent for font_info in font_infos)
+    max_height = max_ascent + max(font_info.font.getmetrics()[1] for font_info in font_infos)
+
+    total_data_len = 0
+    glyph_infos: list[GlyphInfo] = []
+    for i in ichar_gen:
+        char = chr(i)
+        is_printable = valid_chr(char)
+        # if not is_unknown_char:
+        #     glyph_infos.append(replacement_char)
+        #     continue
+
+        font_info, mask, bbox = get_font_mask(char) if is_printable else replacement_char
+
+        x1, y1, x2, y2 = bbox
         cx = x2 - x1
         cy = y2 - y1
-        # offsetx, offsety = freetypefont.getoffset(char)
-        # max_height = max(max_height, offsety + cy)
-        max_height = max(max_height, freetypefont.getsize(char)[1])
         total_data_len += align4(nbbytes(cx) * cy)
 
-f.write(struct.pack('<H', fontsize))
-f.write(struct.pack('<h', 1))
-f.write(struct.pack('<H', max_height))
-f.write(struct.pack('<I', len(ichar_gen)))
-f.write(struct.pack('<I', total_data_len))
+        glyph_infos.append((font_info, mask, bbox))
 
-ituple = 0
-for i in ichar_gen:
-    char = chr(i)
-    freetypefont, mask = freetypefont_masks[ituple]
-    ituple += 1
-    abc = freetypefont.font.getabc(char)
-    abc = (int(abc[0]), int(abc[1]), int(abc[2]))
-    w, h = freetypefont.getsize(char)
-    #x w, h = mask.size # freetypefont.getsize(char)
-    offsetx, offsety = freetypefont.getoffset(char)
-    bbox = mask.getbbox()
-    if bbox is None:
-        class mask:
-            def getpixel(self):
-                return 0
-        bbox = (0, 0, abc[0]+abc[1]+abc[2], 1)
-        abc = (0, bbox[2], 0)
-    x1 = bbox[0]
-    y1 = bbox[1]
-    x2 = bbox[2]
-    y2 = bbox[3]
-    cx = x2 - x1
-    cy = y2 - y1
+    f.write(struct.pack('<H', global_fontsize))
+    f.write(struct.pack('<h', 1))
+    f.write(struct.pack('<H', max_height))
+    f.write(struct.pack('<I', len(ichar_gen)))
+    f.write(struct.pack('<I', total_data_len))
 
-    print(f"{i:#x} CHR: {char}  SIZE: {w},{h}  CX/Y: {cx},{cy}  OFFSET: {offsetx},{offsety}  ABC: {abc}  BBOX: {bbox}")
+    for i, glyph in zip(ichar_gen, glyph_infos):
+        char = chr(i)
+        font_info, mask, bbox = glyph
+        font = font_info.font
+        bbox_char = font.getbbox(char)
 
-    f.write(struct.pack('<I', i))
-    f.write(struct.pack('<h', offsetx))
-    f.write(struct.pack('<h', offsety))
-    f.write(struct.pack('<h', abc[0]))
-    f.write(struct.pack('<h', abc[1]))
-    f.write(struct.pack('<h', abc[2]))
-    f.write(struct.pack('<H', cx))
-    f.write(struct.pack('<H', cy))
-    # f.write(struct.pack('<H', x1))
-    # f.write(struct.pack('<H', y1))
+        x1, y1, x2, y2 = bbox_char
+        offsetx = x1
+        offsety = y1 + max_ascent - font_info.ascent
 
-    padding = count_bit_padding(cx)
-    empty_line = '+'*(w+padding) + '\n'
-    padding_line = 'o'*(padding)
-    left_empty_line = '+'*x1
-    right_empty_line = '+'*(w-x1-cx)
-    line = empty_line*y1 + '\n'
-    for iy in range(y1, y1+cy):
-        line += left_empty_line
-        byte = 0
-        counter = 0
+        # for display only
+        w = x2 - x1
+        h = y2 - y1
 
-        for ix in range(x1, x1+cx):
-            pix = mask.getpixel((ix, iy))
-            byte <<= 1
-            if pix == 255:
-                line += '#'
-                byte |= 1
-            else:
-                line += '.'
+        x1, y1, x2, y2 = bbox
+        offsetx += x1
+        offsety += y1
+        cx = x2 - x1
+        cy = y2 - y1
+        # incby = max(0, offsetx) + cx
+        incby = x2
 
-            counter += 1
-            if counter == 8:
-                f.write(struct.pack('<B', byte))
-                counter = 0
-                byte = 0
+        is_printable = valid_chr(char)
+        if not is_printable:
+            char = 'NonPrintable'
 
-        if counter != 0:
-            line += padding_line
-            f.write(struct.pack('<B', byte << padding))
+        print(f"{i:#x}  CHR: {char}  SIZE: {w},{h}  CX/CY: {cx},{cy}  INCBY: {incby}  OFFSET: {offsetx},{offsety}  IMGBBOX: {bbox_char}  BBOX: {bbox}")
 
-        line += right_empty_line+'\n'
+        f.write(struct.pack('<I', i))
+        f.write(struct.pack('<h', offsetx))
+        f.write(struct.pack('<h', offsety))
+        f.write(struct.pack('<h', 0))
+        f.write(struct.pack('<h', 0))
+        f.write(struct.pack('<h', incby))
+        f.write(struct.pack('<H', cx))
+        f.write(struct.pack('<H', cy))
 
-    f.write(b'\0'*(align4(nbbytes(cx)*cy)-nbbytes(cx)*cy))
+        # TODO new format (save 1/3: 6.8 -> 4.3)
+        # f.write(struct.pack('<b', offsetx))
+        # f.write(struct.pack('<b', offsety))
+        # f.write(struct.pack('<B', incby))
+        # f.write(struct.pack('<B', cx))
+        # f.write(struct.pack('<B', cy))
 
-    print(line+empty_line*(h-y2)+'\n')
+        # if not is_printable:
+        #     continue
+
+        padding = count_bit_padding(cx)
+        empty_line = '+' * (w + padding) + '\n'
+        padding_line = 'o' * padding
+        left_empty_line = '+' * x1
+        right_empty_line = '+' * (w - x1 - cx)
+        line = empty_line * y1
+        for iy in range(y1, y1 + cy):
+            line += left_empty_line
+            byte = 0
+            counter = 0
+
+            for ix in range(x1, x1+cx):
+                pix = mask.getpixel((ix, iy))
+                byte <<= 1
+                if pix == 255:
+                    line += '#'
+                    byte |= 1
+                else:
+                    line += '.'
+
+                counter += 1
+                if counter == 8:
+                    f.write(struct.pack('<B', byte))
+                    counter = 0
+                    byte = 0
+
+            if counter != 0:
+                line += padding_line
+                f.write(struct.pack('<B', byte << padding))
+
+            line += right_empty_line + '\n'
+
+        f.write(b'\0' * (align4(nbbytes(cx) * cy) - nbbytes(cx) * cy))
+
+        print(line + empty_line * (h - y2) + '\n')
+
+print(f'Output file: {output}')
