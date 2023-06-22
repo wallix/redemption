@@ -33,6 +33,11 @@ RED_AUTO_TEST_CASE_WD(TestHeadlessRepl, wd)
         paths.emplace_back(str_concat(t, "  "_av, path));
     };
 
+    repl.event_manager.get_writable_time_base() = {
+        MonotonicTimePoint{std::chrono::seconds(4512)},
+        RealTimePoint{std::chrono::seconds(1687432726)},
+    };
+
     RED_CHECK(repl.start_connection == false);
 
     auto wrm_path = wd.add_file("output.wrm");

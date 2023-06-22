@@ -275,7 +275,6 @@ bool HeadlessRepl::can_be_start_capture(SessionLogApi& session_log)
 
     if (enable_wrm && drawable) {
         auto& time_base = event_manager.get_writable_time_base();
-        time_base = TimeBase::now();
 
         auto ctx = HeadlessPath::Context{
             .counter = ++counters.wrm,
