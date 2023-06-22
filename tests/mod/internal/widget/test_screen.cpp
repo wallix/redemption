@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     TestGraphic drawable(800, 600);
     Theme colors;
 
-    WidgetScreen wscreen(drawable, drawable.width(), drawable.height(), global_font_lato_light_16(), Theme{});
+    WidgetScreen wscreen(drawable, drawable.width(), drawable.height(), global_font_deja_vu_14(), Theme{});
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     NotifyTrace notifier1;
@@ -50,28 +50,28 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
 
     WidgetButton wbutton1(
         drawable, "button 1", notifier1,
-        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
+        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_deja_vu_14());
     Dimension dim = wbutton1.get_optimal_dim();
     wbutton1.set_wh(dim);
     wbutton1.set_xy(0, 0);
 
     WidgetButton wbutton2(
         drawable, "button 2", notifier2,
-        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
+        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_deja_vu_14());
     dim = wbutton2.get_optimal_dim();
     wbutton2.set_wh(dim);
     wbutton2.set_xy(0, 30);
 
     WidgetButton wbutton3(
         drawable, "button 3", notifier3,
-        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
+        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_deja_vu_14());
     dim = wbutton3.get_optimal_dim();
     wbutton3.set_wh(dim);
     wbutton3.set_xy(100, 0);
 
     WidgetButton wbutton4(
         drawable, "button 4", notifier4,
-        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
+        WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_deja_vu_14());
     dim = wbutton4.get_optimal_dim();
     wbutton4.set_wh(dim);
     wbutton4.set_xy(100, 30);

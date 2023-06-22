@@ -130,10 +130,10 @@ RED_AUTO_TEST_CASE(TestPaste)
     CopyPasteFront front(screen_info, copy_paste);
     TestGraphic gd(screen_info.width, screen_info.height);
 
-    WidgetScreen parent(gd, screen_info.width, screen_info.height, global_font_lato_light_16(), Theme{});
+    WidgetScreen parent(gd, screen_info.width, screen_info.height, global_font_deja_vu_14(), Theme{});
 
     WidgetEdit edit(gd, copy_paste, "", {WidgetEventNotifier()},
-                    PINK, ORANGE, RED, global_font_lato_light_16());
+                    PINK, ORANGE, RED, global_font_deja_vu_14());
     Dimension dim = edit.get_optimal_dim();
     edit.set_wh(120, dim.h);
     edit.set_xy(0, 0);

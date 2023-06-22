@@ -65,8 +65,8 @@ namespace
 
     int get_space_size(Font const & font)
     {
-        FontCharView c = font.glyph_or_unknown(' ');
-        int w = c.width + c.incby;
+        auto const& fc = font.item(' ').view;
+        int w = fc.offsetx + fc.incby;
         if (w <= 0) {
             w = 8;
         }

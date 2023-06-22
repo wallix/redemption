@@ -27,15 +27,19 @@
 
 namespace
 {
+    inline int compute_incby(Font const& font, uint32_t c)
+    {
+        FontCharView const& font_item = font.item(c).view;
+        return font_item.offsetx + font_item.incby;
+    }
+
     template<class Getc>
     void textmetrics_impl(
         const Font & font, const char * unicode_text, int & width, int & height, Getc getc)
     {
         UTF8toUnicodeIterator unicode_iter(unicode_text);
-        FontCharView const* font_item = nullptr;
         for (; uint32_t c = getc(unicode_iter); ++unicode_iter) {
-            font_item = &font.glyph_or_unknown(c);
-            width += font_item->offsetx + font_item->incby;
+            width += compute_incby(font, c);
         }
         height = font.max_height();
     }
@@ -56,8 +60,8 @@ namespace
                         return;
                     default:
                         UTF8toUnicodeIterator iter(p);
-                        FontCharView const* font_item = &font.glyph_or_unknown(*iter);
-                        w += font_item->offsetx + font_item->incby;
+                        FontCharView const& font_item = font.item(*iter).view;
+                        w += font_item.offsetx + font_item.incby;
                         p = iter.pos();
                 }
             }
@@ -129,8 +133,7 @@ namespace
 
                             default:
                                 UTF8toUnicodeIterator iter(unicode_text);
-                                FontCharView const* font_item = &font.glyph_or_unknown(*iter);
-                                int cw = font_item->offsetx + font_item->incby;
+                                int cw = compute_incby(font, *iter);
                                 if (max_width < w + cw) {
                                     if (w) {
                                         new_line(start, unicode_text, w);
@@ -207,8 +210,8 @@ TextMetrics::TextMetrics(const Font & font, const char * unicode_text)
 MultiLineTextMetrics::MultiLineTextMetrics(
     const Font& font, const char* unicode_text, unsigned max_width)
 {
-    FontCharView const* font_item = &font.glyph_or_unknown(' ');
-    const int space_w = font_item->offsetx + font_item->incby;
+    FontCharView const& font_item = font.item(' ').view;
+    const int space_w = font_item.offsetx + font_item.incby;
 
     uint8_t const* p = byte_ptr(unicode_text).as_u8p();
 
@@ -274,13 +277,12 @@ void server_draw_text(
         do {
             const uint32_t charnum = *unicode_iter;
 
-            FontCharView const* font_item = font.glyph_at(charnum);
-            if (!font_item) {
+            Font::FontCharElement font_item = font.item(charnum);
+            if (!font_item.is_valid) {
                 LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
-                font_item = &font.unknown_glyph();
             }
 
-            auto nextx = x + font_item->offsetx + font_item->incby;
+            auto nextx = x + font_item.view.offsetx + font_item.view.incby;
             if (nextx > clip.x) {
                 break;
             }
@@ -303,20 +305,19 @@ void server_draw_text(
             ++unicode_iter;
 
             int cacheIndex = 0;
-            FontCharView const* font_item = font.glyph_at(charnum);
-            if (!font_item) {
+            Font::FontCharElement font_item = font.item(charnum);
+            if (!font_item.is_valid) {
                 LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
-                font_item = &font.unknown_glyph();
             }
 
             const GlyphCache::t_glyph_cache_result cache_result =
-                mod_glyph_cache.add_glyph(*font_item, cacheId, cacheIndex);
+                mod_glyph_cache.add_glyph(font_item.view, cacheId, cacheIndex);
             (void)cache_result; // supress warning
 
             *data_begin++ = cacheIndex;
-            *data_begin++ += font_item->offsetx;
-            data_begin[1] = font_item->incby;
-            total_width += font_item->offsetx + font_item->incby;
+            *data_begin++ += font_item.view.offsetx;
+            data_begin[1] = font_item.view.incby;
+            total_width += font_item.view.offsetx + font_item.view.incby;
         }
 
         Rect bk(x, y, total_width + 2, font.max_height());

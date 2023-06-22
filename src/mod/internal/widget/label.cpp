@@ -103,8 +103,8 @@ void WidgetLabel::draw(
 
 Dimension WidgetLabel::get_optimal_dim() const
 {
-    gdi::TextMetrics tm(this->font, (this->buffer[0] ? this->buffer : "Édp"));
-    return Dimension(tm.width + this->x_text * 2, tm.height + this->y_text * 2);
+    int width = this->buffer[0] ? gdi::TextMetrics(this->font, this->buffer).width : 0;
+    return Dimension(width + this->x_text * 2, this->font.max_height() + this->y_text * 2);
 }
 
 Dimension WidgetLabel::get_optimal_dim(Font const & font, char const* text, int xtext, int ytext)
@@ -121,8 +121,8 @@ Dimension WidgetLabel::get_optimal_dim(Font const & font, char const* text, int 
         buffer[max] = 0;
     }
 
-    gdi::TextMetrics tm(font, (buffer[0] ? buffer : "Édp"));
-    return Dimension(tm.width + xtext * 2, tm.height + ytext * 2);
+    int width = buffer[0] ? gdi::TextMetrics(font, buffer).width : 0;
+    return Dimension(width + xtext * 2, font.max_height() + ytext * 2);
 }
 
 bool WidgetLabel::shift_text(int pos_x)

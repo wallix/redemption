@@ -36,15 +36,7 @@ Font const& global_font()
 Font const& global_font_deja_vu_14()
 {
     if (!deja_vu_14.is_loaded()) {
-        deja_vu_14 = Font(FIXTURES_PATH "/dejavu_14.rbf");
+        deja_vu_14 = Font(FIXTURES_PATH "/dejavu_14.rbf2");
     }
     return deja_vu_14;
-}
-
-Font const& global_font_lato_light_16()
-{
-    if (!lato_light_16.is_loaded()) {
-        lato_light_16 = Font{FIXTURES_PATH "/Lato-Light_16.rbf"};
-    }
-    return lato_light_16;
 }

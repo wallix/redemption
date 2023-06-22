@@ -55,7 +55,7 @@ struct TestWidgetInteractivePasswordCtx
         }(),
         caption, text_device, device_str,
         "Login", "user1", "Password",
-        global_font_lato_light_16(), nullptr)
+        global_font_deja_vu_14(), nullptr)
     {
         interactive.rdp_input_invalidate(interactive.get_rect());
     }

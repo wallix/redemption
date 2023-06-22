@@ -24,8 +24,6 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
 #include <memory>
 #include <utility>
 
@@ -33,6 +31,9 @@
 #include <cstring>
 
 #include "utils/bitfu.hpp"
+
+
+// TODO u16 -> u8
 
 
 struct FontCharView
@@ -44,7 +45,7 @@ struct FontCharView
     uint16_t height = 0;
     uint8_t const* data = nullptr;
 
-    FontCharView(
+    constexpr FontCharView(
         int16_t offsetx, int16_t offsety, int16_t incby,
         uint16_t width, uint16_t height, uint8_t const* data) noexcept
     : offsetx{offsetx}
@@ -57,7 +58,8 @@ struct FontCharView
 
     FontCharView() = default;
 
-    explicit operator bool () const noexcept {
+    explicit operator bool () const noexcept
+    {
         return bool(this->data);
     }
 
@@ -158,13 +160,15 @@ struct FontChar
 
     void * operator new (size_t) = delete;
 
-    [[nodiscard]] FontChar clone() const {
+    [[nodiscard]] FontChar clone() const
+    {
         auto ptr = std::make_unique<uint8_t[]>(this->datasize());
         memcpy(ptr.get(), this->data.get(), this->datasize());
         return FontChar(std::move(ptr), this->offsetx, this->offsety, this->width, this->height, this->incby);
     }
 
-    explicit operator bool () const noexcept {
+    explicit operator bool () const noexcept
+    {
         return bool(this->data);
     }
 
@@ -230,70 +234,50 @@ struct Font
     Font() = default;
 
     /// \param file_path  path to the font definition file (*.rbf)
-    explicit Font(const char * file_path)
+    explicit Font(char const * file_path);
+
+    bool is_loaded() const
     {
-        this->load_from_file(file_path);
-        this->font_items.shrink_to_fit();
-        if (auto item = this->glyph_at('?')) {
-            this->unknown_item = *item;
-        }
+        return this->nb_contiguous_item && this->nb_random_item;
     }
 
-    explicit Font(std::string const & file_path)
-    : Font(file_path.c_str())
-    {}
-
-    [[nodiscard]] bool is_loaded() const
+    uint16_t max_height() const noexcept
     {
-        return !this->font_items.empty();
-    }
-
-    [[nodiscard]] uint16_t size() const noexcept {
-        return this->size_;
-    }
-
-    [[nodiscard]] uint16_t max_height() const noexcept {
         return this->max_height_;
     }
 
-    [[nodiscard]] char const * name() const noexcept {
-        return this->name_;
-    }
-
-    [[nodiscard]] bool glyph_defined(uint32_t charnum) const
-    {
-        return (size_t(charnum - 32u) < this->font_items.size())
-            && bool(this->font_items[charnum - 32u]);
-    }
-
-    [[nodiscard]] FontCharView const & glyph_or_unknown(uint32_t charnum) const
-    {
-        return this->glyph_defined(charnum)
-             ? this->font_items[charnum - 32u]
-             : this->unknown_glyph();
-    }
-
-    [[nodiscard]] FontCharView const * glyph_at(uint32_t charnum) const
-    {
-        return this->glyph_defined(charnum)
-             ? &this->font_items[charnum - 32u]
-             : nullptr;
-    }
-
-    [[nodiscard]] FontCharView const & unknown_glyph() const noexcept
+    FontCharView const & unknown_glyph() const noexcept
     {
         return this->unknown_item;
     }
 
+    struct [[nodiscard]] FontCharElement
+    {
+        FontCharView const& view;
+        bool is_valid;
+    };
+
+    FontCharElement item(uint32_t unicode) const
+    {
+        if (unicode >= 32u) {
+            if (unicode - 32u < nb_contiguous_item) {
+                return {this->font_items[unicode - 32u], true};
+            }
+            return this->get_higher_item(unicode);
+        }
+        return {this->unknown_item, false};
+    }
+
 private:
-    static FontCharView default_unknown_glyph() noexcept;
+    FontCharElement get_higher_item(uint32_t unicode) const;
 
     void load_from_file(const char * file_path);
 
-    std::unique_ptr<uint8_t[]> data_glyphs;
-    std::vector<FontCharView> font_items;
-    FontCharView unknown_item = default_unknown_glyph();
-    uint16_t size_ = 0;
+    std::unique_ptr<FontCharView[]> font_items;
+    std::size_t nb_contiguous_item = 0;
+    std::size_t nb_random_item = 0;
     uint16_t max_height_ = 0;
-    char name_[32] {};
+    std::unique_ptr<uint32_t[]> unicode_values;
+    std::unique_ptr<uint8_t[]> data_glyphs;
+    FontCharView unknown_item;
 };

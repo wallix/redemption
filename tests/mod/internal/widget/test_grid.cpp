@@ -65,12 +65,12 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                 w = std::make_unique<WidgetButton>(
                     drawable, text, WidgetEventNotifier(),
                     WHITE, MEDIUM_BLUE, LIGHT_BLUE, 2,
-                    global_font_lato_light_16(), 2, 2);
+                    global_font_deja_vu_14(), 2, 2);
             }
             else {
                 w = std::make_unique<WidgetLabel>(
                     drawable, text, fg_color, bg_color,
-                    global_font_lato_light_16());
+                    global_font_deja_vu_14());
             }
 
             Dimension dim = w->get_optimal_dim();

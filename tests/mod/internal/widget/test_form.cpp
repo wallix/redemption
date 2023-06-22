@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TestWidgetForm)
 
     WidgetForm form(drawable, copy_paste, 0, 0, 600, 150,
                     {WidgetEventNotifier(), WidgetEventNotifier()},
-                    global_font_lato_light_16(), colors, Language::en, flag);
+                    global_font_deja_vu_14(), colors, Language::en, flag);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.get_rect());

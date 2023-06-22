@@ -21,7 +21,7 @@
 #include "mod/internal/selector_mod.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "configs/config.hpp"
-#include "gdi/text_metrics.hpp"
+#include "core/font.hpp"
 #include "gdi/osd_api.hpp"
 #include "keyboard/keymap.hpp"
 #include "utils/sugar/int_to_chars.hpp"
@@ -177,8 +177,7 @@ SelectorMod::SelectorMod(
     this->screen.init_focus();
 
     uint16_t available_height = (this->selector.first_page.y() - 10) - this->selector.selector_lines.y();
-    gdi::TextMetrics tm(font, "Édp");
-    uint16_t line_height = tm.height + 2 * (
+    uint16_t line_height = font.max_height() + 2 * (
                             this->selector.selector_lines.border
                             +  this->selector.selector_lines.y_padding_label);
 
@@ -344,8 +343,7 @@ void SelectorMod::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
     this->selector.move_size_widget(left, top, width, height);
 
     uint16_t available_height = (this->selector.first_page.y() - 10) - this->selector.selector_lines.y();
-    gdi::TextMetrics tm(this->screen.font, "Édp");
-    uint16_t line_height = tm.height + 2 * (
+    uint16_t line_height = this->screen.font.max_height() + 2 * (
                             this->selector.selector_lines.border
                             +  this->selector.selector_lines.y_padding_label);
 

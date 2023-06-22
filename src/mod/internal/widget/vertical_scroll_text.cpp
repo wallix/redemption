@@ -35,7 +35,7 @@ namespace
     Dimension get_optimal_button_dim(const Font& font)
     {
         UTF8toUnicodeIterator unicode_iter(top_button_char);
-        auto const& glyph = font.glyph_or_unknown(*unicode_iter);
+        auto const& glyph = font.item(*unicode_iter).view;
         return Dimension(glyph.width + 8, glyph.height + 12);
     }
 } // anonymous namespace
@@ -93,8 +93,9 @@ void WidgetVerticalScrollText::set_wh(uint16_t w, uint16_t h)
 
         this->page_h = std::max(cy / glyph_cy - 1, 1) * glyph_cy;
         this->total_h = text_h - this->page_h;
-        this->cursor_button_h = std::max(uint16_t(this->page_h * total_scroll_h / text_h),
-                                         this->button_dim.h);
+        this->cursor_button_h = text_h
+          ? std::max(uint16_t(this->page_h * total_scroll_h / text_h), this->button_dim.h)
+          : uint16_t();
         this->scroll_h = std::max(total_scroll_h - this->cursor_button_h, 1);
         this->cursor_button_y = int16_t(this->button_dim.h - 1);
         this->current_y = 0;

@@ -38,19 +38,19 @@
 RED_AUTO_TEST_CASE(TextMetrics)
 {
     {
-        gdi::TextMetrics text(global_font_lato_light_16(), "abc");
-        RED_CHECK_EQUAL(21, text.height);
-        RED_CHECK_EQUAL(27, text.width);
+        gdi::TextMetrics text(global_font_deja_vu_14(), "abc");
+        RED_CHECK_EQUAL(18, text.height);
+        RED_CHECK_EQUAL(25, text.width);
     }
     {
-        gdi::TextMetrics text(global_font_lato_light_16(), "abcde");
-        RED_CHECK_EQUAL(21, text.height);
-        RED_CHECK_EQUAL(46, text.width);
+        gdi::TextMetrics text(global_font_deja_vu_14(), "abcde");
+        RED_CHECK_EQUAL(18, text.height);
+        RED_CHECK_EQUAL(43, text.width);
     }
     {
-        gdi::TextMetrics text(global_font_lato_light_16(), "Ay");
-        RED_CHECK_EQUAL(21, text.height);
-        RED_CHECK_EQUAL(20, text.width);
+        gdi::TextMetrics text(global_font_deja_vu_14(), "Ay");
+        RED_CHECK_EQUAL(18, text.height);
+        RED_CHECK_EQUAL(19, text.width);
     }
 }
 
@@ -113,7 +113,6 @@ RED_TEST_DISPATCH_COMPARISON_EQ((), (::array_view<::LineForTest>), (::array_view
 RED_AUTO_TEST_CASE(MultiLineTextMetrics)
 {
     auto& font14 = global_font_deja_vu_14();
-    auto& font16 = global_font_lato_light_16();
 
     RED_TEST(gdi::MultiLineTextMetrics(font14, "", 0).lines().size() == 0);
 
@@ -170,16 +169,16 @@ RED_AUTO_TEST_CASE(MultiLineTextMetrics)
 
     TEST_LINES(font14, "annvhg jgsy kfhdis hnvlkj gks hxk.hf", 50,
         {"annvh", 44},
-        {"g jgsy", 44},
+        {"g jgsy", 45},
         {"kfhdis", 42},
-        {"hnvlkj", 42},
+        {"hnvlkj", 43},
         {"gks", 25},
-        {"hxk.hf", 44},
+        {"hxk.hf", 45},
     );
 
     TEST_LINES(font14, "annvhg jgsy kfhdis hnvlkj gks hxk.hf", 150,
-        {"annvhg jgsy kfhdis", 135},
-        {"hnvlkj gks hxk.hf", 121},
+        {"annvhg jgsy kfhdis", 136},
+        {"hnvlkj gks hxk.hf", 123},
     );
 
     TEST_LINES(font14, "veryverylonglonglong string", 100,
@@ -218,60 +217,8 @@ RED_AUTO_TEST_CASE(MultiLineTextMetrics)
     TEST_LINES(font14, "bla bla\n\n - abc\n - def", 100,
         {"bla bla", 45},
         {"", 0},
-        {" - abc", 40},
-        {" - def", 38},
-    );
-
-    TEST_LINES(font16,
-        "abc efg fajshfkg kf gfjg hjgsj dj, fhsg h, sg, mshg szjh gkj,"
-        " s hzgskhg shzktgs t lurzywiurtyzlis uhtzsli uyzi tyz liuhtzli"
-        " tyzkr tyzdkl yzdk,  ylktyzdlk dlktuh lkzhluzo huwory gzl",
-        300,
-        {"abc efg fajshfkg kf gfjg hjgsj dj, fhsg h,", 299},
-        {"sg, mshg szjh gkj, s hzgskhg shzktgs t", 283},
-        {"lurzywiurtyzlis uhtzsli uyzi tyz liuhtzli", 276},
-        {"tyzkr tyzdkl yzdk,  ylktyzdlk dlktuh", 258},
-        {"lkzhluzo huwory gzl", 147},
-    );
-
-    TEST_LINES(font16,
-        "Unauthorized access to this system is forbidden and will be prosecuted"
-        " by law. By accessing this system, you agree that your actions may be"
-        " monitored if unauthorized usage is suspected.",
-        300,
-        {"Unauthorized access to this system is", 286},
-        {"forbidden and will be prosecuted by", 272},
-        {"law. By accessing this system, you", 260},
-        {"agree that your actions may be", 235},
-        {"monitored if unauthorized usage is", 261},
-        {"suspected.", 81},
-    );
-
-    TEST_LINES(font16,
-        "Unauthorized access to this system is forbidden and will be prosecuted"
-        " by law.\nBy accessing this system, you agree that your actions may be"
-        " monitored if unauthorized usage is suspected.",
-        300,
-        {"Unauthorized access to this system is", 286},
-        {"forbidden and will be prosecuted by", 272},
-        {"law.", 30},
-        {"By accessing this system, you agree", 272},
-        {"that your actions may be monitored if", 285},
-        {"unauthorized usage is suspected.", 250},
-    );
-
-    TEST_LINES(font16,
-        "Unauthorized access to this system is forbidden and will be prosecuted"
-        " by law.\n\nBy accessing this system, you agree that your actions may be"
-        " monitored if unauthorized usage is suspected.",
-        300,
-        {"Unauthorized access to this system is", 286},
-        {"forbidden and will be prosecuted by", 272},
-        {"law.", 30},
-        {"", 0},
-        {"By accessing this system, you agree", 272},
-        {"that your actions may be monitored if", 285},
-        {"unauthorized usage is suspected.", 250},
+        {" - abc", 41},
+        {" - def", 39},
     );
 }
 

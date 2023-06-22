@@ -20,6 +20,7 @@
  */
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/font.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/text_metrics.hpp"
 #include "keyboard/keymap.hpp"
@@ -39,7 +40,7 @@ WidgetEdit::WidgetEdit(
 , onsubmit(onsubmit)
 , label(drawable, text, fgcolor, bgcolor, font, xtext, ytext)
 , w_text(0)
-, h_text(0)
+, h_text(font.max_height())
 , cursor_color(0x888888)
 , focus_color(focus_color)
 , drawall(false)
@@ -68,11 +69,6 @@ WidgetEdit::WidgetEdit(
         this->edit_pos = 0;
         this->cursor_px_pos = 0;
     }
-
-    // TODO: tm.width unused ?
-    gdi::TextMetrics tm(this->font, "Édp");
-    this->h_text = tm.height;
-    this->h_text -= 1;
 
     this->pointer_flag = PointerType::Edit;
 }
@@ -108,7 +104,6 @@ void WidgetEdit::set_text(const char * text/*, int position = 0*/)
         this->label.buffer[this->buffer_size] = 0;
         gdi::TextMetrics tm(this->font, this->label.buffer);
         this->w_text = tm.width;
-        this->h_text = tm.height;
         this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
     }
     this->edit_pos = this->num_chars;
@@ -139,7 +134,6 @@ void WidgetEdit::insert_text(const char * text/*, int position = 0*/)
         this->label.buffer[this->buffer_size] = 0;
         gdi::TextMetrics tm(this->font, this->label.buffer);
         this->w_text = tm.width;
-        this->h_text = tm.height;
         const size_t tmp_num_chars = this->num_chars;
         this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
         Rect rect = this->get_cursor_rect();
@@ -245,7 +239,6 @@ void WidgetEdit::increment_edit_pos()
     char c = this->label.buffer[this->edit_buffer_pos + n];
     this->label.buffer[this->edit_buffer_pos + n] = 0;
     gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
-    this->h_text = tm.height;
     this->cursor_px_pos += tm.width;
     this->label.buffer[this->edit_buffer_pos + n] = c;
     this->edit_buffer_pos += n;
@@ -276,7 +269,6 @@ void WidgetEdit::decrement_edit_pos()
     char c = this->label.buffer[this->edit_buffer_pos];
     this->label.buffer[this->edit_buffer_pos] = 0;
     gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos - len);
-    this->h_text = tm.height;
     this->cursor_px_pos -= tm.width;
     this->label.buffer[this->edit_buffer_pos] = c;
     this->edit_buffer_pos -= len;
@@ -469,7 +461,6 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
                     char c = this->label.buffer[this->edit_buffer_pos + len];
                     this->label.buffer[this->edit_buffer_pos + len] = 0;
                     gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
-                    this->h_text = tm.height;
                     this->label.buffer[this->edit_buffer_pos + len] = c;
                     UTF8RemoveOne(make_writable_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
                     this->buffer_size -= len;

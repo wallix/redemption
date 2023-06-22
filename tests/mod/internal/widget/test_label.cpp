@@ -50,7 +50,7 @@ struct TestWidgetLabelCtx
         char const* text, Colors colors = Colors{RED, YELLOW}, int xtext = 0, int ytext = 0)
     : wlabel(
         drawable, text,
-        colors.fg, colors.bg, global_font_lato_light_16(), xtext, ytext)
+        colors.fg, colors.bg, global_font_deja_vu_14(), xtext, ytext)
     {}
 };
 
@@ -171,32 +171,32 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     wcomposite.set_xy(0, 0);
 
     WidgetLabel wlabel1(drawable,
-                        "abababab", YELLOW, BLACK, global_font_lato_light_16());
+                        "abababab", YELLOW, BLACK, global_font_deja_vu_14());
     wlabel1.set_wh(wlabel1.get_optimal_dim());
     wlabel1.set_xy(0, 0);
 
     WidgetLabel wlabel2(drawable,
-                        "ggghdgh", WHITE, BLUE, global_font_lato_light_16());
+                        "ggghdgh", WHITE, BLUE, global_font_deja_vu_14());
     wlabel2.set_wh(wlabel2.get_optimal_dim());
     wlabel2.set_xy(0, 100);
 
     WidgetLabel wlabel3(drawable,
-                        "lldlslql", BLUE, RED, global_font_lato_light_16());
+                        "lldlslql", BLUE, RED, global_font_deja_vu_14());
     wlabel3.set_wh(wlabel3.get_optimal_dim());
     wlabel3.set_xy(100, 100);
 
     WidgetLabel wlabel4(drawable,
-                        "LLLLMLLM", PINK, DARK_GREEN, global_font_lato_light_16());
+                        "LLLLMLLM", PINK, DARK_GREEN, global_font_deja_vu_14());
     wlabel4.set_wh(wlabel4.get_optimal_dim());
     wlabel4.set_xy(300, 300);
 
     WidgetLabel wlabel5(drawable,
-                        "dsdsdjdjs", LIGHT_GREEN, DARK_BLUE, global_font_lato_light_16());
+                        "dsdsdjdjs", LIGHT_GREEN, DARK_BLUE, global_font_deja_vu_14());
     wlabel5.set_wh(wlabel5.get_optimal_dim());
     wlabel5.set_xy(700, -10);
 
     WidgetLabel wlabel6(drawable,
-                        "xxwwp", ANTHRACITE, PALE_GREEN, global_font_lato_light_16());
+                        "xxwwp", ANTHRACITE, PALE_GREEN, global_font_deja_vu_14());
     wlabel6.set_wh(wlabel6.get_optimal_dim());
     wlabel6.set_xy(-10, 550);
 

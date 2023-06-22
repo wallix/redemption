@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     int16_t y = 10;
     const char * tooltiptext = "testémq";
 
-    WidgetTooltip wtooltip(drawable, tooltiptext, fg_color, bg_color, border_color, global_font_lato_light_16());
+    WidgetTooltip wtooltip(drawable, tooltiptext, fg_color, bg_color, border_color, global_font_deja_vu_14());
     Dimension dim = wtooltip.get_optimal_dim();
     wtooltip.set_wh(dim);
     wtooltip.set_xy(x, y);
@@ -61,16 +61,16 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     int y = 20;
 
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), Theme{});
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), Theme{});
 
     WidgetLabel label(drawable, "TOOLTIPTEST",
-                      BLACK, WHITE, global_font_lato_light_16());
+                      BLACK, WHITE, global_font_deja_vu_14());
     Dimension dim = label.get_optimal_dim();
     label.set_wh(dim);
     label.set_xy(x, y);
 
     WidgetLabel label2(drawable, "TOOLTIPTESTMULTI",
-                       BLACK, WHITE, global_font_lato_light_16());
+                       BLACK, WHITE, global_font_deja_vu_14());
     dim = label2.get_optimal_dim();
     label2.set_wh(dim);
     label2.set_xy(x + 50, y + 90);

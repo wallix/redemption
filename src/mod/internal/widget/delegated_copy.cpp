@@ -96,7 +96,7 @@ Dimension WidgetDelegatedCopy::get_optimal_dim() const
 
 Dimension WidgetDelegatedCopy::get_optimal_dim(Font const & font, int xicon, int yicon)
 {
-    auto& glyph = font.glyph_or_unknown('E');
+    auto const& glyph = font.item('E').view;
     return Dimension{
         checked_int{glyph.width + 4 + xicon * 2},
         checked_int{glyph.height + 3 + yicon * 2},

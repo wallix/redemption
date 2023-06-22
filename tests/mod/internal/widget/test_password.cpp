@@ -54,7 +54,7 @@ struct TestWidgetPasswordCtx
     : wpassword(
         drawable, copy_paste, text, onsubmit,
         colors.fg_color, colors.bg_color, colors.focus_color,
-        global_font_lato_light_16(), password_pos, xtext, ytext)
+        global_font_deja_vu_14(), password_pos, xtext, ytext)
     {
         Dimension dim = wpassword.get_optimal_dim();
         wpassword.set_wh(edit_width, dim.h);
@@ -221,7 +221,7 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     keyboard.rdp_input_scancode(Keymap::KeyCode::Enter);
     RED_CHECK(onsubmit.get_and_reset() == 1);
 
-    wpassword.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 3);
+    wpassword.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 12, 3);
     RED_CHECK(onsubmit.get_and_reset() == 0);
 
     wpassword.rdp_input_invalidate(Rect(0, 0, wpassword.cx(), wpassword.cx()));
@@ -238,37 +238,37 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     wcomposite.set_xy(0, 0);
 
     WidgetPassword wpassword1(drawable, copy_paste, "abababab",
-                              {WidgetEventNotifier()}, YELLOW, BLACK, BLACK, global_font_lato_light_16());
+                              {WidgetEventNotifier()}, YELLOW, BLACK, BLACK, global_font_deja_vu_14());
     Dimension dim = wpassword1.get_optimal_dim();
     wpassword1.set_wh(50, dim.h);
     wpassword1.set_xy(0, 0);
 
     WidgetPassword wpassword2(drawable, copy_paste, "ggghdgh",
-                              {WidgetEventNotifier()}, WHITE, RED, RED, global_font_lato_light_16());
+                              {WidgetEventNotifier()}, WHITE, RED, RED, global_font_deja_vu_14());
     dim = wpassword2.get_optimal_dim();
     wpassword2.set_wh(50, dim.h);
     wpassword2.set_xy(0, 100);
 
     WidgetPassword wpassword3(drawable, copy_paste, "lldlslql",
-                              {WidgetEventNotifier()}, BLUE, RED, RED, global_font_lato_light_16());
+                              {WidgetEventNotifier()}, BLUE, RED, RED, global_font_deja_vu_14());
     dim = wpassword3.get_optimal_dim();
     wpassword3.set_wh(50, dim.h);
     wpassword3.set_xy(100, 100);
 
     WidgetPassword wpassword4(drawable, copy_paste, "LLLLMLLM",
-                              {WidgetEventNotifier()}, PINK, DARK_GREEN, DARK_GREEN, global_font_lato_light_16());
+                              {WidgetEventNotifier()}, PINK, DARK_GREEN, DARK_GREEN, global_font_deja_vu_14());
     dim = wpassword4.get_optimal_dim();
     wpassword4.set_wh(50, dim.h);
     wpassword4.set_xy(300, 300);
 
     WidgetPassword wpassword5(drawable, copy_paste, "dsdsdjdjs",
-                              {WidgetEventNotifier()}, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, global_font_lato_light_16());
+                              {WidgetEventNotifier()}, LIGHT_GREEN, DARK_BLUE, DARK_BLUE, global_font_deja_vu_14());
     dim = wpassword5.get_optimal_dim();
     wpassword5.set_wh(50, dim.h);
     wpassword5.set_xy(700, -10);
 
     WidgetPassword wpassword6(drawable, copy_paste, "xxwwp",
-                              {WidgetEventNotifier()}, ANTHRACITE, PALE_GREEN, PALE_GREEN, global_font_lato_light_16());
+                              {WidgetEventNotifier()}, ANTHRACITE, PALE_GREEN, PALE_GREEN, global_font_deja_vu_14());
     dim = wpassword6.get_optimal_dim();
     wpassword6.set_wh(50, dim.h);
     wpassword6.set_xy(-10, 550);

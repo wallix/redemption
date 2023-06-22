@@ -49,7 +49,7 @@
 #define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
 #define LOCKFILE "rdpproxy.pid"
 #define RDPPROXY_INI "rdpproxy.ini"
-#define DEFAULT_FONT_NAME "dejavu_14.rbf"
+#define DEFAULT_FONT_NAME "dejavu_14.rbf2"
 
 
 zstring_view app_path(AppPath k) noexcept

@@ -26,7 +26,6 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/font.hpp"
-#include <string_view>
 
 using namespace std::string_view_literals;
 
@@ -57,23 +56,14 @@ RED_AUTO_TEST_CASE(TestCreateFont)
         RED_CHECK(!f.is_loaded());
     }
 
-    Font f(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font f(FIXTURES_PATH "/dejavu_14.rbf2");
     RED_CHECK(f.is_loaded());
 
-    RED_CHECK_EQUAL("Lato"sv, f.name());
-    RED_CHECK_EQUAL(16, f.size());
-
-    RED_CHECK(!f.glyph_defined(31));
-    RED_CHECK(f.glyph_defined(32));
-    RED_CHECK(f.glyph_defined(0x4dff));
-    RED_CHECK(!f.glyph_defined(0x4dff+1));
-
-    RED_CHECK(f.glyph_defined('?'));
-    RED_CHECK(font_item_equal(f.glyph_or_unknown('?'), f.unknown_glyph()));
-
-    FontCharView* nullptr_char = nullptr;
-    RED_CHECK_EQUAL(&f.glyph_or_unknown(31), &f.unknown_glyph());
-    RED_CHECK_EQUAL(f.glyph_at(31), nullptr_char);
-    RED_CHECK_EQUAL(f.glyph_at(32), &f.glyph_or_unknown(32));
-    RED_CHECK_NE(f.glyph_at(32), nullptr_char);
+    RED_CHECK(!f.item(31).is_valid);
+    RED_CHECK(f.item(' ').is_valid);
+    RED_CHECK(f.item('?').is_valid);
+    RED_CHECK(f.item(0x4dff).is_valid);
+    RED_CHECK(!f.item(0x30dff).is_valid);
+    RED_CHECK(&f.item(31).view == &f.unknown_glyph());
+    RED_CHECK(&f.item(0x30dff).view == &f.unknown_glyph());
 }

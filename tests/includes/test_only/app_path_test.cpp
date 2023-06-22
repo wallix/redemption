@@ -21,7 +21,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #define LOGIN_WAB_BLUE "wablogoblue.png"
 #define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
 #define RDPPROXY_INI "rdpproxy.ini"
-#define DEFAULT_FONT_NAME "dejavu_14.rbf"
+#define DEFAULT_FONT_NAME "dejavu_14.rbf2"
 
 namespace
 {

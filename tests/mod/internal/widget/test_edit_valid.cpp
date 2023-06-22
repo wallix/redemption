@@ -242,7 +242,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     keyboard.send_scancode(0x0F); // tab
     keyboard.send_scancode(0x0E); // backspace
-    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_15.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_8.png");
 
     keyboard.send_scancode(0x0F); // tab
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_11.png");

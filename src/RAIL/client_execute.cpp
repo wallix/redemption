@@ -672,7 +672,7 @@ void draw_button_mini(
 {
     auto fg_color = black;
     auto bg_color = normal_button_bg_colors[underlying_cast(button_style)];
-    draw_text_region(drawable, font, rect, fg_color, bg_color, 12, 3, "−"_zv, clip);
+    draw_text_region(drawable, font, rect, fg_color, bg_color, 12, 2, "−"_zv, clip);
 }
 
 void draw_button_maxi(
@@ -798,7 +798,7 @@ void draw_button_close(
 {
     auto bg_color = close_button_bg_colors[underlying_cast(button_style)];
     auto fg_color = close_button_fg_colors[underlying_cast(button_style)];
-    draw_text_region(drawable, font, rect, fg_color, bg_color, 13, 3, "x"_zv, clip);
+    draw_text_region(drawable, font, rect, fg_color, bg_color, 13, 2, "x"_zv, clip);
 }
 
 

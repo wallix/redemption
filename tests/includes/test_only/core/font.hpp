@@ -23,4 +23,3 @@ Author(s): Jonathan Poelen
 class Font;
 Font const& global_font();
 Font const& global_font_deja_vu_14();
-Font const& global_font_lato_light_16();
