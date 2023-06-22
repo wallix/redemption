@@ -324,6 +324,11 @@ public:
         return this->impl_.height();
     }
 
+    [[nodiscard]] Rect area() const noexcept
+    {
+        return Rect(0, 0, width(), height());
+    }
+
     [[nodiscard]] unsigned size() const noexcept
     {
         return this->impl_.size();
