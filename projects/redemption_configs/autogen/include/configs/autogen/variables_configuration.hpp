@@ -1791,7 +1791,7 @@ namespace cfg
         using mapped_type = SessionProbeOnKeepaliveTimeout;
         type value { SessionProbeOnKeepaliveTimeout::disconnect_user };
     };
-    /// End automatically a disconnected session. <br/>
+    /// Automatically end a disconnected Desktop session or clean up a disconnected RemoteApp session. <br/>
     /// This option is recommended for Web applications running in Desktop mode. <br/>
     /// Session Probe must be enabled to use this feature. <br/>
     /// type: bool <br/>

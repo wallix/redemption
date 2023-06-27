@@ -575,7 +575,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<SessionProbeOnKeepaliveTimeout>(), names{"on_keepalive_timeout"}, set(SessionProbeOnKeepaliveTimeout::disconnect_user));
 
         W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"end_disconnected_session"}, desc{
-            "End automatically a disconnected session.\n"
+            "Automatically end a disconnected Desktop session or clean up a disconnected RemoteApp session.\n"
             "This option is recommended for Web applications running in Desktop mode.\n"
             "Session Probe must be enabled to use this feature."
         }, set(false));

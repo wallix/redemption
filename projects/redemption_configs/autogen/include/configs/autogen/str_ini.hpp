@@ -689,7 +689,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #on_keepalive_timeout = 1
 
-# End automatically a disconnected session.
+# Automatically end a disconnected Desktop session or clean up a disconnected RemoteApp session.
 # This option is recommended for Web applications running in Desktop mode.
 # Session Probe must be enabled to use this feature.
 # value: 0 or 1
