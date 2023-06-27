@@ -574,7 +574,7 @@ keepalive_timeout = integer(min=0, max=60000, default=5000)
 #_hidden
 on_keepalive_timeout = option(0, 1, 2, default=1)
 
-# End automatically a disconnected session.
+# Automatically end a disconnected Desktop session or clean up a disconnected RemoteApp session.
 # This option is recommended for Web applications running in Desktop mode.
 # Session Probe must be enabled to use this feature.
 #_hidden

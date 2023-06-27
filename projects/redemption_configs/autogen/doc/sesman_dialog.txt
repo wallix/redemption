@@ -168,7 +168,7 @@ cfg::session_probe::on_keepalive_timeout ⇐ session_probe:on_keepalive_timeout 
       1: disconnect user
       2: freeze connection and wait
 cfg::session_probe::end_disconnected_session ⇐ session_probe:end_disconnected_session   [bool]
-    End automatically a disconnected session.
+    Automatically end a disconnected Desktop session or clean up a disconnected RemoteApp session.
     This option is recommended for Web applications running in Desktop mode.
     Session Probe must be enabled to use this feature.
 cfg::session_probe::enable_log ⇐ session_probe:enable_log   [bool]
