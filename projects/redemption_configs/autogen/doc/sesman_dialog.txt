@@ -124,7 +124,7 @@ cfg::mod_rdp::session_probe_on_keepalive_timeout ⇐ mod_rdp:session_probe_on_ke
       1: disconnect user
       2: freeze connection and wait
 cfg::mod_rdp::session_probe_end_disconnected_session ⇐ mod_rdp:session_probe_end_disconnected_session   [bool]
-    End automatically a disconnected session.
+    Automatically end a disconnected Desktop session or clean up a disconnected RemoteApp session.
     This option is recommended for Web applications running in Desktop mode.
     Session Probe must be enabled to use this feature.
 cfg::mod_rdp::session_probe_enable_log ⇐ mod_rdp:session_probe_enable_log   [bool]
