@@ -667,7 +667,7 @@ private:
 
     bool retry_rdp(
         SecondarySession & secondary_session, ModFactory & mod_factory,
-        ModWrapper & mod_wrapper, Front & front,
+        ModWrapper & mod_wrapper, Front & front, EventManager& event_manager,
         ClientExecute & rail_client_execute,
         PerformAutomaticReconnection perform_automatic_reconnection)
     {
@@ -691,6 +691,7 @@ private:
         {
             LOG(LOG_INFO, "Waiting for %lu ms before retrying RDP", session_reconnection_delay_ms);
             ::usleep(session_reconnection_delay_ms * 1000);
+            event_manager.set_time_base(current_time_base());
         }
 
         SessionLogApi& session_log = secondary_session.get_secondary_session_log();
@@ -1197,7 +1198,7 @@ private:
 
                             run_session = this->retry_rdp(
                                 secondary_session, mod_factory, mod_wrapper,
-                                front, rail_client_execute,
+                                front, event_manager, rail_client_execute,
                                 PerformAutomaticReconnection::Yes);
                         }
                     }
@@ -1209,7 +1210,7 @@ private:
 
                             run_session = this->retry_rdp(
                                 secondary_session, mod_factory, mod_wrapper,
-                                front, rail_client_execute,
+                                front, event_manager, rail_client_execute,
                                 PerformAutomaticReconnection::Yes);
                         }
                     }
@@ -1292,7 +1293,7 @@ private:
                     case EndSessionResult::retry:
                         run_session = this->retry_rdp(
                             secondary_session, mod_factory, mod_wrapper,
-                            front, rail_client_execute,
+                            front, event_manager, rail_client_execute,
                             PerformAutomaticReconnection::No);
                         break;
 
@@ -1300,7 +1301,7 @@ private:
                     case EndSessionResult::reconnection:
                         run_session = this->retry_rdp(
                             secondary_session, mod_factory, mod_wrapper,
-                            front, rail_client_execute,
+                            front, event_manager, rail_client_execute,
                             PerformAutomaticReconnection::Yes);
                         break;
                     }
