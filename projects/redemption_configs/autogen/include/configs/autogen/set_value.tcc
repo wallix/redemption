@@ -1051,7 +1051,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::session_reconnection_delay&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>>{},
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 15000>>{},
                 value
             );
         }

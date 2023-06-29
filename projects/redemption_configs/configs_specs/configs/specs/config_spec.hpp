@@ -476,7 +476,7 @@ void config_spec_definition(Writer && W)
                       "The keyboard shortcut is fixed and cannot be changed."},
                  set(false));
 
-        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(),
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 15000>>(),
                  names{"session_reconnection_delay"},
                  desc{"The delay in milliseconds between a session disconnection and the automatic reconnection that follows."},
                  set(0));

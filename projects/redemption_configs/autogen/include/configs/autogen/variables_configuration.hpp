@@ -1536,7 +1536,7 @@ namespace cfg
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 31};
         using type = std::chrono::milliseconds;
-        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
+        using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 15000>;
         type value { 0 };
     };
     /// Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server. <br/>

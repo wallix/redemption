@@ -518,7 +518,7 @@ allow_session_reconnection_by_shortcut = boolean(default=False)
 # The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
 # (in milliseconds)
 #_hidden
-session_reconnection_delay = integer(min=0, max=60000, default=0)
+session_reconnection_delay = integer(min=0, max=15000, default=0)
 
 # Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
 #_hidden

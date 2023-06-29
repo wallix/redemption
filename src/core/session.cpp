@@ -718,7 +718,7 @@ private:
 
     bool retry_rdp(
         SecondarySession & secondary_session, ModFactory & mod_factory,
-        SessionFront & front, PerformAutomaticReconnection perform_automatic_reconnection)
+        SessionFront & front, EventManager& event_manager, PerformAutomaticReconnection perform_automatic_reconnection)
     {
         LOG(LOG_INFO, "Retry RDP");
 
@@ -737,6 +737,7 @@ private:
         {
             LOG(LOG_INFO, "Waiting for %lu ms before retrying RDP", session_reconnection_delay_ms);
             ::usleep(session_reconnection_delay_ms * 1000);
+            event_manager.set_time_base(TimeBase::now());
         }
 
         SessionLogApi& session_log = secondary_session.get_secondary_session_log();
@@ -1353,7 +1354,7 @@ private:
 
                             run_session = this->retry_rdp(
                                 secondary_session, mod_factory,
-                                front, PerformAutomaticReconnection::Yes);
+                                front, event_manager, PerformAutomaticReconnection::Yes);
                         }
                     }
                     else if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
@@ -1364,7 +1365,7 @@ private:
 
                             run_session = this->retry_rdp(
                                 secondary_session, mod_factory,
-                                front, PerformAutomaticReconnection::Yes);
+                                front, event_manager, PerformAutomaticReconnection::Yes);
                         }
                     }
                     else {
@@ -1447,14 +1448,14 @@ private:
                     case EndSessionResult::retry:
                         run_session = this->retry_rdp(
                             secondary_session, mod_factory,
-                            front, PerformAutomaticReconnection::No);
+                            front, event_manager, PerformAutomaticReconnection::No);
                         break;
 
                     // TODO: should we put some counter to avoid retrying indefinitely?
                     case EndSessionResult::reconnection:
                         run_session = this->retry_rdp(
                             secondary_session, mod_factory,
-                            front, PerformAutomaticReconnection::Yes);
+                            front, event_manager, PerformAutomaticReconnection::Yes);
                         break;
                     }
 

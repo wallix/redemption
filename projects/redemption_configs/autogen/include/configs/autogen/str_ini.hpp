@@ -603,7 +603,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #allow_session_reconnection_by_shortcut = 0
 
 # The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
-# min = 0, max = 60000
+# min = 0, max = 15000
 # (in milliseconds)
 #_hidden
 #session_reconnection_delay = 0
