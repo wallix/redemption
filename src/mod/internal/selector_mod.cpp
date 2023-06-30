@@ -288,6 +288,8 @@ void SelectorMod::refresh_device()
         this->selector.add_device(texts);
     }
     else {
+        this->selector.selector_lines.set_focusable();
+
         this->selector.selector_lines.set_selection(0);
         this->selector.set_widget_focus(this->selector.selector_lines, Widget::focus_reason_tabkey);
     }

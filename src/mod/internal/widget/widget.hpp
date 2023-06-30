@@ -121,6 +121,11 @@ public:
     , has_focus(false)
     {}
 
+    void set_focusable(Focusable is_focusable = Focusable::Yes)
+    {
+        focusable = is_focusable;
+    }
+
     void set_unfocusable()
     {
         focusable = Focusable::No;
