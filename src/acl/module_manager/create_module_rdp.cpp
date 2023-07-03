@@ -807,11 +807,12 @@ ModPack create_mod_rdp(
     mod_rdp_params.krb_armoring_password = ini.get<cfg::mod_rdp::effective_krb_armoring_password>().c_str();
 
     auto connect_to_rdp_target_host = [](
-            Inifile & ini, SessionLogApi& session_log,
-            trkeys::TrKey const& authentification_fail, bool enable_ipv6,
-            std::chrono::milliseconds connection_establishment_timeout,
-            std::chrono::milliseconds tcp_user_timeout,
-            time_t shadow_invite_time) {
+        Inifile & ini, SessionLogApi& session_log,
+        trkeys::TrKey const& authentification_fail, bool enable_ipv6,
+        std::chrono::milliseconds connection_establishment_timeout,
+        std::chrono::milliseconds tcp_user_timeout,
+        time_t shadow_invite_time
+    ) {
         try
         {
             return connect_to_target_host(

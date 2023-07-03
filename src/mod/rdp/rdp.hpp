@@ -1147,8 +1147,9 @@ public:
                             const char (& client_name)[128])
     {
         if (!this->file_system.enable_rdpdr_data_analysis
-        &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
-        &&  !this->drive.file_system_drive_manager.has_managed_drive()) {
+         &&  this->channels_authorizations.rdpdr_type_all_is_authorized()
+         && !this->drive.file_system_drive_manager.has_managed_drive()
+        ) {
             this->send_to_front_channel(front, channel_names::rdpdr, stream.get_current(), length, chunk_size, flags);
             return;
         }
@@ -1359,10 +1360,11 @@ public:
                 SslSha1 sha1;
                 sha1.update(this->session_probe.target_informations);
 
-                uint8_t sig[SslSha1::DIGEST_LENGTH];
-                sha1.final(make_writable_sized_array_view(sig));
+                uint8_t sigbuf[SslSha1::DIGEST_LENGTH];
+                auto sig = make_writable_sized_array_view(sigbuf);
+                sha1.final(sig);
 
-                return str_concat("/#"_av, static_array_to_hexadecimal_upper_chars(make_bounded_array_view(sig).first<10>()), ' ');
+                return str_concat("/#"_av, static_array_to_hexadecimal_upper_chars(sig.first<10>()), ' ');
             }
 
             return str_concat("/#", this->session_probe.target_informations, ' ');
@@ -1469,8 +1471,9 @@ public:
         const char (& client_name)[128])
     {
         if (!this->file_system.enable_rdpdr_data_analysis
-        &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
-        &&  !this->drive.file_system_drive_manager.has_managed_drive()) {
+         &&  this->channels_authorizations.rdpdr_type_all_is_authorized()
+         && !this->drive.file_system_drive_manager.has_managed_drive()
+        ) {
             this->send_to_channel(*rdpdr_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
             return;
         }

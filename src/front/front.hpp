@@ -2025,7 +2025,7 @@ public:
             MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
         }
 
-       if (this->ini.get<cfg::client::bogus_user_id>()) {
+        if (this->ini.get<cfg::client::bogus_user_id>()) {
             // To avoid bug in freerdp 0.7.x and Remmina 0.8.x that causes client disconnection
             //  when unexpected channel id is received.
             this->userid = 32;
@@ -2501,12 +2501,13 @@ public:
 
                     // rdesktop Linux client is not affected
                     // (sending only slowpath keyboard input events)
-                    if ((1 == num_events)
-                    && (0 == i)
-                    && (cfpie.payload.in_remain() == 6)
-                    && (0x1D == ke.keyCode)
-                    && (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
-                         BogusNumberOfFastpathInputEvent::pause_key_only)) {
+                    if (1 == num_events
+                     && 0 == i
+                     && cfpie.payload.in_remain() == 6
+                     && 0x1D == ke.keyCode
+                     && this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>()
+                        == BogusNumberOfFastpathInputEvent::pause_key_only
+                    ) {
                         LOG(LOG_INFO,
                             "Front::incoming: BogusNumberOfFastpathInputEvent::pause_key_only");
                         num_events = 4;
@@ -2578,10 +2579,11 @@ public:
             LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                 "Front::incoming: Received Fast-Path PUD done");
 
-            if (cfpie.payload.in_remain() &&
-                (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
-                 BogusNumberOfFastpathInputEvent::all_input_events) &&
-                !((i + 1) < num_events)) {
+            if (cfpie.payload.in_remain()
+             && this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>()
+                == BogusNumberOfFastpathInputEvent::all_input_events
+             && i + 1 >= num_events
+            ) {
                 LOG(LOG_INFO,
                     "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events. in_remain=%zu num_events=%u",
                     cfpie.payload.in_remain(), unsigned(num_events));
@@ -3668,8 +3670,9 @@ private:
                     if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.glyph_cache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
-                    if (ini.get<cfg::client::bogus_ios_glyph_support_level>() &&
-                        (this->client_info.general_caps.os_major == OSMAJORTYPE_IOS)) {
+                    if (this->client_info.general_caps.os_major == OSMAJORTYPE_IOS
+                     && ini.get<cfg::client::bogus_ios_glyph_support_level>()
+                    ) {
                         LOG(LOG_INFO, "Front::process_confirm_active: Support of bogus iOS glyph support level enabled.");
 
                         this->client_info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_NONE;

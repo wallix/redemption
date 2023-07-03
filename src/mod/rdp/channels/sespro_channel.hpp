@@ -718,17 +718,17 @@ public:
                 });
 
                 {
-                    unsigned int const disconnect_session_limit =
-                        (this->param_real_alternate_shell.empty() ?
-                         // Normal RDP session
-                         this->sespro_params.disconnected_session_limit.count() :
-                         // Application session
-                         this->sespro_params.disconnected_application_limit.count());
+                    std::chrono::milliseconds const disconnect_session_limit
+                        = this->param_real_alternate_shell.empty()
+                        // Normal RDP session
+                        ? this->sespro_params.disconnected_session_limit
+                        // Application session
+                        : this->sespro_params.disconnected_application_limit;
 
-                    if (disconnect_session_limit) {
+                    if (disconnect_session_limit.count()) {
                         send_client_message([disconnect_session_limit](OutStream & out_s) {
                             out_s.out_copy_bytes("DisconnectedSessionLimit="_av);
-                            out_s.out_copy_bytes(int_to_decimal_chars(disconnect_session_limit));
+                            out_s.out_copy_bytes(int_to_decimal_chars(disconnect_session_limit.count()));
                         });
                     }
                 }
