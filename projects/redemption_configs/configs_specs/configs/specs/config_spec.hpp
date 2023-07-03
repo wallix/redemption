@@ -128,9 +128,9 @@ void config_spec_definition(Writer && W)
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
     ;
 
-    auto L = loggable;
-    auto NL = unloggable;
-    auto VNL = unloggable_if_value_contains_password;
+    auto L = spec::log_policy::loggable;
+    auto NL = spec::log_policy::unloggable;
+    auto VNL = spec::log_policy::unloggable_if_value_contains_password;
 
     auto vnc_connpolicy = sesman::connection_policy{"vnc"};
     auto rdp_without_jh_connpolicy = sesman::connection_policy{"rdp"};

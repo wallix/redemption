@@ -243,10 +243,6 @@ namespace spec
         inline constexpr internal::spec_attr_t<internal::attr::external>        external{};
         inline constexpr internal::spec_attr_t<internal::attr::restart_service> restart_service{};
         inline constexpr internal::spec_attr_t<internal::attr::logged_in_gui>   logged_in_gui{};
-
-        inline constexpr auto loggable = log_policy::loggable;
-        inline constexpr auto unloggable = log_policy::unloggable;
-        inline constexpr auto unloggable_if_value_contains_password = log_policy::unloggable_if_value_contains_password;
     }
 }
 
