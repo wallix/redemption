@@ -34,12 +34,11 @@ zstring_view app_path(AppPath k) noexcept
         static std::array<std::string, 32> app_path_buffer {};
         auto i = static_cast<std::size_t>(k);
 #ifndef REDEMPTION_DONT_USE_BOOST_TEST
-        auto path = ut_impl::compute_test_path(str);
-#else
-        auto path = str;
-#endif
         // copy, don't move for address consistence
-        app_path_buffer[i] = std::string_view(path);
+        auto path = ut_impl::compute_test_path(str);
+        str = path;
+#endif
+        app_path_buffer[i] = str;
         return zstring_view(app_path_buffer[i]);
     };
 
