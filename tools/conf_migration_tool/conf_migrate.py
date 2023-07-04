@@ -1,10 +1,10 @@
 #!/usr/bin/python3 -O
 # -*- coding: utf-8 -*-
 ##
-# Copyright (c) 2021 WALLIX. All rights reserved.
+# Copyright (c) 2023 WALLIX. All rights reserved.
 # Licensed computer software. Property of WALLIX.
 # Product Name: WALLIX Bastion v9.0
-# Author(s): Raphael Zhou
+# Author(s): Raphael Zhou, Jonathan Poelen
 # Module description:  Sesman Worker
 ##
 
@@ -326,19 +326,16 @@ def migrate(fragments: List[ConfigurationFragment],
     # insert a key in a section
     for i, fragment in enumerate(fragments):
         added_fragments = reinject_fragments.get(i, (fragment,))
-
-        section = ""
-        for x in added_fragments:
-            if x.kind == ConfigKind.Section:
-                section = x.value1
-                break
-
         result_fragments.extend(added_fragments)
-        if section:
-            key = added_keys.get(section)
-            if key:
-                result_fragments.extend(key)
-                added_keys[section] = []
+
+        for fragment in added_fragments:
+            if fragment.kind == ConfigKind.Section:
+                section = fragment.value1
+                key = added_keys.get(section)
+                if key:
+                    result_fragments.extend(key)
+                    added_keys[section] = []
+                break
 
     # add new section
     for section, keys in added_keys.items():
@@ -348,6 +345,20 @@ def migrate(fragments: List[ConfigurationFragment],
                 ConfigurationFragment(f'[{section}]', ConfigKind.Section, section),
             ))
             result_fragments.extend(keys)
+
+    # remove duplicate key and keep the last (i.e. remove moved keys that already exist).
+    keys_visited = set()
+    def filter_duplicate_key(fragment: ConfigurationFragment) -> bool:
+        if fragment.kind == ConfigKind.KeyValue:
+            key = fragment.value1
+            if key in keys_visited:
+                return False
+            keys_visited.add(key)
+        elif fragment.kind == ConfigKind.Section:
+            keys_visited.clear()
+        return True
+    result_fragments = list(filter(filter_duplicate_key, reversed(result_fragments)))
+    result_fragments.reverse()
 
     return (True, result_fragments)
 
@@ -359,21 +370,6 @@ migration_defs: List[MigrationType] = [
         },
     }),
     (RedemptionVersion("9.1.71"), {
-        'rdp': {
-            'session_probe_exe_or_file': UpdateItem(section='session_probe', key='exe_or_file'),
-            'session_probe_arguments': UpdateItem(section='session_probe', key='arguments'),
-            'session_probe_customize_executable_name': UpdateItem(section='session_probe',
-                                                                  key='customize_executable_name'),
-            'session_probe_allow_multiple_handshake': UpdateItem(section='session_probe',
-                                                                 key='allow_multiple_handshake'),
-            'session_probe_at_end_of_session_freeze_connection_and_wait':
-                UpdateItem(section='session_probe', key='at_end_of_session_freeze_connection_and_wait'),
-            'session_probe_enable_cleaner': UpdateItem(section='session_probe', key='enable_cleaner'),
-            'session_probe_clipboard_based_launcher_reset_keyboard_status':
-                UpdateItem(section='session_probe', key='clipboard_based_launcher_reset_keyboard_status'),
-            'session_probe_bestsafe_integration': UpdateItem(section='session_probe',
-                                                             key='enable_bestsafe_interaction'),
-        },
         'video': {
             'replay_path': UpdateItem(section='mod_replay'),
         },
@@ -392,6 +388,24 @@ migration_defs: List[MigrationType] = [
         'metrics': RemoveItem(),
     }),
     (RedemptionVersion("10.5.27"), {
+        # this change should be in 9.1.71, but the section name was wrong ('rdp' instead of 'mod_rdp')
+        'mod_rdp': {
+            'session_probe_exe_or_file': UpdateItem(section='session_probe', key='exe_or_file'),
+            'session_probe_arguments': UpdateItem(section='session_probe', key='arguments'),
+            'session_probe_customize_executable_name': UpdateItem(section='session_probe',
+                                                                  key='customize_executable_name'),
+            'session_probe_allow_multiple_handshake': UpdateItem(section='session_probe',
+                                                                 key='allow_multiple_handshake'),
+            'session_probe_at_end_of_session_freeze_connection_and_wait':
+                UpdateItem(section='session_probe',
+                           key='at_end_of_session_freeze_connection_and_wait'),
+            'session_probe_enable_cleaner': UpdateItem(section='session_probe', key='enable_cleaner'),
+            'session_probe_clipboard_based_launcher_reset_keyboard_status':
+                UpdateItem(section='session_probe',
+                           key='clipboard_based_launcher_reset_keyboard_status'),
+            'session_probe_bestsafe_integration': UpdateItem(section='session_probe',
+                                                             key='enable_bestsafe_interaction'),
+        },
         'globals': {
             'glyph_cache': UpdateItem(section='mod_rdp'),
         },

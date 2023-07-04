@@ -207,8 +207,56 @@ class TestMigration(unittest.TestCase):
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('moved_key_to_new_section5=vd', kind=ConfigKind.KeyValue,
                                   value1='moved_key_to_new_section5', value2='vd'),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),        ]
+            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
+        ]))
+
+    def test_migrate_value_to_an_already_existing_value(self):
+        ini = (
+            '[sec1]\n'
+            'key = val\n'  # this key will be moved in sec2 then removed
+            '[sec2]\n'
+            'key = other value\n'
+        )
+
+        migrate_def = {
+            'sec1': {
+                'key': UpdateItem(section='sec2'),
+            }
+        }
+
+        fragments = parse_configuration(ini)
+
+        self.assertEqual(migration_def_to_actions(fragments, migrate_def), (
+            # renamed_sections
+            [],
+            # renamed_keys
+            [],
+            # moved_keys
+            [
+                ('sec1', 'key',
+                 'sec2', 'key', 'val'),
+            ],
+            # removed_sections
+            [],
+            # removed_keys
+            []
         ))
+
+        self.assertEqual(migrate(fragments, {}), (False, fragments))
+
+        self.assertEqual(migrate(fragments, migrate_def), (True, [
+            ConfigurationFragment(text='[sec1]', kind=ConfigKind.Section, value1='sec1', value2=''),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
+            ConfigurationFragment(text='#key = val', kind=ConfigKind.Comment, value1='', value2=''),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
+            ConfigurationFragment(text='[sec2]', kind=ConfigKind.Section, value1='sec2', value2=''),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
+            ConfigurationFragment(text='key = other value', kind=ConfigKind.KeyValue,
+                                  value1='key', value2='other value'),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2='')
+        ]))
 
     def test_migrate_file(self):
         ini_filename = '/tmp/test_config_file.ini'
@@ -218,7 +266,7 @@ class TestMigration(unittest.TestCase):
                 '[globals]\n'
                 'session_timeout = 1000\n'
                 '\n'
-                '[rdp]\n'
+                '[mod_rdp]\n'
                 'session_probe_exe_or_file=notepad\n'
                 'depth=15\n'
                 '\n'
@@ -242,7 +290,7 @@ class TestMigration(unittest.TestCase):
                 '#session_timeout = 1000\n'
                 'base_inactivity_timeout=1000\n'
                 '\n'
-                '[rdp]\n'
+                '[mod_rdp]\n'
                 '#session_probe_exe_or_file=notepad\n'
                 'depth=15\n'
                 '\n'
@@ -252,11 +300,11 @@ class TestMigration(unittest.TestCase):
                 '[all_target_mod]\n'
                 '#connection_retry_count=3\n'
                 '\n'
-                '[session_probe]\n'
-                'exe_or_file=notepad\n'
-                '\n'
                 '[mod_replay]\n'
-                'replay_path=/tmp/\n')
+                'replay_path=/tmp/\n'
+                '\n'
+                '[session_probe]\n'
+                'exe_or_file=notepad\n')
 
         os.remove(ini_filename)
         os.remove(f'{ini_filename}.{version}')
