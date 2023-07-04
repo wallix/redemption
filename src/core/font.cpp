@@ -112,7 +112,7 @@ Font::Font(char const * file_path)
                         file_path, strerror(errno));
                     return false;
                 }
-                LOG(LOG_WARNING, "Font: file %s defines glyphs up to %d, file looks broken",
+                LOG(LOG_WARNING, "Font: file %s defines glyphs up to %u, file looks broken",
                     file_path, index);
                 return false;
             }
