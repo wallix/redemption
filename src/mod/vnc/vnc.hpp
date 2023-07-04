@@ -64,10 +64,8 @@ class ClientExecute;
 class mod_vnc : public mod_api
 {
 
-    static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
-    enum {
-        maxSpokenVncProcotol = 3 * 1000 + 8 // 3.8
-    };
+    static constexpr uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
+    static constexpr int maxSpokenVncProcotol = 3 * 1000 + 8; // 3.8
 
     /* mod data */
     char mod_name[256] {0};

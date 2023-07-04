@@ -885,7 +885,7 @@ bool mod_vnc::draw_event_impl()
                 "Server Protocol Version=%d.%d", major, minor);
 
             int serverProtocol = major * 1000 + minor;
-            this->spokenProtocol = std::min(static_cast<int>(maxSpokenVncProcotol), serverProtocol);
+            this->spokenProtocol = std::min(maxSpokenVncProcotol, serverProtocol);
 
             char handshakeAnswer[13];
             snprintf(handshakeAnswer, sizeof(handshakeAnswer), "RFB %.3d.%.3d\n",
