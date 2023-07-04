@@ -1,5 +1,4 @@
 #!/usr/bin/python3 -O
-# -*- coding: utf-8 -*-
 ##
 # Copyright (c) 2023 WALLIX. All rights reserved.
 # Licensed computer software. Property of WALLIX.
@@ -8,15 +7,13 @@
 # Module description:  Sesman Worker
 ##
 
-from collections import OrderedDict
 from shutil import copyfile
-from enum import Enum, IntEnum
+from enum import IntEnum
 from typing import List, Tuple, Dict, Optional, Union, Iterable, NamedTuple, Generator
 
 import os
 import re
 import sys
-import traceback
 import itertools
 
 rgx_version = re.compile(r'^(\d+)\.(\d+)\.(\d+)(.*)')

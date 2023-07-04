@@ -2,7 +2,6 @@
 import unittest
 import os
 
-from typing import List, Union, Tuple, NamedTuple
 from conf_migrate import (parse_configuration,
                           migration_filter,
                           migration_def_to_actions,
