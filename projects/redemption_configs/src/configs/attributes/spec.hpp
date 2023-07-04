@@ -82,6 +82,28 @@ struct desc { std::string value; };
 
 struct prefix_value { char const * value; };
 
+enum class TagList : unsigned
+{
+    None,
+    Debug,
+    Workaround,
+};
+
+constexpr TagList operator | (TagList x, TagList y)
+{
+    return static_cast<TagList>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
+}
+
+constexpr TagList operator & (TagList x, TagList y)
+{
+    return static_cast<TagList>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
+}
+
+struct Tags
+{
+    TagList value = TagList::None;
+};
+
 struct names
 {
     std::string all;

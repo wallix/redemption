@@ -46,6 +46,7 @@ namespace cfg_generators {
 namespace connection_policy_writer {
 
 using namespace cfg_attributes;
+using python_spec_writer::get_desc;
 
 
 struct ConnectionPolicyWriterBase

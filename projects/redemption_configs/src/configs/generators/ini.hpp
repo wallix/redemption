@@ -42,6 +42,7 @@ namespace ini_writer {
 
 using python_spec_writer::begin_raw_string;
 using python_spec_writer::end_raw_string;
+using python_spec_writer::get_desc;
 
 
 using namespace cfg_attributes;

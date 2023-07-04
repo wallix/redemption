@@ -132,6 +132,9 @@ void config_spec_definition(Writer && _)
     auto NL = spec::log_policy::unloggable;
     auto VNL = spec::log_policy::unloggable_if_value_contains_password;
 
+    auto D = Tags{TagList::Debug};
+    auto W = Tags{TagList::Workaround};
+
     auto vnc_connpolicy = sesman::connection_policy{"vnc"};
     auto rdp_without_jh_connpolicy = sesman::connection_policy{"rdp"};
     auto jh_without_rdp_connpolicy = sesman::connection_policy{"rdp-jumphost"};
@@ -291,7 +294,7 @@ void config_spec_definition(Writer && _)
         _.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"tls_support"}, set(true));
         _.member(ini_and_gui, no_sesman, L, type_<types::u32>(), names{"tls_min_level"}, desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(2));
         _.member(ini_and_gui, no_sesman, L, type_<types::u32>(), names{"tls_max_level"}, desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
-        _.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"show_common_cipher_list"}, desc{"Show common cipher list supported by client and server"}, set(false));
+        _.member(ini_and_gui, no_sesman, L, D, type_<bool>(), names{"show_common_cipher_list"}, desc{"Show common cipher list supported by client and server"}, set(false));
         _.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_nla"},
                     desc{"Needed for primary NTLM or Kerberos connections over NLA."}, set(false));
 
@@ -334,7 +337,7 @@ void config_spec_definition(Writer && _)
 
         _.member(advanced_in_gui, no_sesman, L, type_<bool>{}, names{"enable_remotefx"}, desc{"Enable front remoteFx"}, set(true));
 
-        _.member(advanced_in_gui, no_sesman, L, type_<types::list<types::unsigned_>>(), names{"disabled_orders"}, desc{disabled_orders_desc}, set("25"));
+        _.member(advanced_in_gui, no_sesman, L, D, type_<types::list<types::unsigned_>>(), names{"disabled_orders"}, desc{disabled_orders_desc}, set("25"));
     });
 
     _.section("all_target_mod", [&]
@@ -356,7 +359,7 @@ void config_spec_definition(Writer && _)
 
         _.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"open_session_timeout"}, set(0));
 
-        _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, type_<types::list<types::unsigned_>>(), names{"disabled_orders"}, desc{disabled_orders_desc});
+        _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, D, type_<types::list<types::unsigned_>>(), names{"disabled_orders"}, desc{disabled_orders_desc});
 
         _.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"enable_nla"}, desc{"NLA authentication in secondary target."}, set(true), jh_without_rdp_connpolicy.always(false));
         _.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"enable_kerberos"}, desc{
@@ -369,7 +372,7 @@ void config_spec_definition(Writer && _)
             desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
         _.member(no_ini_no_gui, rdp_and_jh_connpolicy, L, type_<std::string>(), names{"cipher_string"},
             desc{"TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."}, set("ALL"));
-        _.member(no_ini_no_gui, rdp_and_jh_connpolicy, L, type_<bool>(), names{"show_common_cipher_list"}, desc{"Show common cipher list supported by client and server"}, set(false));
+        _.member(no_ini_no_gui, rdp_and_jh_connpolicy, L, D, type_<bool>(), names{"show_common_cipher_list"}, desc{"Show common cipher list supported by client and server"}, set(false));
 
         _.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"persistent_disk_bitmap_cache"}, desc{"Persistent Disk Bitmap Cache on the mod side."}, set(true));
         _.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"cache_waiting_list"}, desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
@@ -468,10 +471,9 @@ void config_spec_definition(Writer && _)
 
         _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"auto_reconnection_on_losing_target_link"}, set(false));
 
-        _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(),
+        _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, W, type_<bool>(),
                  names{"allow_session_reconnection_by_shortcut"},
-                 desc{"The use of this feature is not recommended!\n"
-                      "If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.\n"
+                 desc{"If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.\n"
                       "This feature should not be used together with the End disconnected session option (section session_probe).\n"
                       "The keyboard shortcut is fixed and cannot be changed."},
                  set(false));
@@ -535,9 +537,8 @@ void config_spec_definition(Writer && _)
 
         _.member(no_ini_no_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"use_session_probe_to_launch_remote_program"}, desc{"Use Session Probe to launch Remote Program as much as possible."}, set(true));
 
-        _.member(no_ini_no_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"replace_null_pointer_by_default_pointer"},
-            desc{"The use of this feature is not recommended!\n"
-                 "Replace an empty mouse pointer with normal pointer."}, set(false));
+        _.member(no_ini_no_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, W, type_<bool>(), names{"replace_null_pointer_by_default_pointer"},
+            desc{"Replace an empty mouse pointer with normal pointer."}, set(false));
     });
 
     _.section("protocol", [&]
@@ -586,7 +587,7 @@ void config_spec_definition(Writer && _)
 
         _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_log"}, set(false));
         _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_log_rotation"}, set(false));
-        _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<SessionProbeLogLevel>(), names{"log_level"}, set(SessionProbeLogLevel::Debug));
+        _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, D, type_<SessionProbeLogLevel>(), names{"log_level"}, set(SessionProbeLogLevel::Debug));
 
         _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{"disconnected_application_limit"}, desc{
             "(Deprecated!) This policy setting allows you to configure a time limit in milliseconds for disconnected application sessions.\n"
@@ -610,7 +611,7 @@ void config_spec_definition(Writer && _)
 
         _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{"launcher_abort_delay"}, set(2000));
 
-        _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"enable_crash_dump"}, set(false));
+        _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, D, type_<bool>(), names{"enable_crash_dump"}, set(false));
 
         _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<types::u32, 0, 1000>>(), names{"handle_usage_limit"}, set(0));
         _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<types::u32, 0, 200'000'000>>(), names{"memory_usage_limit"}, set(0));

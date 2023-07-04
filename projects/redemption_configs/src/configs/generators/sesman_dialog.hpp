@@ -40,6 +40,7 @@ namespace sesman_dialog_writer
 {
 
 using namespace cfg_attributes;
+using python_spec_writer::get_desc;
 
 template<unsigned n>
 void write_type(std::ostream& out, type_<types::fixed_string<n>>, int)

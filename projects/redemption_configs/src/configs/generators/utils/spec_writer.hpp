@@ -109,14 +109,6 @@ auto get_type(Pack const & pack)
     }
 }
 
-template<class Pack>
-std::string const& get_desc(Pack const & pack)
-{
-    static cfg_attributes::desc d{};
-    return value_or<cfg_attributes::desc>(pack, d).value;
-}
-
-
 inline bool is_empty(char const * s) { return !*s; }
 inline bool is_empty(std::string const & str) { return str.empty(); }
 template<class T> bool is_empty(cfg_attributes::types::list<T> const &) { return true; }

@@ -1508,7 +1508,6 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// The use of this feature is not recommended! <br/>
     /// If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12. <br/>
     /// This feature should not be used together with the End disconnected session option (section session_probe). <br/>
     /// The keyboard shortcut is fixed and cannot be changed. <br/>
@@ -1621,7 +1620,6 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// The use of this feature is not recommended! <br/>
     /// Replace an empty mouse pointer with normal pointer. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>

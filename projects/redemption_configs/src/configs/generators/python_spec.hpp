@@ -169,6 +169,18 @@ inline void write_section(std::ostream& out, std::string const& section_name)
     }
 }
 
+template<class Pack>
+std::string get_desc(Pack const & pack)
+{
+    cfg_attributes::desc d;
+    std::string const& s = value_or<cfg_attributes::desc>(pack, d).value;
+    auto tag = value_or<cfg_attributes::Tags>(pack, cfg_attributes::Tags()).value;
+    if (bool(tag & cfg_attributes::TagList::Workaround)) {
+        return str_concat("The use of this feature is not recommended!", s.empty() ? "" : "\n", s);
+    }
+    return s;
+}
+
 
 namespace impl
 {
