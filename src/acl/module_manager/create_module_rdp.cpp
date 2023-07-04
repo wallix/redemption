@@ -649,16 +649,17 @@ ModPack create_mod_rdp(
              || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>()
                 && not rap.windows_execute_shell_params.exe_or_file.empty())));
 
+        bool wabam_uses_translated_remoteapp
+            = ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>()
+            && ini.get<cfg::context::is_wabam>();
+
         rap.should_ignore_first_client_execute
             = rail_client_execute.should_ignore_first_client_execute();
-        rap.enable_remote_program = ((client_info.remote_program
-            || (ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>()
-                && ini.get<cfg::context::is_wabam>()))
-                && rail_is_required);
+        rap.enable_remote_program = ((client_info.remote_program || wabam_uses_translated_remoteapp)
+            && rail_is_required);
         rap.remote_program_enhanced = client_info.remote_program_enhanced;
         rap.convert_remoteapp_to_desktop = (!client_info.remote_program
-            && ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>()
-            && ini.get<cfg::context::is_wabam>()
+            && wabam_uses_translated_remoteapp
             && rail_is_required);
         rap.use_client_provided_remoteapp = ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
         rap.rail_disconnect_message_delay = ini.get<cfg::mod_rdp::remote_programs_disconnect_message_delay>();
