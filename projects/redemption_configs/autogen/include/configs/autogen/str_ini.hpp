@@ -5,10 +5,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [globals]
 
-# value: 0 or 1
-#_advanced
-#glyph_cache = 0
-
 # Warning: Service will be automatically restarted and active sessions will be disconnected
 # The port set in this field must not be already used, otherwise the service will not run.
 # Changing the port number will prevent WALLIX Access Manager from working properly.
@@ -371,6 +367,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (in seconds)
 #_advanced
 #open_session_timeout = 0
+
+# value: 0 or 1
+#_advanced
+#glyph_cache = 0
 
 # Disables supported drawing orders:
 #    0: DstBlt

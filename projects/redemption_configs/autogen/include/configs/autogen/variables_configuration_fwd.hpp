@@ -18,7 +18,6 @@ namespace cfg
         struct target_application;
         struct target_application_account;
         struct target_application_password;
-        struct glyph_cache;
         struct port;
         struct encryptionLevel;
         struct authfile;
@@ -102,6 +101,7 @@ namespace cfg
         struct rdp_compression;
         struct disconnect_on_logon_user_change;
         struct open_session_timeout;
+        struct glyph_cache;
         struct disabled_orders;
         struct enable_nla;
         struct enable_kerberos;

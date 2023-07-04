@@ -8,7 +8,6 @@
 
 namespace configs::cfg_ini_infos {
 using IniPack = Pack<
-cfg::globals::glyph_cache,
 cfg::globals::port,
 cfg::globals::encryptionLevel,
 cfg::globals::authfile,
@@ -78,6 +77,7 @@ cfg::remote_program::allow_resize_hosted_desktop,
 cfg::mod_rdp::rdp_compression,
 cfg::mod_rdp::disconnect_on_logon_user_change,
 cfg::mod_rdp::open_session_timeout,
+cfg::mod_rdp::glyph_cache,
 cfg::mod_rdp::disabled_orders,
 cfg::mod_rdp::enable_nla,
 cfg::mod_rdp::enable_kerberos,
@@ -292,7 +292,6 @@ cfg::debug::probe_client_addresses
 
 struct SectionAndName { zstring_view section; zstring_view name; };
 constexpr SectionAndName const ini_names[] = {
-{"globals"_zv, "glyph_cache"_zv},
 {"globals"_zv, "port"_zv},
 {"globals"_zv, "encryptionLevel"_zv},
 {"globals"_zv, "authfile"_zv},
@@ -362,6 +361,7 @@ constexpr SectionAndName const ini_names[] = {
 {"mod_rdp"_zv, "rdp_compression"_zv},
 {"mod_rdp"_zv, "disconnect_on_logon_user_change"_zv},
 {"mod_rdp"_zv, "open_session_timeout"_zv},
+{"mod_rdp"_zv, "glyph_cache"_zv},
 {"mod_rdp"_zv, "disabled_orders"_zv},
 {"mod_rdp"_zv, "enable_nla"_zv},
 {"mod_rdp"_zv, "enable_kerberos"_zv},

@@ -150,6 +150,7 @@ inline void write_spec_attr(std::ostream& out, spec_internal_attr attr)
     if (bool(attr & spec_internal_attr::hidden_in_gui))   out << "_hidden\n";
     if (bool(attr & spec_internal_attr::hex_in_gui))      out << "_hex\n";
     if (bool(attr & spec_internal_attr::password_in_gui)) out << "_password\n";
+    // TODO move path in config_spec.hpp
     if (bool(attr & spec_internal_attr::image_in_gui))    out << "_image=/var/wab/images/rdp-oem-logo.png\n";
     if (bool(attr & spec_internal_attr::restart_service)) out << "_adminkit\n";
     if (bool(attr & spec_internal_attr::logged_in_gui))   out << "_logged\n";

@@ -87,14 +87,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     if (0) {}
     else if (this->section_id == 1) {
         if (0) {}
-        else if (key == "glyph_cache"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::globals::glyph_cache&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
         else if (key == "port"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -676,6 +668,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::open_session_timeout&>(this->variables).value,
                 ::configs::spec_type<std::chrono::seconds>{},
+                value
+            );
+        }
+        else if (key == "glyph_cache"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::glyph_cache&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 value
             );
         }

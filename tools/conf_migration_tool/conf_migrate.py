@@ -391,6 +391,11 @@ migration_defs: List[MigrationType] = [
     (RedemptionVersion("10.3.3"), {
         'metrics': RemoveItem(),
     }),
+    (RedemptionVersion("10.5.27"), {
+        'globals': {
+            'glyph_cache': UpdateItem(section='mod_rdp'),
+        },
+    }),
 ]
 
 

@@ -5,9 +5,6 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 
 [globals]
 
-#_advanced
-glyph_cache = boolean(default=False)
-
 # Warning: Service will be automatically restarted and active sessions will be disconnected
 # The port set in this field must not be already used, otherwise the service will not run.
 # Changing the port number will prevent WALLIX Access Manager from working properly.
@@ -317,6 +314,9 @@ disconnect_on_logon_user_change = boolean(default=False)
 # (in seconds)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
+
+#_advanced
+glyph_cache = boolean(default=False)
 
 # Disables supported drawing orders:
 # &nbsp; &nbsp;    0: DstBlt

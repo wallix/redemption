@@ -192,7 +192,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::enable_osd>(true);
     ini.set<cfg::globals::enable_osd_display_remote_target>(true);
     ini.set<cfg::globals::encryptionLevel>(Level::high);
-    ini.set<cfg::globals::glyph_cache>(true);
     ini.set_acl<cfg::globals::host>(cs);
     ini.set_acl<cfg::globals::host>(s);
     ini.set<cfg::globals::keepalive_grace_delay>(std::chrono::minutes{1});
@@ -217,6 +216,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::globals::target_user>(s);
     ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
+    ini.set<cfg::mod_rdp::glyph_cache>(true);
     ini.set<cfg::mod_rdp::allow_channels>(cslist);
     ini.set<cfg::mod_rdp::allow_channels>(slist);
     ini.set<cfg::mod_rdp::alternate_shell>(cs);

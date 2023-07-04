@@ -197,14 +197,6 @@ namespace cfg
         using mapped_type = std::string;
         type value {  };
     };
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct globals::glyph_cache {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
-    };
     /// Warning: Service will be automatically restarted and active sessions will be disconnected <br/>
     /// The port set in this field must not be already used, otherwise the service will not run. <br/>
     /// Changing the port number will prevent WALLIX Access Manager from working properly. <br/>
@@ -881,6 +873,14 @@ namespace cfg
         using type = std::chrono::seconds;
         using mapped_type = std::chrono::seconds;
         type value { 0 };
+    };
+    /// type: bool <br/>
+    /// default: false <br/>
+    struct mod_rdp::glyph_cache {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
+        using type = bool;
+        using mapped_type = bool;
+        type value { false };
     };
     /// Disables supported drawing orders: <br/>
     ///    0: DstBlt <br/>
@@ -4908,7 +4908,6 @@ struct globals
 , cfg::globals::authentication_timeout
 , cfg::globals::close_timeout
 , cfg::globals::rdp_keepalive_connection_interval
-, cfg::globals::glyph_cache
 , cfg::globals::port
 , cfg::globals::encryptionLevel
 , cfg::globals::trace_type
@@ -4995,6 +4994,7 @@ struct mod_rdp
 , cfg::mod_rdp::effective_krb_armoring_password
 , cfg::mod_rdp::rdp_compression
 , cfg::mod_rdp::disconnect_on_logon_user_change
+, cfg::mod_rdp::glyph_cache
 , cfg::mod_rdp::disabled_orders
 , cfg::mod_rdp::enable_nla
 , cfg::mod_rdp::enable_kerberos

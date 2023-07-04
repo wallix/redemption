@@ -20,7 +20,6 @@ template<> struct sesman_and_spec_type<cfg::globals::target_user> { using type =
 template<> struct sesman_and_spec_type<cfg::globals::target_application> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::globals::target_application_account> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::globals::target_application_password> { using type = std::string; };
-template<> struct sesman_and_spec_type<cfg::globals::glyph_cache> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::globals::port> { using type = unsigned; };
 template<> struct sesman_and_spec_type<cfg::globals::encryptionLevel> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::globals::authfile> { using type = std::string; };
@@ -92,6 +91,7 @@ template<> struct sesman_and_spec_type<cfg::remote_program::allow_resize_hosted_
 template<> struct sesman_and_spec_type<cfg::mod_rdp::rdp_compression> { using type = RdpCompression; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::disconnect_on_logon_user_change> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::open_session_timeout> { using type = std::chrono::seconds; };
+template<> struct sesman_and_spec_type<cfg::mod_rdp::glyph_cache> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::disabled_orders> { using type = ::configs::spec_types::list<unsigned>; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::enable_nla> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::enable_kerberos> { using type = bool; };

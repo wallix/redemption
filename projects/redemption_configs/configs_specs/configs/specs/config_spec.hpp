@@ -183,7 +183,6 @@ void config_spec_definition(Writer && _)
         _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L, type_<std::string>(), names{"target_application_account"});
         _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, NL, type_<std::string>(), names{"target_application_password"});
 
-        _.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"glyph_cache"}, set(false));
         _.member(advanced_in_gui | iptables_in_gui | logged_in_gui, no_sesman, L, type_<types::unsigned_>(), names{"port"}, desc{"Warning: Service will be automatically restarted and active sessions will be disconnected\nThe port set in this field must not be already used, otherwise the service will not run.\nChanging the port number will prevent WALLIX Access Manager from working properly."}, set(3389));
         _.member(advanced_in_gui, no_sesman, L, type_<Level>(), spec::type_<std::string>(), names{"encryptionLevel"}, set(Level::low));
         _.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"authfile"}, set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
@@ -358,6 +357,8 @@ void config_spec_definition(Writer && _)
         _.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"disconnect_on_logon_user_change"}, set(false));
 
         _.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"open_session_timeout"}, set(0));
+
+        _.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"glyph_cache"}, set(false));
 
         _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, D, type_<types::list<types::unsigned_>>(), names{"disabled_orders"}, desc{disabled_orders_desc});
 

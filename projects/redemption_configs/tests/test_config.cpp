@@ -88,7 +88,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
@@ -181,6 +180,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::glyph_cache>());
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
@@ -274,7 +274,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     // test we can read a config file with a global section
     std::ofstream(wf.c_str()) <<
         "[globals]\n"
-        "glyph_cache=yes\n"
         "port=3390\n"
         "encryptionLevel=low\n"
         "trace_type=2\n"
@@ -308,6 +307,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "fast_path=true\n"
         "\n"
         "[mod_rdp]\n"
+        "glyph_cache=yes\n"
         "disconnect_on_logon_user_change=yes\n"
         "enable_nla=yes\n"
         "open_session_timeout=45\n"
@@ -360,7 +360,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
@@ -450,6 +449,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::glyph_cache>());
     RED_CHECK_EQUAL("audin",                          ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::fast_path>());
@@ -554,7 +554,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::medium,                    ini.get<cfg::globals::encryptionLevel>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
@@ -641,6 +640,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::glyph_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     RED_CHECK_EQUAL("*docs",                          ini.get<cfg::mod_rdp::proxy_managed_drives>());
@@ -719,7 +719,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::high,                      ini.get<cfg::globals::encryptionLevel>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
@@ -836,7 +836,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     std::ofstream(wf.c_str()) <<
         " [ globals ] \n"
         " bitmap_cache\t= no \n"
-        " glyph_cache = no \n"
         "encryptionLevel=high\n"
         "trace_type=2\n"
         "listen_address=127.0.0.1\n"
@@ -856,6 +855,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
         "persist_bitmap_cache_on_disk=no\n"
         "bitmap_compression=false\n"
         "\t[mod_rdp]\n"
+        " glyph_cache = no \n"
         "rdp_compression=0\n"
         "bogus_sc_net_size=no\n"
         "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE   \n"
@@ -888,7 +888,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::high,                      ini.get<cfg::globals::encryptionLevel>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
@@ -967,6 +966,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::glyph_cache>());
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
@@ -1031,7 +1031,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
@@ -1111,6 +1110,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::glyph_cache>());
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
@@ -1148,12 +1148,12 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
         "listen_address=192.168.1.1\n"
         "certificate_password=\n"
         "enable_transparent_mode=yes\n"
-        "glyph_cache=yes\n"
         "[client]\n"
         "bitmap_compression=no\n"
         "persist_bitmap_cache_on_disk=yes\n"
         "bogus_user_id=yes\n"
         "[mod_rdp]\n"
+        "glyph_cache=yes\n"
         "persist_bitmap_cache_on_disk=yes\n"
         "proxy_managed_drives=docs,apps\n"
         "[session_probe]\n"
@@ -1176,7 +1176,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
@@ -1256,6 +1255,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::glyph_cache>());
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
@@ -1305,7 +1305,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
@@ -1386,6 +1385,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::glyph_cache>());
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
@@ -1437,7 +1437,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
@@ -1517,6 +1516,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::glyph_cache>());
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
