@@ -190,6 +190,7 @@ namespace cfg
         struct server_cert_failure_message;
         struct server_cert_error_message;
         struct hide_client_name;
+        struct use_license_store;
         struct bogus_ios_rdpdr_virtual_channel;
         struct enable_rdpdr_data_analysis;
         struct remoteapp_bypass_legal_notice_delay;
@@ -203,7 +204,6 @@ namespace cfg
         struct server_cert;
         struct server_cert_response;
         struct session_shadowing_support;
-        struct use_license_store;
         struct enable_remotefx;
         struct accept_monitor_layout_change_if_capture_is_not_started;
         struct enable_restricted_admin_mode;

@@ -1310,6 +1310,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "use_license_store"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::use_license_store&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
         else if (key == "bogus_ios_rdpdr_virtual_channel"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -1386,14 +1394,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::session_shadowing_support&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "use_license_store"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::use_license_store&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );

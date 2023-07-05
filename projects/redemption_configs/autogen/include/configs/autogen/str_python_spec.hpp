@@ -692,7 +692,12 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 server_cert_error_message = integer(min=0, max=7, default=1)
 
 # Do not transmit client machine name or RDP server.
-hide_client_name = boolean(default=False)
+# If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host.
+hide_client_name = boolean(default=True)
+
+# Stores CALs issued by the terminal servers.
+#_advanced
+use_license_store = boolean(default=True)
 
 bogus_ios_rdpdr_virtual_channel = boolean(default=True)
 
@@ -730,10 +735,6 @@ wabam_uses_translated_remoteapp = boolean(default=False)
 # Enables Session Shadowing Support.
 #_advanced
 session_shadowing_support = boolean(default=True)
-
-# Stores CALs issued by the terminal servers.
-#_advanced
-use_license_store = boolean(default=True)
 
 # Enables support of the remoteFX codec.
 #_hidden
