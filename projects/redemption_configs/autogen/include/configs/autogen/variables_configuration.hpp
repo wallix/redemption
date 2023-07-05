@@ -1305,7 +1305,7 @@ namespace cfg
         type value { REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT };
     };
     /// Do not transmit client machine name to RDP server. <br/>
-    /// If Per-Device licensing mode is configured on the RD host, this Bastion will consume a license for all of these connections to the RD host. <br/>
+    /// If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::hide_client_name {
