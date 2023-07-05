@@ -1304,14 +1304,23 @@ namespace cfg
         using mapped_type = ::configs::spec_types::fixed_string;
         type value { REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT };
     };
-    /// Do not transmit client machine name or RDP server. <br/>
+    /// Do not transmit client machine name to RDP server. <br/>
     /// type: bool <br/>
-    /// default: false <br/>
+    /// default: true <br/>
     struct mod_rdp::hide_client_name {
         static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
         using mapped_type = bool;
-        type value { false };
+        type value { true };
+    };
+    /// Stores CALs issued by the terminal servers. <br/>
+    /// type: bool <br/>
+    /// default: true <br/>
+    struct mod_rdp::use_license_store {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
+        using type = bool;
+        using mapped_type = bool;
+        type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
@@ -1397,15 +1406,6 @@ namespace cfg
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::session_shadowing_support {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
-    /// Stores CALs issued by the terminal servers. <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct mod_rdp::use_license_store {
         static constexpr unsigned sesman_proxy_communication_flags = 0b00;
         using type = bool;
         using mapped_type = bool;
@@ -5024,6 +5024,7 @@ struct mod_rdp
 , cfg::mod_rdp::application_driver_firefox_uia_script
 , cfg::mod_rdp::application_driver_ie_script
 , cfg::mod_rdp::hide_client_name
+, cfg::mod_rdp::use_license_store
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
 , cfg::mod_rdp::enable_rdpdr_data_analysis
 , cfg::mod_rdp::log_only_relevant_clipboard_activities
@@ -5031,7 +5032,6 @@ struct mod_rdp
 , cfg::mod_rdp::split_domain
 , cfg::mod_rdp::wabam_uses_translated_remoteapp
 , cfg::mod_rdp::session_shadowing_support
-, cfg::mod_rdp::use_license_store
 , cfg::mod_rdp::enable_remotefx
 , cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started
 , cfg::mod_rdp::enable_restricted_admin_mode

@@ -128,6 +128,7 @@ template<> struct sesman_and_spec_type<cfg::mod_rdp::application_driver_chrome_u
 template<> struct sesman_and_spec_type<cfg::mod_rdp::application_driver_firefox_uia_script> { using type = ::configs::spec_types::fixed_string; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::application_driver_ie_script> { using type = ::configs::spec_types::fixed_string; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::hide_client_name> { using type = bool; };
+template<> struct sesman_and_spec_type<cfg::mod_rdp::use_license_store> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::enable_rdpdr_data_analysis> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay> { using type = std::chrono::milliseconds; };
@@ -137,7 +138,6 @@ template<> struct sesman_and_spec_type<cfg::mod_rdp::experimental_fix_too_long_c
 template<> struct sesman_and_spec_type<cfg::mod_rdp::split_domain> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::wabam_uses_translated_remoteapp> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::session_shadowing_support> { using type = bool; };
-template<> struct sesman_and_spec_type<cfg::mod_rdp::use_license_store> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::enable_remotefx> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::enable_restricted_admin_mode> { using type = bool; };

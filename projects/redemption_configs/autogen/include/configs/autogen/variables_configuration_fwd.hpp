@@ -138,6 +138,7 @@ namespace cfg
         struct application_driver_firefox_uia_script;
         struct application_driver_ie_script;
         struct hide_client_name;
+        struct use_license_store;
         struct bogus_ios_rdpdr_virtual_channel;
         struct enable_rdpdr_data_analysis;
         struct remoteapp_bypass_legal_notice_delay;
@@ -147,7 +148,6 @@ namespace cfg
         struct split_domain;
         struct wabam_uses_translated_remoteapp;
         struct session_shadowing_support;
-        struct use_license_store;
         struct enable_remotefx;
         struct accept_monitor_layout_change_if_capture_is_not_started;
         struct enable_restricted_admin_mode;

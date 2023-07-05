@@ -439,8 +439,13 @@ application_driver_firefox_uia_script = string(max=256, default=')gen_config_ini
 #_hidden
 application_driver_ie_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(')
 
-# Do not transmit client machine name or RDP server.
-hide_client_name = boolean(default=False)
+# Do not transmit client machine name to RDP server.<br/>
+# <br/>
+hide_client_name = boolean(default=True)
+
+# Stores CALs issued by the terminal servers.
+#_advanced
+use_license_store = boolean(default=True)
 
 bogus_ios_rdpdr_virtual_channel = boolean(default=True)
 
@@ -476,10 +481,6 @@ wabam_uses_translated_remoteapp = boolean(default=False)
 # Enables Session Shadowing Support.
 #_advanced
 session_shadowing_support = boolean(default=True)
-
-# Stores CALs issued by the terminal servers.
-#_advanced
-use_license_store = boolean(default=True)
 
 # Enables support of the remoteFX codec.
 #_hidden
