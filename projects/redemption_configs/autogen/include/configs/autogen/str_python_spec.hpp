@@ -439,8 +439,8 @@ application_driver_firefox_uia_script = string(max=256, default=')gen_config_ini
 #_hidden
 application_driver_ie_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(')
 
-# Do not transmit client machine name to RDP server.<br/>
-# <br/>
+# Do not transmit client machine name to RDP server.
+# If Per-Device licensing mode is configured on the RD host, this Bastion will consume a license for all of these connections to the RD host.
 hide_client_name = boolean(default=True)
 
 # Stores CALs issued by the terminal servers.
