@@ -5,7 +5,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [globals]
 
-# Warning: Service will be automatically restarted and active sessions will be disconnected
+# Warning: Service will be automatically restarted and active sessions will be disconnected.
 # The port set in this field must not be already used, otherwise the service will not run.
 # Changing the port number will prevent WALLIX Access Manager from working properly.
 # min = 0
@@ -279,7 +279,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_suppress_output = 1
 
 # [Not configured]: Compatible with more RDP clients (less secure)
-# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
+# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
+# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
 #ssl_cipher_list = HIGH:!ADH:!3DES:!SHA
 
 # value: 0 or 1

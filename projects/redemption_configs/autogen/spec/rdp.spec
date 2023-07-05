@@ -152,11 +152,11 @@ bogus_monitor_layout_treatment = boolean(default=False)
 #_advanced
 krb_armoring_account = string(default='')
 
-# Realm to be used for armoring Kerberos tickets. 
+# Realm to be used for armoring Kerberos tickets.
 #_advanced
 krb_armoring_realm = string(default='')
 
-# Fallback username to be used for armoring Kerberos tickets. 
+# Fallback username to be used for armoring Kerberos tickets.
 #_advanced
 krb_armoring_fallback_user = string(default='')
 

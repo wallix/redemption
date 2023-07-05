@@ -197,7 +197,7 @@ namespace cfg
         using mapped_type = std::string;
         type value {  };
     };
-    /// Warning: Service will be automatically restarted and active sessions will be disconnected <br/>
+    /// Warning: Service will be automatically restarted and active sessions will be disconnected. <br/>
     /// The port set in this field must not be already used, otherwise the service will not run. <br/>
     /// Changing the port number will prevent WALLIX Access Manager from working properly. <br/>
     /// type: unsigned <br/>
@@ -727,7 +727,8 @@ namespace cfg
         type value { true };
     };
     /// [Not configured]: Compatible with more RDP clients (less secure) <br/>
-    /// HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure) <br/>
+    /// HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure) <br/>
+    /// HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure) <br/>
     /// type: std::string <br/>
     /// default: "HIGH:!ADH:!3DES:!SHA" <br/>
     struct client::ssl_cipher_list {
