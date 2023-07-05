@@ -6128,11 +6128,13 @@ public:
                 "SessionProbeVirtualChannel::process_event: "
                     "Force full screen update. Rect=(0, 0, %u, %u)",
                 this->negociation_result.front_width, this->negociation_result.front_height);
-                if (this->bogus_refresh_rect && this->monitor_count) {
-                    this->rdp_suppress_display_updates();
-                    this->rdp_allow_display_updates(0, 0,
-                        this->negociation_result.front_width, this->negociation_result.front_height);
-                }
+
+            if (this->bogus_refresh_rect && this->monitor_count) {
+                this->rdp_suppress_display_updates();
+                this->rdp_allow_display_updates(0, 0,
+                    this->negociation_result.front_width, this->negociation_result.front_height);
+            }
+
             this->rdp_input_invalidate(Rect(0, 0,
                 this->negociation_result.front_width, this->negociation_result.front_height));
         }

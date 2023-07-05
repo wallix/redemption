@@ -455,7 +455,7 @@ enum {
 //   Store Apps running on Windows 8.1. This value must be calculated such that
 //   the effective maximum height of a Windows Store App is always greater than
 //   768 pixels, otherwise the app will not start.
-//   <7> The deviceScaleFactor field is processed only in Windows 8.1.
+//   <7> The deviceScaleFactor field is processed only in Windows 8.1 and above.
 
 struct CSCore {
     // header

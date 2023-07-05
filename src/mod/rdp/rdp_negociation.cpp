@@ -259,8 +259,7 @@ RdpNegociation::RdpNegociation(
     , build_number(info.build)
     , forward_build_number(mod_rdp_params.forward_client_build_number)
 {
-    this->negociation_result.front_width = info.screen_info.width;
-    this->negociation_result.front_width -= this->negociation_result.front_width % 4;
+    this->negociation_result.front_width = info.screen_info.width - info.screen_info.width % 4;
     this->negociation_result.front_height = info.screen_info.height;
 
     if (this->cbAutoReconnectCookie) {
@@ -811,7 +810,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
         [this](StreamSize<65536-1024> /*maxlen*/, OutStream & stream) {
             // 216: optional parameters up to serverSelectedProtocol
             // 234: optional parameters up to deviceScaleFactor
-            const uint16_t cs_core_length = (allow_scale_factor && this->device_scale_factor > 0)
+            const uint16_t cs_core_length = (this->allow_scale_factor && this->device_scale_factor > 0)
                 ? 234 : 216;
 
             GCC::UserData::CSCore cs_core(cs_core_length);
@@ -1149,7 +1148,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 //}
                 this->cs_monitor.emit(stream);
 
-                if (allow_scale_factor
+                if (this->allow_scale_factor
                  && this->cs_monitor.monitorCount == this->cs_monitor_ex.monitorCount
                 ) {
                     this->cs_monitor_ex.log("Sending to server");

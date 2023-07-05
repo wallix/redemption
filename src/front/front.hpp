@@ -1783,14 +1783,13 @@ public:
                     break;
                     case CS_MONITOR:
                     {
-                        GCC::UserData::CSMonitor & cs_monitor =
-                            this->client_info.cs_monitor;
+                        GCC::UserData::CSMonitor & cs_monitor = this->client_info.cs_monitor;
                         cs_monitor.recv(f.payload);
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             cs_monitor.log("Front::incoming: Receiving from Client");
                         }
 
-                        Rect client_monitors_rect = this->client_info.cs_monitor.get_rect();
+                        Rect client_monitors_rect = cs_monitor.get_rect();
                         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
                             "Front::incoming: MonitorsRect=(%d, %d, %d, %d)",
                             client_monitors_rect.x, client_monitors_rect.y,
@@ -1804,8 +1803,7 @@ public:
                     break;
                     case CS_MONITOR_EX:
                     {
-                        GCC::UserData::CSMonitorEx & cs_monitor_ex =
-                            this->client_info.cs_monitor_ex;
+                        GCC::UserData::CSMonitorEx & cs_monitor_ex = this->client_info.cs_monitor_ex;
                         cs_monitor_ex.recv(f.payload);
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             cs_monitor_ex.log("Front::incoming: Receiving from Client");
@@ -4045,16 +4043,19 @@ public:
     }   // void send_savesessioninfo()
 
 private:
-    void send_monitor_layout() {
-        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-            this->client_info.cs_monitor.monitorCount &&
-            this->client_info.remote_program) {
+    void send_monitor_layout()
+    {
+        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>()
+         && this->client_info.cs_monitor.monitorCount
+         && this->client_info.remote_program
+        ) {
             LOG(LOG_WARNING, "Front::send_monitor_layout: RemoteApp in multimon mode, but the use of multiple monitors is not allowed. You may experience display issues!");
         }
 
-        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() ||
-            !this->client_info.cs_monitor.monitorCount ||
-            !this->client_support_monitor_layout_pdu) {
+        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>()
+         || !this->client_info.cs_monitor.monitorCount
+         || !this->client_support_monitor_layout_pdu
+        ) {
             return;
         }
 
