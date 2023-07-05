@@ -1542,16 +1542,28 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT };
     };
-    /// Do not transmit client machine name or RDP server. <br/>
+    /// Do not transmit client machine name to RDP server. <br/>
+    /// If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host. <br/>
     /// type: bool <br/>
-    /// default: false <br/>
+    /// default: true <br/>
     struct mod_rdp::hide_client_name {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value { false };
+        type value { true };
+    };
+    /// Stores CALs issued by the terminal servers. <br/>
+    /// type: bool <br/>
+    /// default: true <br/>
+    struct mod_rdp::use_license_store {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
@@ -1652,17 +1664,6 @@ namespace cfg
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::session_shadowing_support {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { true };
-    };
-    /// Stores CALs issued by the terminal servers. <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct mod_rdp::use_license_store {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = bool;
@@ -5781,6 +5782,7 @@ struct mod_rdp
 , cfg::mod_rdp::application_driver_firefox_uia_script
 , cfg::mod_rdp::application_driver_ie_script
 , cfg::mod_rdp::hide_client_name
+, cfg::mod_rdp::use_license_store
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
 , cfg::mod_rdp::enable_rdpdr_data_analysis
 , cfg::mod_rdp::log_only_relevant_clipboard_activities
@@ -5788,7 +5790,6 @@ struct mod_rdp
 , cfg::mod_rdp::split_domain
 , cfg::mod_rdp::wabam_uses_translated_remoteapp
 , cfg::mod_rdp::session_shadowing_support
-, cfg::mod_rdp::use_license_store
 , cfg::mod_rdp::enable_remotefx
 , cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started
 , cfg::mod_rdp::enable_restricted_admin_mode

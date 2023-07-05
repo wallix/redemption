@@ -435,7 +435,12 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_firefox_uia_script"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_FIREFOX_UIA_SCRIPT)));
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_ie_script"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT)));
 
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"hide_client_name"}, desc{"Do not transmit client machine name or RDP server."}, set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"hide_client_name"}, desc{
+            "Do not transmit client machine name to RDP server.\n"
+            "If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host."
+        }, set(true));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"use_license_store"}, desc{"Stores CALs issued by the terminal servers."}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"bogus_ios_rdpdr_virtual_channel"}, set(true));
 
@@ -461,8 +466,6 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"wabam_uses_translated_remoteapp"}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_shadowing_support"}, desc{"Enables Session Shadowing Support."}, set(true));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"use_license_store"}, desc{"Stores CALs issued by the terminal servers."}, set(true));
 
         W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"enable_remotefx"}, desc{"Enables support of the remoteFX codec."}, set(false));
 

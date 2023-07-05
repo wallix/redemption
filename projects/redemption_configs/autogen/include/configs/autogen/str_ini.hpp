@@ -504,9 +504,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #application_driver_ie_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(
 
-# Do not transmit client machine name or RDP server.
+# Do not transmit client machine name to RDP server.
+# If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host.
 # value: 0 or 1
-#hide_client_name = 0
+#hide_client_name = 1
+
+# Stores CALs issued by the terminal servers.
+# value: 0 or 1
+#_advanced
+#use_license_store = 1
 
 # value: 0 or 1
 #bogus_ios_rdpdr_virtual_channel = 1
@@ -548,11 +554,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #session_shadowing_support = 1
-
-# Stores CALs issued by the terminal servers.
-# value: 0 or 1
-#_advanced
-#use_license_store = 1
 
 # Enables support of the remoteFX codec.
 # value: 0 or 1
