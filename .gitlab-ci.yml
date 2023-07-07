@@ -2,6 +2,7 @@ variables:
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
   IMAGE_REDEMPTION_ANALYZE: redemption-analyze
+  IMAGE_SESMAN_TESTS: sshproxies-tests  # image from sshproxies repo
   TESTDIR: test_tmpdir
 
 stages:
@@ -20,6 +21,22 @@ build-analyze-image:
     - docker tag ${IMAGE_REDEMPTION_ANALYZE} ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
     - docker push ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
   when: manual
+
+test-sesman:
+  stage: build
+  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
+  script:
+    - cd tools/sesman/
+    - coverage run -m unittest discover -t . tests
+    - coverage report
+    - coverage xml
+  artifacts:
+    paths:
+      - tools/sesman/coverage.xml
+    expire_in: 1 day
+  only:
+    - merge_requests
+    - future
 
 build-project:
   stage: build
@@ -62,7 +79,7 @@ build-analyze:
 
 sonarqube-check:
   stage: build
-  needs: [build-project]
+  needs: [build-project, test-sesman]
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
