@@ -143,46 +143,42 @@ void ModWrapper::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
 
     this->get_mod().rdp_input_scancode(flags, scancode, event_time, keymap);
 
-    if (this->enable_osd) {
-        Inifile const& ini = this->ini;
+    if (this->enable_osd && scancode == Scancode::F12 && this->enable_osd_display_remote_target) {
+        bool const f12_released = bool(flags & KbdFlags::Release);
+        if (this->target_info_is_shown && f12_released) {
+            this->clear_osd_message();
+        }
+        else if (!this->target_info_is_shown && !f12_released) {
+            std::string msg;
+            msg.reserve(64);
 
-        if (scancode == Scancode::F12 && this->enable_osd_display_remote_target) {
-            bool const f12_released = bool(flags & KbdFlags::Release);
-            if (this->target_info_is_shown && f12_released) {
+            if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
+                str_append(msg, ini.get<cfg::globals::target_user>(), '@');
+            }
+
+            msg += ini.get<cfg::globals::target_device>();
+
+            if (this->end_time_session.time_since_epoch().count()) {
+                const auto elapsed_time = this->end_time_session - this->time_base.monotonic_time;
+                // only if "reasonable" time (1 year)
+                using namespace std::chrono_literals;
+                if (elapsed_time < MonotonicTimePoint::duration(60s*60*24*366)) {
+                    append_time_before_closing(
+                        msg, Translator(language(ini)),
+                        std::chrono::duration_cast<std::chrono::seconds>(elapsed_time)
+                    );
+                }
+            }
+
+            if (msg != this->osd_message) {
                 this->clear_osd_message();
             }
-            else if (!this->target_info_is_shown && !f12_released) {
-                std::string msg;
-                msg.reserve(64);
 
-                if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
-                    str_append(msg, ini.get<cfg::globals::target_user>(), '@');
-                }
-
-                msg += ini.get<cfg::globals::target_device>();
-
-                if (this->end_time_session.time_since_epoch().count()) {
-                    const auto elapsed_time = this->end_time_session - this->time_base.monotonic_time;
-                    // only if "reasonable" time (1 year)
-                    using namespace std::chrono_literals;
-                    if (elapsed_time < MonotonicTimePoint::duration(60s*60*24*366)) {
-                        append_time_before_closing(
-                            msg, Translator(language(ini)),
-                            std::chrono::duration_cast<std::chrono::seconds>(elapsed_time)
-                        );
-                    }
-                }
-
-                if (msg != this->osd_message) {
-                    this->clear_osd_message();
-                }
-
-                if (!msg.empty()) {
-                    this->osd_message = std::move(msg);
-                    this->color = RDPColor::from(0);
-                    this->draw_osd_message(false);
-                    this->target_info_is_shown = true;
-                }
+            if (!msg.empty()) {
+                this->osd_message = std::move(msg);
+                this->color = RDPColor::from(0);
+                this->draw_osd_message(false);
+                this->target_info_is_shown = true;
             }
         }
     }

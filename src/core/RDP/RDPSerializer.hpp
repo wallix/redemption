@@ -124,7 +124,7 @@ public:
     static constexpr std::size_t SERIALIZER_HEADER_SIZE = 106;
 
     // Packet more than 16384 bytes can cause MSTSC to crash.
-    enum { MAX_ORDERS_SIZE = 16384 };
+    static constexpr std::size_t MAX_ORDERS_SIZE = 16384;
 
 protected:
     OutStream & stream_orders;
@@ -179,10 +179,9 @@ public:
     , bitmap_cache_version(bitmap_cache_version)
     , use_bitmap_comp(use_bitmap_comp)
     , use_compact_packets(use_compact_packets)
-    , max_data_block_size(std::min(max_data_block_size,
-                                   (experimental_enable_serializer_data_block_size_limit ?
-                                    static_cast<decltype(max_data_block_size)>(MAX_ORDERS_SIZE) :
-                                    std::numeric_limits<decltype(max_data_block_size)>::max())))
+    , max_data_block_size(experimental_enable_serializer_data_block_size_limit
+        ? std::min(max_data_block_size, MAX_ORDERS_SIZE)
+        : max_data_block_size)
     , bmp_cache(bmp_cache)
     , glyph_cache(glyph_cache)
     , verbose{verbose}

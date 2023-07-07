@@ -4782,25 +4782,21 @@ private:
             this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
         }
         else {
-            // REVERT FIX
-            Bitmap new_bmp(bmp.bpp(), bmp);
-            // Bitmap new_bmp(this->client_info.screen_info.bpp, bmp);
-
             size_t const serializer_max_data_block_size = this->orders.graphics_update_pdu().get_max_data_block_size();
 
-            if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * underlying_cast(new_bmp.bpp())) > serializer_max_data_block_size) { /*NOLINT*/
+            if (static_cast<size_t>(bmp.cx() * bmp.cy() * underlying_cast(bmp.bpp())) > serializer_max_data_block_size) { /*NOLINT*/
                 const uint16_t max_image_width
                   = std::min<uint16_t>(
-                        ((serializer_max_data_block_size / nb_bytes_per_pixel(new_bmp.bpp())) & ~3),
-                        new_bmp.cx()
+                        ((serializer_max_data_block_size / nb_bytes_per_pixel(bmp.bpp())) & ~3),
+                        bmp.cx()
                     );
-                const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nb_bytes_per_pixel(new_bmp.bpp()));
+                const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nb_bytes_per_pixel(bmp.bpp()));
 
                 contiguous_sub_rect_f(
-                    CxCy{new_bmp.cx(), new_bmp.cy()},
+                    CxCy{bmp.cx(), bmp.cy()},
                     SubCxCy{max_image_width, max_image_height},
                     [&](Rect subrect){
-                        Bitmap sub_image(new_bmp, subrect);
+                        Bitmap sub_image(bmp, subrect);
 
                         StaticOutStream<65535> bmp_stream;
                         sub_image.compress(bmp.bpp(), bmp_stream);
@@ -4827,16 +4823,16 @@ private:
             }
             else {
                 StaticOutStream<65535> bmp_stream;
-                new_bmp.compress(bmp.bpp(), bmp_stream);
+                bmp.compress(bmp.bpp(), bmp_stream);
 
                 RDPBitmapData target_bitmap_data = bitmap_data;
 
-                target_bitmap_data.bits_per_pixel = safe_int(new_bmp.bpp());
+                target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
                 target_bitmap_data.flags = uint16_t(BITMAP_COMPRESSION)
                                          | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                 target_bitmap_data.bitmap_length = bmp_stream.get_offset();
 
-                this->gd->draw(target_bitmap_data, new_bmp);
+                this->gd->draw(target_bitmap_data, bmp);
             }
         }
     }
@@ -4892,40 +4888,41 @@ private:
             std::vector<Bitmap> image_collection;
 
             auto get_image = [&image_collection](uint16_t width, uint16_t height, BitsPerPixel bpp, uint32_t color) -> Bitmap const & {
-                    std::vector<Bitmap>::iterator iter = std::find_if(image_collection.begin(), image_collection.end(),
-                        [width, height](Bitmap const & bitmap) {
-                                return ((bitmap.cx() == width) && (bitmap.cy() == height));
-                            });
-                    if (image_collection.end() != iter) {
-                        return *iter;
-                    }
+                std::vector<Bitmap>::iterator iter = std::find_if(
+                    image_collection.begin(), image_collection.end(),
+                    [width, height](Bitmap const & bitmap) {
+                        return bitmap.cx() == width && bitmap.cy() == height;
+                    });
+                if (image_collection.end() != iter) {
+                    return *iter;
+                }
 
-                    unsigned int const Bpp = nb_bytes_per_pixel(bpp);
+                unsigned int const Bpp = nb_bytes_per_pixel(bpp);
 
-                    image_collection.emplace_back();
+                image_collection.emplace_back();
 
-                    Bitmap & bitmap = image_collection.back();
+                Bitmap & bitmap = image_collection.back();
 
-                    Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(bitmap, bpp, width, height);
+                Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(bitmap, bpp, width, height);
 
-                    uint8_t * begin_ptr = data.get();
-                    uint8_t * write_ptr = begin_ptr;
-                    for (uint16_t i = 0; i < width; ++i, write_ptr += Bpp) {
-                        memcpy(write_ptr, &color, Bpp);
-                    }
+                uint8_t * begin_ptr = data.get();
+                uint8_t * write_ptr = begin_ptr;
+                for (uint16_t i = 0; i < width; ++i, write_ptr += Bpp) {
+                    memcpy(write_ptr, &color, Bpp);
+                }
 
-                    unsigned int const line_size = data.line_size();
+                unsigned int const line_size = data.line_size();
 
-                    write_ptr = data.get() + line_size;
-                    for (uint16_t i = 1; i < height; ++i, write_ptr += line_size) {
-                        memcpy(write_ptr, begin_ptr, line_size);
-                    }
+                write_ptr = data.get() + line_size;
+                for (uint16_t i = 1; i < height; ++i, write_ptr += line_size) {
+                    memcpy(write_ptr, begin_ptr, line_size);
+                }
 
-                    StaticOutStream<65535> bmp_stream;
-                    bitmap.compress(bpp, bmp_stream);
+                StaticOutStream<65535> bmp_stream;
+                bitmap.compress(bpp, bmp_stream);
 
-                    return bitmap;
-                };
+                return bitmap;
+            };
 
             for (uint32_t y = 0; y < image_rect.cy; y += max_image_height) {
                 for (uint32_t x = 0; x < image_rect.cx; x += max_image_width) {
@@ -5410,25 +5407,31 @@ public:
     }
 
 private:
-    void update_keyboard_input_mask_state() {
-        const ::KeyboardInputMaskingLevel keyboard_input_masking_level =
+    void update_keyboard_input_mask_state()
+    {
+        if (!this->capture) {
+            return;
+        }
+
+        const KeyboardInputMaskingLevel keyboard_input_masking_level =
             this->ini.get<cfg::session_log::keyboard_input_masking_level>();
 
-        if (keyboard_input_masking_level == ::KeyboardInputMaskingLevel::unmasked) return;
-
-        const bool mask_unidentified_data =
-            ((keyboard_input_masking_level ==
-                  ::KeyboardInputMaskingLevel::password_and_unidentified) ?
-             (!this->session_probe_started_) : false);
-
-        if (this->capture) {
-            this->capture->enable_kbd_input_mask(
-                    this->focus_on_password_textbox ||
-                    ((keyboard_input_masking_level == ::KeyboardInputMaskingLevel::password_and_unidentified) &&
-                     this->focus_on_unidentified_input_field) ||
-                    this->consent_ui_is_visible || this->session_locked || mask_unidentified_data
-                );
+        if (keyboard_input_masking_level == KeyboardInputMaskingLevel::unmasked) {
+            return;
         }
+
+        const bool password_and_unidentified
+          = keyboard_input_masking_level == KeyboardInputMaskingLevel::password_and_unidentified;
+
+        const bool mask_unidentified_data = password_and_unidentified && !this->session_probe_started_;
+
+        this->capture->enable_kbd_input_mask(
+            this->focus_on_password_textbox
+         || (password_and_unidentified && this->focus_on_unidentified_input_field)
+         || this->consent_ui_is_visible
+         || this->session_locked
+         || mask_unidentified_data
+        );
     }
 
 public:
