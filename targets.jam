@@ -3787,8 +3787,8 @@ test-run tests/mod/rdp/test_rdp :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(MUSL_GETTEXT)
 ;
-test-run tests/mod/rdp/test_rdp_negociation :
-  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_negociation.cpp
+test-run tests/mod/rdp/test_rdp_negociation_data :
+  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_negociation_data.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -5257,7 +5257,7 @@ alias test_rdpdr_channel : tests/mod/rdp/channels/test_rdpdr_channel ;
 alias test_sespro_channel_params : tests/mod/rdp/channels/test_sespro_channel_params ;
 alias test_virtual_channel_filter : tests/mod/rdp/channels/test_virtual_channel_filter ;
 alias test_rdp : tests/mod/rdp/test_rdp ;
-alias test_rdp_negociation : tests/mod/rdp/test_rdp_negociation ;
+alias test_rdp_negociation_data : tests/mod/rdp/test_rdp_negociation_data ;
 alias test_file_validator_service : tests/mod/test_file_validator_service ;
 alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
 alias test_pointer_loader_vnc : tests/mod/vnc/encoder/test_pointer_loader_vnc ;
@@ -5629,7 +5629,7 @@ alias tests/mod/rdp/channels.norec :
 ;
 alias tests/mod/rdp.norec :
   tests/mod/rdp/test_rdp
-  tests/mod/rdp/test_rdp_negociation
+  tests/mod/rdp/test_rdp_negociation_data
 ;
 alias tests/mod.norec :
   tests/mod/test_file_validator_service
@@ -6357,7 +6357,7 @@ explicit
   test_sespro_channel_params
   test_virtual_channel_filter
   test_rdp
-  test_rdp_negociation
+  test_rdp_negociation_data
   test_file_validator_service
   test_hextile
   test_pointer_loader_vnc
