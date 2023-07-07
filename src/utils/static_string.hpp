@@ -111,7 +111,7 @@ struct static_string
     void delayed_build(Builder&& builder)
     {
         m_len = builder(m_str);
-        assert(m_len < max_capacity());
+        assert(m_len <= max_capacity());
         m_str[m_len] = '\0';
     }
 
