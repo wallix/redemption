@@ -70,6 +70,11 @@ RED_AUTO_TEST_CASE(TestStaticString)
         return checked_int(3u);
     });
     RED_CHECK_EQUAL(s3, "abc"_av);
+
+    // test that there is no assertion
+    s3.delayed_build([&](auto&){
+        return checked_int(s3.max_capacity());
+    });
 }
 
 RED_AUTO_TEST_CASE(TestStaticStringTruncated)
