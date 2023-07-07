@@ -37,19 +37,6 @@ OcrParams ocr_params_from_ini(const Inifile & ini)
     };
 }
 
-MetaParams meta_params_from_ini(const Inifile & ini)
-{
-    return MetaParams{
-        MetaParams::EnableSessionLog(ini.get<cfg::session_log::enable_session_log>()),
-        MetaParams::HideNonPrintable(ini.get<cfg::session_log::hide_non_printable_kbd_input>()),
-
-        MetaParams::LogClipboardActivities((ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::meta) != ClipboardLogFlags::meta),
-        MetaParams::LogFileSystemActivities((ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::meta) != FileSystemLogFlags::meta),
-
-        MetaParams::LogOnlyRelevantClipboardActivities(ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>())
-    };
-}
-
 KbdLogParams kbd_log_params_capture_from_ini(const Inifile & ini)
 {
     auto const disable_keyboard_log = ini.get<cfg::capture::disable_keyboard_log>();
@@ -62,21 +49,6 @@ KbdLogParams kbd_log_params_capture_from_ini(const Inifile & ini)
         , !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlagsCP::syslog)
         , !keyboard_input_fully_masked && ini.get<cfg::session_log::enable_session_log>()
         , !keyboard_input_fully_masked
-    };
-}
-
-KbdLogParams kbd_log_params_video_from_ini(const Inifile & ini)
-{
-    auto const disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
-    auto const keyboard_input_fully_masked = (
-            ini.get<cfg::session_log::keyboard_input_masking_level>() ==
-            ::KeyboardInputMaskingLevel::fully_masked
-        );
-    return KbdLogParams{
-          !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlags::wrm)
-        , !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlags::syslog)
-        , !keyboard_input_fully_masked && ini.get<cfg::session_log::enable_session_log>()
-        , !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlags::meta)
     };
 }
 
