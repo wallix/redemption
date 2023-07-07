@@ -26,7 +26,6 @@ namespace cfg
         struct inactivity_timeout;
         struct keepalive_grace_delay;
         struct authentication_timeout;
-        struct close_timeout;
         struct trace_type;
         struct listen_address;
         struct enable_transparent_mode;
@@ -34,6 +33,7 @@ namespace cfg
         struct is_rec;
         struct enable_bitmap_update;
         struct enable_close_box;
+        struct close_timeout;
         struct enable_osd;
         struct enable_osd_display_remote_target;
         struct enable_wab_integration;

@@ -278,15 +278,6 @@ namespace cfg
         using mapped_type = std::chrono::seconds;
         type value { 120 };
     };
-    /// Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate). <br/>
-    /// type: std::chrono::seconds <br/>
-    /// default: 600 <br/>
-    struct globals::close_timeout {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = std::chrono::seconds;
-        using mapped_type = std::chrono::seconds;
-        type value { 600 };
-    };
     /// type: TraceType <br/>
     /// sesman ⇒ proxy <br/>
     /// default: TraceType::localfile_hashed <br/>
@@ -354,6 +345,15 @@ namespace cfg
         using type = bool;
         using mapped_type = bool;
         type value { true };
+    };
+    /// Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate). <br/>
+    /// type: std::chrono::seconds <br/>
+    /// default: 600 <br/>
+    struct globals::close_timeout {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
+        using type = std::chrono::seconds;
+        using mapped_type = std::chrono::seconds;
+        type value { 600 };
     };
     /// type: bool <br/>
     /// default: true <br/>

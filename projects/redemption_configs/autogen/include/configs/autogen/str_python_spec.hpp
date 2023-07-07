@@ -46,11 +46,6 @@ keepalive_grace_delay = integer(min=0, default=30)
 #_advanced
 authentication_timeout = integer(min=0, default=120)
 
-# Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
-# (in seconds)
-#_advanced
-close_timeout = integer(min=0, default=600)
-
 # Session record options.
 # &nbsp; &nbsp;   0: No encryption (faster).
 # &nbsp; &nbsp;   1: No encryption, with checksum.
@@ -77,6 +72,11 @@ enable_bitmap_update = boolean(default=True)
 
 # Show close screen.
 enable_close_box = boolean(default=True)
+
+# Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
+# (in seconds)
+#_advanced
+close_timeout = integer(min=0, default=600)
 
 #_advanced
 enable_osd = boolean(default=True)

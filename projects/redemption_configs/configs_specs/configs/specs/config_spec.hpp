@@ -285,12 +285,6 @@ _.section("globals", [&]
              set(120),
              desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."});
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"close_timeout"},
-             type_<std::chrono::seconds>(),
-             set(600),
-             desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."});
-
     _.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L,
              names{"trace_type"},
              type_<TraceType>(),
@@ -324,11 +318,18 @@ _.section("globals", [&]
              set(true),
              desc{"Support of Bitmap Update."});
 
+
     _.member(ini_and_gui, no_sesman, L,
              names{"enable_close_box"},
              type_<bool>(),
              set(true),
              desc{"Show close screen."});
+
+    _.member(advanced_in_gui, no_sesman, L,
+             names{"close_timeout"},
+             type_<std::chrono::seconds>(),
+             set(600),
+             desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."});
 
 
     _.member(advanced_in_gui, no_sesman, L,

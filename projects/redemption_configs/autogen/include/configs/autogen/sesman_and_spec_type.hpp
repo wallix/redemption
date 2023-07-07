@@ -28,7 +28,6 @@ template<> struct sesman_and_spec_type<cfg::globals::base_inactivity_timeout> { 
 template<> struct sesman_and_spec_type<cfg::globals::inactivity_timeout> { using type = std::chrono::seconds; };
 template<> struct sesman_and_spec_type<cfg::globals::keepalive_grace_delay> { using type = std::chrono::seconds; };
 template<> struct sesman_and_spec_type<cfg::globals::authentication_timeout> { using type = std::chrono::seconds; };
-template<> struct sesman_and_spec_type<cfg::globals::close_timeout> { using type = std::chrono::seconds; };
 template<> struct sesman_and_spec_type<cfg::globals::trace_type> { using type = TraceType; };
 template<> struct sesman_and_spec_type<cfg::globals::listen_address> { using type = ::configs::spec_types::ip; };
 template<> struct sesman_and_spec_type<cfg::globals::enable_transparent_mode> { using type = bool; };
@@ -36,6 +35,7 @@ template<> struct sesman_and_spec_type<cfg::globals::certificate_password> { usi
 template<> struct sesman_and_spec_type<cfg::globals::is_rec> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::globals::enable_bitmap_update> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::globals::enable_close_box> { using type = bool; };
+template<> struct sesman_and_spec_type<cfg::globals::close_timeout> { using type = std::chrono::seconds; };
 template<> struct sesman_and_spec_type<cfg::globals::enable_osd> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::globals::enable_osd_display_remote_target> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::globals::enable_wab_integration> { using type = bool; };

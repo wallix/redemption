@@ -48,11 +48,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #authentication_timeout = 120
 
-# Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
-# (in seconds)
-#_advanced
-#close_timeout = 600
-
 # Session record options.
 # min = 0, max = 2
 #   0: No encryption (faster).
@@ -84,6 +79,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Show close screen.
 # value: 0 or 1
 #enable_close_box = 1
+
+# Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
+# (in seconds)
+#_advanced
+#close_timeout = 600
 
 # value: 0 or 1
 #_advanced
