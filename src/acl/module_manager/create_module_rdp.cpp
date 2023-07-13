@@ -843,6 +843,7 @@ ModPack create_mod_rdp(
     if (ini.get<cfg::context::is_wabam>()
      && ini.get<cfg::session_probe::smart_launcher_enable_wabam_affinity>()
      && channels_authorizations.is_authorized(CHANNELS::channel_names::cliprdr)
+     && mod_rdp_params.session_probe_params.enable_session_probe
      ) {
         LOG(LOG_INFO, "Session Probe Clipboard Based Launche enables AM Affinity");
         mod_rdp_params.session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms =
