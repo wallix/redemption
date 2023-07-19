@@ -391,10 +391,10 @@ namespace ocr
                 {
                     const unsigned width = this->input.width();
                     const unsigned h = std::min(this->ih, this->input.height()) - this->y;
-                    auto first = this->extract_titles.deja_vu.begin() + this->y * width + this->x;
-                    auto last = first + width * h;
-                    for (; first != last; first += width) {
-                        std::fill(first, first + this->w, true);
+                    uint8_t* p = this->extract_titles.deja_vu.data() + this->y * width + this->x;
+                    for (unsigned i = 0; i < h; ++i) {
+                        std::fill(p, p + this->w, uint8_t(1));
+                        p += width;
                     }
                     this->extract_titles.rect_deja_vu.emplace_back(
                         mln::point2d(this->y,this->x), mln::point2d(this->y+h, this->x+this->w));
