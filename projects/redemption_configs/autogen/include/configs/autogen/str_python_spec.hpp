@@ -970,12 +970,6 @@ wrm_color_depth_selection_strategy = option(0, 1, default=1)
 #_advanced
 wrm_compression_algorithm = option(0, 1, 2, default=1)
 
-# Needed to play a video with old ffplay or VLC v1.
-# Note: Useless with mpv, MPlayer or VLC v2.
-#_advanced
-#_display_name=Bogus VLC frame rate
-bogus_vlc_frame_rate = boolean(default=True)
-
 #_advanced
 codec_id = string(default='mp4')
 

@@ -1315,7 +1315,6 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     OriginalOr<TraceType> wrm_encryption(TraceType::localfile);
     std::string wrm_compression_algorithm;  // output compression algorithm.
     std::string color_depth;
-    int bogus_vlc = 2; /* 0 = explicitly disabled, 1 = explicitly enabled */
     std::string_view msg_error;
     std::string_view codec_options;
     std::chrono::seconds video_break_interval {};
@@ -1492,13 +1491,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             .parser(cli::arg_location(codec_options)).argname("<ffmpeg-option>"),
 
         cli::option("video-codec").help("ffmpeg video codec name (flv, mp4, etc)")
-            .parser(cli::arg_location(recorder.video_params.codec)).argname("<codec>"),
-
-        cli::option("bogus-vlc").help("Needed to play a video with old ffplay or VLC v1")
-            .parser(cli::on_off_location(bogus_vlc)),
-
-        cli::option("disable-bogus-vlc")
-            .parser(cli::on_off([&](bool x){ bogus_vlc = !x; }))
+            .parser(cli::arg_location(recorder.video_params.codec)).argname("<codec>")
     );
 
     auto cl_error = [&recorder](chars_view mes, int const errnum = 1) /*NOLINT*/ {
@@ -1562,17 +1555,6 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     recorder.sequenced_video_params.break_interval = video_break_interval.count()
         ? video_break_interval
         : ini.get<cfg::video::break_interval>();
-
-    recorder.full_video_params.bogus_vlc_frame_rate = ini.get<cfg::video::bogus_vlc_frame_rate>();
-    recorder.sequenced_video_params.bogus_vlc_frame_rate = false;
-    if (1 == bogus_vlc) {
-        recorder.full_video_params.bogus_vlc_frame_rate = true;
-        recorder.sequenced_video_params.bogus_vlc_frame_rate = true;
-    }
-    if (0 == bogus_vlc) {
-        recorder.full_video_params.bogus_vlc_frame_rate = false;
-        recorder.sequenced_video_params.bogus_vlc_frame_rate = false;
-    }
     //@}
 
 

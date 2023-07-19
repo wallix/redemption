@@ -1138,13 +1138,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #wrm_compression_algorithm = 1
 
-# Needed to play a video with old ffplay or VLC v1.
-# Note: Useless with mpv, MPlayer or VLC v2.
-# value: 0 or 1
-#_advanced
-#_display_name=Bogus VLC frame rate
-#bogus_vlc_frame_rate = 1
-
 #_advanced
 #codec_id = mp4
 

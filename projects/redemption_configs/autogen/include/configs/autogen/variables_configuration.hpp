@@ -2809,17 +2809,6 @@ namespace cfg
         using mapped_type = WrmCompressionAlgorithm;
         type value { WrmCompressionAlgorithm::gzip };
     };
-    /// Needed to play a video with old ffplay or VLC v1. <br/>
-    /// Note: Useless with mpv, MPlayer or VLC v2. <br/>
-    /// type: bool <br/>
-    /// displayName: Bogus VLC frame rate <br/>
-    /// default: true <br/>
-    struct video::bogus_vlc_frame_rate {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
     /// type: std::string <br/>
     /// default: "mp4" <br/>
     struct video::codec_id {
@@ -5162,7 +5151,6 @@ struct video
 , cfg::video::disable_file_system_log
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
-, cfg::video::bogus_vlc_frame_rate
 , cfg::video::framerate
 , cfg::video::notimestamp
 , cfg::video::smart_video_cropping

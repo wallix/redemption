@@ -1853,15 +1853,6 @@ _.section("video", [&]
              set(WrmCompressionAlgorithm::gzip));
 
     _.member(advanced_in_gui, no_sesman, L,
-             names{
-                .all="bogus_vlc_frame_rate",
-                .display="Bogus VLC frame rate"
-             },
-             type_<bool>(),
-             set(true),
-             desc{"Needed to play a video with old ffplay or VLC v1.\nNote: Useless with mpv, MPlayer or VLC v2."});
-
-    _.member(advanced_in_gui, no_sesman, L,
              names{"codec_id"},
              type_<std::string>(),
              set("mp4"));

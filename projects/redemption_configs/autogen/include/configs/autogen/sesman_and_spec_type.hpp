@@ -249,7 +249,6 @@ template<> struct sesman_and_spec_type<cfg::video::disable_clipboard_log> { usin
 template<> struct sesman_and_spec_type<cfg::video::disable_file_system_log> { using type = FileSystemLogFlags; };
 template<> struct sesman_and_spec_type<cfg::video::wrm_color_depth_selection_strategy> { using type = ColorDepthSelectionStrategy; };
 template<> struct sesman_and_spec_type<cfg::video::wrm_compression_algorithm> { using type = WrmCompressionAlgorithm; };
-template<> struct sesman_and_spec_type<cfg::video::bogus_vlc_frame_rate> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::video::codec_id> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::video::framerate> { using type = ::configs::spec_types::range<unsigned, 1, 120>; };
 template<> struct sesman_and_spec_type<cfg::video::ffmpeg_options> { using type = std::string; };

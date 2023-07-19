@@ -58,16 +58,11 @@ namespace
         return res;
     }
 
-    inline ImageByInterval video_params_to_image_by_interval(
-        bool no_timestamp, bool bogus_vlc_frame_rate)
+    inline ImageByInterval video_params_to_image_by_interval(bool no_timestamp)
     {
         return no_timestamp
-            ? (bogus_vlc_frame_rate
-                ? ImageByInterval::OneWithoutTimestamp
-                : ImageByInterval::ZeroOrOneWithoutTimestamp)
-            : (bogus_vlc_frame_rate
-                ? ImageByInterval::OneWithTimestamp
-                : ImageByInterval::ZeroOrOneWithTimestamp)
+            ? ImageByInterval::ZeroOrOneWithoutTimestamp
+            : ImageByInterval::ZeroOrOneWithTimestamp
             ;
     }
 } // anonymous namespace
@@ -175,9 +170,7 @@ VideoCaptureCtx::VideoCaptureCtx(
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
 , next_trace_time(monotonic_now)
 , image_by_interval(image_by_interval)
-, has_timestamp(
-    image_by_interval == ImageByInterval::OneWithTimestamp
- || image_by_interval == ImageByInterval::ZeroOrOneWithTimestamp)
+, has_timestamp(image_by_interval == ImageByInterval::ZeroOrOneWithTimestamp)
 , video_cropper(drawable, crop_rect)
 , updatable_frame_marker_end_bitset_stream(updatable_frame_marker_end_bitset_view.data())
 , updatable_frame_marker_end_bitset_end(updatable_frame_marker_end_bitset_view.end())
@@ -368,29 +361,6 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
         };
 
         switch (this->image_by_interval) {
-            case ImageByInterval::OneWithTimestamp:
-                do {
-                    if (this->monotonic_last_time_capture >= this->next_trace_time) {
-                        preparing_timestamp_video_frame(recorder);
-                        this->next_trace_time += 1s;
-                    }
-
-                    recorder.encoding_video_frame(++this->frame_index);
-
-                    this->monotonic_last_time_capture += frame_interval;
-                    tick -= frame_interval;
-                } while (this->monotonic_last_time_capture + frame_interval <= now);
-                break;
-
-            case ImageByInterval::OneWithoutTimestamp:
-                do {
-                    recorder.encoding_video_frame(++this->frame_index);
-
-                    this->monotonic_last_time_capture += frame_interval;
-                    tick -= frame_interval;
-                } while (this->monotonic_last_time_capture + frame_interval <= now);
-                break;
-
             case ImageByInterval::ZeroOrOneWithTimestamp:
                 do {
                     if (this->monotonic_last_time_capture >= this->next_trace_time) {
@@ -462,12 +432,11 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     Drawable & drawable,
     LazyDrawablePointer & lazy_drawable_pointer,
     Rect crop_rect,
-    VideoParams const & video_params, FullVideoParams const & full_video_params)
+    VideoParams const & video_params,
+    FullVideoParams const & /*full_video_params*/ /*empty struct*/)
 : video_cap_ctx(
     capture_params.now, capture_params.real_now,
-    video_params_to_image_by_interval(
-        video_params.no_timestamp,
-        full_video_params.bogus_vlc_frame_rate),
+    video_params_to_image_by_interval(video_params.no_timestamp),
     video_params.frame_rate, drawable, lazy_drawable_pointer, crop_rect,
     video_params.updatable_frame_marker_end_bitset_view)
 , recorder(
@@ -634,8 +603,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 , monotonic_to_real(capture_params.now, capture_params.real_now)
 , video_cap_ctx(
     capture_params.now, capture_params.real_now,
-    video_params_to_image_by_interval(
-        video_params.no_timestamp, sequenced_video_params.bogus_vlc_frame_rate),
+    video_params_to_image_by_interval(video_params.no_timestamp),
     video_params.frame_rate, drawable, lazy_drawable_pointer, crop_rect,
     video_params.updatable_frame_marker_end_bitset_view)
 , vc_filename_generator(capture_params.record_path, capture_params.basename, video_params.codec)

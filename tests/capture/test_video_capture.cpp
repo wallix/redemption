@@ -122,7 +122,7 @@ namespace
         LazyDrawablePointer lazy_drawable_pointer(ptr_cache.source_pointers_view());
         VideoParams video_params{
             25, codec.name, codec.options, false, 0};
-        SequencedVideoParams sequenced_video_params { video_interval, false };
+        SequencedVideoParams sequenced_video_params { video_interval };
         CaptureParams capture_params{
             monotonic_time, real_time, "video", nullptr, dirname,
             nullptr, SmartVideoCropping::disable, 0};

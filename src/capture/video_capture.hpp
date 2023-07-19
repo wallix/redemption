@@ -46,10 +46,8 @@ class Drawable;
 
 struct VideoCaptureCtx : noncopyable
 {
-    enum class ImageByInterval : unsigned char
+    enum class ImageByInterval : bool
     {
-        OneWithTimestamp,
-        OneWithoutTimestamp,
         ZeroOrOneWithTimestamp,
         ZeroOrOneWithoutTimestamp,
     };

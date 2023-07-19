@@ -283,7 +283,6 @@ namespace cfg
         struct disable_file_system_log;
         struct wrm_color_depth_selection_strategy;
         struct wrm_compression_algorithm;
-        struct bogus_vlc_frame_rate;
         struct codec_id;
         struct framerate;
         struct ffmpeg_options;
