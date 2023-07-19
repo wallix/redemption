@@ -51,7 +51,7 @@ authentication_timeout = integer(min=0, default=120)
 # &nbsp; &nbsp;   1: No encryption, with checksum.
 # &nbsp; &nbsp;   2: Encryption enabled.
 # When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.
-#_advanced
+#_hidden
 trace_type = option(0, 1, 2, default=1)
 
 #_advanced

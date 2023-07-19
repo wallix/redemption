@@ -54,7 +54,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   1: No encryption, with checksum.
 #   2: Encryption enabled.
 # When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.
-#_advanced
+#_hidden
 #trace_type = 1
 
 #_advanced

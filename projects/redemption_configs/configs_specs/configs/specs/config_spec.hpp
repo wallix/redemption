@@ -285,7 +285,7 @@ _.section("globals", [&]
              set(120),
              desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."});
 
-    _.member(advanced_in_gui, sesman_to_proxy, reset_back_to_selector, L,
+    _.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L,
              names{"trace_type"},
              type_<TraceType>(),
              set(TraceType::localfile_hashed));
