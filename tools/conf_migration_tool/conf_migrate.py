@@ -406,6 +406,15 @@ migration_defs: List[MigrationType] = [
         'globals': {
             'glyph_cache': UpdateItem(section='mod_rdp'),
         },
+        'client': {
+            'bogus_user_id': RemoveItem(),
+        },
+        'video': {
+            'bogus_vlc_frame_rate': RemoveItem(),
+        },
+        'session_log': {
+            'hide_non_printable_kbd_input': RemoveItem(),
+        },
     }),
 ]
 
