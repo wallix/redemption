@@ -67,7 +67,6 @@ namespace cfg
         struct show_common_cipher_list;
         struct enable_nla;
         struct bogus_neg_request;
-        struct bogus_user_id;
         struct disable_tsk_switch_shortcuts;
         struct rdp_compression;
         struct max_color_depth;

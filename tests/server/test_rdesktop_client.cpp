@@ -91,7 +91,6 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
-    ini.set<cfg::client::bogus_user_id>(false);
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
     ini.set<cfg::globals::large_pointer_support>(false);
     ini.set<cfg::globals::unicode_keyboard_event_support>(false);

@@ -163,7 +163,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
@@ -297,7 +296,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "tls_support=no\n"
         "rdp_compression=1\n"
         "bogus_neg_request=yes\n"
-        "bogus_user_id=yes\n"
         "disable_tsk_switch_shortcuts=yes\n"
         "max_color_depth=0\n" /* unknown value */
         "persistent_disk_bitmap_cache=yes\n"
@@ -432,7 +430,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_neg_request>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     RED_CHECK_EQUAL(RdpCompression::rdp4,             ini.get<cfg::client::rdp_compression>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
@@ -501,7 +498,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "performance_flags_force_not_present=0\n"
         "tls_support=yes\n"
         "bogus_neg_request=no\n"
-        "bogus_user_id=no\n"
         "rdp_compression=0\n"
         "max_color_depth=8\n"
         "persistent_disk_bitmap_cache=no\n"
@@ -624,7 +620,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_user_id>());
     RED_CHECK_EQUAL(RdpCompression::none,             ini.get<cfg::client::rdp_compression>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     RED_CHECK_EQUAL(ColorDepth::depth8,               ini.get<cfg::client::max_color_depth>());
@@ -782,7 +777,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
@@ -845,7 +839,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
         "handshake_timeout=7\n"
         "[client]\t\n"
         "tls_support=yes\n"
-        "bogus_user_id=yes\n"
         "performance_flags_default=07\n"
         "performance_flags_force_present=1\n"
         "performance_flags_force_not_present=0x\n"
@@ -949,7 +942,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
@@ -1093,7 +1085,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
@@ -1151,7 +1142,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
         "[client]\n"
         "bitmap_compression=no\n"
         "persist_bitmap_cache_on_disk=yes\n"
-        "bogus_user_id=yes\n"
         "[mod_rdp]\n"
         "glyph_cache=yes\n"
         "persist_bitmap_cache_on_disk=yes\n"
@@ -1238,7 +1228,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
@@ -1368,7 +1357,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
@@ -1499,7 +1487,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());

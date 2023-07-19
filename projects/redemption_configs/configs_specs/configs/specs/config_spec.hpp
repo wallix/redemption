@@ -555,12 +555,6 @@ _.section("client", [&]
              set(false),
              desc{"Needed to connect with jrdp, based on bogus X224 layer code."});
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"bogus_user_id"},
-             type_<bool>(),
-             set(true),
-             desc{"Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code."});
-
     _.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
              names{"disable_tsk_switch_shortcuts"},
              type_<bool>(),

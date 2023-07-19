@@ -221,11 +221,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #bogus_neg_request = 0
 
-# Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code.
-# value: 0 or 1
-#_advanced
-#bogus_user_id = 1
-
 # If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
 # value: 0 or 1
 #_advanced

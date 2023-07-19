@@ -635,15 +635,6 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code. <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct client::bogus_user_id {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
     /// If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences. <br/>
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
@@ -4933,7 +4924,6 @@ struct client
 , cfg::client::show_common_cipher_list
 , cfg::client::enable_nla
 , cfg::client::bogus_neg_request
-, cfg::client::bogus_user_id
 , cfg::client::disable_tsk_switch_shortcuts
 , cfg::client::rdp_compression
 , cfg::client::max_color_depth

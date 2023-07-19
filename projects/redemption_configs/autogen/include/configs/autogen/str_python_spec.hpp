@@ -188,10 +188,6 @@ enable_nla = boolean(default=False)
 #_advanced
 bogus_neg_request = boolean(default=False)
 
-# Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code.
-#_advanced
-bogus_user_id = boolean(default=True)
-
 # If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
 #_advanced
 disable_tsk_switch_shortcuts = boolean(default=False)
