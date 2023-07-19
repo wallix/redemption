@@ -253,7 +253,6 @@ namespace cfg
         struct enable_session_log;
         struct enable_arcsight_log;
         struct keyboard_input_masking_level;
-        struct hide_non_printable_kbd_input;
     };
 
     struct ocr {

@@ -447,11 +447,6 @@ _.section("session_log", [&]
              type_<KeyboardInputMaskingLevel>(),
              set(KeyboardInputMaskingLevel::password_and_unidentified),
              desc{"Keyboard Input Masking Level:"});
-
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"hide_non_printable_kbd_input"},
-             type_<bool>(),
-             set(false));
 });
 
 _.section("client", [&]

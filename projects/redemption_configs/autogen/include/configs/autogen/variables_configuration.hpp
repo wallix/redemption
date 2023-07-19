@@ -2595,14 +2595,6 @@ namespace cfg
         using mapped_type = KeyboardInputMaskingLevel;
         type value { KeyboardInputMaskingLevel::password_and_unidentified };
     };
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct session_log::hide_non_printable_kbd_input {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
-    };
 
     /// type: OcrVersion <br/>
     /// default: OcrVersion::v2 <br/>
@@ -5137,7 +5129,6 @@ struct session_log
 : cfg::session_log::enable_session_log
 , cfg::session_log::enable_arcsight_log
 , cfg::session_log::keyboard_input_masking_level
-, cfg::session_log::hide_non_printable_kbd_input
 { static constexpr bool is_section = true; };
 
 struct ocr

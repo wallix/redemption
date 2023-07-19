@@ -1024,10 +1024,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #keyboard_input_masking_level = 2
 
-# value: 0 or 1
-#_advanced
-#hide_non_printable_kbd_input = 0
-
 [ocr]
 
 #   1: v1

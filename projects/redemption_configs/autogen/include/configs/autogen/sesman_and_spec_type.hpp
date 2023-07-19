@@ -228,7 +228,6 @@ template<> struct sesman_and_spec_type<cfg::mod_vnc::enable_ipv6> { using type =
 template<> struct sesman_and_spec_type<cfg::session_log::enable_session_log> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::session_log::enable_arcsight_log> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::session_log::keyboard_input_masking_level> { using type = KeyboardInputMaskingLevel; };
-template<> struct sesman_and_spec_type<cfg::session_log::hide_non_printable_kbd_input> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::ocr::version> { using type = OcrVersion; };
 template<> struct sesman_and_spec_type<cfg::ocr::locale> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::ocr::interval> { using type = std::chrono::duration<unsigned, std::ratio<1, 100>>; };

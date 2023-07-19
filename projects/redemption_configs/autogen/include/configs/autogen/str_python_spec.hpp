@@ -870,9 +870,6 @@ enable_arcsight_log = boolean(default=False)
 #_hidden
 keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
-#_advanced
-hide_non_printable_kbd_input = boolean(default=False)
-
 [ocr]
 
 #   1: v1
