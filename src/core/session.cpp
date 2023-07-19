@@ -1244,7 +1244,6 @@ private:
                         [](int /*fd*/){ return false; },
                         bool(this->verbose & SessionVerbose::Event));
                 }
-                front.sync();
 
                 front.sync();
 
