@@ -16,7 +16,7 @@ port = integer(min=0, default=3389)
 #_advanced
 encryptionLevel = option('low', 'medium', 'high', default='low')
 
-#_advanced
+#_hidden
 authfile = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(')
 
 # Time out during RDP handshake stage.
@@ -385,7 +385,7 @@ client_address_sent = option(0, 1, 2, default=0)
 bogus_sc_net_size = boolean(default=True)
 
 # (values are comma-separated)
-#_advanced
+#_hidden
 proxy_managed_drives = string(default='')
 
 #_hidden
@@ -1148,7 +1148,7 @@ enable_target_field = boolean(default=True)
 
 [mod_replay]
 
-#_advanced
+#_hidden
 replay_path = string(max=4096, default='/tmp/')
 
 # 0 - Wait for Escape, 1 - End session

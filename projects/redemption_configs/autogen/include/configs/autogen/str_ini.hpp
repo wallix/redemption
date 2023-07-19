@@ -18,7 +18,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #encryptionLevel = low
 
-#_advanced
+#_hidden
 #authfile = )gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(
 
 # Time out during RDP handshake stage.
@@ -443,7 +443,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #bogus_sc_net_size = 1
 
-#_advanced
+#_hidden
 #proxy_managed_drives = 
 
 # value: 0 or 1
@@ -1346,7 +1346,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 [mod_replay]
 
 # maxlen = 4096
-#_advanced
+#_hidden
 #replay_path = /tmp/
 
 # 0 - Wait for Escape, 1 - End session

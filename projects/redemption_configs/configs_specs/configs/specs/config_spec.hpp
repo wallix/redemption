@@ -246,7 +246,7 @@ _.section("globals", [&]
              spec::type_<std::string>(),
              set(Level::low));
 
-    _.member(advanced_in_gui, no_sesman, L,
+    _.member(hidden_in_gui, no_sesman, L,
              names{"authfile"},
              type_<std::string>(),
              set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
@@ -817,7 +817,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
              set(true),
              desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."});
 
-    _.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
+    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
              names{"proxy_managed_drives"},
              type_<types::list<std::string>>());
 
@@ -1720,7 +1720,7 @@ for (char const* section_name : {"icap_server_down", "icap_server_up"}) {
 
 _.section("mod_replay", [&]
 {
-    _.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
+    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
              names{"replay_path"},
              type_<types::dirpath>(),
              set("/tmp/"));
