@@ -364,10 +364,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #open_session_timeout = 0
 
-# value: 0 or 1
-#_advanced
-#glyph_cache = 0
-
 # Disables supported drawing orders:
 #    0: DstBlt
 #    1: PatBlt
@@ -383,7 +379,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   25: EllipseSC
 #   27: GlyphIndex
 #_hidden
-#disabled_orders = 
+#disabled_orders = 27
 
 # NLA authentication in secondary target.
 # value: 0 or 1

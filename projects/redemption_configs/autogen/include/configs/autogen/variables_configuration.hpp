@@ -866,14 +866,6 @@ namespace cfg
         using mapped_type = std::chrono::seconds;
         type value { 0 };
     };
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct mod_rdp::glyph_cache {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
-    };
     /// Disables supported drawing orders: <br/>
     ///    0: DstBlt <br/>
     ///    1: PatBlt <br/>
@@ -891,7 +883,7 @@ namespace cfg
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:disabled_orders <br/>
-    /// default: {} <br/>
+    /// default: "27" <br/>
     struct mod_rdp::disabled_orders {
         static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
@@ -899,7 +891,7 @@ namespace cfg
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 0};
         using type = std::string;
         using mapped_type = ::configs::spec_types::list<unsigned>;
-        type value {  };
+        type value { "27" };
     };
     /// NLA authentication in secondary target. <br/>
     /// type: bool <br/>
@@ -4967,7 +4959,6 @@ struct mod_rdp
 , cfg::mod_rdp::effective_krb_armoring_password
 , cfg::mod_rdp::rdp_compression
 , cfg::mod_rdp::disconnect_on_logon_user_change
-, cfg::mod_rdp::glyph_cache
 , cfg::mod_rdp::disabled_orders
 , cfg::mod_rdp::enable_nla
 , cfg::mod_rdp::enable_kerberos

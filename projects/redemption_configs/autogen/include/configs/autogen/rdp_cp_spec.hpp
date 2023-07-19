@@ -56,7 +56,7 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 # &nbsp; &nbsp;   27: GlyphIndex
 # (values are comma-separated)
 #_advanced
-disabled_orders = string(default='')
+disabled_orders = string(default='27')
 
 # NLA authentication in secondary target.
 enable_nla = boolean(default=True)

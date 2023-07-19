@@ -385,8 +385,9 @@ migration_defs: List[MigrationType] = [
         'metrics': RemoveItem(),
     }),
     (RedemptionVersion("10.5.27"), {
-        # this change should be in 9.1.71, but the section name was wrong ('rdp' instead of 'mod_rdp')
         'mod_rdp': {
+            'glyph_cache': RemoveItem(),
+            # this change should be in 9.1.71, but the section name was wrong ('rdp' instead of 'mod_rdp')
             'session_probe_exe_or_file': UpdateItem(section='session_probe', key='exe_or_file'),
             'session_probe_arguments': UpdateItem(section='session_probe', key='arguments'),
             'session_probe_customize_executable_name': UpdateItem(section='session_probe',

@@ -66,7 +66,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]     = 1;
     info.order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]   = 1;
     info.order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
-    info.order_caps.orderSupport[TS_NEG_GLYPH_INDEX]      = 1;
 
     info.order_caps.orderSupportExFlags = 0xFFFF;
 
@@ -194,7 +193,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]     = 1;
     info.order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]   = 1;
     info.order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
-    info.order_caps.orderSupport[TS_NEG_GLYPH_INDEX]      = 1;
 
     info.order_caps.orderSupportExFlags = 0xFFFF;
 

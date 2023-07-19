@@ -312,9 +312,6 @@ disconnect_on_logon_user_change = boolean(default=False)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
 
-#_advanced
-glyph_cache = boolean(default=False)
-
 # Disables supported drawing orders:
 # &nbsp; &nbsp;    0: DstBlt
 # &nbsp; &nbsp;    1: PatBlt
@@ -331,7 +328,7 @@ glyph_cache = boolean(default=False)
 # &nbsp; &nbsp;   27: GlyphIndex
 # (values are comma-separated)
 #_hidden
-disabled_orders = string(default='')
+disabled_orders = string(default='27')
 
 # NLA authentication in secondary target.
 #_hidden

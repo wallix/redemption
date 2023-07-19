@@ -692,14 +692,11 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
              type_<std::chrono::seconds>(),
              set(0));
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"glyph_cache"},
-             type_<bool>(),
-             set(false));
-
     _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, D,
              names{"disabled_orders"},
              type_<types::list<types::unsigned_>>(),
+             // disable glyph_index / glyph_cache
+             set("27"),
              desc{disabled_orders_desc});
 
     _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,

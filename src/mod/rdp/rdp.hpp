@@ -1807,7 +1807,6 @@ class mod_rdp : public mod_api, public rdp_api, public sespro_api
 
     const bool enable_fastpath;                    // choice of programmer
     const bool enable_fastpath_server_update;      // choice of programmer
-    const bool enable_glyph_cache;
     const bool enable_new_pointer;
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
@@ -1981,7 +1980,6 @@ public:
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
-        , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
@@ -1989,7 +1987,7 @@ public:
         , enable_server_cert_external_validation(mod_rdp_params.enable_server_cert_external_validation)
         , enable_remotefx(mod_rdp_params.enable_remotefx)
         , primary_drawing_orders_support(
-            [](auto& order_support, PrimaryDrawingOrdersSupport const& disabled_orders){
+            [](auto const& order_support, PrimaryDrawingOrdersSupport disabled_orders){
                 PrimaryDrawingOrdersSupport client_support;
                 for (auto idx : order_indexes_supported) {
                     if (order_support[idx]) {
@@ -1998,7 +1996,6 @@ public:
                 }
                 return client_support - disabled_orders;
             }(info.order_caps.orderSupport, mod_rdp_params.disabled_orders))
-        // info.order_caps.orderSupport
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , gd(gd)
@@ -3794,10 +3791,10 @@ public:
                 confirm_active_pdu.emit_capability_set(brush_caps);
 
                 GlyphCacheCaps glyphcache_caps;
-                if (this->enable_glyph_cache) {
+                if (primary_drawing_orders_support.test(OrdersIndexes::TS_NEG_GLYPH_INDEX)) {
                     glyphcache_caps = this->client_glyph_cache_caps;
 
-                    glyphcache_caps.FragCache         = 0;  // Not yet supported
+                    glyphcache_caps.FragCache = 0;  // Not yet supported
                     if (glyphcache_caps.GlyphSupportLevel != GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
                         glyphcache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
                     }

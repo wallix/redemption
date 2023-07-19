@@ -215,7 +215,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::globals::target_user>(s);
     ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
-    ini.set<cfg::mod_rdp::glyph_cache>(true);
     ini.set<cfg::mod_rdp::allow_channels>(cslist);
     ini.set<cfg::mod_rdp::allow_channels>(slist);
     ini.set<cfg::mod_rdp::alternate_shell>(cs);

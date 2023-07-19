@@ -56,7 +56,7 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 # &nbsp; &nbsp;   27: GlyphIndex
 # (values are comma-separated)
 #_advanced
-disabled_orders = string(default='')
+disabled_orders = string(default='27')
 
 # Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 tls_min_level = integer(min=0, default=0)
