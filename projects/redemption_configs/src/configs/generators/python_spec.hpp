@@ -475,6 +475,9 @@ static std::string htmlize(std::string str)
     html.swap(str);
 
     // replace "  " at start line with "&nbsp; ;&nbsp; "
+    if (str[0] == ' ' && str[1] == ' ') {
+        html += "&nbsp; &nbsp; ";
+    }
     for (char const& c : str) {
         if (c == '\n' && (&c)[1] == ' ' && (&c)[2] == ' ') {
             html += "\n&nbsp; &nbsp; ";

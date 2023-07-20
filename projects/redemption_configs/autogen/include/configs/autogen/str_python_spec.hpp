@@ -512,7 +512,7 @@ bogus_monitor_layout_treatment = boolean(default=False)
 
 [protocol]
 
-#   0: Windows
+# &nbsp; &nbsp;   0: Windows
 # &nbsp; &nbsp;   1: Bastion, xrdp or others
 #_hidden
 save_session_info_pdu = option(0, 1, default=1)
@@ -563,7 +563,7 @@ start_launch_timeout_timer_only_after_logon = boolean(default=True)
 #_hidden
 keepalive_timeout = integer(min=0, max=60000, default=5000)
 
-#   0: ignore and continue
+# &nbsp; &nbsp;   0: ignore and continue
 # &nbsp; &nbsp;   1: disconnect user
 # &nbsp; &nbsp;   2: freeze connection and wait
 #_hidden
@@ -586,7 +586,7 @@ enable_log = boolean(default=False)
 #_hidden
 enable_log_rotation = boolean(default=False)
 
-#   1: Fatal
+# &nbsp; &nbsp;   1: Fatal
 # &nbsp; &nbsp;   2: Error
 # &nbsp; &nbsp;   3: Info
 # &nbsp; &nbsp;   4: Warning
@@ -651,7 +651,7 @@ memory_usage_limit = integer(min=0, max=200000000, default=0)
 #_hidden
 cpu_usage_alarm_threshold = integer(min=0, max=10000, default=0)
 
-#   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+# &nbsp; &nbsp;   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
 # &nbsp; &nbsp;   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
 #_hidden
 cpu_usage_alarm_action = option(0, 1, default=0)
@@ -669,7 +669,7 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #_hidden
 update_disabled_features = boolean(default=True)
 
-#   0x000: none
+# &nbsp; &nbsp;   0x000: none
 # &nbsp; &nbsp;   0x001: Java Access Bridge
 # &nbsp; &nbsp;   0x002: MS Active Accessbility
 # &nbsp; &nbsp;   0x004: MS UI Automation
@@ -717,7 +717,7 @@ enable_cleaner = boolean(default=True)
 #_advanced
 clipboard_based_launcher_reset_keyboard_status = boolean(default=True)
 
-#   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
+# &nbsp; &nbsp;   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
 # &nbsp; &nbsp;   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
 # &nbsp; &nbsp;   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 #_hidden
@@ -817,7 +817,7 @@ encodings = string(default='')
 #_advanced
 server_clipboard_encoding_type = option('utf-8', 'latin1', default='latin1')
 
-#   0: delayed
+# &nbsp; &nbsp;   0: delayed
 # &nbsp; &nbsp;   1: duplicated
 # &nbsp; &nbsp;   2: continued
 #_advanced
@@ -852,7 +852,7 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
 [ocr]
 
-#   1: v1
+# &nbsp; &nbsp;   1: v1
 # &nbsp; &nbsp;   2: v2
 version = option(1, 2, default=2)
 
@@ -966,7 +966,7 @@ ffmpeg_options = string(default='crf=35 preset=superfast')
 #_advanced
 notimestamp = boolean(default=False)
 
-#   0: Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
+# &nbsp; &nbsp;   0: Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
 # &nbsp; &nbsp;   1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
 # &nbsp; &nbsp;   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
 smart_video_cropping = option(0, 1, 2, default=2)
@@ -1392,7 +1392,7 @@ ffmpeg = integer(min=0, default=0)
 #_advanced
 config = boolean(default=True)
 
-#   0: Off
+# &nbsp; &nbsp;   0: Off
 # &nbsp; &nbsp;   1: SimulateErrorRead
 # &nbsp; &nbsp;   2: SimulateErrorWrite
 #_hidden

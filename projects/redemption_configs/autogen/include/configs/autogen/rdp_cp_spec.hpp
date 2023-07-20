@@ -183,7 +183,7 @@ replace_null_pointer_by_default_pointer = boolean(default=False)
 
 [protocol]
 
-#   0: Windows
+# &nbsp; &nbsp;   0: Windows
 # &nbsp; &nbsp;   1: Bastion, xrdp or others
 #_advanced
 save_session_info_pdu = option(0, 1, default=1)
@@ -224,7 +224,7 @@ start_launch_timeout_timer_only_after_logon = boolean(default=True)
 #_advanced
 keepalive_timeout = integer(min=0, max=60000, default=5000)
 
-#   0: ignore and continue
+# &nbsp; &nbsp;   0: ignore and continue
 # &nbsp; &nbsp;   1: disconnect user
 # &nbsp; &nbsp;   2: freeze connection and wait
 on_keepalive_timeout = option(0, 1, 2, default=1)
@@ -244,7 +244,7 @@ enable_log = boolean(default=False)
 #_advanced
 enable_log_rotation = boolean(default=False)
 
-#   1: Fatal
+# &nbsp; &nbsp;   1: Fatal
 # &nbsp; &nbsp;   2: Error
 # &nbsp; &nbsp;   3: Info
 # &nbsp; &nbsp;   4: Warning
@@ -309,7 +309,7 @@ memory_usage_limit = integer(min=0, max=200000000, default=0)
 #_advanced
 cpu_usage_alarm_threshold = integer(min=0, max=10000, default=0)
 
-#   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+# &nbsp; &nbsp;   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
 # &nbsp; &nbsp;   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
 #_advanced
 cpu_usage_alarm_action = option(0, 1, default=0)
@@ -327,7 +327,7 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #_advanced
 update_disabled_features = boolean(default=True)
 
-#   0x000: none
+# &nbsp; &nbsp;   0x000: none
 # &nbsp; &nbsp;   0x001: Java Access Bridge
 # &nbsp; &nbsp;   0x002: MS Active Accessbility
 # &nbsp; &nbsp;   0x004: MS UI Automation
@@ -376,7 +376,7 @@ extra_system_processes = string(default='')
 # Comma-separated processes (Ex.: chrome.exe,ngf.exe)
 windows_of_these_applications_as_unidentified_input_field = string(default='')
 
-#   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
+# &nbsp; &nbsp;   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
 # &nbsp; &nbsp;   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
 # &nbsp; &nbsp;   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 #_advanced
