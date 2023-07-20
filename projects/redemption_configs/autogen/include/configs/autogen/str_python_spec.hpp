@@ -368,10 +368,6 @@ server_redirection_support = boolean(default=False)
 #_advanced
 client_address_sent = option(0, 1, 2, default=0)
 
-# Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
-#_advanced
-bogus_sc_net_size = boolean(default=True)
-
 # (values are comma-separated)
 #_hidden
 proxy_managed_drives = string(default='')

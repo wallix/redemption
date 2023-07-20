@@ -80,8 +80,6 @@ cfg::mod_rdp::server_redirection_support ⇐ mod_rdp:server_redirection_support 
     Enables Server Redirection Support.
 cfg::mod_rdp::load_balance_info ⇐ mod_rdp:load_balance_info   [std::string]
     Load balancing information
-cfg::mod_rdp::bogus_sc_net_size ⇐ rdp_bogus_sc_net_size   [bool]
-    Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
 cfg::mod_rdp::proxy_managed_drives ⇐ proxy_managed_drives   [std::string]
 cfg::mod_rdp::ignore_auth_channel ⇐ ignore_auth_channel   [bool]
 cfg::mod_rdp::alternate_shell ⇐ alternate_shell   [std::string]

@@ -156,7 +156,6 @@ private:
     RdpCompression rdp_compression;
     const bool session_probe_use_clipboard_based_launcher;
     const bool remote_program;
-    const bool bogus_sc_net_size;
 
     const bool allow_using_multiple_monitors;
     const bool bogus_monitor_layout_treatment;

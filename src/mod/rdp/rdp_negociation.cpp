@@ -238,7 +238,6 @@ RdpNegociation::RdpNegociation(
     , session_probe_use_clipboard_based_launcher(false)
 #endif
     , remote_program(mod_rdp_params.remote_app_params.enable_remote_program)
-    , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
     , bogus_monitor_layout_treatment(mod_rdp_params.bogus_monitor_layout_treatment)
     , allow_scale_factor(mod_rdp_params.allow_scale_factor)
@@ -683,7 +682,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 
                 {
                     GCC::UserData::SCNet sc_net;
-                    sc_net.recv(f.payload, this->bogus_sc_net_size);
+                    sc_net.recv(f.payload);
 
                     /* We assume that the channel_id array is confirmed in the same order
                         that it has been sent. If there are any channels not confirmed, they're

@@ -107,7 +107,7 @@ struct SCNet {
         }
     }
 
-    void recv(InStream & stream, bool bogus_sc_net_size)
+    void recv(InStream & stream)
     {
         if (!stream.in_check_rem(8)){
             LOG(LOG_ERR, "SCNet::recv short header");
@@ -125,11 +125,10 @@ struct SCNet {
         this->MCSChannelId = stream.in_uint16_le();
         this->channelCount = stream.in_uint16_le();
 
-        if (!this->channelCount && (length == 10) && bogus_sc_net_size) {
-            LOG(LOG_WARNING, "SCNet::recv accepts VirtualBox bogus TS_UD_SC_NET data block.");
-        }
-        else if (length != (((this->channelCount + (this->channelCount & 1)) << 1) + 8)) {
-            LOG(LOG_ERR, "SCNet::recv bad header length=%d", length);
+        uint16_t const length_array_in_bytes = length - 8;
+
+        if (length_array_in_bytes < this->channelCount * 2) {
+            LOG(LOG_ERR, "SCNet::recv bad header length=%d with channelCount=%d", length, this->channelCount);
             throw Error(ERR_GCC);
         }
 
@@ -137,12 +136,13 @@ struct SCNet {
             LOG(LOG_ERR, "SCNet::recv channel count out of range (%u)", this->channelCount);
             throw Error(ERR_CHANNEL_OUT_OF_RANGE);
         }
-        for (size_t i = 0; i < this->channelCount ; i++){
+
+        for (size_t i = 0; i < this->channelCount ; ++i) {
             this->channelDefArray[i].id = stream.in_uint16_le();
         }
-        if (this->channelCount & 1){
-            stream.in_skip_bytes(2);
-        }
+
+        // skip padding or extra data
+        stream.in_skip_bytes(length_array_in_bytes - this->channelCount * 2);
     }
 
     void log(const char * msg) const

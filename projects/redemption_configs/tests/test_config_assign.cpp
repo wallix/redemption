@@ -220,7 +220,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_rdp::alternate_shell>(s);
     ini.set<cfg::mod_rdp::auth_channel>(cs);
     ini.set<cfg::mod_rdp::auth_channel>(s);
-    ini.set<cfg::mod_rdp::bogus_sc_net_size>(true);
     ini.set<cfg::mod_rdp::cache_waiting_list>(true);
     ini.set<cfg::mod_rdp::deny_channels>(cslist);
     ini.set<cfg::mod_rdp::deny_channels>(slist);

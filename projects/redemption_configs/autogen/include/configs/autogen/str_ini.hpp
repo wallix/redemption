@@ -423,11 +423,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #client_address_sent = 0
 
-# Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
-# value: 0 or 1
-#_advanced
-#bogus_sc_net_size = 1
-
 #_hidden
 #proxy_managed_drives = 
 

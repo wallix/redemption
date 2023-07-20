@@ -116,7 +116,6 @@ namespace cfg
         struct server_redirection_support;
         struct client_address_sent;
         struct load_balance_info;
-        struct bogus_sc_net_size;
         struct proxy_managed_drives;
         struct ignore_auth_channel;
         struct auth_channel;

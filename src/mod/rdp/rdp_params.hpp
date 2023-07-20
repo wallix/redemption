@@ -131,7 +131,6 @@ struct ModRDPParams
 
     uint32_t password_printing_mode = 0;
 
-    bool bogus_sc_net_size = true;
     bool bogus_refresh_rect = true;
 
     struct DriveParams
@@ -392,8 +391,6 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             persist_bitmap_cache_on_disk);
 
         RDP_PARAMS_LOG("%u",     RDP_PARAMS_LOG_GET,    password_printing_mode);
-
-        RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_sc_net_size);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_refresh_rect);
 

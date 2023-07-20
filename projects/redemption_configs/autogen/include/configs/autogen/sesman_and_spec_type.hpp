@@ -106,7 +106,6 @@ template<> struct sesman_and_spec_type<cfg::mod_rdp::fast_path> { using type = b
 template<> struct sesman_and_spec_type<cfg::mod_rdp::server_redirection_support> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::client_address_sent> { using type = ClientAddressSent; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::load_balance_info> { using type = std::string; };
-template<> struct sesman_and_spec_type<cfg::mod_rdp::bogus_sc_net_size> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::proxy_managed_drives> { using type = ::configs::spec_types::list<std::string>; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::ignore_auth_channel> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::auth_channel> { using type = ::configs::spec_types::fixed_string; };

@@ -64,15 +64,15 @@ RED_AUTO_TEST_CASE_WF(TestConfigFromFile, wf)
 {
     // test we can read from a file (and not only from a stream)
     Inifile ini;
-    RED_CHECK_EQUAL(true, ini.get<cfg::mod_rdp::bogus_sc_net_size>());
+    ini.set<cfg::mod_rdp::disconnect_on_logon_user_change>(true);
     std::ofstream(wf.c_str()) <<
         "[mod_rdp]\n"
         "proxy_managed_drives = /tmp/raw/movie/\n"
-        "bogus_sc_net_size = no\n"
+        "disconnect_on_logon_user_change = no\n"
     ;
     RED_CHECK(configuration_load(Inifile::ConfigurationHolder(ini).as_ref(), wf.c_str()));
     RED_CHECK_EQUAL("/tmp/raw/movie/", ini.get<cfg::mod_rdp::proxy_managed_drives>());
-    RED_CHECK_EQUAL(false, ini.get<cfg::mod_rdp::bogus_sc_net_size>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
 }
 
 
@@ -181,7 +181,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());
@@ -444,7 +443,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL("audin",                          ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());
@@ -507,7 +505,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "cache_waiting_list=no\n"
         "persist_bitmap_cache_on_disk=no\n"
         "fast_path=yes\n"
-        "bogus_sc_net_size=no\n"
         "proxy_managed_drives=*docs\n"
         "alternate_shell=\n"
         "[session_probe]\n"
@@ -628,7 +625,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     RED_CHECK_EQUAL("*docs",                          ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());
@@ -679,7 +675,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
         "bitmap_compression=false\n"
         "[mod_rdp]\n"
         "rdp_compression=0\n"
-        "bogus_sc_net_size=yes\n"
         "proxy_managed_drives=*\n"
         "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
         "[session_probe]\n"
@@ -784,7 +779,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());
@@ -837,7 +831,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
         "bitmap_compression=false\n"
         "\t[mod_rdp]\n"
         "rdp_compression=0\n"
-        "bogus_sc_net_size=no\n"
         "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE   \n"
         "shell_working_directory=\n"
         "[session_probe]\n"
@@ -947,7 +940,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());
@@ -1088,7 +1080,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());
@@ -1228,7 +1219,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     RED_CHECK_EQUAL("docs,apps",                      ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());
@@ -1355,7 +1345,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());
@@ -1483,7 +1472,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());

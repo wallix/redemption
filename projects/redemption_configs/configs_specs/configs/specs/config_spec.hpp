@@ -794,15 +794,6 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
              type_<std::string>(),
              desc{"Load balancing information"});
 
-    _.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{
-                .all="bogus_sc_net_size",
-                .sesman="rdp_bogus_sc_net_size"
-             },
-             type_<bool>(),
-             set(true),
-             desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."});
-
     _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
              names{"proxy_managed_drives"},
              type_<types::list<std::string>>());
