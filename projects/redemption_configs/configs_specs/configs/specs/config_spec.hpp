@@ -549,12 +549,6 @@ _.section("client", [&]
              set(false),
              desc{"Needed for primary NTLM or Kerberos connections over NLA."});
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"bogus_neg_request"},
-             type_<bool>(),
-             set(false),
-             desc{"Needed to connect with jrdp, based on bogus X224 layer code."});
-
     _.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
              names{"disable_tsk_switch_shortcuts"},
              type_<bool>(),

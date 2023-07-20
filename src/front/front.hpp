@@ -1506,7 +1506,7 @@ public:
                                           , total_length, flags, chunk_data);
     }
 
-    void connection_initiation(bytes_view tpdu, bool bogus_neg_req, bool enable_nla)
+    void connection_initiation(bytes_view tpdu, bool enable_nla)
     {
         // Connection Initiation
         // ---------------------
@@ -1527,7 +1527,7 @@ public:
         }
 
         {
-            auto cr_tpdu = X224::CR_TPDU_Data_Recv(x224_stream, bogus_neg_req, 0);
+            auto cr_tpdu = X224::CR_TPDU_Data_Recv(x224_stream, 0);
             // if (cr_tpdu._header_size != x224_stream.get_capacity()) {
             //     LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
             //                  " %zu bytes remains", x224_stream.get_capacity() - cr_tpdu._header_size);
@@ -2974,7 +2974,7 @@ public:
         case CONNECTION_INITIATION:
         {
             bool enable_nla = this->ini.get<cfg::client::enable_nla>();
-            this->connection_initiation(tpdu, this->ini.get<cfg::client::bogus_neg_request>(), enable_nla);
+            this->connection_initiation(tpdu, enable_nla);
             if (enable_nla){
                 this->state = PRIMARY_AUTH_NLA;
             }

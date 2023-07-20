@@ -83,7 +83,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     }
 
     ini.set<cfg::client::bitmap_compression>(true);
-    ini.set<cfg::client::bogus_neg_request>(true);
     ini.set<cfg::client::cache_waiting_list>(true);
     ini.set<cfg::client::disable_tsk_switch_shortcuts>(1);
     ini.set<cfg::client::fast_path>(true);

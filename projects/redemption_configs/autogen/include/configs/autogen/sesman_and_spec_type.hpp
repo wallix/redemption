@@ -65,7 +65,6 @@ template<> struct sesman_and_spec_type<cfg::client::tls_min_level> { using type 
 template<> struct sesman_and_spec_type<cfg::client::tls_max_level> { using type = uint32_t; };
 template<> struct sesman_and_spec_type<cfg::client::show_common_cipher_list> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::client::enable_nla> { using type = bool; };
-template<> struct sesman_and_spec_type<cfg::client::bogus_neg_request> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::client::disable_tsk_switch_shortcuts> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::client::rdp_compression> { using type = RdpCompression; };
 template<> struct sesman_and_spec_type<cfg::client::max_color_depth> { using type = ColorDepth; };

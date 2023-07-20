@@ -626,15 +626,6 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Needed to connect with jrdp, based on bogus X224 layer code. <br/>
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct client::bogus_neg_request {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
-    };
     /// If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences. <br/>
     /// type: bool <br/>
     /// sesman ⇒ proxy <br/>
@@ -4915,7 +4906,6 @@ struct client
 , cfg::client::tls_max_level
 , cfg::client::show_common_cipher_list
 , cfg::client::enable_nla
-, cfg::client::bogus_neg_request
 , cfg::client::disable_tsk_switch_shortcuts
 , cfg::client::rdp_compression
 , cfg::client::max_color_depth

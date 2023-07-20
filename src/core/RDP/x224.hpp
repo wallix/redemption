@@ -743,7 +743,7 @@ namespace X224
 
 
 
-    inline CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose)
+    inline CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, uint32_t verbose)
     {
         CR_TPDU_Data x224;
         Tpkt tpkt = Tpkt_Recv(stream);
@@ -773,36 +773,29 @@ namespace X224
             rdp_neg_length = stream.in_uint16_le();
             rdp_neg_requestedProtocols = stream.in_uint32_le();
 
-            if (bogus_neg_req){
-                LOG_IF(verbose, LOG_INFO, "Bogus Negotiation Request Structure");
-                // for broken clients like jrdp
-                stream.in_skip_bytes(end_of_header - stream.get_current());
+            if (rdp_neg_type != X224::RDP_NEG_REQ){
+                LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
+                    header.LI, rdp_neg_type, rdp_neg_flags, rdp_neg_length, rdp_neg_requestedProtocols);
+                throw Error(ERR_X224);
             }
-            else {
-                if (rdp_neg_type != X224::RDP_NEG_REQ){
-                    LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
-                        header.LI, rdp_neg_type, rdp_neg_flags, rdp_neg_length, rdp_neg_requestedProtocols);
-                    throw Error(ERR_X224);
-                }
 
-                LOG_IF(verbose, LOG_INFO, "RequestedProtocols:%u", rdp_neg_requestedProtocols);
+            LOG_IF(verbose, LOG_INFO, "RequestedProtocols:%u", rdp_neg_requestedProtocols);
 
-                LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_RDP,
-                    LOG_INFO, "CR Recv: PROTOCOL RDP");
-                LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_TLS,
-                    LOG_INFO, "CR Recv: PROTOCOL TLS");
-                LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID,
-                    LOG_INFO, "CR Recv: PROTOCOL HYBRID");
-                LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID_EX,
-                    LOG_INFO, "CR Recv: PROTOCOL HYBRID EX");
-                LOG_IF(rdp_neg_requestedProtocols
-                    & ~(X224::PROTOCOL_RDP
-                       |X224::PROTOCOL_TLS
-                       |X224::PROTOCOL_HYBRID
-                       |X224::PROTOCOL_HYBRID_EX),
-                    LOG_INFO, "CR Recv: Unknown protocol flags %x",
-                    rdp_neg_requestedProtocols);
-            }
+            LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_RDP,
+                LOG_INFO, "CR Recv: PROTOCOL RDP");
+            LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_TLS,
+                LOG_INFO, "CR Recv: PROTOCOL TLS");
+            LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID,
+                LOG_INFO, "CR Recv: PROTOCOL HYBRID");
+            LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID_EX,
+                LOG_INFO, "CR Recv: PROTOCOL HYBRID EX");
+            LOG_IF(rdp_neg_requestedProtocols
+                & ~(X224::PROTOCOL_RDP
+                   |X224::PROTOCOL_TLS
+                   |X224::PROTOCOL_HYBRID
+                   |X224::PROTOCOL_HYBRID_EX),
+                LOG_INFO, "CR Recv: Unknown protocol flags %x",
+                rdp_neg_requestedProtocols);
         }
         else {
             LOG_IF(verbose, LOG_INFO, "No RDP Negotiation Request Structure");

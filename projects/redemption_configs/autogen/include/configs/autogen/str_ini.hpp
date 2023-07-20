@@ -216,11 +216,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #enable_nla = 0
 
-# Needed to connect with jrdp, based on bogus X224 layer code.
-# value: 0 or 1
-#_advanced
-#bogus_neg_request = 0
-
 # If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
 # value: 0 or 1
 #_advanced

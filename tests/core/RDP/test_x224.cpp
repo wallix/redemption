@@ -54,7 +54,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
-    X224::CR_TPDU_Data x224 = X224::CR_TPDU_Data_Recv(stream, false, true);
+    X224::CR_TPDU_Data x224 = X224::CR_TPDU_Data_Recv(stream, true);
 
     RED_CHECK_EQUAL(3, x224.tpkt.version);
     RED_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
@@ -103,7 +103,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream({array, std::size_t(end - array)});
-    auto x224 = X224::CR_TPDU_Data_Recv(stream, false, false);
+    auto x224 = X224::CR_TPDU_Data_Recv(stream, false);
 
     RED_CHECK_EQUAL(3, x224.tpkt.version);
     RED_CHECK_EQUAL(11, x224.tpkt.len);
@@ -138,7 +138,7 @@ RED_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream({array, std::size_t(end - array)});
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false), ERR_X224);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream({array, std::size_t(end - array)});
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false), ERR_X224);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
@@ -168,7 +168,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream({array, std::size_t(end - array)});
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false), ERR_X224);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
@@ -185,7 +185,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream({array, std::size_t(end - array)});
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false), ERR_X224);
 }
 
 
@@ -203,7 +203,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream({array, std::size_t(end - array)});
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false), ERR_X224);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
@@ -218,7 +218,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(size_t(11), fac_x224.length);
 
-    auto x224 = X224::CR_TPDU_Data_Recv(stream, false, false);
+    auto x224 = X224::CR_TPDU_Data_Recv(stream, false);
 
     RED_CHECK_EQUAL(3, x224.tpkt.version);
     RED_CHECK_EQUAL(11, x224.tpkt.len);
@@ -256,7 +256,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
-    auto x224 = X224::CR_TPDU_Data_Recv(stream, false, false);
+    auto x224 = X224::CR_TPDU_Data_Recv(stream, false);
 
     RED_CHECK_EQUAL(3, x224.tpkt.version);
     RED_CHECK_EQUAL(tpkt_len, x224.tpkt.len);

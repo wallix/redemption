@@ -63,7 +63,7 @@ void ProxyRecorder::front_step1(Transport & frontConn)
     LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_STEP1 frontbuffer content >>>>>>");
 
     InStream x224_stream(currentPacket);
-    this->front_CR_TPDU = X224::CR_TPDU_Data_Recv(x224_stream, false, this->verbosity);
+    this->front_CR_TPDU = X224::CR_TPDU_Data_Recv(x224_stream, this->verbosity);
     if (this->front_CR_TPDU._header_size != x224_stream.get_capacity()) {
         LOG(LOG_WARNING,
             "Front::incoming: connection request: all data should have been consumed,"

@@ -130,14 +130,14 @@ public:
         sigaction(SIGCHLD, &sa, nullptr);
     }
 
-    X224::CR_TPDU_Data front_hello(Transport & trans, bytes_view tpdu, bool bogus_neg_req, int verbosity)
+    X224::CR_TPDU_Data front_hello(Transport & trans, bytes_view tpdu, int verbosity)
     {
         X224::CR_TPDU_Data cr_tpdu;
 
         LOG(LOG_INFO, "front RDP Hello");
 
         InStream x224_stream(tpdu);
-        cr_tpdu = X224::CR_TPDU_Data_Recv(x224_stream, bogus_neg_req, verbosity);
+        cr_tpdu = X224::CR_TPDU_Data_Recv(x224_stream, verbosity);
         if (cr_tpdu._header_size != x224_stream.get_capacity()) {
             LOG(LOG_WARNING,
                 "Front::incoming: connection request: all data should have been consumed,"
@@ -289,8 +289,7 @@ public:
                         case PState::NEGOTIATING_FRONT_HELLO:
                             LOG(LOG_INFO, "NEGOTIATING_FRONT_HELLO");
                             if (buffer.next(TpduBuffer::PDU)) {
-                                bool bogus_neg_req = false;
-                                this->front_CR_TPDU = this->front_hello(trans, buffer.current_pdu_buffer(), bogus_neg_req, this->verbosity);
+                                this->front_CR_TPDU = this->front_hello(trans, buffer.current_pdu_buffer(), this->verbosity);
                             }
                             break;
 
