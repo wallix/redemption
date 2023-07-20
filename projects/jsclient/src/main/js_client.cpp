@@ -396,7 +396,6 @@ public:
 
         set_if(config, "hideClientName", rdp_params.hide_client_name);
         rdp_params.disabled_orders = disabled_orders;
-        rdp_params.enable_glyph_cache = supported_orders.test(TS_NEG_GLYPH_INDEX);
 
         rdp_params.enable_persistent_disk_bitmap_cache
             = get_or(config, "enablePersistentDiskBitmapCache", false);
