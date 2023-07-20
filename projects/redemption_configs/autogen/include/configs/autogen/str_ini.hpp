@@ -283,12 +283,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #transform_glyph_to_bitmap = 0
 
-# min = 0, max = 2
-#   0: disabled
-#   1: pause key only
-#   2: all input events
-#bogus_number_of_fastpath_input_event = 1
-
 # min = 100, max = 10000
 # (in milliseconds)
 #_advanced

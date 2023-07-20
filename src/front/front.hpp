@@ -2482,28 +2482,6 @@ public:
                     LOG_IF(bool(this->verbose & Verbose::keymap_and_basic_trace3), LOG_INFO,
                         "Front::incoming: Received Fast-Path PDU, scancode eventFlags=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
                         ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
-                    // Bug #14538
-                    // Workaround for a bug of RDP Linux client xfreerdp.
-                    // freerdp send 4 keyboard events in a FastPath packet
-                    // pretending (bogusly) it only contains 1
-                    // Microsoft RDP Servers seems able to handle that ill formed message
-
-                    // Microsoft RDP Clients (mstsc from Windows 10 or Windows 2003)
-                    // are sending correctly formed messages.
-
-                    // rdesktop Linux client is not affected
-                    // (sending only slowpath keyboard input events)
-                    if (1 == num_events
-                     && 0 == i
-                     && cfpie.payload.in_remain() == 6
-                     && 0x1D == ke.keyCode
-                     && this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>()
-                        == BogusNumberOfFastpathInputEvent::pause_key_only
-                    ) {
-                        LOG(LOG_INFO,
-                            "Front::incoming: BogusNumberOfFastpathInputEvent::pause_key_only");
-                        num_events = 4;
-                    }
 
                     this->input_event_scancode(
                         Keymap::KbdFlags(ke.spKeyboardFlags),
@@ -2570,17 +2548,6 @@ public:
             }
             LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                 "Front::incoming: Received Fast-Path PUD done");
-
-            if (cfpie.payload.in_remain()
-             && this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>()
-                == BogusNumberOfFastpathInputEvent::all_input_events
-             && i + 1 >= num_events
-            ) {
-                LOG(LOG_INFO,
-                    "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events. in_remain=%zu num_events=%u",
-                    cfpie.payload.in_remain(), unsigned(num_events));
-                num_events++;
-            }
         }
 
         if (cfpie.payload.in_remain() != 0) {

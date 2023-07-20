@@ -498,18 +498,6 @@ template<> struct is_valid_enum_value<OcrLocale>
     constexpr static bool is_valid(uint64_t n) { return n <= 1; }
 };
 
-enum class BogusNumberOfFastpathInputEvent : uint8_t
-{
-    disabled = 0,
-    pause_key_only = 1,
-    all_input_events = 2,
-};
-
-template<> struct is_valid_enum_value<BogusNumberOfFastpathInputEvent>
-{
-    constexpr static bool is_valid(uint64_t n) { return n <= 2; }
-};
-
 enum class SessionProbeOnKeepaliveTimeout : uint8_t
 {
     ignore_and_continue = 0,

@@ -743,14 +743,6 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// type: BogusNumberOfFastpathInputEvent <br/>
-    /// default: BogusNumberOfFastpathInputEvent::pause_key_only <br/>
-    struct client::bogus_number_of_fastpath_input_event {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = BogusNumberOfFastpathInputEvent;
-        using mapped_type = BogusNumberOfFastpathInputEvent;
-        type value { BogusNumberOfFastpathInputEvent::pause_key_only };
-    };
     /// type: std::chrono::milliseconds <br/>
     /// default: 1000 <br/>
     struct client::recv_timeout {
@@ -4918,7 +4910,6 @@ struct client
 , cfg::client::show_target_user_in_f12_message
 , cfg::client::bogus_ios_glyph_support_level
 , cfg::client::transform_glyph_to_bitmap
-, cfg::client::bogus_number_of_fastpath_input_event
 , cfg::client::recv_timeout
 , cfg::client::enable_osd_4_eyes
 , cfg::client::enable_remotefx

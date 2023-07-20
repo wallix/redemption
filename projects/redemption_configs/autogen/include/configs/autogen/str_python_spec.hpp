@@ -240,11 +240,6 @@ bogus_ios_glyph_support_level = boolean(default=True)
 #_advanced
 transform_glyph_to_bitmap = boolean(default=False)
 
-#   0: disabled
-# &nbsp; &nbsp;   1: pause key only
-# &nbsp; &nbsp;   2: all input events
-bogus_number_of_fastpath_input_event = option(0, 1, 2, default=1)
-
 # (in milliseconds)
 #_advanced
 recv_timeout = integer(min=100, max=10000, default=1000)

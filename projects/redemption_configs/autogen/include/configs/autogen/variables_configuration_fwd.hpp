@@ -79,7 +79,6 @@ namespace cfg
         struct show_target_user_in_f12_message;
         struct bogus_ios_glyph_support_level;
         struct transform_glyph_to_bitmap;
-        struct bogus_number_of_fastpath_input_event;
         struct recv_timeout;
         struct enable_osd_4_eyes;
         struct enable_remotefx;

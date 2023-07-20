@@ -625,11 +625,6 @@ _.section("client", [&]
              type_<bool>(),
              set(false));
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"bogus_number_of_fastpath_input_event"},
-             type_<BogusNumberOfFastpathInputEvent>(),
-             set(BogusNumberOfFastpathInputEvent::pause_key_only));
-
     _.member(advanced_in_gui, no_sesman, L,
              names{"recv_timeout"},
              type_<types::range<std::chrono::milliseconds, 100, 10000>>(),

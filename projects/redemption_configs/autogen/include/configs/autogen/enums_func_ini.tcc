@@ -1186,68 +1186,6 @@ parse_error parse_from_cfg(OcrLocale & x, ::configs::spec_type<std::string> /*ty
         x, value, "bad value, expected: latin, cyrillic");
 }
 
-inline constexpr zstring_view enum_zstr_BogusNumberOfFastpathInputEvent[] {
-    "disabled"_zv,
-    "pause_key_only"_zv,
-    "all_input_events"_zv,
-};
-
-inline constexpr zstring_view enum_zint_BogusNumberOfFastpathInputEvent[] {
-    "0"_zv,
-    "1"_zv,
-    "2"_zv,
-};
-
-zstring_view assign_zbuf_from_cfg(
-    writable_chars_view zbuf,
-    cfg_s_type<BogusNumberOfFastpathInputEvent> /*type*/,
-    BogusNumberOfFastpathInputEvent x
-){
-    (void)zbuf;
-    assert(is_valid_enum_value<BogusNumberOfFastpathInputEvent>::is_valid(static_cast<uint8_t>(x)));
-    return enum_zint_BogusNumberOfFastpathInputEvent[static_cast<uint8_t>(x)];
-}
-
-zstring_view assign_zbuf_from_cfg(
-    writable_chars_view zbuf,
-    cfg_s_type<std::string> /*type*/,
-    BogusNumberOfFastpathInputEvent x
-){
-    (void)zbuf;
-    assert(is_valid_enum_value<BogusNumberOfFastpathInputEvent>::is_valid(static_cast<uint8_t>(x)));
-    return enum_zstr_BogusNumberOfFastpathInputEvent[static_cast<uint8_t>(x)];
-}
-
-parse_error parse_from_cfg(BogusNumberOfFastpathInputEvent & x, ::configs::spec_type<BogusNumberOfFastpathInputEvent> /*type*/, bytes_view value)
-{
-    using ul = uint8_t;
-
-    ul xi = 0;
-    if (parse_error err = parse_integral(
-        xi, value,
-        zero_integral<ul>(),
-        std::integral_constant<ul, 2>()
-    )) {
-        return err;
-    }
-
-    x = static_cast<BogusNumberOfFastpathInputEvent>(xi);
-    return no_parse_error;
-}
-
-
-inline constexpr std::pair<chars_view, BogusNumberOfFastpathInputEvent> enum_str_value_BogusNumberOfFastpathInputEvent[] {
-    {"DISABLED"_av, BogusNumberOfFastpathInputEvent::disabled},
-    {"PAUSE_KEY_ONLY"_av, BogusNumberOfFastpathInputEvent::pause_key_only},
-    {"ALL_INPUT_EVENTS"_av, BogusNumberOfFastpathInputEvent::all_input_events},
-};
-
-parse_error parse_from_cfg(BogusNumberOfFastpathInputEvent & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
-{
-    return parse_str_value_pairs<enum_str_value_BogusNumberOfFastpathInputEvent>(
-        x, value, "bad value, expected: disabled, pause_key_only, all_input_events");
-}
-
 inline constexpr zstring_view enum_zstr_SessionProbeOnKeepaliveTimeout[] {
     "ignore_and_continue"_zv,
     "disconnect_user"_zv,

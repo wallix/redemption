@@ -543,14 +543,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "bogus_number_of_fastpath_input_event"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::client::bogus_number_of_fastpath_input_event&>(this->variables).value,
-                ::configs::spec_type<BogusNumberOfFastpathInputEvent>{},
-                value
-            );
-        }
         else if (key == "recv_timeout"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),

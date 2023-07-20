@@ -78,7 +78,6 @@ template<> struct sesman_and_spec_type<cfg::client::ssl_cipher_list> { using typ
 template<> struct sesman_and_spec_type<cfg::client::show_target_user_in_f12_message> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::client::bogus_ios_glyph_support_level> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::client::transform_glyph_to_bitmap> { using type = bool; };
-template<> struct sesman_and_spec_type<cfg::client::bogus_number_of_fastpath_input_event> { using type = BogusNumberOfFastpathInputEvent; };
 template<> struct sesman_and_spec_type<cfg::client::recv_timeout> { using type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>; };
 template<> struct sesman_and_spec_type<cfg::client::enable_osd_4_eyes> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::client::enable_remotefx> { using type = bool; };

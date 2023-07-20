@@ -177,12 +177,6 @@ inline void config_type_definition(type_enumerations & e)
       .value("cyrillic")
     ;
 
-    e.enumeration_list("BogusNumberOfFastpathInputEvent")
-      .value("disabled")
-      .value("pause_key_only")
-      .value("all_input_events")
-    ;
-
     e.enumeration_list("SessionProbeOnKeepaliveTimeout")
       .value("ignore_and_continue")
       .value("disconnect_user")
