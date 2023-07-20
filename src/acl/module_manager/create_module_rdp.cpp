@@ -508,9 +508,15 @@ inline static void update_application_driver(ModRDPParams & mod_rdp_params, Inif
     mod_rdp_params.session_probe_params.enable_session_probe                               = true;
     mod_rdp_params.session_probe_params.vc_params.launch_application_driver                = true;
     mod_rdp_params.session_probe_params.vc_params.launch_application_driver_then_terminate = !(ini.get<cfg::session_probe::enable_session_probe>());
-    mod_rdp_params.session_probe_params.vc_params.on_launch_failure                        = SessionProbeOnLaunchFailure::disconnect_user;
 
+    mod_rdp_params.session_probe_params.vc_params.on_launch_failure                        = SessionProbeOnLaunchFailure::disconnect_user;
     ini.set<cfg::session_probe::on_launch_failure>(SessionProbeOnLaunchFailure::disconnect_user);
+
+    if (!ini.get<cfg::session_probe::enable_session_probe>())
+    {
+        mod_rdp_params.session_probe_params.vc_params.on_keepalive_timeout = SessionProbeOnKeepaliveTimeout::ignore_and_continue;
+        ini.set<cfg::session_probe::on_keepalive_timeout>(SessionProbeOnKeepaliveTimeout::ignore_and_continue);
+    }
 
     if (ini.get<cfg::session_probe::enable_autodeployed_appdriver_affinity>()) {
         mod_rdp_params.session_probe_params.vc_params.end_disconnected_session = true;
