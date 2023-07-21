@@ -593,7 +593,7 @@ _.section("client", [&]
              set(true),
              desc{"Support of Bitmap Compression."});
 
-    _.member(advanced_in_gui, no_sesman, L,
+    _.member(hidden_in_gui, no_sesman, L,
              names{"fast_path"},
              type_<bool>(),
              set(true),
@@ -772,7 +772,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
              type_<std::string>(),
              desc{"List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all."});
 
-    _.member(advanced_in_gui, no_sesman, L,
+    _.member(hidden_in_gui, no_sesman, L,
              names{"fast_path"},
              type_<bool>(),
              set(true),

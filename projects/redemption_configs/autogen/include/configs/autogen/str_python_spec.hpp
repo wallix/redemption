@@ -226,7 +226,7 @@ persist_bitmap_cache_on_disk = boolean(default=False)
 bitmap_compression = boolean(default=True)
 
 # Enables support of Client Fast-Path Input Event PDUs.
-#_advanced
+#_hidden
 fast_path = boolean(default=True)
 
 enable_suppress_output = boolean(default=True)
@@ -357,7 +357,7 @@ deny_channels = string(default='')
 
 # Enables support of Client/Server Fast-Path Input/Update PDUs.
 # Fast-Path is required for Windows Server 2012 (or more recent)!
-#_advanced
+#_hidden
 fast_path = boolean(default=True)
 
 # Enables Server Redirection Support.

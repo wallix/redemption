@@ -265,7 +265,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Enables support of Client Fast-Path Input Event PDUs.
 # value: 0 or 1
-#_advanced
+#_hidden
 #fast_path = 1
 
 # value: 0 or 1
@@ -410,7 +410,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Enables support of Client/Server Fast-Path Input/Update PDUs.
 # Fast-Path is required for Windows Server 2012 (or more recent)!
 # value: 0 or 1
-#_advanced
+#_hidden
 #fast_path = 1
 
 # Enables Server Redirection Support.
