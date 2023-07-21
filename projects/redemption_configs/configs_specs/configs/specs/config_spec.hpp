@@ -235,7 +235,6 @@ _.section("globals", [&]
              type_<types::unsigned_>(),
              set(3389),
              desc{
-                "Warning: Service will be automatically restarted and active sessions will be disconnected.\n"
                 "The port set in this field must not be already used, otherwise the service will not run.\n"
                 "Changing the port number will prevent WALLIX Access Manager from working properly."
              });

@@ -143,6 +143,21 @@ inline void write_prefered_display_name(std::ostream& out, Names const& names)
     }
 }
 
+inline void write_warning_attr(std::ostream& out, spec_internal_attr attr)
+{
+    if (bool(attr & spec_internal_attr::restart_service)) {
+        out <<
+            "Warning: Service will be automatically restarted and active sessions will be disconnected.\n"
+        ;
+    }
+
+    if (bool(attr & spec_internal_attr::iptables_in_gui)) {
+        out <<
+            "Warning: IP tables rules are reloaded and active sessions will be disconnected.\n"
+        ;
+    }
+}
+
 inline void write_spec_attr(std::ostream& out, spec_internal_attr attr)
 {
     if (bool(attr & spec_internal_attr::iptables_in_gui)) out << "_iptables\n";
@@ -640,8 +655,11 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
 
             bool is_enum_parser = false;
             auto semantic_type = get_semantic_type(type, infos, &is_enum_parser);
+            auto attr = spec_attr_t(infos).value;
 
             std::stringstream comments;
+
+            write_warning_attr(comments, attr);
 
             write_description(comments, enums, semantic_type, get_desc(infos));
             write_type_info(comments, type);
@@ -650,9 +668,7 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
             this->out() << io_prefix_lines{htmlize(comments.str()).c_str(), "# ", "", 0};
             comments.str("");
 
-            write_spec_attr(comments,
-                spec_attr_t(infos).value
-              | attr_hex_if_enum_flag(semantic_type, enums));
+            write_spec_attr(comments, attr | attr_hex_if_enum_flag(semantic_type, enums));
 
             write_prefered_display_name(comments, names);
 

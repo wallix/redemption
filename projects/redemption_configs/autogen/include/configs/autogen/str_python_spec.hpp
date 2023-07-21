@@ -5,7 +5,7 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 
 [globals]
 
-# Warning: Service will be automatically restarted and active sessions will be disconnected.
+# Warning: IP tables rules are reloaded and active sessions will be disconnected.
 # The port set in this field must not be already used, otherwise the service will not run.
 # Changing the port number will prevent WALLIX Access Manager from working properly.
 #_iptables
@@ -58,6 +58,7 @@ trace_type = option(0, 1, 2, default=1)
 #_advanced
 listen_address = ip_addr(default='0.0.0.0')
 
+# Warning: IP tables rules are reloaded and active sessions will be disconnected.
 # Allow Transparent mode.
 #_iptables
 enable_transparent_mode = boolean(default=False)

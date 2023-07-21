@@ -210,6 +210,8 @@ namespace spec
             external        = 1 << 8,
             restart_service = 1 << 9,
             logged_in_gui   = 1 << 10,
+            // /!\ newline is stored as \r\n
+            // multiline       = 1 << 11,
         };
 
         constexpr attr operator | (attr x, attr y) {
