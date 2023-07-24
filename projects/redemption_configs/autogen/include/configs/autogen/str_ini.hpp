@@ -18,6 +18,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #encryptionLevel = low
 
+# Socket path or socket address of passthrough / sesman
 #_hidden
 #authfile = )gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(
 
@@ -154,7 +155,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [client]
 
-# bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy
+# List of keyboard layouts available by the internal pages button.
+# Possible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy
 #_advanced
 #keyboard_layout_proposals = en-US, fr-FR, de-DE, ru-RU
 
@@ -207,8 +209,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 # min = 0
 #tls_max_level = 0
 
-# Show common cipher list supported by client and server
+# Show in the logs the common cipher list supported by client and server
 # value: 0 or 1
+#_advanced
 #show_common_cipher_list = 0
 
 # Needed for primary NTLM or Kerberos connections over NLA.
@@ -423,6 +426,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #client_address_sent = 0
 
+# Shared directory between proxy and secondary target.
+# Requires rdpdr support.
 #_hidden
 #proxy_managed_drives = 
 
@@ -503,13 +508,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #enable_rdpdr_data_analysis = 1
 
-# Delay in milliseconds before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
+# Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
 # (in milliseconds)
 #_advanced
 #remoteapp_bypass_legal_notice_delay = 0
 
-# Time limit in milliseconds to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
+# Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
 # (in milliseconds)
 #_advanced
@@ -969,6 +974,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #server_is_macos = 0
 
+# When disabled, Ctrl + Alt becomes AltGr (Windows behavior)
 # value: 0 or 1
 #_hidden
 #server_unix_alt = 0
@@ -1008,10 +1014,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 # values: latin, cyrillic
 #locale = latin
 
+# Time interval between 2 analyzes.
+# Too low a value will affect session reactivity.
 # (in 1/100 seconds)
 #_advanced
 #interval = 100
 
+# Checks shape and color to determine if the text is on a title bar
 # value: 0 or 1
 #_advanced
 #on_title_bar_only = 1
@@ -1214,6 +1223,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #block_invalid_clipboard_text_down = 0
 
+# Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged.
 # value: 0 or 1
 #_hidden
 #log_if_accepted = 1
@@ -1232,6 +1242,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
+# /!\ Saving files can take up a lot of disk space
 #   never: Never store transferred files.
 #   always: Always store transferred files.
 #   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).

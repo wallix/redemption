@@ -70,7 +70,8 @@ tls_max_level = integer(min=0, default=0)
 # TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
 cipher_string = string(default='ALL')
 
-# Show common cipher list supported by client and server
+# Show in the logs the common cipher list supported by client and server
+#_advanced
 show_common_cipher_list = boolean(default=False)
 
 # List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all.
@@ -483,6 +484,7 @@ block_invalid_file_up = boolean(default=False)
 # File verification on download must be enabled via option Enable down.
 block_invalid_file_down = boolean(default=False)
 
+# Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged.
 #_advanced
 log_if_accepted = boolean(default=True)
 
@@ -494,6 +496,7 @@ max_file_size_rejected = integer(min=0, default=256)
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
+# /!\ Saving files can take up a lot of disk space
 # &nbsp; &nbsp;   never: Never store transferred files.
 # &nbsp; &nbsp;   always: Always store transferred files.
 # &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).

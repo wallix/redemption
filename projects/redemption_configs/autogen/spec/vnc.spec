@@ -31,6 +31,7 @@ inactivity_timeout = integer(min=0, default=0)
 
 server_is_macos = boolean(default=False)
 
+# When disabled, Ctrl + Alt becomes AltGr (Windows behavior)
 server_unix_alt = boolean(default=False)
 
 support_cursor_pseudo_encoding = boolean(default=True)
@@ -42,6 +43,7 @@ enable_ipv6 = boolean(default=True)
 
 enable = boolean(default=False)
 
+# Port to be used for SSH tunneling
 ssh_port = integer(min=0, default=22)
 
 # static_login: Static values provided in "Ssh login" &amp; "Ssh password" fields will be used to establish the SSH tunnel.

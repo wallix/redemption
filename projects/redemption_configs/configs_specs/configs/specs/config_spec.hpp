@@ -249,7 +249,8 @@ _.section("globals", [&]
     _.member(hidden_in_gui, no_sesman, L,
              names{"authfile"},
              type_<std::string>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
+             set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)),
+             desc{"Socket path or socket address of passthrough / sesman"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"handshake_timeout"},
@@ -470,7 +471,10 @@ _.section("client", [&]
              names{"keyboard_layout_proposals"},
              type_<types::list<std::string>>(),
              set("en-US, fr-FR, de-DE, ru-RU"),
-             desc{keyboard_layout_proposals_desc});
+             desc{
+                 "List of keyboard layouts available by the internal pages button.\n"
+                 "Possible values: " + keyboard_layout_proposals_desc
+             });
 
 
     _.member(advanced_in_gui, no_sesman, L,
@@ -536,11 +540,11 @@ _.section("client", [&]
              set(0),
              desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"});
 
-    _.member(ini_and_gui, no_sesman, L, D,
+    _.member(advanced_in_gui, no_sesman, L, D,
              names{"show_common_cipher_list"},
              type_<bool>(),
              set(false),
-             desc{"Show common cipher list supported by client and server"});
+             desc{"Show in the logs the common cipher list supported by client and server"});
 
 
     _.member(advanced_in_gui, no_sesman, L,
@@ -722,11 +726,11 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
              set("ALL"),
              desc{"TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."});
 
-    _.member(no_ini_no_gui, rdp_and_jh_connpolicy, L, D,
+    _.member(no_ini_no_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, D,
              names{"show_common_cipher_list"},
              type_<bool>(),
              set(false),
-             desc{"Show common cipher list supported by client and server"});
+             desc{"Show in the logs the common cipher list supported by client and server"});
 
     _.member(advanced_in_gui, no_sesman, L,
              names{"persistent_disk_bitmap_cache"},
@@ -796,7 +800,8 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
              names{"proxy_managed_drives"},
-             type_<types::list<std::string>>());
+             type_<types::list<std::string>>(),
+             desc{"Shared directory between proxy and secondary target.\nRequires rdpdr support."});
 
     _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
              names{"ignore_auth_channel"},
@@ -904,7 +909,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
              type_<std::chrono::milliseconds>(),
              set(0),
              desc{
-                "Delay in milliseconds before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
+                "Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
                 "Set to 0 to disable this feature."
              });
 
@@ -913,7 +918,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
              type_<std::chrono::milliseconds>(),
              set(20000),
              desc{
-                "Time limit in milliseconds to automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
+                "Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
                 "Set to 0 to disable this feature."
              });
 
@@ -1505,7 +1510,8 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
     _.member(hidden_in_gui, vnc_connpolicy, L,
              names{"server_unix_alt"},
              type_<bool>(),
-             set(false));
+             set(false),
+             desc{"When disabled, Ctrl + Alt becomes AltGr (Windows behavior)"});
 
     _.member(hidden_in_gui, vnc_connpolicy, L,
              names{"support_cursor_pseudo_encoding"},
@@ -1529,7 +1535,8 @@ _.section(names{"vnc_over_ssh"}, [&]
     _.member(external, vnc_connpolicy, L,
              names{"ssh_port"},
              type_<types::unsigned_>(),
-             set(22));
+             set(22),
+             desc{"Port to be used for SSH tunneling"});
 
     _.member(external, vnc_connpolicy, L,
              names{"tunneling_credential_source"},
@@ -1591,41 +1598,60 @@ _.section("file_verification", [&]
     _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
              names{"clipboard_text_up"},
              type_<bool>(),
-             desc{"Verify text data via clipboard from client to server.\nFile verification on upload must be enabled via option Enable up."});
+             desc{
+                "Verify text data via clipboard from client to server.\n"
+                "File verification on upload must be enabled via option Enable up."
+             });
 
     _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
              names{"clipboard_text_down"},
              type_<bool>(),
-             desc{"Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down."});
+             desc{
+                "Verify text data via clipboard from server to client\n"
+                "File verification on download must be enabled via option Enable down."
+             });
 
     _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
              names{"block_invalid_file_up"},
              type_<bool>(),
              set(false),
-             desc{"Block file transfer from client to server on invalid file verification.\nFile verification on upload must be enabled via option Enable up."});
+             desc{
+                "Block file transfer from client to server on invalid file verification.\n"
+                "File verification on upload must be enabled via option Enable up."
+             });
 
     _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
              names{"block_invalid_file_down"},
              type_<bool>(),
              set(false),
-             desc{"Block file transfer from server to client on invalid file verification.\nFile verification on download must be enabled via option Enable down."});
+             desc{
+                "Block file transfer from server to client on invalid file verification.\n"
+                "File verification on download must be enabled via option Enable down."
+             });
 
     _.member(hidden_in_gui, no_sesman, L,
              names{"block_invalid_clipboard_text_up"},
              type_<bool>(),
              set(false),
-             desc{"Block text transfer from client to server on invalid text verification.\nText verification on upload must be enabled via option Clipboard text up."});
+             desc{
+                "Block text transfer from client to server on invalid text verification.\n"
+                "Text verification on upload must be enabled via option Clipboard text up."
+             });
 
     _.member(hidden_in_gui, no_sesman, L,
              names{"block_invalid_clipboard_text_down"},
              type_<bool>(),
              set(false),
-             desc{"Block text transfer from server to client on invalid text verification.\nText verification on download must be enabled via option Clipboard text down."});
+             desc{
+                "Block text transfer from server to client on invalid text verification.\n"
+                "Text verification on download must be enabled via option Clipboard text down."
+             });
 
     _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
              names{"log_if_accepted"},
              type_<bool>(),
-             set(true));
+             set(true),
+             desc{"Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged."});
 
     _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
              names{"max_file_size_rejected"},
@@ -1650,7 +1676,10 @@ _.section("file_storage", [&]
              type_<RdpStoreFile>(),
              spec::type_<std::string>(),
              set(RdpStoreFile::never),
-             desc{"Enable storage of transferred files (via RDP Clipboard)."});
+             desc{
+                "Enable storage of transferred files (via RDP Clipboard).\n"
+                "/!\\ Saving files can take up a lot of disk space"
+             });
 });
 
 // for validator only
@@ -1731,12 +1760,17 @@ _.section("ocr", [&]
     _.member(advanced_in_gui, no_sesman, L,
              names{"interval"},
              type_<std::chrono::duration<unsigned, std::centi>>(),
-             set(100));
+             set(100),
+             desc{
+                 "Time interval between 2 analyzes.\n"
+                 "Too low a value will affect session reactivity."
+             });
 
     _.member(advanced_in_gui, no_sesman, L,
              names{"on_title_bar_only"},
              type_<bool>(),
-             set(true));
+             set(true),
+             desc{"Checks shape and color to determine if the text is on a title bar"});
 
     _.member(advanced_in_gui, no_sesman, L,
              names{"max_unrecog_char_rate"},

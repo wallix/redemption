@@ -216,6 +216,7 @@ namespace cfg
         using mapped_type = std::string;
         type value { Level::low };
     };
+    /// Socket path or socket address of passthrough / sesman <br/>
     /// type: std::string <br/>
     /// default: REDEMPTION_CONFIG_AUTHFILE <br/>
     struct globals::authfile {
@@ -512,7 +513,8 @@ namespace cfg
         using mapped_type = unsigned;
         type value { 0 };
     };
-    /// bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy <br/>
+    /// List of keyboard layouts available by the internal pages button. <br/>
+    /// Possible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy <br/>
     /// type: std::string <br/>
     /// default: "en-US, fr-FR, de-DE, ru-RU" <br/>
     struct client::keyboard_layout_proposals {
@@ -608,7 +610,7 @@ namespace cfg
         using mapped_type = uint32_t;
         type value { 0 };
     };
-    /// Show common cipher list supported by client and server <br/>
+    /// Show in the logs the common cipher list supported by client and server <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::show_common_cipher_list {
@@ -947,7 +949,7 @@ namespace cfg
         using mapped_type = std::string;
         type value { "ALL" };
     };
-    /// Show common cipher list supported by client and server <br/>
+    /// Show in the logs the common cipher list supported by client and server <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:show_common_cipher_list <br/>
@@ -1089,6 +1091,8 @@ namespace cfg
         using mapped_type = std::string;
         type value {  };
     };
+    /// Shared directory between proxy and secondary target. <br/>
+    /// Requires rdpdr support. <br/>
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
@@ -1297,7 +1301,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Delay in milliseconds before automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
+    /// Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
     /// Set to 0 to disable this feature. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// default: 0 <br/>
@@ -1307,7 +1311,7 @@ namespace cfg
         using mapped_type = std::chrono::milliseconds;
         type value { 0 };
     };
-    /// Time limit in milliseconds to automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
+    /// Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
     /// Set to 0 to disable this feature. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// default: 20000 <br/>
@@ -2476,6 +2480,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// When disabled, Ctrl + Alt becomes AltGr (Windows behavior) <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_vnc:server_unix_alt <br/>
@@ -2564,6 +2569,8 @@ namespace cfg
         using mapped_type = std::string;
         type value { OcrLocale::latin };
     };
+    /// Time interval between 2 analyzes. <br/>
+    /// Too low a value will affect session reactivity. <br/>
     /// type: std::chrono::duration&lt;unsigned, std::ratio&lt;1, 100>> <br/>
     /// default: 100 <br/>
     struct ocr::interval {
@@ -2572,6 +2579,7 @@ namespace cfg
         using mapped_type = std::chrono::duration<unsigned, std::ratio<1, 100>>;
         type value { 100 };
     };
+    /// Checks shape and color to determine if the text is on a title bar <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct ocr::on_title_bar_only {
@@ -3074,6 +3082,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: file_verification:log_if_accepted <br/>
@@ -3113,6 +3122,7 @@ namespace cfg
     };
 
     /// Enable storage of transferred files (via RDP Clipboard). <br/>
+    /// /!\ Saving files can take up a lot of disk space <br/>
     /// type: RdpStoreFile <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: file_storage:store_file <br/>

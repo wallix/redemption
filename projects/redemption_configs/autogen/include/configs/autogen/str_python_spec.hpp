@@ -16,6 +16,7 @@ port = integer(min=0, default=3389)
 #_advanced
 encryptionLevel = option('low', 'medium', 'high', default='low')
 
+# Socket path or socket address of passthrough / sesman
 #_hidden
 authfile = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(')
 
@@ -132,7 +133,8 @@ minimal_memory_available_before_connection_silently_closed = integer(min=0, defa
 
 [client]
 
-# bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy
+# List of keyboard layouts available by the internal pages button.
+# Possible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy
 # (values are comma-separated)
 #_advanced
 keyboard_layout_proposals = string(default='en-US, fr-FR, de-DE, ru-RU')
@@ -177,7 +179,8 @@ tls_min_level = integer(min=0, default=2)
 # Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 tls_max_level = integer(min=0, default=0)
 
-# Show common cipher list supported by client and server
+# Show in the logs the common cipher list supported by client and server
+#_advanced
 show_common_cipher_list = boolean(default=False)
 
 # Needed for primary NTLM or Kerberos connections over NLA.
@@ -368,6 +371,8 @@ server_redirection_support = boolean(default=False)
 #_advanced
 client_address_sent = option(0, 1, 2, default=0)
 
+# Shared directory between proxy and secondary target.
+# Requires rdpdr support.
 # (values are comma-separated)
 #_hidden
 proxy_managed_drives = string(default='')
@@ -433,13 +438,13 @@ bogus_ios_rdpdr_virtual_channel = boolean(default=True)
 #_hidden
 enable_rdpdr_data_analysis = boolean(default=True)
 
-# Delay in milliseconds before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
+# Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
 # (in milliseconds)
 #_advanced
 remoteapp_bypass_legal_notice_delay = integer(min=0, default=0)
 
-# Time limit in milliseconds to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
+# Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
 # (in milliseconds)
 #_advanced
@@ -826,6 +831,7 @@ bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)
 #_hidden
 server_is_macos = boolean(default=False)
 
+# When disabled, Ctrl + Alt becomes AltGr (Windows behavior)
 #_hidden
 server_unix_alt = boolean(default=False)
 
@@ -858,10 +864,13 @@ version = option(1, 2, default=2)
 
 locale = option('latin', 'cyrillic', default='latin')
 
+# Time interval between 2 analyzes.
+# Too low a value will affect session reactivity.
 # (in 1/100 seconds)
 #_advanced
 interval = integer(min=0, default=100)
 
+# Checks shape and color to determine if the text is on a title bar
 #_advanced
 on_title_bar_only = boolean(default=True)
 
@@ -1035,6 +1044,7 @@ block_invalid_clipboard_text_up = boolean(default=False)
 #_hidden
 block_invalid_clipboard_text_down = boolean(default=False)
 
+# Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged.
 #_hidden
 log_if_accepted = boolean(default=True)
 
@@ -1050,6 +1060,7 @@ tmpdir = string(max=4096, default='/tmp/')
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
+# /!\ Saving files can take up a lot of disk space
 # &nbsp; &nbsp;   never: Never store transferred files.
 # &nbsp; &nbsp;   always: Always store transferred files.
 # &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).

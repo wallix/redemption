@@ -67,7 +67,7 @@ cfg::mod_rdp::tls_max_level ⇐ mod_rdp:tls_max_level   [uint32_t]
 cfg::mod_rdp::cipher_string ⇐ mod_rdp:cipher_string   [std::string]
     TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
 cfg::mod_rdp::show_common_cipher_list ⇐ mod_rdp:show_common_cipher_list   [bool]
-    Show common cipher list supported by client and server
+    Show in the logs the common cipher list supported by client and server
 cfg::mod_rdp::allow_channels ⇐ allow_channels   [std::string]
     List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
 cfg::mod_rdp::deny_channels ⇐ deny_channels   [std::string]
@@ -81,6 +81,8 @@ cfg::mod_rdp::server_redirection_support ⇐ mod_rdp:server_redirection_support 
 cfg::mod_rdp::load_balance_info ⇐ mod_rdp:load_balance_info   [std::string]
     Load balancing information
 cfg::mod_rdp::proxy_managed_drives ⇐ proxy_managed_drives   [std::string]
+    Shared directory between proxy and secondary target.
+    Requires rdpdr support.
 cfg::mod_rdp::ignore_auth_channel ⇐ ignore_auth_channel   [bool]
 cfg::mod_rdp::alternate_shell ⇐ alternate_shell   [std::string]
 cfg::mod_rdp::shell_arguments ⇐ shell_arguments   [std::string]
@@ -312,6 +314,7 @@ cfg::mod_vnc::bogus_clipboard_infinite_loop ⇐ vnc_bogus_clipboard_infinite_loo
       2: continued
 cfg::mod_vnc::server_is_macos ⇐ mod_vnc:server_is_macos   [bool]
 cfg::mod_vnc::server_unix_alt ⇐ mod_vnc:server_unix_alt   [bool]
+    When disabled, Ctrl + Alt becomes AltGr (Windows behavior)
 cfg::mod_vnc::support_cursor_pseudo_encoding ⇐ mod_vnc:support_cursor_pseudo_encoding   [bool]
 cfg::mod_vnc::enable_ipv6 ⇐ mod_vnc:enable_ipv6   [bool]
     Enable target connection on ipv6
@@ -368,12 +371,14 @@ cfg::file_verification::block_invalid_file_down ⇐ file_verification:block_inva
     Block file transfer from server to client on invalid file verification.
     File verification on download must be enabled via option Enable down.
 cfg::file_verification::log_if_accepted ⇐ file_verification:log_if_accepted   [bool]
+    Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged.
 cfg::file_verification::max_file_size_rejected ⇐ file_verification:max_file_size_rejected   [uint32_t]
     If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
     Warning: This value affects the RAM used by the session.
 
 cfg::file_storage::store_file ⇐ file_storage:store_file   [RdpStoreFile ⇐ std::string]
     Enable storage of transferred files (via RDP Clipboard).
+    /!\ Saving files can take up a lot of disk space
       never: Never store transferred files.
       always: Always store transferred files.
       on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
@@ -386,6 +391,7 @@ cfg::crypto::sign_key ⇐ sign_key   [std::array<unsigned char, 32>]
 
 <sesman only> ⇐ vnc_over_ssh:enable   [bool]
 <sesman only> ⇐ vnc_over_ssh:ssh_port   [unsigned]
+    Port to be used for SSH tunneling
 <sesman only> ⇐ vnc_over_ssh:tunneling_credential_source   [VncTunnelingCredentialSource ⇐ std::string]
     static_login: Static values provided in "Ssh login" & "Ssh password" fields will be used to establish the SSH tunnel.
     scenario_account: Scenario account provided in "Scenario account name" field will be used to establish the SSH tunnel. (Recommended)

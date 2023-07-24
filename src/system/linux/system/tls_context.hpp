@@ -79,6 +79,20 @@ inline void set_tls_levels(SSL_CTX* ctx, uint32_t tls_min_level, uint32_t tls_ma
     }
 }
 
+inline void log_cipher_list(SSL* ssl, char const* origin)
+{
+    int priority = 0;
+
+    while(const char * cipher_name = SSL_get_cipher_list(ssl, priority)) {
+        priority++;
+        LOG(LOG_INFO, "TLSContext::%s cipher %d: %s", origin, priority, cipher_name);
+    }
+
+    if (priority == 0) {
+        LOG(LOG_INFO, "TLSContext::%s cipher list empty", origin);
+    }
+}
+
 /**
  * @brief all the context needed to manipulate TLS context for a TLS object
  */
@@ -180,14 +194,7 @@ public:
         }
 
         if (tls_client_params.show_common_cipher_list){
-            int priority = 0;
-            while (const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority)) {
-                 priority++;
-                 LOG(LOG_INFO, "TLSContext::Client cipher %d: %s", priority, cipher_name);
-            }
-            if (priority == 0){
-                 LOG(LOG_INFO, "TLSContext::Client negotiated cipher list empty");
-            }
+            log_cipher_list(this->allocated_ssl, "Client");
         }
 
         LOG(LOG_INFO, "SSL_connect()");
@@ -623,15 +630,8 @@ public:
 
         LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(this->allocated_ssl));
 
-        if (show_common_cipher_list){
-            int priority = 0;
-            while(const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority)) {
-                 priority++;
-                 LOG(LOG_INFO, "TLSContext::Server cipher %d: %s", priority, cipher_name);
-            }
-            if (priority == 0){
-                 LOG(LOG_INFO, "TLSContext::Server cipher list empty");
-            }
+        if (show_common_cipher_list) {
+            log_cipher_list(this->allocated_ssl, "Server");
         }
 
         LOG(LOG_INFO, "TLSContext::Negociated cipher used %s", SSL_CIPHER_get_name(SSL_get_current_cipher(this->allocated_ssl)));
