@@ -120,7 +120,7 @@ _.set_sections({
     "debug",
 });
 
-prefix_value disable_prefix_val{"disable"};
+// prefix_value disable_prefix_val{"disable"};
 
 // updated by sesman
 constexpr char default_key[] =
@@ -1426,7 +1426,6 @@ _.section("session_probe", [&]
     _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
              names{"disabled_features"},
              type_<SessionProbeDisabledFeature>(),
-             disable_prefix_val,
              desc{
                 "This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes."
              },
@@ -1975,7 +1974,6 @@ _.section("video", [&]
     _.member(advanced_in_gui, no_sesman, L,
              names{"disable_keyboard_log"},
              type_<KeyboardLogFlags>(),
-             disable_prefix_val,
              set(KeyboardLogFlags::syslog),
              desc{
                 "Disable keyboard log:\n"
@@ -1986,14 +1984,12 @@ _.section("video", [&]
              names{"disable_clipboard_log"},
              type_<ClipboardLogFlags>(),
              set(ClipboardLogFlags::syslog),
-             disable_prefix_val,
              desc{"Disable clipboard log:"});
 
     _.member(advanced_in_gui, no_sesman, L,
              names{"disable_file_system_log"},
              type_<FileSystemLogFlags>(),
              set(FileSystemLogFlags::syslog),
-             disable_prefix_val,
              desc{"Disable (redirected) file system log:"});
 
     _.member(advanced_in_gui, no_sesman, L,
@@ -2081,7 +2077,6 @@ _.section("capture", [&]
              names{"disable_keyboard_log"},
              type_<KeyboardLogFlagsCP>(),
              set(KeyboardLogFlagsCP::syslog),
-             disable_prefix_val,
              desc{
                 "Disable keyboard log:\n"
                 "(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"

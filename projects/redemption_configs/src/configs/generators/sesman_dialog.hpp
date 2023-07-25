@@ -146,6 +146,7 @@ public:
             std::stringstream comments;
 
             python_spec_writer::write_description(comments, enums, semantic_type, get_desc(infos));
+
             python_spec_writer::write_enumeration_value_description(comments, enums, semantic_type, infos, is_enum_parser);
 
             this->out << io_prefix_lines{comments.str().c_str(), "    ", "", 0};

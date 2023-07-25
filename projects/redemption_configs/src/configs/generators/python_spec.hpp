@@ -431,14 +431,28 @@ namespace impl
     }
 }
 
+template<class Pack>
+char const* get_prefix(Pack const& infos)
+{
+    using cfg_attributes::prefix_value;
+    Names const& names = infos;
+    char const* prefix = value_or<prefix_value>(infos, prefix_value{}).value;
+    if (!prefix && utils::starts_with(names.cpp_name(), "disable"_av)) {
+        prefix = "disable";
+    }
+    return prefix;
+}
+
 template<class T, class Pack>
-void write_enumeration_value_description(std::ostream& out, type_enumerations& enums, type_<T>, Pack const & pack, bool is_enum_parser)
+void write_enumeration_value_description(
+    std::ostream& out, type_enumerations& enums,
+    type_<T>, Pack const & pack, bool is_enum_parser)
 {
     using cfg_attributes::prefix_value;
 
     if constexpr (std::is_enum_v<T>) {
         type_enumeration const& e = enums.get_enum<T>();
-        impl::write_desc_value(out, e, value_or<prefix_value>(pack, prefix_value{}).value, is_enum_parser);
+        impl::write_desc_value(out, e, get_prefix(pack), is_enum_parser);
         if (e.info) {
             out << e.info;
         }

@@ -227,7 +227,8 @@ struct IniWriterBase : python_spec_writer::IniPythonSpecWriterBase
                     comments << "min = " << e.min() << ", max = " << e.max() << "\n";
                 }
 
-                if (!python_spec_writer::impl::write_desc_value(comments, e, value_or<prefix_value>(infos, prefix_value{}).value, is_enum_parser)) {
+                auto prefix = python_spec_writer::get_prefix(infos);
+                if (!python_spec_writer::impl::write_desc_value(comments, e, prefix, is_enum_parser)) {
                     char const* prefix = "values: ";
                     switch (e.cat) {
                     case type_enumeration::Category::flags:
