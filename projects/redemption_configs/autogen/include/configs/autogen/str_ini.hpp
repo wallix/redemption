@@ -694,6 +694,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_autodeployed_appdriver_affinity = 1
 
 # This parameter allows you to enable the Windows-side logging of Session Probe.
+# The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team.
 # value: 0 or 1
 #_hidden
 #enable_log = 0

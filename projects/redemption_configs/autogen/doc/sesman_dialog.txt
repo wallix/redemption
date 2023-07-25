@@ -193,6 +193,7 @@ cfg::session_probe::enable_autodeployed_appdriver_affinity ⇐ session_probe:ena
     If enabled, disconnected auto-deployed Application Driver session will automatically terminate by Session Probe.
 cfg::session_probe::enable_log ⇐ session_probe:enable_log   [bool]
     This parameter allows you to enable the Windows-side logging of Session Probe.
+    The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team.
 cfg::session_probe::enable_log_rotation ⇐ session_probe:enable_log_rotation   [bool]
     This parameter enables or disables the Log files rotation for Windows-side logging of Session Probe.
     The Log files rotation helps reduce disk space consumption caused by logging. But the interesting information may be lost if the corresponding file is not retrieved in time.

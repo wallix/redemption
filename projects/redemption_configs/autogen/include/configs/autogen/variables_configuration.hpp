@@ -1791,6 +1791,7 @@ namespace cfg
         type value { true };
     };
     /// This parameter allows you to enable the Windows-side logging of Session Probe. <br/>
+    /// The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:enable_log <br/>

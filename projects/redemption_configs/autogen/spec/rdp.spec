@@ -248,6 +248,7 @@ end_disconnected_session = boolean(default=False)
 enable_autodeployed_appdriver_affinity = boolean(default=True)
 
 # This parameter allows you to enable the Windows-side logging of Session Probe.
+# The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team.
 #_advanced
 enable_log = boolean(default=False)
 
