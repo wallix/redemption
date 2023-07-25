@@ -1564,7 +1564,9 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 3000, 120000>;
         type value { 3000 };
     };
-    /// Use Session Probe to launch Remote Program as much as possible. <br/>
+    /// This option only has an effect in RemoteApp sessions (RDS meaning). <br/>
+    /// If enabled, the RDP Proxy relies on the Session Probe to launch the remote programs. <br/>
+    /// Otherwise, remote programs will be launched according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol. This latter is the native method.The difference is that Session Probe does not start a new application when its host session is resumed. Conversely, launching applications according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol is not affected by this behavior. However, launching applications via the native method requires them to be published in Remote Desktop Services, which is unnecessary if launched by the Session Probe. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:use_session_probe_to_launch_remote_program <br/>
@@ -1636,8 +1638,9 @@ namespace cfg
         using mapped_type = ::configs::spec_types::fixed_string;
         type value { REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS };
     };
-    /// Minimum supported server : Windows Server 2008. <br/>
-    /// Clipboard redirection should be remain enabled on Terminal Server. <br/>
+    /// This parameter only has an effect in Desktop sessions. <br/>
+    /// It allows you to choose between Smart launcher and Legacy launcher to launch the Session Probe. <br/>
+    /// The Smart launcher and the Legacy launcher do not have the same technical prerequisites. Detailed information can be found in the Administration guide. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:use_smart_launcher <br/>
@@ -1651,6 +1654,9 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// This parameter enables or disables the Session Probe’s launch mask. <br/>
+    /// The Launch mask hides the Session Probe launch steps from the end-users. <br/>
+    /// Disabling the mask makes it easier to diagnose Session Probe launch issues. It is recommended to enable the mask for normal operation. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:enable_launch_mask <br/>
@@ -1664,6 +1670,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// It is recommended to use option 2. <br/>
     /// type: SessionProbeOnLaunchFailure <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:on_launch_failure <br/>
@@ -1707,7 +1714,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         type value { 40000 };
     };
-    /// Minimum supported server : Windows Server 2008. <br/>
+    /// If enabled, the Launch timeout countdown timer will be started only after user logged in Windows. Otherwise, the countdown timer will be started immediately after RDP protocol connexion. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:start_launch_timeout_timer_only_after_logon <br/>
@@ -1721,6 +1728,10 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// The number of seconds that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by On keepalive timeout. <br/>
+    /// If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by On keepalive timeout. <br/>
+    /// The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected. <br/>
+    /// During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:keepalive_timeout <br/>
@@ -1734,10 +1745,11 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
         type value { 5000 };
     };
+    /// This parameter allows us to choose the behavior of the RDP Proxy in case of losing the connection with Session Probe. <br/>
     /// type: SessionProbeOnKeepaliveTimeout <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:on_keepalive_timeout <br/>
-    /// default: SessionProbeOnKeepaliveTimeout::disconnect_user <br/>
+    /// default: SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait <br/>
     struct session_probe::on_keepalive_timeout {
         static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
@@ -1745,11 +1757,13 @@ namespace cfg
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 8};
         using type = SessionProbeOnKeepaliveTimeout;
         using mapped_type = SessionProbeOnKeepaliveTimeout;
-        type value { SessionProbeOnKeepaliveTimeout::disconnect_user };
+        type value { SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait };
     };
-    /// Automatically end a disconnected Desktop session or clean up a disconnected RemoteApp session. <br/>
-    /// This option is recommended for Web applications running in Desktop mode. <br/>
-    /// Session Probe must be enabled to use this feature. <br/>
+    /// The behavior of this parameter is different between the Desktop session and the RemoteApp session (RDS meaning). But in each case, the purpose of enabling this parameter is to not leave disconnected sessions in a state unusable by the RDP proxy. <br/>
+    /// If enabled, Session Probe will automatically end the disconnected Desktop session. Otherwise, the RDP session and the applications it contains will remain active after user disconnection (unless a parameter defined at the RDS-level decides otherwise). <br/>
+    /// The parameter in RemoteApp session (RDS meaning) does not cause the latter to be closed but a simple cleanup. However, this makes the session suitable for reuse. <br/>
+    /// This parameter must be enabled for Web applications because an existing session with a running browser cannot be reused. <br/>
+    /// It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when Use session probe to launch remote program parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:end_disconnected_session <br/>
@@ -1763,7 +1777,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// End automatically a disconnected auto-deployed Application Driver session. <br/>
+    /// If enabled, disconnected auto-deployed Application Driver session will automatically terminate by Session Probe. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:enable_autodeployed_appdriver_affinity <br/>
@@ -1777,6 +1791,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// This parameter allows you to enable the Windows-side logging of Session Probe. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:enable_log <br/>
@@ -1790,6 +1805,8 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// This parameter enables or disables the Log files rotation for Windows-side logging of Session Probe. <br/>
+    /// The Log files rotation helps reduce disk space consumption caused by logging. But the interesting information may be lost if the corresponding file is not retrieved in time. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:enable_log_rotation <br/>
@@ -1803,6 +1820,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// Defines logging severity levels. <br/>
     /// type: SessionProbeLogLevel <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:log_level <br/>
@@ -1816,7 +1834,8 @@ namespace cfg
         using mapped_type = SessionProbeLogLevel;
         type value { SessionProbeLogLevel::Debug };
     };
-    /// (Deprecated!) This policy setting allows you to configure a time limit in milliseconds for disconnected application sessions. <br/>
+    /// (Deprecated!) <br/>
+    /// The period above which the disconnected Application session will be automatically closed by the Session Probe. <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
@@ -1831,7 +1850,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         type value { 0 };
     };
-    /// This policy setting allows you to configure a time limit in milliseconds for disconnected Terminal Services sessions. <br/>
+    /// The period above which the disconnected Desktop session will be automatically closed by the Session Probe. <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
@@ -1846,7 +1865,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         type value { 0 };
     };
-    /// This parameter allows you to specify the maximum amount of time in milliseconds that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe. <br/>
+    /// The period of user inactivity above which the session will be locked by the Session Probe. <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
@@ -1861,6 +1880,9 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         type value { 0 };
     };
+    /// The additional period given to the device to make Clipboard redirection available. <br/>
+    /// This parameter is effective only if the Smart launcher is used. <br/>
+    /// If we see the message "Clipboard Virtual Channel is unavailable" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:smart_launcher_clipboard_initialization_delay <br/>
@@ -1874,6 +1896,10 @@ namespace cfg
         using mapped_type = std::chrono::milliseconds;
         type value { 2000 };
     };
+    /// For under-performing devices. <br/>
+    /// The extra time given to the device before starting the Session Probe launch sequence. <br/>
+    /// This parameter is effective only if the Smart launcher is used. <br/>
+    /// This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:smart_launcher_start_delay <br/>
@@ -1887,6 +1913,10 @@ namespace cfg
         using mapped_type = std::chrono::milliseconds;
         type value { 0 };
     };
+    /// The delay between two simulated keystrokes during the Session Probe launch sequence execution. <br/>
+    /// This parameter is effective only if the Smart launcher is used. <br/>
+    /// This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance. <br/>
+    /// This parameter is usually used together with the Smart launcher short delay parameter. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:smart_launcher_long_delay <br/>
@@ -1900,6 +1930,10 @@ namespace cfg
         using mapped_type = std::chrono::milliseconds;
         type value { 500 };
     };
+    /// The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution. <br/>
+    /// This parameter is effective only if the Smart launcher is used. <br/>
+    /// This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance. <br/>
+    /// This parameter is usually used together with the Smart launcher long delay parameter. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:smart_launcher_short_delay <br/>
@@ -1913,6 +1947,7 @@ namespace cfg
         using mapped_type = std::chrono::milliseconds;
         type value { 50 };
     };
+    /// Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the Smart launcher clipboard initialization delay parameter.This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:smart_launcher_enable_wabam_affinity <br/>
@@ -1927,6 +1962,9 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// The time interval between the detection of an error (example: a refusal by the target of the redirected drive) and the actual abandonment of the Session Probe launch. <br/>
+    /// The purpose of this parameter is to give the target time to gracefully stop some ongoing processing. <br/>
+    /// It is strongly recommended to keep the default value of this parameter. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:launcher_abort_delay <br/>
@@ -1940,6 +1978,10 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         type value { 2000 };
     };
+    /// This parameter enables or disables the crash dump generation when the Session Probe encounters a fatal error. <br/>
+    /// The crash dump file is useful for post-modem debugging. It is not designed for normal use. <br/>
+    /// The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team. <br/>
+    /// There is no rotation mechanism to limit the number of dump files produced. Extended activation of this parameter can quickly exhaust disk space. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:enable_crash_dump <br/>
@@ -1953,6 +1995,11 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// Use only if you see unusually high consumption of system object handles by the Session Probe. <br/>
+    /// The Session Probe will sabotage and then restart it-self if it consumes more handles than what is defined by this parameter. <br/>
+    /// A value of 0 disables this feature. <br/>
+    /// This feature can cause the session to be disconnected if the value of the On KeepAlive timeout parameter is set to 1 (Disconnect user). <br/>
+    /// If Allow multiple handshakes parameter (session_probe section of Configuration options) is disabled, restarting the Session Probe will cause the session to disconnect. <br/>
     /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:handle_usage_limit <br/>
@@ -1966,6 +2013,11 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<uint32_t, 0, 1000>;
         type value { 0 };
     };
+    /// Use only if you see unusually high consumption of memory by the Session Probe. <br/>
+    /// The Session Probe will sabotage and then restart it-self if it consumes more memory than what is defined by this parameter. <br/>
+    /// A value of 0 disables this feature. <br/>
+    /// This feature can cause the session to be disconnected if the value of the On KeepAlive timeout parameter is set to 1 (Disconnect user). <br/>
+    /// If Allow multiple handshakes parameter (session_probe section of Configuration options) is disabled, restarting the Session Probe will cause the session to disconnect. <br/>
     /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:memory_usage_limit <br/>
@@ -1979,8 +2031,9 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<uint32_t, 0, 200000000>;
         type value { 0 };
     };
-    /// As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program. <br/>
-    /// The alarm is deactivated if this value is less than 200. <br/>
+    /// This debugging feature was created to determine the cause of high CPU consumption by Session Probe in certain environments. <br/>
+    /// As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program execution. The alarm is deactivated if this value of parameter is less than 200 (200%% of reference consumption). <br/>
+    /// When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by Cpu usage alarm action parameter. <br/>
     /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:cpu_usage_alarm_threshold <br/>
@@ -1994,6 +2047,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<uint32_t, 0, 10000>;
         type value { 0 };
     };
+    /// Additional behavior when CPU consumption exceeds what is allowed. Please refer to the Cpu usage alarm threshold parameter. <br/>
     /// type: SessionProbeCPUUsageAlarmAction <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:cpu_usage_alarm_action <br/>
@@ -2007,6 +2061,10 @@ namespace cfg
         using mapped_type = SessionProbeCPUUsageAlarmAction;
         type value { SessionProbeCPUUsageAlarmAction::Restart };
     };
+    /// For application session only. <br/>
+    /// The delay between the launch of the application and the start of End of session check. <br/>
+    /// Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe. <br/>
+    /// End of session check delay time allow you to delay the start of End of session check in order to give the application the time to create its window. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:end_of_session_check_delay_time <br/>
@@ -2020,6 +2078,8 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
         type value { 0 };
     };
+    /// For application session only. <br/>
+    /// If enabled, during the End of session check, the processes that do not have a visible window will not be counted as active processes of the session. Without active processes, the application session will be logged off by the Session Probe. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:ignore_ui_less_processes_during_end_of_session_check <br/>
@@ -2033,136 +2093,9 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// type: bool <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesmanName: session_probe:childless_window_as_unidentified_input_field <br/>
-    /// default: true <br/>
-    struct session_probe::childless_window_as_unidentified_input_field {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 30};
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
-    /// type: bool <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesmanName: session_probe:update_disabled_features <br/>
-    /// default: true <br/>
-    struct session_probe::update_disabled_features {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 31};
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
-    /// type: SessionProbeDisabledFeature <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesmanName: session_probe:disabled_features <br/>
-    /// default: SessionProbeDisabledFeature{352} <br/>
-    struct session_probe::disabled_features {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 32};
-        using type = SessionProbeDisabledFeature;
-        using mapped_type = SessionProbeDisabledFeature;
-        type value { SessionProbeDisabledFeature{352} };
-    };
-    /// type: bool <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesmanName: session_probe:enable_bestsafe_interaction <br/>
-    /// default: false <br/>
-    struct session_probe::enable_bestsafe_interaction {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 33};
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
-    };
-    /// type: SessionProbeOnAccountManipulation <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesmanName: session_probe:on_account_manipulation <br/>
-    /// default: SessionProbeOnAccountManipulation::allow <br/>
-    struct session_probe::on_account_manipulation {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 34};
-        using type = SessionProbeOnAccountManipulation;
-        using mapped_type = SessionProbeOnAccountManipulation;
-        type value { SessionProbeOnAccountManipulation::allow };
-    };
-    /// The name of the environment variable pointing to the alternative directory to launch Session Probe. <br/>
-    /// If empty, the environment variable TMP will be used. <br/>
-    /// type: char[4] <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesmanName: session_probe:alternate_directory_environment_variable <br/>
-    /// default: {} <br/>
-    struct session_probe::alternate_directory_environment_variable {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 35};
-        using type = char[4];
-        using mapped_type = ::configs::spec_types::fixed_string;
-        type value {  };
-    };
-    /// If enabled, disconnected session can be recovered by a different primary user. <br/>
-    /// type: bool <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesmanName: session_probe:public_session <br/>
-    /// default: false <br/>
-    struct session_probe::public_session {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 36};
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
-    };
-    /// Comma-separated rules <br/>
-    /// (Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21) <br/>
-    /// (Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21) <br/>
-    /// (Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389) <br/>
-    /// (Ex. for backwards compatibility only: 10.1.0.0/16:22) <br/>
-    /// Session Probe must be enabled to use this feature. <br/>
-    /// type: std::string <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesmanName: session_probe:outbound_connection_monitoring_rules <br/>
-    /// default: {} <br/>
-    struct session_probe::outbound_connection_monitoring_rules {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 37};
-        using type = std::string;
-        using mapped_type = std::string;
-        type value {  };
-    };
-    /// Comma-separated rules (Ex.: $deny:Taskmgr) <br/>
-    /// @ = All child processes of Bastion Application (Ex.: $deny:@) <br/>
-    /// Session Probe must be enabled to use this feature. <br/>
-    /// type: std::string <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesmanName: session_probe:process_monitoring_rules <br/>
-    /// default: {} <br/>
-    struct session_probe::process_monitoring_rules {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 38};
-        using type = std::string;
-        using mapped_type = std::string;
-        type value {  };
-    };
-    /// Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe) <br/>
+    /// This parameter is used to provide the list of (comma-separated) system processes that can be run in the session. <br/>
+    /// Ex.: dllhos.exe,TSTheme.exe <br/>
+    /// Unlike user processes, system processes do not keep the session open. A session with no user process will be automatically closed by Session Probe after starting the End of session check. <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:extra_system_processes <br/>
@@ -2171,12 +2104,33 @@ namespace cfg
         static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 39};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 30};
         using type = std::string;
         using mapped_type = std::string;
         type value {  };
     };
-    /// Comma-separated processes (Ex.: chrome.exe,ngf.exe) <br/>
+    /// This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log). <br/>
+    /// Unfortunately, the detection does not work with applications developed in Java, Flash, etc. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata. <br/>
+    /// One of the specifics of these applications is that their main windows do not have any child window from point of view of WIN32 API. Activating this parameter allows this property to be used to detect applications developed in Java or Flash. <br/>
+    /// Please refer to the 'Keyboard input masking level' parameter of 'session_log' section. <br/>
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:childless_window_as_unidentified_input_field <br/>
+    /// default: true <br/>
+    struct session_probe::childless_window_as_unidentified_input_field {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 31};
+        using type = bool;
+        using mapped_type = bool;
+        type value { true };
+    };
+    /// Comma-separated process names. (Ex.: chrome.exe,ngf.exe) <br/>
+    /// This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log). <br/>
+    /// Unfortunately, the detection is not infallible. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata. <br/>
+    /// This parameter is used to provide the list of processes whose windows are considered as input fields of unknown type. <br/>
+    /// Please refer to the 'Keyboard input masking level' parameter of 'session_log' section. <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:windows_of_these_applications_as_unidentified_input_field <br/>
@@ -2185,11 +2139,146 @@ namespace cfg
         static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 32};
+        using type = std::string;
+        using mapped_type = std::string;
+        type value {  };
+    };
+    /// This parameter is used when resuming a session hosting a existing Session Probe. <br/>
+    /// If enabled, the Session Probe will activate or deactivate features according to the value of 'Disabled features' parameter received when resuming its host session. Otherwise, the Session Probe will keep the same set of features that were used during the previous connection. <br/>
+    /// It is recommended to keep the default value of this parameter. <br/>
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:update_disabled_features <br/>
+    /// default: true <br/>
+    struct session_probe::update_disabled_features {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 33};
+        using type = bool;
+        using mapped_type = bool;
+        type value { true };
+    };
+    /// This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes. <br/>
+    /// type: SessionProbeDisabledFeature <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:disabled_features <br/>
+    /// default: SessionProbeDisabledFeature{352} <br/>
+    struct session_probe::disabled_features {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 34};
+        using type = SessionProbeDisabledFeature;
+        using mapped_type = SessionProbeDisabledFeature;
+        type value { SessionProbeDisabledFeature{352} };
+    };
+    /// This parameter has no effect on the device without BestSafe. <br/>
+    /// Is enabled, Session Probe relies on BestSafe to perform the detection of application launches and the detection of outgoing connections. <br/>
+    /// BestSafe has more efficient mechanisms in these tasks than Session Probe. <br/>
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:enable_bestsafe_interaction <br/>
+    /// default: false <br/>
+    struct session_probe::enable_bestsafe_interaction {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 35};
+        using type = bool;
+        using mapped_type = bool;
+        type value { false };
+    };
+    /// This parameter has no effect on the device without BestSafe. <br/>
+    /// BestSafe interaction must be enabled. Please refer to 'Enable bestsafe interaction' parameter. <br/>
+    /// This parameter allows you to choose the behavior of the RDP Proxy in case of detection of Windows account manipulation. <br/>
+    /// Detectable account manipulations are the creation, deletion of a Windows account, and the addition and deletion of an account from a Windows user group. <br/>
+    /// type: SessionProbeOnAccountManipulation <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:on_account_manipulation <br/>
+    /// default: SessionProbeOnAccountManipulation::allow <br/>
+    struct session_probe::on_account_manipulation {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 36};
+        using type = SessionProbeOnAccountManipulation;
+        using mapped_type = SessionProbeOnAccountManipulation;
+        type value { SessionProbeOnAccountManipulation::allow };
+    };
+    /// This parameter is used to indicate the name of an environment variable, to be set on the Windows device, and pointed to a directory (on the device) that can be used to store and start the Session Probe. The environment variable must be available in the Windows user session. <br/>
+    /// The environment variable name is limited to 3 characters or less. <br/>
+    /// By default, the Session Probe will be stored and started from the temporary directory of Windows user. <br/>
+    /// This parameter is useful if a GPO prevents Session Probe from starting from the Windows user's temporary directory. <br/>
+    /// type: char[4] <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:alternate_directory_environment_variable <br/>
+    /// default: {} <br/>
+    struct session_probe::alternate_directory_environment_variable {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 37};
+        using type = char[4];
+        using mapped_type = ::configs::spec_types::fixed_string;
+        type value {  };
+    };
+    /// If enabled, the session, once disconnected, can be resumed by another Bastion user. <br/>
+    /// Except in special cases, this is usually a security problem. <br/>
+    /// By default, a session can only be resumed by the Bastion user who created it. <br/>
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:public_session <br/>
+    /// default: false <br/>
+    struct session_probe::public_session {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 38};
+        using type = bool;
+        using mapped_type = bool;
+        type value { false };
+    };
+    /// This parameter is used to provide the list of (comma-separated) rules used to monitor outgoing connections created in the session. <br/>
+    /// (Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21) <br/>
+    /// (Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21) <br/>
+    /// (Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389) <br/>
+    /// (Ex. for backwards compatibility only: 10.1.0.0/16:22) <br/>
+    /// BestSafe can be used to perform detection of outgoing connections created in the session. Please refer to 'Enable bestsafe interaction' parameter. <br/>
+    /// type: std::string <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:outbound_connection_monitoring_rules <br/>
+    /// default: {} <br/>
+    struct session_probe::outbound_connection_monitoring_rules {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 39};
+        using type = std::string;
+        using mapped_type = std::string;
+        type value {  };
+    };
+    /// This parameter is used to provide the list of (comma-separated) rules used to monitor the execution of processes in the session. <br/>
+    /// (Ex.: $deny:taskmgr.exe) <br/>
+    /// @ = All child processes of (Bastion) application (Ex.: $deny:@) <br/>
+    /// BestSafe can be used to perform detection of process launched in the session. Please refer to 'Enable bestsafe interaction' parameter. <br/>
+    /// type: std::string <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: session_probe:process_monitoring_rules <br/>
+    /// default: {} <br/>
+    struct session_probe::process_monitoring_rules {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 40};
         using type = std::string;
         using mapped_type = std::string;
         type value {  };
     };
+    /// If enabled, a string of random characters will be added to the name of the executable of Session Probe. <br/>
+    /// The result could be: SesProbe-5420.exe <br/>
+    /// Some other features automatically enable customization of the Session Probe executable name. Application Driver auto-deployment for example. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct session_probe::customize_executable_name {
@@ -2198,7 +2287,9 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// If enabled, the RDP Proxy accepts to perform the handshake several times during the same RDP session. Otherwise, any new handshake attempt will interrupt the current session with the display of an alert message. <br/>
     /// type: bool <br/>
+    /// displayName: Allow multiple handshakes <br/>
     /// default: false <br/>
     struct session_probe::allow_multiple_handshake {
         static constexpr unsigned sesman_proxy_communication_flags = 0b00;
@@ -2206,6 +2297,8 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// If disabled, the RDP proxy disconnects from the session when the Session Probe reports that the session is about to close (old behavior). <br/>
+    /// The new session end procedure (freeze and wait) prevents another connection from resuming a session that is close to end-of-life. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct session_probe::at_end_of_session_freeze_connection_and_wait {
@@ -2243,6 +2336,9 @@ namespace cfg
         using mapped_type = SessionProbeProcessCommandLineRetrieveMethod;
         type value { SessionProbeProcessCommandLineRetrieveMethod::both };
     };
+    /// Time between two polling performed by Session Probe. <br/>
+    /// The parameter is created to adapt the CPU consumption to the performance of the Windows device. <br/>
+    /// The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:periodic_task_run_interval <br/>
@@ -2256,6 +2352,8 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 300, 2000>;
         type value { 500 };
     };
+    /// If enabled, Session Probe activity will be minimized when the user is disconnected from the session. No metadata will be collected during this time. <br/>
+    /// The purpose of this behavior is to optimize CPU consumption. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:pause_if_session_is_disconnected <br/>
@@ -4997,10 +5095,10 @@ struct session_probe
 , cfg::session_probe::smart_launcher_start_delay
 , cfg::session_probe::smart_launcher_long_delay
 , cfg::session_probe::smart_launcher_short_delay
-, cfg::session_probe::outbound_connection_monitoring_rules
-, cfg::session_probe::process_monitoring_rules
 , cfg::session_probe::extra_system_processes
 , cfg::session_probe::windows_of_these_applications_as_unidentified_input_field
+, cfg::session_probe::outbound_connection_monitoring_rules
+, cfg::session_probe::process_monitoring_rules
 , cfg::session_probe::disabled_features
 , cfg::session_probe::enable_session_probe
 , cfg::session_probe::exe_or_file
@@ -5439,7 +5537,9 @@ using VariablesAclPack = Pack<
 , cfg::session_probe::cpu_usage_alarm_action
 , cfg::session_probe::end_of_session_check_delay_time
 , cfg::session_probe::ignore_ui_less_processes_during_end_of_session_check
+, cfg::session_probe::extra_system_processes
 , cfg::session_probe::childless_window_as_unidentified_input_field
+, cfg::session_probe::windows_of_these_applications_as_unidentified_input_field
 , cfg::session_probe::update_disabled_features
 , cfg::session_probe::disabled_features
 , cfg::session_probe::enable_bestsafe_interaction
@@ -5448,8 +5548,6 @@ using VariablesAclPack = Pack<
 , cfg::session_probe::public_session
 , cfg::session_probe::outbound_connection_monitoring_rules
 , cfg::session_probe::process_monitoring_rules
-, cfg::session_probe::extra_system_processes
-, cfg::session_probe::windows_of_these_applications_as_unidentified_input_field
 , cfg::session_probe::process_command_line_retrieve_method
 , cfg::session_probe::periodic_task_run_interval
 , cfg::session_probe::pause_if_session_is_disconnected

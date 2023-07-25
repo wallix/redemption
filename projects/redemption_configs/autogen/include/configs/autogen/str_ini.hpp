@@ -622,21 +622,25 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #arguments = )gen_config_ini" << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << R"gen_config_ini(
 
-# Minimum supported server : Windows Server 2008.
-# Clipboard redirection should be remain enabled on Terminal Server.
+# This parameter only has an effect in Desktop sessions.
+# It allows you to choose between Smart launcher and Legacy launcher to launch the Session Probe.
+# The Smart launcher and the Legacy launcher do not have the same technical prerequisites. Detailed information can be found in the Administration guide.
 # value: 0 or 1
 #_hidden
 #use_smart_launcher = 1
 
+# This parameter enables or disables the Session Probe’s launch mask.
+# The Launch mask hides the Session Probe launch steps from the end-users.
+# Disabling the mask makes it easier to diagnose Session Probe launch issues. It is recommended to enable the mask for normal operation.
 # value: 0 or 1
 #_hidden
 #enable_launch_mask = 1
 
-# Behavior on failure to launch Session Probe.
+# It is recommended to use option 2.
 # min = 0, max = 2
-#   0: ignore failure and continue.
-#   1: disconnect user.
-#   2: reconnect without Session Probe.
+#   0: The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the Launch fallback timeout instead of the Launch timeout.
+#   1: This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of Launch timeout to the performance of the target.
+#   2: We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the Launch fallback timeout instead of the Launch timeout.
 #_hidden
 #on_launch_failure = 1
 
@@ -654,165 +658,231 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #launch_fallback_timeout = 40000
 
-# Minimum supported server : Windows Server 2008.
+# If enabled, the Launch timeout countdown timer will be started only after user logged in Windows. Otherwise, the countdown timer will be started immediately after RDP protocol connexion.
 # value: 0 or 1
 #_hidden
 #start_launch_timeout_timer_only_after_logon = 1
 
+# The number of seconds that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by On keepalive timeout.
+# If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by On keepalive timeout.
+# The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected.
+# During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate.
 # min = 0, max = 60000
 # (in milliseconds)
 #_hidden
 #keepalive_timeout = 5000
 
+# This parameter allows us to choose the behavior of the RDP Proxy in case of losing the connection with Session Probe.
 # min = 0, max = 2
-#   0: ignore and continue
-#   1: disconnect user
-#   2: freeze connection and wait
+#   0: Designed to minimize the impact on the user experience if the Session Probe is unstable. It should not be used when Session Probe is working well. An attacker can take advantage of this setting by simulating a Session Probe crash in order to bypass the surveillance.
+#   1: Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the End disconnected session parameter (or an equivalent setting at the RDS-level) is enabled.
+#   2: This is the recommended setting. User actions will be blocked until contact with the Session Probe (reply to KeepAlive message or something else) is resumed.
 #_hidden
-#on_keepalive_timeout = 1
+#on_keepalive_timeout = 2
 
-# Automatically end a disconnected Desktop session or clean up a disconnected RemoteApp session.
-# This option is recommended for Web applications running in Desktop mode.
-# Session Probe must be enabled to use this feature.
+# The behavior of this parameter is different between the Desktop session and the RemoteApp session (RDS meaning). But in each case, the purpose of enabling this parameter is to not leave disconnected sessions in a state unusable by the RDP proxy.
+# If enabled, Session Probe will automatically end the disconnected Desktop session. Otherwise, the RDP session and the applications it contains will remain active after user disconnection (unless a parameter defined at the RDS-level decides otherwise).
+# The parameter in RemoteApp session (RDS meaning) does not cause the latter to be closed but a simple cleanup. However, this makes the session suitable for reuse.
+# This parameter must be enabled for Web applications because an existing session with a running browser cannot be reused.
+# It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when Use session probe to launch remote program parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes.
 # value: 0 or 1
 #_hidden
 #end_disconnected_session = 0
 
-# End automatically a disconnected auto-deployed Application Driver session.
-# 
+# If enabled, disconnected auto-deployed Application Driver session will automatically terminate by Session Probe.
 # value: 0 or 1
 #_hidden
 #enable_autodeployed_appdriver_affinity = 1
 
+# This parameter allows you to enable the Windows-side logging of Session Probe.
 # value: 0 or 1
 #_hidden
 #enable_log = 0
 
+# This parameter enables or disables the Log files rotation for Windows-side logging of Session Probe.
+# The Log files rotation helps reduce disk space consumption caused by logging. But the interesting information may be lost if the corresponding file is not retrieved in time.
 # value: 0 or 1
 #_hidden
 #enable_log_rotation = 0
 
+# Defines logging severity levels.
 # min = 0, max = 6
-#   1: Fatal
-#   2: Error
-#   3: Info
-#   4: Warning
-#   5: Debug
-#   6: Detail
+#   1: The Fatal level designates very severe error events that will presumably lead the application to abort.
+#   2: The Error level designates error events that might still allow the application to continue running.
+#   3: The Info level designates informational messages that highlight the progress of the application at coarse-grained level.
+#   4: The Warning level designates potentially harmful situations.
+#   5: The Debug level designates fine-grained informational events that are mostly useful to debug an application.
+#   6: The Detail level designates finer-grained informational events than Debug.
 #_hidden
 #log_level = 5
 
-# (Deprecated!) This policy setting allows you to configure a time limit in milliseconds for disconnected application sessions.
+# (Deprecated!)
+# The period above which the disconnected Application session will be automatically closed by the Session Probe.
 # 0 to disable timeout.
 # min = 0, max = 172800000
 # (in milliseconds)
 #_hidden
 #disconnected_application_limit = 0
 
-# This policy setting allows you to configure a time limit in milliseconds for disconnected Terminal Services sessions.
+# The period above which the disconnected Desktop session will be automatically closed by the Session Probe.
 # 0 to disable timeout.
 # min = 0, max = 172800000
 # (in milliseconds)
 #_hidden
 #disconnected_session_limit = 0
 
-# This parameter allows you to specify the maximum amount of time in milliseconds that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
+# The period of user inactivity above which the session will be locked by the Session Probe.
 # 0 to disable timeout.
 # min = 0, max = 172800000
 # (in milliseconds)
 #_hidden
 #idle_session_limit = 0
 
+# The additional period given to the device to make Clipboard redirection available.
+# This parameter is effective only if the Smart launcher is used.
+# If we see the message "Clipboard Virtual Channel is unavailable" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter.
 # (in milliseconds)
 #_hidden
 #smart_launcher_clipboard_initialization_delay = 2000
 
+# For under-performing devices.
+# The extra time given to the device before starting the Session Probe launch sequence.
+# This parameter is effective only if the Smart launcher is used.
+# This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened.
 # (in milliseconds)
 #_hidden
 #smart_launcher_start_delay = 0
 
+# The delay between two simulated keystrokes during the Session Probe launch sequence execution.
+# This parameter is effective only if the Smart launcher is used.
+# This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
+# This parameter is usually used together with the Smart launcher short delay parameter.
 # (in milliseconds)
 #_hidden
 #smart_launcher_long_delay = 500
 
+# The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution.
+# This parameter is effective only if the Smart launcher is used.
+# This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
+# This parameter is usually used together with the Smart launcher long delay parameter.
 # (in milliseconds)
 #_hidden
 #smart_launcher_short_delay = 50
 
+# Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the Smart launcher clipboard initialization delay parameter.This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager.
 # value: 0 or 1
 #_hidden
 #_display_name=Enable Smart launcher with AM affinity
 #smart_launcher_enable_wabam_affinity = 1
 
+# The time interval between the detection of an error (example: a refusal by the target of the redirected drive) and the actual abandonment of the Session Probe launch.
+# The purpose of this parameter is to give the target time to gracefully stop some ongoing processing.
+# It is strongly recommended to keep the default value of this parameter.
 # min = 0, max = 300000
 # (in milliseconds)
 #_hidden
 #launcher_abort_delay = 2000
 
+# This parameter enables or disables the crash dump generation when the Session Probe encounters a fatal error.
+# The crash dump file is useful for post-modem debugging. It is not designed for normal use.
+# The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team.
+# There is no rotation mechanism to limit the number of dump files produced. Extended activation of this parameter can quickly exhaust disk space.
 # value: 0 or 1
 #_hidden
 #enable_crash_dump = 0
 
+# Use only if you see unusually high consumption of system object handles by the Session Probe.
+# The Session Probe will sabotage and then restart it-self if it consumes more handles than what is defined by this parameter.
+# A value of 0 disables this feature.
+# This feature can cause the session to be disconnected if the value of the On KeepAlive timeout parameter is set to 1 (Disconnect user).
+# If Allow multiple handshakes parameter (session_probe section of Configuration options) is disabled, restarting the Session Probe will cause the session to disconnect.
 # min = 0, max = 1000
 # min = 0
 #_hidden
 #handle_usage_limit = 0
 
+# Use only if you see unusually high consumption of memory by the Session Probe.
+# The Session Probe will sabotage and then restart it-self if it consumes more memory than what is defined by this parameter.
+# A value of 0 disables this feature.
+# This feature can cause the session to be disconnected if the value of the On KeepAlive timeout parameter is set to 1 (Disconnect user).
+# If Allow multiple handshakes parameter (session_probe section of Configuration options) is disabled, restarting the Session Probe will cause the session to disconnect.
 # min = 0, max = 200000000
 # min = 0
 #_hidden
 #memory_usage_limit = 0
 
-# As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program.
-# The alarm is deactivated if this value is less than 200.
+# This debugging feature was created to determine the cause of high CPU consumption by Session Probe in certain environments.
+# As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program execution. The alarm is deactivated if this value of parameter is less than 200 (200%% of reference consumption).
+# When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by Cpu usage alarm action parameter.
 # min = 0, max = 10000
 # min = 0
 #_hidden
 #cpu_usage_alarm_threshold = 0
 
+# Additional behavior when CPU consumption exceeds what is allowed. Please refer to the Cpu usage alarm threshold parameter.
 # min = 0, max = 1
-#   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
-#   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+#   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section and 'Allow multiple handshakes' parameter of 'Configuration options'.
+#   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section.
 #_hidden
 #cpu_usage_alarm_action = 0
 
+# For application session only.
+# The delay between the launch of the application and the start of End of session check.
+# Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe.
+# End of session check delay time allow you to delay the start of End of session check in order to give the application the time to create its window.
 # min = 0, max = 60000
 # (in milliseconds)
 #_hidden
 #end_of_session_check_delay_time = 0
 
+# For application session only.
+# If enabled, during the End of session check, the processes that do not have a visible window will not be counted as active processes of the session. Without active processes, the application session will be logged off by the Session Probe.
 # value: 0 or 1
 #_hidden
 #ignore_ui_less_processes_during_end_of_session_check = 1
 
+# This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log).
+# Unfortunately, the detection does not work with applications developed in Java, Flash, etc. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata.
+# One of the specifics of these applications is that their main windows do not have any child window from point of view of WIN32 API. Activating this parameter allows this property to be used to detect applications developed in Java or Flash.
+# Please refer to the 'Keyboard input masking level' parameter of 'session_log' section.
 # value: 0 or 1
 #_hidden
 #childless_window_as_unidentified_input_field = 1
 
+# This parameter is used when resuming a session hosting a existing Session Probe.
+# If enabled, the Session Probe will activate or deactivate features according to the value of 'Disabled features' parameter received when resuming its host session. Otherwise, the Session Probe will keep the same set of features that were used during the previous connection.
+# It is recommended to keep the default value of this parameter.
 # value: 0 or 1
 #_hidden
 #update_disabled_features = 1
 
+# This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes.
 # min = 0, max = 511
 #   0x000: none
-#   0x001: Java Access Bridge
-#   0x002: MS Active Accessbility
-#   0x004: MS UI Automation
-#   0x010: Inspect Edge location URL
-#   0x020: Inspect Chrome Address/Search bar
-#   0x040: Inspect Firefox Address/Search bar
-#   0x080: Monitor Internet Explorer event
-#   0x100: Inspect group membership of user
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
+#   0x001: disable Java Access Bridge. General user activity monitoring in the Java applications (including detection of password fields).
+#   0x002: disable MS Active Accessbility. General user activity monitoring (including detection of password fields). (legacy API)
+#   0x004: disable MS UI Automation. General user activity monitoring (including detection of password fields). (new API)
+#   0x010: disable Inspect Edge location URL. Basic web navigation monitoring.
+#   0x020: disable Inspect Chrome Address/Search bar. Basic web navigation monitoring.
+#   0x040: disable Inspect Firefox Address/Search bar. Basic web navigation monitoring.
+#   0x080: disable Monitor Internet Explorer event. Advanced web navigation monitoring.
+#   0x100: disable Inspect group membership of user. User identity monitoring.
+# Note: values can be added (disable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
 #disabled_features = 352
 
+# This parameter has no effect on the device without BestSafe.
+# Is enabled, Session Probe relies on BestSafe to perform the detection of application launches and the detection of outgoing connections.
+# BestSafe has more efficient mechanisms in these tasks than Session Probe.
 # value: 0 or 1
 #_hidden
 #enable_bestsafe_interaction = 0
 
-# For targets running WALLIX BestSafe only.
+# This parameter has no effect on the device without BestSafe.
+# BestSafe interaction must be enabled. Please refer to 'Enable bestsafe interaction' parameter.
+# This parameter allows you to choose the behavior of the RDP Proxy in case of detection of Windows account manipulation.
+# Detectable account manipulations are the creation, deletion of a Windows account, and the addition and deletion of an account from a Windows user group.
 # min = 0, max = 2
 #   0: User action will be accepted
 #   1: (Same thing as 'allow') 
@@ -820,35 +890,46 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #on_account_manipulation = 0
 
-# The name of the environment variable pointing to the alternative directory to launch Session Probe.
-# If empty, the environment variable TMP will be used.
+# This parameter is used to indicate the name of an environment variable, to be set on the Windows device, and pointed to a directory (on the device) that can be used to store and start the Session Probe. The environment variable must be available in the Windows user session.
+# The environment variable name is limited to 3 characters or less.
+# By default, the Session Probe will be stored and started from the temporary directory of Windows user.
+# This parameter is useful if a GPO prevents Session Probe from starting from the Windows user's temporary directory.
 # maxlen = 3
 #_hidden
 #alternate_directory_environment_variable = 
 
-# If enabled, disconnected session can be recovered by a different primary user.
+# If enabled, the session, once disconnected, can be resumed by another Bastion user.
+# Except in special cases, this is usually a security problem.
+# By default, a session can only be resumed by the Bastion user who created it.
 # value: 0 or 1
 #_hidden
 #public_session = 0
 
+# If enabled, a string of random characters will be added to the name of the executable of Session Probe.
+# The result could be: SesProbe-5420.exe
+# Some other features automatically enable customization of the Session Probe executable name. Application Driver auto-deployment for example.
 # value: 0 or 1
 #_advanced
 #customize_executable_name = 0
 
+# If enabled, the RDP Proxy accepts to perform the handshake several times during the same RDP session. Otherwise, any new handshake attempt will interrupt the current session with the display of an alert message.
 # value: 0 or 1
 #_advanced
+#_display_name=Allow multiple handshakes
 #allow_multiple_handshake = 0
 
+# If disabled, the RDP proxy disconnects from the session when the Session Probe reports that the session is about to close (old behavior).
+# The new session end procedure (freeze and wait) prevents another connection from resuming a session that is close to end-of-life.
 # value: 0 or 1
-#_advanced
+#_hidden
 #at_end_of_session_freeze_connection_and_wait = 1
 
 # value: 0 or 1
-#_advanced
+#_hidden
 #enable_cleaner = 1
 
 # value: 0 or 1
-#_advanced
+#_hidden
 #clipboard_based_launcher_reset_keyboard_status = 1
 
 # min = 0, max = 2
@@ -858,11 +939,16 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #process_command_line_retrieve_method = 2
 
+# Time between two polling performed by Session Probe.
+# The parameter is created to adapt the CPU consumption to the performance of the Windows device.
+# The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption.
 # min = 300, max = 2000
 # (in milliseconds)
 #_hidden
 #periodic_task_run_interval = 500
 
+# If enabled, Session Probe activity will be minimized when the user is disconnected from the session. No metadata will be collected during this time.
+# The purpose of this behavior is to optimize CPU consumption.
 # value: 0 or 1
 #_hidden
 #pause_if_session_is_disconnected = 0

@@ -182,7 +182,9 @@ template<> struct sesman_and_spec_type<cfg::session_probe::cpu_usage_alarm_thres
 template<> struct sesman_and_spec_type<cfg::session_probe::cpu_usage_alarm_action> { using type = SessionProbeCPUUsageAlarmAction; };
 template<> struct sesman_and_spec_type<cfg::session_probe::end_of_session_check_delay_time> { using type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>; };
 template<> struct sesman_and_spec_type<cfg::session_probe::ignore_ui_less_processes_during_end_of_session_check> { using type = bool; };
+template<> struct sesman_and_spec_type<cfg::session_probe::extra_system_processes> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::session_probe::childless_window_as_unidentified_input_field> { using type = bool; };
+template<> struct sesman_and_spec_type<cfg::session_probe::windows_of_these_applications_as_unidentified_input_field> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::session_probe::update_disabled_features> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::session_probe::disabled_features> { using type = SessionProbeDisabledFeature; };
 template<> struct sesman_and_spec_type<cfg::session_probe::enable_bestsafe_interaction> { using type = bool; };
@@ -191,8 +193,6 @@ template<> struct sesman_and_spec_type<cfg::session_probe::alternate_directory_e
 template<> struct sesman_and_spec_type<cfg::session_probe::public_session> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::session_probe::outbound_connection_monitoring_rules> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::session_probe::process_monitoring_rules> { using type = std::string; };
-template<> struct sesman_and_spec_type<cfg::session_probe::extra_system_processes> { using type = std::string; };
-template<> struct sesman_and_spec_type<cfg::session_probe::windows_of_these_applications_as_unidentified_input_field> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::session_probe::customize_executable_name> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::session_probe::allow_multiple_handshake> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::session_probe::at_end_of_session_freeze_connection_and_wait> { using type = bool; };

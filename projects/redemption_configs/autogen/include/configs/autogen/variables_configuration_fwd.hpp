@@ -198,7 +198,9 @@ namespace cfg
         struct cpu_usage_alarm_action;
         struct end_of_session_check_delay_time;
         struct ignore_ui_less_processes_during_end_of_session_check;
+        struct extra_system_processes;
         struct childless_window_as_unidentified_input_field;
+        struct windows_of_these_applications_as_unidentified_input_field;
         struct update_disabled_features;
         struct disabled_features;
         struct enable_bestsafe_interaction;
@@ -207,8 +209,6 @@ namespace cfg
         struct public_session;
         struct outbound_connection_monitoring_rules;
         struct process_monitoring_rules;
-        struct extra_system_processes;
-        struct windows_of_these_applications_as_unidentified_input_field;
         struct customize_executable_name;
         struct allow_multiple_handshake;
         struct at_end_of_session_freeze_connection_and_wait;

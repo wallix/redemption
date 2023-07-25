@@ -395,11 +395,11 @@ template<> struct is_valid_enum_value<KeyboardInputMaskingLevel>
 // Behavior on failure to launch Session Probe.
 enum class SessionProbeOnLaunchFailure : uint8_t
 {
-    // ignore failure and continue.
+    // The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the Launch fallback timeout instead of the Launch timeout.
     ignore_and_continue = 0,
-    // disconnect user.
+    // This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of Launch timeout to the performance of the target.
     disconnect_user = 1,
-    // reconnect without Session Probe.
+    // We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the Launch fallback timeout instead of the Launch timeout.
     retry_without_session_probe = 2,
 };
 
@@ -500,8 +500,11 @@ template<> struct is_valid_enum_value<OcrLocale>
 
 enum class SessionProbeOnKeepaliveTimeout : uint8_t
 {
+    // Designed to minimize the impact on the user experience if the Session Probe is unstable. It should not be used when Session Probe is working well. An attacker can take advantage of this setting by simulating a Session Probe crash in order to bypass the surveillance.
     ignore_and_continue = 0,
+    // Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the End disconnected session parameter (or an equivalent setting at the RDS-level) is enabled.
     disconnect_user = 1,
+    // This is the recommended setting. User actions will be blocked until contact with the Session Probe (reply to KeepAlive message or something else) is resumed.
     freeze_connection_and_wait = 2,
 };
 
@@ -543,23 +546,23 @@ template<> struct is_valid_enum_value<RdpModeConsole>
 enum class SessionProbeDisabledFeature : uint16_t
 {
     none = 0,
-    // Java Access Bridge
+    // Java Access Bridge. General user activity monitoring in the Java applications (including detection of password fields).
     jab = 1,
-    // MS Active Accessbility
+    // MS Active Accessbility. General user activity monitoring (including detection of password fields). (legacy API)
     msaa = 2,
-    // MS UI Automation
+    // MS UI Automation. General user activity monitoring (including detection of password fields). (new API)
     msuia = 4,
     // Reserved (do not use)
     r1 = 8,
-    // Inspect Edge location URL
+    // Inspect Edge location URL. Basic web navigation monitoring.
     edge_inspection = 16,
-    // Inspect Chrome Address/Search bar
+    // Inspect Chrome Address/Search bar. Basic web navigation monitoring.
     chrome_inspection = 32,
-    // Inspect Firefox Address/Search bar
+    // Inspect Firefox Address/Search bar. Basic web navigation monitoring.
     firefox_inspection = 64,
-    // Monitor Internet Explorer event
+    // Monitor Internet Explorer event. Advanced web navigation monitoring.
     ie_monitoring = 128,
-    // Inspect group membership of user
+    // Inspect group membership of user. User identity monitoring.
     group_membership = 256,
 };
 
@@ -642,11 +645,17 @@ template<> struct is_valid_enum_value<ClientAddressSent>
 enum class SessionProbeLogLevel : uint8_t
 {
     Off = 0,
+    // The Fatal level designates very severe error events that will presumably lead the application to abort.
     Fatal = 1,
+    // The Error level designates error events that might still allow the application to continue running.
     Error = 2,
+    // The Info level designates informational messages that highlight the progress of the application at coarse-grained level.
     Info = 3,
+    // The Warning level designates potentially harmful situations.
     Warning = 4,
+    // The Debug level designates fine-grained informational events that are mostly useful to debug an application.
     Debug = 5,
+    // The Detail level designates finer-grained informational events than Debug.
     Detail = 6,
 };
 
@@ -716,9 +725,9 @@ template<> struct is_valid_enum_value<BannerType>
 
 enum class SessionProbeCPUUsageAlarmAction : uint8_t
 {
-    // Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.
+    // Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section and 'Allow multiple handshakes' parameter of 'Configuration options'.
     Restart = 0,
-    // Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.
+    // Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section.
     Stop = 1,
 };
 

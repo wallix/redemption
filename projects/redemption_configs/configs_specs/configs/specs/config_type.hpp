@@ -137,9 +137,9 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("SessionProbeOnLaunchFailure", "Behavior on failure to launch Session Probe.")
-      .value("ignore_and_continue", "ignore failure and continue.")
-      .value("disconnect_user", "disconnect user.")
-      .value("retry_without_session_probe", "reconnect without Session Probe.")
+      .value("ignore_and_continue", "The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the Launch fallback timeout instead of the Launch timeout.")
+      .value("disconnect_user", "This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of Launch timeout to the performance of the target.")
+      .value("retry_without_session_probe", "We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the Launch fallback timeout instead of the Launch timeout.")
     ;
 
     e.enumeration_list("VncBogusClipboardInfiniteLoop")
@@ -178,9 +178,9 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("SessionProbeOnKeepaliveTimeout")
-      .value("ignore_and_continue")
-      .value("disconnect_user")
-      .value("freeze_connection_and_wait")
+      .value("ignore_and_continue", "Designed to minimize the impact on the user experience if the Session Probe is unstable. It should not be used when Session Probe is working well. An attacker can take advantage of this setting by simulating a Session Probe crash in order to bypass the surveillance.")
+      .value("disconnect_user", "Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the End disconnected session parameter (or an equivalent setting at the RDS-level) is enabled.")
+      .value("freeze_connection_and_wait", "This is the recommended setting. User actions will be blocked until contact with the Session Probe (reply to KeepAlive message or something else) is resumed.")
     ;
 
     e.enumeration_list("SmartVideoCropping")
@@ -197,15 +197,15 @@ inline void config_type_definition(type_enumerations & e)
 
     e.enumeration_flags("SessionProbeDisabledFeature")
       .value("none")
-      .value("jab", "Java Access Bridge")
-      .value("msaa", "MS Active Accessbility")
-      .value("msuia", "MS UI Automation")
+      .value("jab", "Java Access Bridge. General user activity monitoring in the Java applications (including detection of password fields).")
+      .value("msaa", "MS Active Accessbility. General user activity monitoring (including detection of password fields). (legacy API)")
+      .value("msuia", "MS UI Automation. General user activity monitoring (including detection of password fields). (new API)")
       .value("r1", "Reserved (do not use)").exclude()
-      .value("edge_inspection", "Inspect Edge location URL")
-      .value("chrome_inspection", "Inspect Chrome Address/Search bar")
-      .value("firefox_inspection", "Inspect Firefox Address/Search bar")
-      .value("ie_monitoring", "Monitor Internet Explorer event")
-      .value("group_membership", "Inspect group membership of user")
+      .value("edge_inspection", "Inspect Edge location URL. Basic web navigation monitoring.")
+      .value("chrome_inspection", "Inspect Chrome Address/Search bar. Basic web navigation monitoring.")
+      .value("firefox_inspection", "Inspect Firefox Address/Search bar. Basic web navigation monitoring.")
+      .value("ie_monitoring", "Monitor Internet Explorer event. Advanced web navigation monitoring.")
+      .value("group_membership", "Inspect group membership of user. User identity monitoring.")
     ;
 
     e.enumeration_list("RdpStoreFile")
@@ -228,12 +228,12 @@ inline void config_type_definition(type_enumerations & e)
 
     e.enumeration_list("SessionProbeLogLevel")
       .value("Off").exclude()
-      .value("Fatal")
-      .value("Error")
-      .value("Info")
-      .value("Warning")
-      .value("Debug")
-      .value("Detail")
+      .value("Fatal", "The Fatal level designates very severe error events that will presumably lead the application to abort.")
+      .value("Error", "The Error level designates error events that might still allow the application to continue running.")
+      .value("Info", "The Info level designates informational messages that highlight the progress of the application at coarse-grained level.")
+      .value("Warning", "The Warning level designates potentially harmful situations.")
+      .value("Debug", "The Debug level designates fine-grained informational events that are mostly useful to debug an application.")
+      .value("Detail", "The Detail level designates finer-grained informational events than Debug.")
     ;
 
     e.enumeration_list("ModRdpUseFailureSimulationSocketTransport")
@@ -266,8 +266,8 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("SessionProbeCPUUsageAlarmAction")
-      .value("Restart", "Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'Keepalive timeout' and 'On keepalive timeout' of current section.")
-      .value("Stop", "Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please check parameters 'On keepalive timeout' of current section.")
+      .value("Restart", "Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section and 'Allow multiple handshakes' parameter of 'Configuration options'.")
+      .value("Stop", "Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section.")
     ;
 
     e.enumeration_list("SessionProbeProcessCommandLineRetrieveMethod")
