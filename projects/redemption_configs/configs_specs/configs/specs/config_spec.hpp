@@ -1211,7 +1211,9 @@ _.section("session_probe", [&]
     _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
              names{"enable_log"},
              type_<bool>(),
-             desc{"This parameter allows you to enable the Windows-side logging of Session Probe."},
+             desc{
+                "This parameter allows you to enable the Windows-side logging of Session Probe.\n"
+                "The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team."},
              set(false));
 
     _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
