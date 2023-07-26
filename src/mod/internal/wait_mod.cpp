@@ -36,7 +36,7 @@ WaitMod::WaitMod(
     CopyPaste& copy_paste, bool showform, uint32_t flag
 )
     : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, showform ? &copy_paste : nullptr)
-    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
+    , language_button(vars.get<cfg::internal_mod::keyboard_layout_proposals>(), this->wait_widget,
         drawable, front, font, theme)
     , wait_widget(drawable, copy_paste, widget_rect,
         {

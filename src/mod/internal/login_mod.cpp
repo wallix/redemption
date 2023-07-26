@@ -69,7 +69,7 @@ LoginMod::LoginMod(
     : RailInternalModBase(drawable, width, height, rail_client_execute, font, theme, &copy_paste)
     , events_guard(events)
     , language_button(
-        vars.get<cfg::client::keyboard_layout_proposals>(),
+        vars.get<cfg::internal_mod::keyboard_layout_proposals>(),
         this->login, drawable, front, font, theme)
     , login([&]{
         std::string target;

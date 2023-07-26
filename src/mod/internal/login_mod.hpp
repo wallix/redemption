@@ -42,9 +42,9 @@ using LoginModVariables = vcfg::variables<
     vcfg::var<cfg::translation::login_language,         vcfg::accessmode::get>,
     vcfg::var<cfg::context::opt_message,                vcfg::accessmode::get>,
     vcfg::var<cfg::context::login_message,              vcfg::accessmode::get>,
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>,
-    vcfg::var<cfg::internal_mod::enable_target_field,   vcfg::accessmode::get>
+    vcfg::var<cfg::internal_mod::enable_target_field,   vcfg::accessmode::get>,
+    vcfg::var<cfg::internal_mod::keyboard_layout_proposals, vcfg::accessmode::get>
 >;
 
 

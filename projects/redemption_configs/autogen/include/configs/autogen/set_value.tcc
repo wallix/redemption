@@ -343,14 +343,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     }
     else if (this->section_id == 2) {
         if (0) {}
-        else if (key == "keyboard_layout_proposals"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::client::keyboard_layout_proposals&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::string>>{},
-                value
-            );
-        }
         else if (key == "ignore_logon_password"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -2042,6 +2034,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::internal_mod::enable_target_field&>(this->variables).value,
                 ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "keyboard_layout_proposals"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::internal_mod::keyboard_layout_proposals&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 value
             );
         }

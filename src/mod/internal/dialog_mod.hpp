@@ -62,9 +62,9 @@ private:
 
 
 using DialogWithChallengeModVariables = vcfg::variables<
-    vcfg::var<cfg::client::keyboard_layout_proposals, vcfg::accessmode::get>,
-    vcfg::var<cfg::context::password,                 vcfg::accessmode::set>,
-    vcfg::var<cfg::translation::language,             vcfg::accessmode::get>
+    vcfg::var<cfg::context::password,                       vcfg::accessmode::set>,
+    vcfg::var<cfg::translation::language,                   vcfg::accessmode::get>,
+    vcfg::var<cfg::internal_mod::keyboard_layout_proposals, vcfg::accessmode::get>
 >;
 
 

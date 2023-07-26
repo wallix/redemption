@@ -53,7 +53,6 @@ template<> struct sesman_and_spec_type<cfg::globals::rdp_keepalive_connection_in
 template<> struct sesman_and_spec_type<cfg::globals::enable_ipv6> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::globals::minimal_memory_available_before_connection_silently_closed> { using type = uint64_t; };
 template<> struct sesman_and_spec_type<cfg::client::keyboard_layout> { using type = unsigned; };
-template<> struct sesman_and_spec_type<cfg::client::keyboard_layout_proposals> { using type = ::configs::spec_types::list<std::string>; };
 template<> struct sesman_and_spec_type<cfg::client::ignore_logon_password> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::client::performance_flags_default> { using type = uint32_t; };
 template<> struct sesman_and_spec_type<cfg::client::performance_flags_force_present> { using type = uint32_t; };
@@ -372,6 +371,7 @@ template<> struct sesman_and_spec_type<cfg::context::smartcard_login> { using ty
 template<> struct sesman_and_spec_type<cfg::context::banner_message> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::context::banner_type> { using type = BannerType; };
 template<> struct sesman_and_spec_type<cfg::internal_mod::enable_target_field> { using type = bool; };
+template<> struct sesman_and_spec_type<cfg::internal_mod::keyboard_layout_proposals> { using type = ::configs::spec_types::list<std::string>; };
 template<> struct sesman_and_spec_type<cfg::mod_replay::replay_path> { using type = ::configs::spec_types::directory_path; };
 template<> struct sesman_and_spec_type<cfg::mod_replay::on_end_of_data> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_replay::replay_on_loop> { using type = bool; };

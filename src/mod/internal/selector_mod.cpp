@@ -72,7 +72,7 @@ SelectorMod::SelectorMod(
     , ini(ini)
     , osd(osd)
     , language_button(
-        ini.get<cfg::client::keyboard_layout_proposals>(),
+        ini.get<cfg::internal_mod::keyboard_layout_proposals>(),
         this->selector, drawable, front, font, theme)
 
     , selector_params([&]() {

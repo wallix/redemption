@@ -512,16 +512,6 @@ namespace cfg
         using mapped_type = unsigned;
         type value { 0 };
     };
-    /// List of keyboard layouts available by the internal pages button. <br/>
-    /// Possible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy <br/>
-    /// type: std::string <br/>
-    /// default: "en-US, fr-FR, de-DE, ru-RU" <br/>
-    struct client::keyboard_layout_proposals {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = std::string;
-        using mapped_type = ::configs::spec_types::list<std::string>;
-        type value { "en-US, fr-FR, de-DE, ru-RU" };
-    };
     /// If true, ignore password provided by RDP client, user need do login manually. <br/>
     /// type: bool <br/>
     /// default: false <br/>
@@ -4427,6 +4417,16 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// List of keyboard layouts available by the internal pages button located at bottom left of some internal pages (login, selector, etc). <br/>
+    /// Possible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy <br/>
+    /// type: std::string <br/>
+    /// default: "en-US, fr-FR, de-DE, ru-RU" <br/>
+    struct internal_mod::keyboard_layout_proposals {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
+        using type = std::string;
+        using mapped_type = ::configs::spec_types::list<std::string>;
+        type value { "en-US, fr-FR, de-DE, ru-RU" };
+    };
 
     /// type: ::configs::spec_types::directory_path <br/>
     /// sesman ⇒ proxy <br/>
@@ -4980,7 +4980,6 @@ struct globals
 struct client
 : cfg::client::ssl_cipher_list
 , cfg::client::keyboard_layout
-, cfg::client::keyboard_layout_proposals
 , cfg::client::ignore_logon_password
 , cfg::client::performance_flags_default
 , cfg::client::performance_flags_force_present
@@ -5357,6 +5356,7 @@ struct context
 
 struct internal_mod
 : cfg::internal_mod::enable_target_field
+, cfg::internal_mod::keyboard_layout_proposals
 { static constexpr bool is_section = true; };
 
 struct mod_replay

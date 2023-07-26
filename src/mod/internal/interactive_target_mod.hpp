@@ -37,7 +37,7 @@ using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::globals::target_device,              vcfg::accessmode::get>,
     vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>
+    vcfg::var<cfg::internal_mod::keyboard_layout_proposals, vcfg::accessmode::get>
 >;
 
 

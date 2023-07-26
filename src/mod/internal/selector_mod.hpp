@@ -46,7 +46,7 @@ using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::context::selector_group_filter,      vcfg::accessmode::set>,
     vcfg::var<cfg::context::selector_device_filter,     vcfg::accessmode::set>,
     vcfg::var<cfg::context::selector_proto_filter,      vcfg::accessmode::set>,
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::internal_mod::keyboard_layout_proposals, vcfg::accessmode::get>,
     vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
     vcfg::var<cfg::context::banner_type,                vcfg::accessmode::get>,

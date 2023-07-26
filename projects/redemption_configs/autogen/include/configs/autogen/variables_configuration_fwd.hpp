@@ -54,7 +54,6 @@ namespace cfg
 
     struct client {
         struct keyboard_layout;
-        struct keyboard_layout_proposals;
         struct ignore_logon_password;
         struct performance_flags_default;
         struct performance_flags_force_present;
@@ -432,6 +431,7 @@ namespace cfg
 
     struct internal_mod {
         struct enable_target_field;
+        struct keyboard_layout_proposals;
     };
 
     struct mod_replay {

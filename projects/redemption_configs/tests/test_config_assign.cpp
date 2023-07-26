@@ -88,8 +88,8 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::client::fast_path>(true);
     ini.set<cfg::client::ignore_logon_password>(true);
     ini.set_acl<cfg::client::keyboard_layout>(1);
-    ini.set<cfg::client::keyboard_layout_proposals>(cslist);
-    ini.set<cfg::client::keyboard_layout_proposals>(slist);
+    ini.set<cfg::internal_mod::keyboard_layout_proposals>(cslist);
+    ini.set<cfg::internal_mod::keyboard_layout_proposals>(slist);
     ini.set<cfg::client::max_color_depth>(ColorDepth::depth16);
     ini.set<cfg::client::performance_flags_default>(1);
     ini.set<cfg::client::performance_flags_force_not_present>(1);

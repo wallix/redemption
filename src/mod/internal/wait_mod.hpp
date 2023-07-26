@@ -30,7 +30,7 @@
 
 
 using WaitModVariables = vcfg::variables<
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::internal_mod::keyboard_layout_proposals, vcfg::accessmode::get>,
     vcfg::var<cfg::context::comment,                    vcfg::accessmode::set>,
     vcfg::var<cfg::context::duration,                   vcfg::accessmode::set>,
     vcfg::var<cfg::context::ticket,                     vcfg::accessmode::set>,
