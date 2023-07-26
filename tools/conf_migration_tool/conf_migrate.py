@@ -409,6 +409,7 @@ migration_defs: List[MigrationType] = [
         },
         'client': {
             'bogus_user_id': RemoveItem(),
+            'keyboard_layoutkeyboard_layout': UpdateItem(section='internal_mod'),
         },
         'video': {
             'bogus_vlc_frame_rate': RemoveItem(),

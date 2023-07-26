@@ -451,30 +451,10 @@ _.section("session_log", [&]
 
 _.section("client", [&]
 {
-    // to_string()
-    std::string keyboard_layout_proposals_desc;
-    for (KeyLayout const& layout : keylayouts_sorted_by_name()) {
-        keyboard_layout_proposals_desc += layout.name;
-        keyboard_layout_proposals_desc += ", ";
-    }
-    if (!keyboard_layout_proposals_desc.empty()) {
-        keyboard_layout_proposals_desc.resize(keyboard_layout_proposals_desc.size() - 2);
-    }
-
     _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
              names{"keyboard_layout"},
              type_<types::unsigned_>(),
              set(0));
-
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"keyboard_layout_proposals"},
-             type_<types::list<std::string>>(),
-             set("en-US, fr-FR, de-DE, ru-RU"),
-             desc{
-                 "List of keyboard layouts available by the internal pages button.\n"
-                 "Possible values: " + keyboard_layout_proposals_desc
-             });
-
 
     _.member(advanced_in_gui, no_sesman, L,
              names{"ignore_logon_password"},
@@ -2291,6 +2271,25 @@ _.section("internal_mod", [&]
              type_<bool>(),
              set(true),
              desc{"Enable target edit field in login page."});
+
+    // to_string()
+    std::string keyboard_layout_proposals_desc;
+    for (KeyLayout const& layout : keylayouts_sorted_by_name()) {
+        keyboard_layout_proposals_desc += layout.name;
+        keyboard_layout_proposals_desc += ", ";
+    }
+    if (!keyboard_layout_proposals_desc.empty()) {
+        keyboard_layout_proposals_desc.resize(keyboard_layout_proposals_desc.size() - 2);
+    }
+
+    _.member(advanced_in_gui, no_sesman, L,
+             names{"keyboard_layout_proposals"},
+             type_<types::list<std::string>>(),
+             set("en-US, fr-FR, de-DE, ru-RU"),
+             desc{
+                 "List of keyboard layouts available by the internal pages button located at bottom left of some internal pages (login, selector, etc).\n"
+                 "Possible values: " + keyboard_layout_proposals_desc
+             });
 });
 
 _.section("context", [&]
