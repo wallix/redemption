@@ -56,6 +56,18 @@ import syslog
 
 from .logtime import logtimer, logtime_function_pause
 
+
+FRENCH_LAYOUTS = (0x0000040C,  # French (Legacy, AZERTY)
+                  0x0001040C,  # French (Standard, AZERTY) (note: AFNOR layout)
+                  0x0002040C,  # French (Standard, BÉPO)
+                  0x00001009,  # Canadian French
+                  0x00000C0C,  # Canadian French (Legacy)
+                  0x0000080C,  # French (Belgium)
+                  0x0001080C,  # French (Belgium) Belgian (Comma)
+                  0x0000100C,  # French (Switzerland)
+                 )
+
+
 # Python 2.7 compatibility layer
 if sys.version_info[0] < 3:
     def bytes(data, encoding="utf-8"):
@@ -486,19 +498,13 @@ class Sesman():
 
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
-        french_layouts = [0x0000040C,  # French (France)
-                          0x00000C0C,  # French (Canada) Canadian French
-                                       #     (Legacy)
-                          0x0000080C,  # French (Belgium)
-                          0x0001080C,  # French (Belgium) Belgian (Comma)
-                          0x0000100C]  # French (Switzerland)
         keylayout = 0
         if self.shared.get(u'keyboard_layout') != MAGICASK:
             try:
                 keylayout = int(self.shared.get(u'keyboard_layout'))
             except Exception:
                 pass
-        if keylayout in french_layouts:
+        if keylayout in FRENCH_LAYOUTS:
             self.language = 'fr'
 
         login_language = (self.shared.get(u'login_language').lower()
