@@ -78,12 +78,15 @@ KEEPALIVE_TIMEOUT = KEEPALIVE_INTERVAL + KEEPALIVE_GRACEDELAY
 
 WORKFLOW_POLL_INTERVAL = 5
 
-FRENCH_LAYOUTS = (0x0000040C,  # French (France)
-                  0x00000C0C,  # French (Canada) Canadian French
-                               #     (Legacy)
+FRENCH_LAYOUTS = (0x0000040C,  # French (Legacy, AZERTY)
+                  0x0001040C,  # French (Standard, AZERTY) (note: AFNOR layout)
+                  0x0002040C,  # French (Standard, BÉPO)
+                  0x00001009,  # Canadian French
+                  0x00000C0C,  # Canadian French (Legacy)
                   0x0000080C,  # French (Belgium)
                   0x0001080C,  # French (Belgium) Belgian (Comma)
-                  0x0000100C)  # French (Switzerland)
+                  0x0000100C,  # French (Switzerland)
+                 )
 
 def mundane(value):
     if value == MAGICASK:
