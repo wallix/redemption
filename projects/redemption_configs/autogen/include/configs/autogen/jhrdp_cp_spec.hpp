@@ -142,7 +142,7 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 
 [session_log]
 
-# Keyboard Input Masking Level:
+# Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.
 # &nbsp; &nbsp;   0: keyboard input are not masked
 # &nbsp; &nbsp;   1: only passwords are masked
 # &nbsp; &nbsp;   2: passwords and unidentified texts are masked

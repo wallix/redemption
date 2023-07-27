@@ -446,7 +446,7 @@ _.section("session_log", [&]
              names{"keyboard_input_masking_level"},
              type_<KeyboardInputMaskingLevel>(),
              set(KeyboardInputMaskingLevel::password_and_unidentified),
-             desc{"Keyboard Input Masking Level:"});
+             desc{"Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified."});
 });
 
 _.section("client", [&]
@@ -1126,7 +1126,7 @@ _.section("session_probe", [&]
     _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
              names{"on_launch_failure"},
              type_<SessionProbeOnLaunchFailure>(),
-             desc{"It is recommended to use option 2."},
+             desc{"It is recommended to use option 1 (disconnect user)."},
              set(SessionProbeOnLaunchFailure::disconnect_user));
 
     _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
@@ -1134,7 +1134,7 @@ _.section("session_probe", [&]
              type_<types::range<std::chrono::milliseconds, 0, 300000>>(),
              set(40000),
              desc{
-                 "This parameter in milliseconds is used if on_launch_failure is 1 (disconnect user).\n"
+                 "This parameter is used if 'On launch failure' is 1 (disconnect user).\n"
                  "0 to disable timeout."
              });
 
@@ -1143,7 +1143,7 @@ _.section("session_probe", [&]
              type_<types::range<std::chrono::milliseconds, 0, 300000>>(),
              set(40000),
              desc{
-                "This parameter in milliseconds is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
+                "This parameter is used if 'On launch failure' is 0 (ignore failure and continue) or 2 (retry without Session Probe).\n"
                 "0 to disable timeout."
              });
 
@@ -1157,8 +1157,8 @@ _.section("session_probe", [&]
              names{"keepalive_timeout"},
              type_<types::range<std::chrono::milliseconds, 0, 60000>>(),
              desc{
-                "The number of seconds that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by On keepalive timeout.\n"
-                "If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by On keepalive timeout.\n"
+                "The amount of time that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by 'On keepalive timeout'.\n"
+                "If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by 'On keepalive timeout'.\n"
                 "The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected.\n"
                 "During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate."
              },
@@ -1178,7 +1178,7 @@ _.section("session_probe", [&]
                 "If enabled, Session Probe will automatically end the disconnected Desktop session. Otherwise, the RDP session and the applications it contains will remain active after user disconnection (unless a parameter defined at the RDS-level decides otherwise).\n"
                 "The parameter in RemoteApp session (RDS meaning) does not cause the latter to be closed but a simple cleanup. However, this makes the session suitable for reuse.\n"
                 "This parameter must be enabled for Web applications because an existing session with a running browser cannot be reused.\n"
-                "It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when Use session probe to launch remote program parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes."
+                "It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when 'Use session probe to launch remote program' parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes."
              },
              set(false));
 
@@ -1261,7 +1261,7 @@ _.section("session_probe", [&]
                 "The delay between two simulated keystrokes during the Session Probe launch sequence execution.\n"
                 "This parameter is effective only if the Smart launcher is used.\n"
                 "This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.\n"
-                "This parameter is usually used together with the Smart launcher short delay parameter."},
+                "This parameter is usually used together with the 'Smart launcher short delay' parameter."},
              set(500));
 
     _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
@@ -1271,7 +1271,7 @@ _.section("session_probe", [&]
                 "The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution.\n"
                 "This parameter is effective only if the Smart launcher is used.\n"
                 "This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.\n"
-                "This parameter is usually used together with the Smart launcher long delay parameter."},
+                "This parameter is usually used together with the 'Smart launcher long delay' parameter."},
              set(50));
 
     _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
@@ -1281,7 +1281,7 @@ _.section("session_probe", [&]
              },
              type_<bool>(),
              desc{
-                "Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the Smart launcher clipboard initialization delay parameter."
+                "Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the 'Smart launcher clipboard initialization delay' parameter."
                 "This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager."},
              set(true));
 
@@ -1313,8 +1313,8 @@ _.section("session_probe", [&]
                 "Use only if you see unusually high consumption of system object handles by the Session Probe.\n"
                 "The Session Probe will sabotage and then restart it-self if it consumes more handles than what is defined by this parameter.\n"
                 "A value of 0 disables this feature.\n"
-                "This feature can cause the session to be disconnected if the value of the On KeepAlive timeout parameter is set to 1 (Disconnect user).\n"
-                "If Allow multiple handshakes parameter (session_probe section of Configuration options) is disabled, restarting the Session Probe will cause the session to disconnect."},
+                "This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).\n"
+                "If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect."},
              set(0));
 
     _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
@@ -1324,8 +1324,8 @@ _.section("session_probe", [&]
                 "Use only if you see unusually high consumption of memory by the Session Probe.\n"
                 "The Session Probe will sabotage and then restart it-self if it consumes more memory than what is defined by this parameter.\n"
                 "A value of 0 disables this feature.\n"
-                "This feature can cause the session to be disconnected if the value of the On KeepAlive timeout parameter is set to 1 (Disconnect user).\n"
-                "If Allow multiple handshakes parameter (session_probe section of Configuration options) is disabled, restarting the Session Probe will cause the session to disconnect."},
+                "This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).\n"
+                "If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect."},
              set(0));
 
     _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
@@ -1334,14 +1334,14 @@ _.section("session_probe", [&]
              desc{
                 "This debugging feature was created to determine the cause of high CPU consumption by Session Probe in certain environments.\n"
                 "As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program execution. The alarm is deactivated if this value of parameter is less than 200 (200%% of reference consumption).\n"
-                "When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by Cpu usage alarm action parameter."
+                "When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by 'Cpu usage alarm action' parameter."
              },
              set(0));
 
     _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
              names{"cpu_usage_alarm_action"},
              type_<SessionProbeCPUUsageAlarmAction>(),
-             desc{"Additional behavior when CPU consumption exceeds what is allowed. Please refer to the Cpu usage alarm threshold parameter."},
+             desc{"Additional behavior when CPU consumption exceeds what is allowed. Please refer to the 'Cpu usage alarm threshold' parameter."},
              set(SessionProbeCPUUsageAlarmAction::Restart));
 
     _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
@@ -1351,7 +1351,7 @@ _.section("session_probe", [&]
                 "For application session only.\n"
                 "The delay between the launch of the application and the start of End of session check.\n"
                 "Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe.\n"
-                "End of session check delay time allow you to delay the start of End of session check in order to give the application the time to create its window."
+                "'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window."
              },
              set(0));
 
@@ -1410,7 +1410,10 @@ _.section("session_probe", [&]
              type_<SessionProbeDisabledFeature>(),
              desc{
                 "This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes.\n"
-                "It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata."
+                "If 'Java Acccess Bridge' feature is disabled, data entered in the password field of Java applications may be visible in the metadata. "
+                "For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section. "
+                "For more information please also refer to 'Childless window as unidentified input field and Windows of these applications as unidentified input field o"
+                "It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'."
              },
              set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
 
@@ -1420,7 +1423,8 @@ _.section("session_probe", [&]
              desc{
                 "This parameter has no effect on the device without BestSafe.\n"
                 "Is enabled, Session Probe relies on BestSafe to perform the detection of application launches and the detection of outgoing connections.\n"
-                "BestSafe has more efficient mechanisms in these tasks than Session Probe."
+                "BestSafe has more efficient mechanisms in these tasks than Session Probe.\n"
+                "For more information please refer to 'Outbound connection monitoring rules' parameter and 'Process monitoring rules' parameter."
              },
              set(false));
 

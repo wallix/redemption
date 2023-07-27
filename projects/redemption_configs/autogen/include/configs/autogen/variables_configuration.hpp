@@ -1659,7 +1659,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// It is recommended to use option 2. <br/>
+    /// It is recommended to use option 1 (disconnect user). <br/>
     /// type: SessionProbeOnLaunchFailure <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:on_launch_failure <br/>
@@ -1673,7 +1673,7 @@ namespace cfg
         using mapped_type = SessionProbeOnLaunchFailure;
         type value { SessionProbeOnLaunchFailure::disconnect_user };
     };
-    /// This parameter in milliseconds is used if on_launch_failure is 1 (disconnect user). <br/>
+    /// This parameter is used if 'On launch failure' is 1 (disconnect user). <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
@@ -1688,7 +1688,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         type value { 40000 };
     };
-    /// This parameter in milliseconds is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe). <br/>
+    /// This parameter is used if 'On launch failure' is 0 (ignore failure and continue) or 2 (retry without Session Probe). <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
@@ -1717,8 +1717,8 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// The number of seconds that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by On keepalive timeout. <br/>
-    /// If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by On keepalive timeout. <br/>
+    /// The amount of time that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by 'On keepalive timeout'. <br/>
+    /// If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by 'On keepalive timeout'. <br/>
     /// The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected. <br/>
     /// During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate. <br/>
     /// type: std::chrono::milliseconds <br/>
@@ -1752,7 +1752,7 @@ namespace cfg
     /// If enabled, Session Probe will automatically end the disconnected Desktop session. Otherwise, the RDP session and the applications it contains will remain active after user disconnection (unless a parameter defined at the RDS-level decides otherwise). <br/>
     /// The parameter in RemoteApp session (RDS meaning) does not cause the latter to be closed but a simple cleanup. However, this makes the session suitable for reuse. <br/>
     /// This parameter must be enabled for Web applications because an existing session with a running browser cannot be reused. <br/>
-    /// It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when Use session probe to launch remote program parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes. <br/>
+    /// It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when 'Use session probe to launch remote program' parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:end_disconnected_session <br/>
@@ -1906,7 +1906,7 @@ namespace cfg
     /// The delay between two simulated keystrokes during the Session Probe launch sequence execution. <br/>
     /// This parameter is effective only if the Smart launcher is used. <br/>
     /// This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance. <br/>
-    /// This parameter is usually used together with the Smart launcher short delay parameter. <br/>
+    /// This parameter is usually used together with the 'Smart launcher short delay' parameter. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:smart_launcher_long_delay <br/>
@@ -1923,7 +1923,7 @@ namespace cfg
     /// The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution. <br/>
     /// This parameter is effective only if the Smart launcher is used. <br/>
     /// This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance. <br/>
-    /// This parameter is usually used together with the Smart launcher long delay parameter. <br/>
+    /// This parameter is usually used together with the 'Smart launcher long delay' parameter. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:smart_launcher_short_delay <br/>
@@ -1937,7 +1937,7 @@ namespace cfg
         using mapped_type = std::chrono::milliseconds;
         type value { 50 };
     };
-    /// Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the Smart launcher clipboard initialization delay parameter.This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager. <br/>
+    /// Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the 'Smart launcher clipboard initialization delay' parameter.This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:smart_launcher_enable_wabam_affinity <br/>
@@ -1988,8 +1988,8 @@ namespace cfg
     /// Use only if you see unusually high consumption of system object handles by the Session Probe. <br/>
     /// The Session Probe will sabotage and then restart it-self if it consumes more handles than what is defined by this parameter. <br/>
     /// A value of 0 disables this feature. <br/>
-    /// This feature can cause the session to be disconnected if the value of the On KeepAlive timeout parameter is set to 1 (Disconnect user). <br/>
-    /// If Allow multiple handshakes parameter (session_probe section of Configuration options) is disabled, restarting the Session Probe will cause the session to disconnect. <br/>
+    /// This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user). <br/>
+    /// If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect. <br/>
     /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:handle_usage_limit <br/>
@@ -2006,8 +2006,8 @@ namespace cfg
     /// Use only if you see unusually high consumption of memory by the Session Probe. <br/>
     /// The Session Probe will sabotage and then restart it-self if it consumes more memory than what is defined by this parameter. <br/>
     /// A value of 0 disables this feature. <br/>
-    /// This feature can cause the session to be disconnected if the value of the On KeepAlive timeout parameter is set to 1 (Disconnect user). <br/>
-    /// If Allow multiple handshakes parameter (session_probe section of Configuration options) is disabled, restarting the Session Probe will cause the session to disconnect. <br/>
+    /// This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user). <br/>
+    /// If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect. <br/>
     /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:memory_usage_limit <br/>
@@ -2023,7 +2023,7 @@ namespace cfg
     };
     /// This debugging feature was created to determine the cause of high CPU consumption by Session Probe in certain environments. <br/>
     /// As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program execution. The alarm is deactivated if this value of parameter is less than 200 (200%% of reference consumption). <br/>
-    /// When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by Cpu usage alarm action parameter. <br/>
+    /// When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by 'Cpu usage alarm action' parameter. <br/>
     /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:cpu_usage_alarm_threshold <br/>
@@ -2037,7 +2037,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<uint32_t, 0, 10000>;
         type value { 0 };
     };
-    /// Additional behavior when CPU consumption exceeds what is allowed. Please refer to the Cpu usage alarm threshold parameter. <br/>
+    /// Additional behavior when CPU consumption exceeds what is allowed. Please refer to the 'Cpu usage alarm threshold' parameter. <br/>
     /// type: SessionProbeCPUUsageAlarmAction <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:cpu_usage_alarm_action <br/>
@@ -2054,7 +2054,7 @@ namespace cfg
     /// For application session only. <br/>
     /// The delay between the launch of the application and the start of End of session check. <br/>
     /// Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe. <br/>
-    /// End of session check delay time allow you to delay the start of End of session check in order to give the application the time to create its window. <br/>
+    /// 'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:end_of_session_check_delay_time <br/>
@@ -2151,7 +2151,7 @@ namespace cfg
         type value { true };
     };
     /// This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes. <br/>
-    /// It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. <br/>
+    /// If 'Java Acccess Bridge' feature is disabled, data entered in the password field of Java applications may be visible in the metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section. For more information please also refer to 'Childless window as unidentified input field and Windows of these applications as unidentified input field oIt is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'. <br/>
     /// type: SessionProbeDisabledFeature <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:disabled_features <br/>
@@ -2168,6 +2168,7 @@ namespace cfg
     /// This parameter has no effect on the device without BestSafe. <br/>
     /// Is enabled, Session Probe relies on BestSafe to perform the detection of application launches and the detection of outgoing connections. <br/>
     /// BestSafe has more efficient mechanisms in these tasks than Session Probe. <br/>
+    /// For more information please refer to 'Outbound connection monitoring rules' parameter and 'Process monitoring rules' parameter. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:enable_bestsafe_interaction <br/>
@@ -2627,7 +2628,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Keyboard Input Masking Level: <br/>
+    /// Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified. <br/>
     /// type: KeyboardInputMaskingLevel <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_log:keyboard_input_masking_level <br/>

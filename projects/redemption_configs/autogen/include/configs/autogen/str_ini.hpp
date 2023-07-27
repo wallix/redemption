@@ -630,22 +630,22 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #enable_launch_mask = 1
 
-# It is recommended to use option 2.
+# It is recommended to use option 1 (disconnect user).
 # min = 0, max = 2
-#   0: The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the Launch fallback timeout instead of the Launch timeout.
-#   1: This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of Launch timeout to the performance of the target.
-#   2: We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the Launch fallback timeout instead of the Launch timeout.
+#   0: The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
+#   1: This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of 'Launch timeout' to the performance of the target.
+#   2: We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
 #_hidden
 #on_launch_failure = 1
 
-# This parameter in milliseconds is used if on_launch_failure is 1 (disconnect user).
+# This parameter is used if 'On launch failure' is 1 (disconnect user).
 # 0 to disable timeout.
 # min = 0, max = 300000
 # (in milliseconds)
 #_hidden
 #launch_timeout = 40000
 
-# This parameter in milliseconds is used if on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
+# This parameter is used if 'On launch failure' is 0 (ignore failure and continue) or 2 (retry without Session Probe).
 # 0 to disable timeout.
 # min = 0, max = 300000
 # (in milliseconds)
@@ -657,8 +657,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #start_launch_timeout_timer_only_after_logon = 1
 
-# The number of seconds that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by On keepalive timeout.
-# If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by On keepalive timeout.
+# The amount of time that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by 'On keepalive timeout'.
+# If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by 'On keepalive timeout'.
 # The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected.
 # During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate.
 # min = 0, max = 60000
@@ -669,7 +669,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # This parameter allows us to choose the behavior of the RDP Proxy in case of losing the connection with Session Probe.
 # min = 0, max = 2
 #   0: Designed to minimize the impact on the user experience if the Session Probe is unstable. It should not be used when Session Probe is working well. An attacker can take advantage of this setting by simulating a Session Probe crash in order to bypass the surveillance.
-#   1: Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the End disconnected session parameter (or an equivalent setting at the RDS-level) is enabled.
+#   1: Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the 'End disconnected session' parameter (or an equivalent setting at the RDS-level) is enabled.
 #   2: This is the recommended setting. User actions will be blocked until contact with the Session Probe (reply to KeepAlive message or something else) is resumed.
 #_hidden
 #on_keepalive_timeout = 2
@@ -678,7 +678,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # If enabled, Session Probe will automatically end the disconnected Desktop session. Otherwise, the RDP session and the applications it contains will remain active after user disconnection (unless a parameter defined at the RDS-level decides otherwise).
 # The parameter in RemoteApp session (RDS meaning) does not cause the latter to be closed but a simple cleanup. However, this makes the session suitable for reuse.
 # This parameter must be enabled for Web applications because an existing session with a running browser cannot be reused.
-# It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when Use session probe to launch remote program parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes.
+# It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when 'Use session probe to launch remote program' parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes.
 # value: 0 or 1
 #_hidden
 #end_disconnected_session = 0
@@ -751,7 +751,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # The delay between two simulated keystrokes during the Session Probe launch sequence execution.
 # This parameter is effective only if the Smart launcher is used.
 # This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
-# This parameter is usually used together with the Smart launcher short delay parameter.
+# This parameter is usually used together with the 'Smart launcher short delay' parameter.
 # (in milliseconds)
 #_hidden
 #smart_launcher_long_delay = 500
@@ -759,12 +759,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 # The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution.
 # This parameter is effective only if the Smart launcher is used.
 # This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
-# This parameter is usually used together with the Smart launcher long delay parameter.
+# This parameter is usually used together with the 'Smart launcher long delay' parameter.
 # (in milliseconds)
 #_hidden
 #smart_launcher_short_delay = 50
 
-# Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the Smart launcher clipboard initialization delay parameter.This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager.
+# Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the 'Smart launcher clipboard initialization delay' parameter.This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager.
 # value: 0 or 1
 #_hidden
 #_display_name=Enable Smart launcher with AM affinity
@@ -789,8 +789,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Use only if you see unusually high consumption of system object handles by the Session Probe.
 # The Session Probe will sabotage and then restart it-self if it consumes more handles than what is defined by this parameter.
 # A value of 0 disables this feature.
-# This feature can cause the session to be disconnected if the value of the On KeepAlive timeout parameter is set to 1 (Disconnect user).
-# If Allow multiple handshakes parameter (session_probe section of Configuration options) is disabled, restarting the Session Probe will cause the session to disconnect.
+# This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).
+# If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect.
 # min = 0, max = 1000
 # min = 0
 #_hidden
@@ -799,8 +799,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Use only if you see unusually high consumption of memory by the Session Probe.
 # The Session Probe will sabotage and then restart it-self if it consumes more memory than what is defined by this parameter.
 # A value of 0 disables this feature.
-# This feature can cause the session to be disconnected if the value of the On KeepAlive timeout parameter is set to 1 (Disconnect user).
-# If Allow multiple handshakes parameter (session_probe section of Configuration options) is disabled, restarting the Session Probe will cause the session to disconnect.
+# This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).
+# If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect.
 # min = 0, max = 200000000
 # min = 0
 #_hidden
@@ -808,13 +808,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # This debugging feature was created to determine the cause of high CPU consumption by Session Probe in certain environments.
 # As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program execution. The alarm is deactivated if this value of parameter is less than 200 (200%% of reference consumption).
-# When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by Cpu usage alarm action parameter.
+# When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by 'Cpu usage alarm action' parameter.
 # min = 0, max = 10000
 # min = 0
 #_hidden
 #cpu_usage_alarm_threshold = 0
 
-# Additional behavior when CPU consumption exceeds what is allowed. Please refer to the Cpu usage alarm threshold parameter.
+# Additional behavior when CPU consumption exceeds what is allowed. Please refer to the 'Cpu usage alarm threshold' parameter.
 # min = 0, max = 1
 #   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section and 'Allow multiple handshakes' parameter of 'Configuration options'.
 #   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section.
@@ -824,7 +824,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # For application session only.
 # The delay between the launch of the application and the start of End of session check.
 # Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe.
-# End of session check delay time allow you to delay the start of End of session check in order to give the application the time to create its window.
+# 'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window.
 # min = 0, max = 60000
 # (in milliseconds)
 #_hidden
@@ -852,7 +852,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #update_disabled_features = 1
 
 # This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes.
-# It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata.
+# If 'Java Acccess Bridge' feature is disabled, data entered in the password field of Java applications may be visible in the metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section. For more information please also refer to 'Childless window as unidentified input field and Windows of these applications as unidentified input field oIt is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'.
 # min = 0, max = 511
 #   0x000: none
 #   0x001: disable Java Access Bridge. General user activity monitoring in the Java applications (including detection of password fields).
@@ -871,6 +871,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # This parameter has no effect on the device without BestSafe.
 # Is enabled, Session Probe relies on BestSafe to perform the detection of application launches and the detection of outgoing connections.
 # BestSafe has more efficient mechanisms in these tasks than Session Probe.
+# For more information please refer to 'Outbound connection monitoring rules' parameter and 'Process monitoring rules' parameter.
 # value: 0 or 1
 #_hidden
 #enable_bestsafe_interaction = 0
@@ -1078,7 +1079,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #enable_arcsight_log = 0
 
-# Keyboard Input Masking Level:
+# Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.
 # min = 0, max = 3
 #   0: keyboard input are not masked
 #   1: only passwords are masked
