@@ -2151,6 +2151,7 @@ namespace cfg
         type value { true };
     };
     /// This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes. <br/>
+    /// It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. <br/>
     /// type: SessionProbeDisabledFeature <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: session_probe:disabled_features <br/>

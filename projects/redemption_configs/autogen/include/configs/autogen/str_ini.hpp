@@ -852,6 +852,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #update_disabled_features = 1
 
 # This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes.
+# It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata.
 # min = 0, max = 511
 #   0x000: none
 #   0x001: disable Java Access Bridge. General user activity monitoring in the Java applications (including detection of password fields).
