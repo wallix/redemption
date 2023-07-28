@@ -31,7 +31,7 @@ void load_theme(Theme& theme, Inifile& ini) noexcept
 
     auto to_bgr = [&ini](auto i) {
         ::configs::spec_types::rgb rgb = ini.get<decltype(i)>();
-        return BGRColor(BGRasRGBColor(BGRColor(rgb.to_rrggbb())));
+        return BGRColor(BGRasRGBColor(BGRColor(rgb.to_rgb888())));
     };
 
     theme.global.bgcolor = to_bgr(cfg::theme::bgcolor());

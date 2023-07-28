@@ -67,7 +67,7 @@ namespace
         cfg_s_type<::configs::spec_types::rgb> /*type*/,
         ::configs::spec_types::rgb rgb
     ) {
-        uint32_t x = rgb.to_rrggbb();
+        uint32_t x = rgb.to_rgb888();
         zbuf[0] = '#';
         int_to_fixed_hexadecimal_upper_chars<3>(zbuf.data()+1, x);
         zbuf[7] = '\0';

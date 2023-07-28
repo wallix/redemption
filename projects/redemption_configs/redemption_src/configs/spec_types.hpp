@@ -69,7 +69,7 @@ namespace spec_types
         uint8_t green() const noexcept { return static_cast<uint8_t>((rgb_ >> 8) & 0xff); }
         uint8_t blue() const noexcept { return static_cast<uint8_t>(rgb_ & 0xff); }
 
-        uint32_t to_rrggbb() const { return rgb_; }
+        uint32_t to_rgb888() const { return rgb_; }
 
     private:
         uint32_t rgb_;

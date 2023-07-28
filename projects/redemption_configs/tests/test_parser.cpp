@@ -156,19 +156,19 @@ RED_AUTO_TEST_CASE(TestColorParser)
 #define TEST_RGB(...) BOOST_TEST(__VA_ARGS__, h32)
 
     RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "0x123456"_zv));
-    TEST_RGB(rgb.to_rrggbb() == 0x123456);
+    TEST_RGB(rgb.to_rgb888() == 0x123456);
     RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "0x123"_zv));
-    TEST_RGB(rgb.to_rrggbb() == 0x123);
+    TEST_RGB(rgb.to_rgb888() == 0x123);
     RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "0xaB2"_zv));
-    TEST_RGB(rgb.to_rrggbb() == 0xAB2);
+    TEST_RGB(rgb.to_rgb888() == 0xAB2);
     RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "#123456"_zv));
-    TEST_RGB(rgb.to_rrggbb() == 0x123456);
+    TEST_RGB(rgb.to_rgb888() == 0x123456);
     RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "#123"_zv));
-    TEST_RGB(rgb.to_rrggbb() == 0x112233);
+    TEST_RGB(rgb.to_rgb888() == 0x112233);
     RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "red"_zv));
-    TEST_RGB(rgb.to_rrggbb() == BGRColor(BGRasRGBColor(RED)).as_u32());
+    TEST_RGB(rgb.to_rgb888() == BGRColor(BGRasRGBColor(RED)).as_u32());
     RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "inv_medium_green"_zv));
-    TEST_RGB(rgb.to_rrggbb() == BGRColor(BGRasRGBColor(INV_MEDIUM_GREEN)).as_u32());
+    TEST_RGB(rgb.to_rgb888() == BGRColor(BGRasRGBColor(INV_MEDIUM_GREEN)).as_u32());
 
     RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, "bla_bla"_zv));
     RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, "0x1234567"_zv));
