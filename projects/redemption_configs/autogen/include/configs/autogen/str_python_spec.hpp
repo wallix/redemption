@@ -5,7 +5,7 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 
 [globals]
 
-# Warning: IP tables rules are reloaded and active sessions will be disconnected.
+# ⚠ IP tables rules are reloaded and active sessions will be disconnected.<br/>
 # The port set in this field must not be already used, otherwise the service will not run.
 # Changing the port number will prevent WALLIX Access Manager from working properly.
 #_iptables
@@ -20,29 +20,29 @@ encryptionLevel = option('low', 'medium', 'high', default='low')
 #_hidden
 authfile = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(')
 
-# Time out during RDP handshake stage.
+# Time out during RDP handshake stage.<br/>
 # (in seconds)
 handshake_timeout = integer(min=0, default=10)
 
 # No automatic disconnection due to inactivity, timer is set on primary authentication.
 # If value is between 1 and 30, then 30 is used.
-# If value is set to 0, then inactivity timeout value is unlimited.
+# If value is set to 0, then inactivity timeout value is unlimited.<br/>
 # (in seconds)
 base_inactivity_timeout = integer(min=0, default=900)
 
 # No automatic disconnection due to inactivity, timer is set on target session.
 # If value is between 1 and 30, then 30 is used.
-# If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.
+# If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.<br/>
 # (in seconds)
 #_hidden
 inactivity_timeout = integer(min=0, default=0)
 
-# Internal keepalive between sesman and rdp proxy
+# Internal keepalive between sesman and rdp proxy<br/>
 # (in seconds)
 #_hidden
 keepalive_grace_delay = integer(min=0, default=30)
 
-# Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
+# Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).<br/>
 # (in seconds)
 #_advanced
 authentication_timeout = integer(min=0, default=120)
@@ -58,7 +58,7 @@ trace_type = option(0, 1, 2, default=1)
 #_advanced
 listen_address = ip_addr(default='0.0.0.0')
 
-# Warning: IP tables rules are reloaded and active sessions will be disconnected.
+# ⚠ IP tables rules are reloaded and active sessions will be disconnected.<br/>
 # Allow Transparent mode.
 #_iptables
 enable_transparent_mode = boolean(default=False)
@@ -75,7 +75,7 @@ enable_bitmap_update = boolean(default=True)
 # Show close screen.
 enable_close_box = boolean(default=True)
 
-# Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
+# Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).<br/>
 # (in seconds)
 #_advanced
 close_timeout = integer(min=0, default=600)
@@ -105,6 +105,7 @@ new_pointer_update_support = boolean(default=True)
 
 unicode_keyboard_event_support = boolean(default=True)
 
+# 
 # (in milliseconds)
 #_advanced
 mod_recv_timeout = integer(min=100, max=10000, default=1000)
@@ -120,12 +121,12 @@ support_connection_redirection_during_recording = boolean(default=True)
 
 # Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
-# Set to 0 to disable this feature.
+# Set to 0 to disable this feature.<br/>
 # (in milliseconds)
 rdp_keepalive_connection_interval = integer(min=0, default=0)
 
+# ⚠ Service need to be manually restarted to take changes into account<br/>
 # Enable primary connection on ipv6.
-# Warning: Service need to be manually restarted to take changes into account
 enable_ipv6 = boolean(default=True)
 
 # In megabytes. 0 for disabled.
@@ -238,6 +239,7 @@ bogus_ios_glyph_support_level = boolean(default=True)
 #_advanced
 transform_glyph_to_bitmap = boolean(default=False)
 
+# 
 # (in milliseconds)
 #_advanced
 recv_timeout = integer(min=100, max=10000, default=1000)
@@ -262,19 +264,19 @@ enable_remotefx = boolean(default=True)
 # &nbsp; &nbsp;   18: MultiOpaqueRect
 # &nbsp; &nbsp;   22: Polyline
 # &nbsp; &nbsp;   25: EllipseSC
-# &nbsp; &nbsp;   27: GlyphIndex
+# &nbsp; &nbsp;   27: GlyphIndex<br/>
 # (values are comma-separated)
 #_advanced
 disabled_orders = string(default='25')
 
 [all_target_mod]
 
-# The maximum time in milliseconds that the proxy will wait while attempting to connect to an target.
+# The maximum time in milliseconds that the proxy will wait while attempting to connect to an target.<br/>
 # (in milliseconds)
 #_advanced
 connection_establishment_timeout = integer(min=1000, max=10000, default=3000)
 
-# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.<br/>
 # (in milliseconds)
 #_hidden
 tcp_user_timeout = integer(min=0, max=3600000, default=0)
@@ -297,6 +299,7 @@ rdp_compression = option(0, 1, 2, 3, 4, default=4)
 #_advanced
 disconnect_on_logon_user_change = boolean(default=False)
 
+# 
 # (in seconds)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
@@ -314,7 +317,7 @@ open_session_timeout = integer(min=0, default=0)
 # &nbsp; &nbsp;   18: MultiOpaqueRect
 # &nbsp; &nbsp;   22: Polyline
 # &nbsp; &nbsp;   25: EllipseSC
-# &nbsp; &nbsp;   27: GlyphIndex
+# &nbsp; &nbsp;   27: GlyphIndex<br/>
 # (values are comma-separated)
 #_hidden
 disabled_orders = string(default='27')
@@ -340,12 +343,12 @@ cache_waiting_list = boolean(default=True)
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
 
-# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.<br/>
 # (values are comma-separated)
 #_hidden
 allow_channels = string(default='*')
 
-# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.<br/>
 # (values are comma-separated)
 #_hidden
 deny_channels = string(default='')
@@ -367,7 +370,7 @@ server_redirection_support = boolean(default=False)
 client_address_sent = option(0, 1, 2, default=0)
 
 # Shared directory between proxy and secondary target.
-# Requires rdpdr support.
+# Requires rdpdr support.<br/>
 # (values are comma-separated)
 #_hidden
 proxy_managed_drives = string(default='')
@@ -434,13 +437,13 @@ bogus_ios_rdpdr_virtual_channel = boolean(default=True)
 enable_rdpdr_data_analysis = boolean(default=True)
 
 # Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
-# Set to 0 to disable this feature.
+# Set to 0 to disable this feature.<br/>
 # (in milliseconds)
 #_advanced
 remoteapp_bypass_legal_notice_delay = integer(min=0, default=0)
 
 # Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
-# Set to 0 to disable this feature.
+# Set to 0 to disable this feature.<br/>
 # (in milliseconds)
 #_advanced
 remoteapp_bypass_legal_notice_timeout = integer(min=0, default=20000)
@@ -490,14 +493,14 @@ enable_ipv6 = boolean(default=True)
 #_hidden
 auto_reconnection_on_losing_target_link = boolean(default=False)
 
-# The use of this feature is not recommended!
+# ⚠ The use of this feature is not recommended!<br/>
 # If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.
 # This feature should not be used together with the End disconnected session option (section session_probe).
 # The keyboard shortcut is fixed and cannot be changed.
 #_hidden
 allow_session_reconnection_by_shortcut = boolean(default=False)
 
-# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
+# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.<br/>
 # (in milliseconds)
 #_hidden
 session_reconnection_delay = integer(min=0, max=15000, default=0)
@@ -548,13 +551,13 @@ enable_launch_mask = boolean(default=True)
 on_launch_failure = option(0, 1, 2, default=1)
 
 # This parameter is used if 'On launch failure' is 1 (disconnect user).
-# 0 to disable timeout.
+# 0 to disable timeout.<br/>
 # (in milliseconds)
 #_hidden
 launch_timeout = integer(min=0, max=300000, default=40000)
 
 # This parameter is used if 'On launch failure' is 0 (ignore failure and continue) or 2 (retry without Session Probe).
-# 0 to disable timeout.
+# 0 to disable timeout.<br/>
 # (in milliseconds)
 #_hidden
 launch_fallback_timeout = integer(min=0, max=300000, default=40000)
@@ -566,7 +569,7 @@ start_launch_timeout_timer_only_after_logon = boolean(default=True)
 # The amount of time that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by 'On keepalive timeout'.
 # If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by 'On keepalive timeout'.
 # The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected.
-# During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate.
+# During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate.<br/>
 # (in milliseconds)
 #_hidden
 keepalive_timeout = integer(min=0, max=60000, default=5000)
@@ -612,26 +615,26 @@ log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
 # (Deprecated!)
 # The period above which the disconnected Application session will be automatically closed by the Session Probe.
-# 0 to disable timeout.
+# 0 to disable timeout.<br/>
 # (in milliseconds)
 #_hidden
 disconnected_application_limit = integer(min=0, max=172800000, default=0)
 
 # The period above which the disconnected Desktop session will be automatically closed by the Session Probe.
-# 0 to disable timeout.
+# 0 to disable timeout.<br/>
 # (in milliseconds)
 #_hidden
 disconnected_session_limit = integer(min=0, max=172800000, default=0)
 
 # The period of user inactivity above which the session will be locked by the Session Probe.
-# 0 to disable timeout.
+# 0 to disable timeout.<br/>
 # (in milliseconds)
 #_hidden
 idle_session_limit = integer(min=0, max=172800000, default=0)
 
 # The additional period given to the device to make Clipboard redirection available.
 # This parameter is effective only if the Smart launcher is used.
-# If we see the message "Clipboard Virtual Channel is unavailable" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter.
+# If we see the message "Clipboard Virtual Channel is unavailable" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter.<br/>
 # (in milliseconds)
 #_hidden
 smart_launcher_clipboard_initialization_delay = integer(min=0, default=2000)
@@ -639,7 +642,7 @@ smart_launcher_clipboard_initialization_delay = integer(min=0, default=2000)
 # For under-performing devices.
 # The extra time given to the device before starting the Session Probe launch sequence.
 # This parameter is effective only if the Smart launcher is used.
-# This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened.
+# This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened.<br/>
 # (in milliseconds)
 #_hidden
 smart_launcher_start_delay = integer(min=0, default=0)
@@ -647,7 +650,7 @@ smart_launcher_start_delay = integer(min=0, default=0)
 # The delay between two simulated keystrokes during the Session Probe launch sequence execution.
 # This parameter is effective only if the Smart launcher is used.
 # This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
-# This parameter is usually used together with the 'Smart launcher short delay' parameter.
+# This parameter is usually used together with the 'Smart launcher short delay' parameter.<br/>
 # (in milliseconds)
 #_hidden
 smart_launcher_long_delay = integer(min=0, default=500)
@@ -655,7 +658,7 @@ smart_launcher_long_delay = integer(min=0, default=500)
 # The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution.
 # This parameter is effective only if the Smart launcher is used.
 # This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
-# This parameter is usually used together with the 'Smart launcher long delay' parameter.
+# This parameter is usually used together with the 'Smart launcher long delay' parameter.<br/>
 # (in milliseconds)
 #_hidden
 smart_launcher_short_delay = integer(min=0, default=50)
@@ -667,7 +670,7 @@ smart_launcher_enable_wabam_affinity = boolean(default=True)
 
 # The time interval between the detection of an error (example: a refusal by the target of the redirected drive) and the actual abandonment of the Session Probe launch.
 # The purpose of this parameter is to give the target time to gracefully stop some ongoing processing.
-# It is strongly recommended to keep the default value of this parameter.
+# It is strongly recommended to keep the default value of this parameter.<br/>
 # (in milliseconds)
 #_hidden
 launcher_abort_delay = integer(min=0, max=300000, default=2000)
@@ -710,7 +713,7 @@ cpu_usage_alarm_action = option(0, 1, default=0)
 # For application session only.
 # The delay between the launch of the application and the start of End of session check.
 # Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe.
-# 'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window.
+# 'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window.<br/>
 # (in milliseconds)
 #_hidden
 end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
@@ -743,7 +746,7 @@ update_disabled_features = boolean(default=True)
 # &nbsp; &nbsp;   0x020: disable Inspect Chrome Address/Search bar. Basic web navigation monitoring.
 # &nbsp; &nbsp;   0x040: disable Inspect Firefox Address/Search bar. Basic web navigation monitoring.
 # &nbsp; &nbsp;   0x080: disable Monitor Internet Explorer event. Advanced web navigation monitoring.
-# &nbsp; &nbsp;   0x100: disable Inspect group membership of user. User identity monitoring.
+# &nbsp; &nbsp;   0x100: disable Inspect group membership of user. User identity monitoring.<br/>
 # Note: values can be added (disable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
@@ -809,7 +812,7 @@ process_command_line_retrieve_method = option(0, 1, 2, default=2)
 
 # Time between two polling performed by Session Probe.
 # The parameter is created to adapt the CPU consumption to the performance of the Windows device.
-# The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption.
+# The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption.<br/>
 # (in milliseconds)
 #_hidden
 periodic_task_run_interval = integer(min=300, max=2000, default=500)
@@ -838,7 +841,7 @@ server_cert_check = option(0, 1, 2, 3, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -848,7 +851,7 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -858,7 +861,7 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -868,7 +871,7 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -878,7 +881,7 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -897,7 +900,7 @@ clipboard_down = boolean(default=False)
 # &nbsp; &nbsp;   1: CopyRect
 # &nbsp; &nbsp;   2: RRE
 # &nbsp; &nbsp;   16: ZRLE
-# &nbsp; &nbsp;   -239 (0xFFFFFF11): Cursor pseudo-encoding
+# &nbsp; &nbsp;   -239 (0xFFFFFF11): Cursor pseudo-encoding<br/>
 # (values are comma-separated)
 #_advanced
 encodings = string(default='')
@@ -949,7 +952,7 @@ version = option(1, 2, default=2)
 locale = option('latin', 'cyrillic', default='latin')
 
 # Time interval between 2 analyzes.
-# Too low a value will affect session reactivity.
+# Too low a value will affect session reactivity.<br/>
 # (in 1/100 seconds)
 #_advanced
 interval = integer(min=0, default=100)
@@ -970,18 +973,18 @@ max_unrecog_char_rate = integer(min=0, max=100, default=40)
 # &nbsp; &nbsp;   0x00: none
 # &nbsp; &nbsp;   0x01: png
 # &nbsp; &nbsp;   0x02: wrm
-# &nbsp; &nbsp;   0x08: ocr
+# &nbsp; &nbsp;   0x08: ocr<br/>
 # Note: values can be added (enable all: 0x01 + 0x02 + 0x08 = 0x0b)
 #_advanced
 #_hex
 capture_flags = integer(min=0, max=15, default=11)
 
-# Frame interval.
+# Frame interval.<br/>
 # (in 1/10 seconds)
 #_advanced
 png_interval = integer(min=0, default=10)
 
-# Time between 2 wrm movies.
+# Time between 2 wrm movies.<br/>
 # (in seconds)
 #_advanced
 break_interval = integer(min=0, default=600)
@@ -1004,7 +1007,7 @@ record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::R
 # &nbsp; &nbsp;   0x0: none
 # &nbsp; &nbsp;   0x1: disable keyboard log in syslog
 # &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions
-# &nbsp; &nbsp;   0x4: disable keyboard log in recorded meta
+# &nbsp; &nbsp;   0x4: disable keyboard log in recorded meta<br/>
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -1014,7 +1017,7 @@ disable_keyboard_log = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: none
 # &nbsp; &nbsp;   0x1: disable clipboard log in syslog
 # &nbsp; &nbsp;   0x2: disable clipboard log in recorded sessions
-# &nbsp; &nbsp;   0x4: disable clipboard log in recorded meta
+# &nbsp; &nbsp;   0x4: disable clipboard log in recorded meta<br/>
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -1024,7 +1027,7 @@ disable_clipboard_log = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: none
 # &nbsp; &nbsp;   0x1: disable (redirected) file system log in syslog
 # &nbsp; &nbsp;   0x2: disable (redirected) file system log in recorded sessions
-# &nbsp; &nbsp;   0x4: disable (redirected) file system log in recorded meta
+# &nbsp; &nbsp;   0x4: disable (redirected) file system log in recorded meta<br/>
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -1051,7 +1054,7 @@ codec_id = string(default='mp4')
 framerate = integer(min=1, max=120, default=5)
 
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
-# /!\ Some browsers and video decoders don't support crf=0
+# ⚠ Some browsers and video decoders don't support crf=0
 #_advanced
 ffmpeg_options = string(default='crf=35 preset=superfast')
 
@@ -1071,7 +1074,7 @@ play_video_with_corrupted_bitmap = boolean(default=False)
 # Allow real-time view (4 eyes) without session recording enabled in the authorization
 allow_rt_without_recording = boolean(default=False)
 
-# Allow to control permissions on recorded files with octal number
+# Allow to control permissions on recorded files with octal number<br/>
 # (in octal or symbolic mode format (as chmod Linux command))
 #_hidden
 file_permissions = string(default='440')
@@ -1081,6 +1084,7 @@ file_permissions = string(default='440')
 #_hidden
 use_redis = boolean(default=True)
 
+# 
 # (in milliseconds)
 #_hidden
 redis_timeout = integer(min=0, default=500)
@@ -1132,8 +1136,9 @@ block_invalid_clipboard_text_down = boolean(default=False)
 #_hidden
 log_if_accepted = boolean(default=True)
 
-# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
-# Warning: This value affects the RAM used by the session.
+# ⚠ This value affects the RAM used by the session.<br/>
+# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize.<br/>
+# (in megabytes)
 #_hidden
 max_file_size_rejected = integer(min=0, default=256)
 
@@ -1144,7 +1149,7 @@ tmpdir = string(max=4096, default='/tmp/')
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
-# /!\ Saving files can take up a lot of disk space
+# ⚠ Saving files can take up a lot of disk space
 # &nbsp; &nbsp;   never: Never store transferred files.
 # &nbsp; &nbsp;   always: Always store transferred files.
 # &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
@@ -1197,10 +1202,12 @@ filename_percent_encoding = boolean(default=False)
 
 [crypto]
 
+# 
 # (in hexadecimal format)
 #_hidden
 encryption_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
 
+# 
 # (in hexadecimal format)
 #_hidden
 sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
@@ -1226,7 +1233,7 @@ listen_address = string(default=':3390')
 enable_target_field = boolean(default=True)
 
 # List of keyboard layouts available by the internal pages button located at bottom left of some internal pages (login, selector, etc).
-# Possible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy
+# Possible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy<br/>
 # (values are comma-separated)
 #_advanced
 keyboard_layout_proposals = string(default='en-US, fr-FR, de-DE, ru-RU')
@@ -1261,67 +1268,88 @@ enable_theme = boolean(default=False)
 #_image=/var/wab/images/rdp-oem-logo.png
 logo = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 bgcolor = string(default='#081F60')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 fgcolor = string(default='#FFFFFF')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 separator_color = string(default='#CFD5EB')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 focus_color = string(default='#004D9C')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 error_color = string(default='#FFFF00')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 edit_bgcolor = string(default='#FFFFFF')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 edit_fgcolor = string(default='#000000')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 edit_focus_color = string(default='#004D9C')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 tooltip_bgcolor = string(default='#000000')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 tooltip_fgcolor = string(default='#FFFF9F')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 tooltip_border_color = string(default='#000000')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_line1_bgcolor = string(default='#E9ECF6')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_line1_fgcolor = string(default='#000000')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_line2_bgcolor = string(default='#CFD5EB')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_line2_fgcolor = string(default='#000000')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_selected_bgcolor = string(default='#4472C4')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_selected_fgcolor = string(default='#FFFFFF')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_focus_bgcolor = string(default='#004D9C')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_focus_fgcolor = string(default='#FFFFFF')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_label_bgcolor = string(default='#4472C4')
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_label_fgcolor = string(default='#FFFFFF')
 
 [debug]
@@ -1330,7 +1358,6 @@ selector_label_fgcolor = string(default='#FFFFFF')
 fake_target_ip = string(default='')
 
 # - kbd / ocr when != 0<br/>
-# 
 # (Wrm)
 # - pointer             = 0x0004
 # - primary_orders      = 0x0020
@@ -1339,7 +1366,7 @@ fake_target_ip = string(default='')
 # - surface_commands    = 0x0100
 # - bmp_cache           = 0x0200
 # - internal_buffer     = 0x0400
-# - sec_decrypted       = 0x1000<br/>
+# - sec_decrypted       = 0x1000
 #_advanced
 #_hex
 capture = integer(min=0, default=0)
@@ -1371,7 +1398,6 @@ session = integer(min=0, default=0)
 # - global_channel  = 0x00002000
 # - sec_decrypted   = 0x00004000
 # - keymap          = 0x00008000<br/>
-# 
 # (Serializer)
 # - pointer             = 0x00040000
 # - primary_orders      = 0x00200000
@@ -1380,7 +1406,7 @@ session = integer(min=0, default=0)
 # - surface_commands    = 0x01000000
 # - bmp_cache           = 0x02000000
 # - internal_buffer     = 0x04000000
-# - sec_decrypted       = 0x10000000<br/>
+# - sec_decrypted       = 0x10000000
 #_advanced
 #_hex
 front = integer(min=0, default=0)
@@ -1499,7 +1525,7 @@ config = boolean(default=True)
 #_hidden
 mod_rdp_use_failure_simulation_socket_transport = option(0, 1, 2, default=0)
 
-# List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs
+# List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs<br/>
 # (values are comma-separated)
 #_advanced
 probe_client_addresses = string(default='')

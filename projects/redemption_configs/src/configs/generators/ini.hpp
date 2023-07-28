@@ -120,7 +120,7 @@ namespace impl
 
     template<class T> io_quoted2 ini_str(T const & s)
     {
-        if constexpr (std::is_convertible_v<T, std::string_view>) {
+        if constexpr (is_convertible_v<T, std::string_view>) {
             auto str = std::string_view(s);
             auto pos = str.find_first_of("\"'\\");
             if (pos != std::string_view::npos) {

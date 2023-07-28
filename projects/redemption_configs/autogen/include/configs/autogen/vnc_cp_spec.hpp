@@ -27,7 +27,7 @@ vault_transformation_rule = string(default='')
 
 # No automatic disconnection due to inactivity, timer is set on target session.
 # If value is between 1 and 30, then 30 is used.
-# If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.
+# If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.<br/>
 # (in seconds)
 inactivity_timeout = integer(min=0, default=0)
 
@@ -61,12 +61,10 @@ ssh_login = string(default='')
 ssh_password = string(default='')
 
 # With the following syntax: "account_name@domain_name[@[device_name]]".<br/>
-# 
 # Syntax for using global domain scenario account:
 # &nbsp; &nbsp;   "account_name@global_domain_name"<br/>
-# 
 # Syntax for using local domain scenario account (with automatic device name deduction):
-# &nbsp; &nbsp;   "account_name@local_domain_name@"<br/>
+# &nbsp; &nbsp;   "account_name@local_domain_name@"
 scenario_account_name = string(default='')
 
 # Only for debugging purposes.

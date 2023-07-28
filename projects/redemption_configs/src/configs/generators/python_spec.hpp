@@ -25,6 +25,7 @@
 #include "configs/generators/utils/write_template.hpp"
 #include "configs/enumeration.hpp"
 
+#include "utils/sugar/zstring_view.hpp"
 #include "utils/file_permissions.hpp"
 
 #include <algorithm>
@@ -72,30 +73,32 @@ inline void write_type_info(std::ostream&, type_<types::ip_string>) {}
 //@}
 
 inline void write_type_info(std::ostream& out, type_<types::rgb>)
-{ out << "(is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)\n"; }
+{ out << "\n(in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<FilePermissions>)
-{ out << "(in octal or symbolic mode format (as chmod Linux command))\n"; }
+{ out << "\n(in octal or symbolic mode format (as chmod Linux command))\n"; }
 
 template<unsigned N>
 void write_type_info(std::ostream& out, type_<types::fixed_binary<N>>)
-{ out << "(in hexadecimal format)\n"; }
+{ out << "\n(in hexadecimal format)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<std::chrono::hours>)
-{ out << "(in hours)\n"; }
+{ out << "\n(in hours)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<std::chrono::minutes>)
-{ out << "(in minutes)\n"; }
+{ out << "\n(in minutes)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<std::chrono::seconds>)
-{ out << "(in seconds)\n"; }
+{ out << "\n(in seconds)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<std::chrono::milliseconds>)
-{ out << "(in milliseconds)\n"; }
+{ out << "\n(in milliseconds)\n"; }
 
-template<class T, class Ratio>
-void write_type_info(std::ostream& out, type_<std::chrono::duration<T, Ratio>>)
-{ out << "(in " << Ratio::num << "/" << Ratio::den << " seconds)\n"; }
+inline void write_type_info(std::ostream& out, type_<std::chrono::duration<unsigned, std::ratio<1, 10>>>)
+{ out << "\n(in 1/10 seconds)\n"; }
+
+inline void write_type_info(std::ostream& out, type_<std::chrono::duration<unsigned, std::ratio<1, 100>>>)
+{ out << "\n(in 1/100 seconds)\n"; }
 
 template<class T, long min, long max>
 void write_type_info(std::ostream& out, type_<types::range<T, min, max>>)
@@ -103,7 +106,7 @@ void write_type_info(std::ostream& out, type_<types::range<T, min, max>>)
 
 template<class T>
 void write_type_info(std::ostream& out, type_<types::list<T>>)
-{ out << "(values are comma-separated)\n"; }
+{ out << "\n(values are comma-separated)\n"; }
 
 
 template<class T>
@@ -143,19 +146,17 @@ inline void write_prefered_display_name(std::ostream& out, Names const& names)
     }
 }
 
-inline void write_warning_attr(std::ostream& out, spec_internal_attr attr)
+inline std::string_view get_warning_attr(spec_internal_attr attr)
 {
     if (bool(attr & spec_internal_attr::restart_service)) {
-        out <<
-            "Warning: Service will be automatically restarted and active sessions will be disconnected.\n"
-        ;
+        return "⚠ Service will be automatically restarted and active sessions will be disconnected.\n\n";
     }
 
     if (bool(attr & spec_internal_attr::iptables_in_gui)) {
-        out <<
-            "Warning: IP tables rules are reloaded and active sessions will be disconnected.\n"
-        ;
+        return "⚠ IP tables rules are reloaded and active sessions will be disconnected.\n\n";
     }
+
+    return {};
 }
 
 inline void write_spec_attr(std::ostream& out, spec_internal_attr attr)
@@ -192,7 +193,7 @@ std::string get_desc(Pack const & pack)
     std::string const& s = value_or<cfg_attributes::desc>(pack, d).value;
     auto tag = value_or<cfg_attributes::Tags>(pack, cfg_attributes::Tags()).value;
     if (bool(tag & cfg_attributes::TagList::Workaround)) {
-        return str_concat("The use of this feature is not recommended!", s.empty() ? "" : "\n", s);
+        return str_concat("⚠ The use of this feature is not recommended!\n\n", s);
     }
     return s;
 }
@@ -358,8 +359,8 @@ namespace impl
             << std::hex << h.v << std::dec;
     }
 
-    template<class T, class V>
-    void write_value_(std::ostream& out, T const & name, V const & v, char const * prefix)
+    template<class T>
+    void write_value_(std::ostream& out, T const & name, type_enumeration::value_type const & v, char const * prefix)
     {
         auto pos = out.tellp();
         out << "  " << name;
@@ -385,12 +386,18 @@ namespace impl
         out << "\n";
     }
 
+    inline bool has_enumeration_values(type_enumeration const & e, bool is_enum_parser)
+    {
+        return !(
+            is_enum_parser
+         && std::none_of(begin(e.values), end(e.values),
+                [](type_enumeration::value_type const & v) { return v.desc; })
+        );
+    }
+
     inline bool write_desc_value(std::ostream& out, type_enumeration const & e, char const * prefix, bool is_enum_parser)
     {
-        if (is_enum_parser
-         && std::none_of(begin(e.values), end(e.values),
-            [](type_enumeration::value_type const & v) { return v.desc; })
-        ) {
+        if (!has_enumeration_values(e, is_enum_parser)) {
             return false;
         }
 
@@ -422,7 +429,7 @@ namespace impl
         if (type_enumeration::Category::flags == e.cat) {
             auto s = oss.str();
             s[s.size() - 2] = '=';
-            out << "Note: values can be added ("
+            out << "\nNote: values can be added ("
                 << (prefix ? prefix : "enable")
                 << " all: " << s << HexFlag{total, e.values.size()} << ")";
         }
@@ -466,6 +473,16 @@ void write_enumeration_value_description(
 static std::string htmlize(std::string str)
 {
     std::string html;
+    html.reserve(str.capacity());
+
+    // trim new lines
+    while (!str.empty() && str.back() == '\n') {
+        str.pop_back();
+    }
+    zstring_view zstr = str;
+    while (zstr[zstr.size()] == '\n') {
+        zstr.pop_front();
+    }
 
     // replace '&' and '<' with "&amp;" and "&lt;"
     for (char const& c : str) {
@@ -487,17 +504,11 @@ static std::string htmlize(std::string str)
     html.reserve(str.size());
     for (char const& c : str) {
         if (c == '\n' && (&c)[1] == '\n') {
-            html += "<br/>\n";
+            html += "<br/>";
         }
         else {
             html += c;
         }
-    }
-    if (html.size() != str.size()) {
-        if (html.back() == '\n') {
-            html.pop_back();
-        }
-        html += "<br/>";
     }
 
     str.clear();
@@ -652,7 +663,7 @@ struct IniPythonSpecWriterBase
 
 template<class Pack>
 constexpr bool is_candidate_for_spec = is_convertible_v<Pack, spec_attr_t>
-                                   && ( !std::is_convertible_v<Pack, is_external_attr_t>
+                                   && ( !is_convertible_v<Pack, is_external_attr_t>
                                      || !is_convertible_v<Pack, connection_policy_t>
                                       );
 
@@ -673,7 +684,7 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
 
             std::stringstream comments;
 
-            write_warning_attr(comments, attr);
+            comments << get_warning_attr(attr);
 
             write_description(comments, enums, semantic_type, get_desc(infos));
             write_type_info(comments, type);

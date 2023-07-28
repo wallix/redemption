@@ -54,17 +54,12 @@ namespace detail
     std::false_type is_t_convertible_impl(...);
 }
 
+// TODO requires{ static_cast<void(*)(To)>(nullptr)(*static_cast<From*>(nullptr)); }
 template<class From, class To>
-using is_convertible = decltype(detail::is_convertible<From, To>(0));
-
-template<class From, class To>
-constexpr bool is_convertible_v = is_convertible<From, To>::value;
+constexpr bool is_convertible_v = decltype(detail::is_convertible<From, To>(0))::value;
 
 template<class From, template<class...> class To>
-using is_t_convertible = decltype(detail::is_t_convertible_impl<To>(static_cast<From*>(nullptr)));
-
-template<class From, template<class...> class To>
-constexpr bool is_t_convertible_v = is_t_convertible<From, To>::value;
+constexpr bool is_t_convertible_v = decltype(detail::is_t_convertible_impl<To>(static_cast<From*>(nullptr)))::value;
 
 template<template<class...> class T, class... Ts>
 T<Ts...> const& get_t_elem(T<Ts...> const& x)

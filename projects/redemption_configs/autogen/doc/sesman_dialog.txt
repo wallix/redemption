@@ -115,7 +115,8 @@ cfg::mod_rdp::mode_console ⇐ mod_rdp:mode_console   [RdpModeConsole ⇐ std::s
       forbid: Block Console mode request from client.
 cfg::mod_rdp::auto_reconnection_on_losing_target_link ⇐ mod_rdp:auto_reconnection_on_losing_target_link   [bool]
 cfg::mod_rdp::allow_session_reconnection_by_shortcut ⇐ mod_rdp:allow_session_reconnection_by_shortcut   [bool]
-    The use of this feature is not recommended!
+    ⚠ The use of this feature is not recommended!
+    
     If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.
     This feature should not be used together with the End disconnected session option (section session_probe).
     The keyboard shortcut is fixed and cannot be changed.
@@ -144,7 +145,8 @@ cfg::mod_rdp::use_session_probe_to_launch_remote_program ⇐ mod_rdp:use_session
     If enabled, the RDP Proxy relies on the Session Probe to launch the remote programs.
     Otherwise, remote programs will be launched according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol. This latter is the native method.The difference is that Session Probe does not start a new application when its host session is resumed. Conversely, launching applications according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol is not affected by this behavior. However, launching applications via the native method requires them to be published in Remote Desktop Services, which is unnecessary if launched by the Session Probe.
 cfg::mod_rdp::replace_null_pointer_by_default_pointer ⇐ mod_rdp:replace_null_pointer_by_default_pointer   [bool]
-    The use of this feature is not recommended!
+    ⚠ The use of this feature is not recommended!
+    
     Replace an empty mouse pointer with normal pointer.
 
 cfg::protocol::save_session_info_pdu ⇐ protocol:save_session_info_pdu   [RdpSaveSessionInfoPDU]
@@ -304,6 +306,7 @@ cfg::session_probe::disabled_features ⇐ session_probe:disabled_features   [Ses
       0x040: disable Inspect Firefox Address/Search bar. Basic web navigation monitoring.
       0x080: disable Monitor Internet Explorer event. Advanced web navigation monitoring.
       0x100: disable Inspect group membership of user. User identity monitoring.
+    
     Note: values can be added (disable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 cfg::session_probe::enable_bestsafe_interaction ⇐ session_probe:enable_bestsafe_interaction   [bool]
     This parameter has no effect on the device without BestSafe.
@@ -366,6 +369,7 @@ cfg::server_cert::server_access_allowed_message ⇐ server_cert:server_access_al
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (Bastion notification)
+    
     Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::server_cert::server_cert_create_message ⇐ server_cert:server_cert_create_message   [ServerNotification]
     Warn that new server certificate file was created.
@@ -373,6 +377,7 @@ cfg::server_cert::server_cert_create_message ⇐ server_cert:server_cert_create_
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (Bastion notification)
+    
     Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::server_cert::server_cert_success_message ⇐ server_cert:server_cert_success_message   [ServerNotification]
     Warn that server certificate file was successfully checked.
@@ -380,6 +385,7 @@ cfg::server_cert::server_cert_success_message ⇐ server_cert:server_cert_succes
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (Bastion notification)
+    
     Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::server_cert::server_cert_failure_message ⇐ server_cert:server_cert_failure_message   [ServerNotification]
     Warn that server certificate file checking failed.
@@ -387,6 +393,7 @@ cfg::server_cert::server_cert_failure_message ⇐ server_cert:server_cert_failur
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (Bastion notification)
+    
     Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::server_cert::enable_external_validation ⇐ enable_external_validation   [bool]
 cfg::server_cert::external_cert ⇒ external_cert   [std::string]
@@ -429,6 +436,7 @@ cfg::capture::disable_keyboard_log ⇐ capture:disable_keyboard_log   [KeyboardL
       0x0: none
       0x1: disable keyboard log in syslog
       0x2: disable keyboard log in recorded sessions
+    
     Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 
 cfg::video::hash_path ⇐ hash_path   [::configs::spec_types::directory_path]
@@ -464,12 +472,15 @@ cfg::file_verification::block_invalid_file_down ⇐ file_verification:block_inva
 cfg::file_verification::log_if_accepted ⇐ file_verification:log_if_accepted   [bool]
     Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged.
 cfg::file_verification::max_file_size_rejected ⇐ file_verification:max_file_size_rejected   [uint32_t]
-    If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
-    Warning: This value affects the RAM used by the session.
+    ⚠ This value affects the RAM used by the session.
+    
+    If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize.
+    
+    (in megabytes)
 
 cfg::file_storage::store_file ⇐ file_storage:store_file   [RdpStoreFile ⇐ std::string]
     Enable storage of transferred files (via RDP Clipboard).
-    /!\ Saving files can take up a lot of disk space
+    ⚠ Saving files can take up a lot of disk space
       never: Never store transferred files.
       always: Always store transferred files.
       on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).

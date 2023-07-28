@@ -27,13 +27,13 @@ vault_transformation_rule = string(default='')
 
 # No automatic disconnection due to inactivity, timer is set on target session.
 # If value is between 1 and 30, then 30 is used.
-# If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.
+# If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.<br/>
 # (in seconds)
 inactivity_timeout = integer(min=0, default=0)
 
 [all_target_mod]
 
-# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.<br/>
 # (in milliseconds)
 #_advanced
 tcp_user_timeout = integer(min=0, max=3600000, default=0)
@@ -53,7 +53,7 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 # &nbsp; &nbsp;   18: MultiOpaqueRect
 # &nbsp; &nbsp;   22: Polyline
 # &nbsp; &nbsp;   25: EllipseSC
-# &nbsp; &nbsp;   27: GlyphIndex
+# &nbsp; &nbsp;   27: GlyphIndex<br/>
 # (values are comma-separated)
 #_advanced
 disabled_orders = string(default='27')
@@ -104,7 +104,7 @@ forward_client_build_number = boolean(default=True)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -114,7 +114,7 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -124,7 +124,7 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -134,7 +134,7 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -155,7 +155,7 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
 # &nbsp; &nbsp;   0x0: none
 # &nbsp; &nbsp;   0x1: disable keyboard log in syslog
-# &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions
+# &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions<br/>
 # Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 #_advanced
 #_hex
@@ -189,15 +189,16 @@ block_invalid_file_down = boolean(default=False)
 #_advanced
 log_if_accepted = boolean(default=True)
 
-# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
-# Warning: This value affects the RAM used by the session.
+# ⚠ This value affects the RAM used by the session.<br/>
+# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize.<br/>
+# (in megabytes)
 #_advanced
 max_file_size_rejected = integer(min=0, default=256)
 
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
-# /!\ Saving files can take up a lot of disk space
+# ⚠ Saving files can take up a lot of disk space
 # &nbsp; &nbsp;   never: Never store transferred files.
 # &nbsp; &nbsp;   always: Always store transferred files.
 # &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).

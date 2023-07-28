@@ -419,8 +419,8 @@ _.section("globals", [&]
              type_<bool>(),
              set(true),
              desc{
-                "Enable primary connection on ipv6.\n"
-                "Warning: Service need to be manually restarted to take changes into account"
+                "⚠ Service need to be manually restarted to take changes into account\n\n"
+                "Enable primary connection on ipv6."
              });
 
     _.member(hidden_in_gui, no_sesman, L,
@@ -1793,8 +1793,9 @@ _.section("file_verification", [&]
              type_<types::u32>(),
              set(256),
              desc{
-                "If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).\n"
-                "Warning: This value affects the RAM used by the session."
+                "⚠ This value affects the RAM used by the session.\n\n"
+                "If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize.\n\n"
+                "(in megabytes)"
              });
 
     _.member(hidden_in_gui, no_sesman, L,
@@ -1813,7 +1814,7 @@ _.section("file_storage", [&]
              set(RdpStoreFile::never),
              desc{
                 "Enable storage of transferred files (via RDP Clipboard).\n"
-                "/!\\ Saving files can take up a lot of disk space"
+                "⚠ Saving files can take up a lot of disk space"
              });
 });
 
@@ -2008,7 +2009,7 @@ _.section("video", [&]
              set("crf=35 preset=superfast"),
              desc{
                  "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
-                 "/!\\ Some browsers and video decoders don't support crf=0"
+                 "⚠ Some browsers and video decoders don't support crf=0"
              });
 
     _.member(advanced_in_gui, no_sesman, L,

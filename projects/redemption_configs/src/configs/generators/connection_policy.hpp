@@ -49,6 +49,32 @@ using namespace cfg_attributes;
 using python_spec_writer::get_desc;
 
 
+template<class Pack>
+auto const& get_default_value_for_connpolicy(Pack const& infos, std::string const& file)
+{
+    if constexpr (is_t_convertible_v<Pack, connpolicy::default_>) {
+        auto& default_values = get_t_elem<connpolicy::default_>(infos);
+        using pointer_type = decltype(&*default_values.values.begin());
+        pointer_type all_value = nullptr;
+        for (auto& value : default_values.values) {
+            if (value.connpolicy_name.empty()) {
+                all_value = &value;
+            }
+            else if (!value.always && value.connpolicy_name == file) {
+                return value.value;
+            }
+        }
+
+        if (all_value) {
+            return all_value->value;
+        }
+    }
+
+    auto type = get_type<spec::type_>(infos);
+    return get_default(type, infos);
+}
+
+
 struct ConnectionPolicyWriterBase
 {
     ConnectionPolicyWriterBase(std::string directory_spec, std::string sesman_map_filename)
@@ -111,28 +137,6 @@ struct ConnectionPolicyWriterBase
             auto s = this->tmp_out.str();
             this->tmp_out.str("");
 
-            auto get_value_of = [&](std::string const& name) -> auto const& {
-                if constexpr (is_t_convertible_v<Pack, connpolicy::default_>) {
-                    auto& default_values = get_t_elem<connpolicy::default_>(infos);
-                    using pointer_type = decltype(&*default_values.values.begin());
-                    pointer_type all_value = nullptr;
-                    for (auto& value : default_values.values) {
-                        if (value.connpolicy_name.empty()) {
-                            all_value = &value;
-                        }
-                        else if (!value.always && value.connpolicy_name == name) {
-                            return value.value;
-                        }
-                    }
-
-                    if (all_value) {
-                        return all_value->value;
-                    }
-                }
-
-                return get_default(type, infos);
-            };
-
             auto sesman_name = sesman_network_name(infos, section_names);
 
             auto sesman_mem_key = str_concat(section.name, '/', sesman_name, '/', member_name);
@@ -141,7 +145,7 @@ struct ConnectionPolicyWriterBase
             }
 
             for (auto const& file : connpolicy.files) {
-                auto const& value = get_value_of(file);
+                auto const& value = get_default_value_for_connpolicy(infos, file);
 
                 python_spec_writer::write_type2(tmp_out, enums, type, semantic_type, value);
                 this->tmp_out << "\n\n";

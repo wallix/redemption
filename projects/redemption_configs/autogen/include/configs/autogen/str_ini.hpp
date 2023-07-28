@@ -22,28 +22,33 @@ R"gen_config_ini(## Config file for RDP proxy.
 #authfile = )gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(
 
 # Time out during RDP handshake stage.
+# 
 # (in seconds)
 #handshake_timeout = 10
 
 # No automatic disconnection due to inactivity, timer is set on primary authentication.
 # If value is between 1 and 30, then 30 is used.
 # If value is set to 0, then inactivity timeout value is unlimited.
+# 
 # (in seconds)
 #base_inactivity_timeout = 900
 
 # No automatic disconnection due to inactivity, timer is set on target session.
 # If value is between 1 and 30, then 30 is used.
 # If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.
+# 
 # (in seconds)
 #_hidden
 #inactivity_timeout = 0
 
 # Internal keepalive between sesman and rdp proxy
+# 
 # (in seconds)
 #_hidden
 #keepalive_grace_delay = 30
 
 # Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
+# 
 # (in seconds)
 #_advanced
 #authentication_timeout = 120
@@ -81,6 +86,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_close_box = 1
 
 # Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
+# 
 # (in seconds)
 #_advanced
 #close_timeout = 600
@@ -120,6 +126,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #unicode_keyboard_event_support = 1
 
 # min = 100, max = 10000
+# 
 # (in milliseconds)
 #_advanced
 #mod_recv_timeout = 1000
@@ -139,11 +146,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
 # Set to 0 to disable this feature.
+# 
 # (in milliseconds)
 #rdp_keepalive_connection_interval = 0
 
+# ⚠ Service need to be manually restarted to take changes into account
+# 
 # Enable primary connection on ipv6.
-# Warning: Service need to be manually restarted to take changes into account
 # value: 0 or 1
 #enable_ipv6 = 1
 
@@ -281,6 +290,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #transform_glyph_to_bitmap = 0
 
 # min = 100, max = 10000
+# 
 # (in milliseconds)
 #_advanced
 #recv_timeout = 1000
@@ -315,12 +325,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # The maximum time in milliseconds that the proxy will wait while attempting to connect to an target.
 # min = 1000, max = 10000
+# 
 # (in milliseconds)
 #_advanced
 #connection_establishment_timeout = 3000
 
 # This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
 # min = 0, max = 3600000
+# 
 # (in milliseconds)
 #_hidden
 #tcp_user_timeout = 0
@@ -346,6 +358,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #disconnect_on_logon_user_change = 0
 
+# 
 # (in seconds)
 #_advanced
 #open_session_timeout = 0
@@ -504,12 +517,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
+# 
 # (in milliseconds)
 #_advanced
 #remoteapp_bypass_legal_notice_delay = 0
 
 # Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
+# 
 # (in milliseconds)
 #_advanced
 #remoteapp_bypass_legal_notice_timeout = 20000
@@ -570,7 +585,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #auto_reconnection_on_losing_target_link = 0
 
-# The use of this feature is not recommended!
+# ⚠ The use of this feature is not recommended!
+# 
 # If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.
 # This feature should not be used together with the End disconnected session option (section session_probe).
 # The keyboard shortcut is fixed and cannot be changed.
@@ -580,6 +596,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
 # min = 0, max = 15000
+# 
 # (in milliseconds)
 #_hidden
 #session_reconnection_delay = 0
@@ -641,6 +658,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # This parameter is used if 'On launch failure' is 1 (disconnect user).
 # 0 to disable timeout.
 # min = 0, max = 300000
+# 
 # (in milliseconds)
 #_hidden
 #launch_timeout = 40000
@@ -648,6 +666,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # This parameter is used if 'On launch failure' is 0 (ignore failure and continue) or 2 (retry without Session Probe).
 # 0 to disable timeout.
 # min = 0, max = 300000
+# 
 # (in milliseconds)
 #_hidden
 #launch_fallback_timeout = 40000
@@ -662,6 +681,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected.
 # During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate.
 # min = 0, max = 60000
+# 
 # (in milliseconds)
 #_hidden
 #keepalive_timeout = 5000
@@ -715,6 +735,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # The period above which the disconnected Application session will be automatically closed by the Session Probe.
 # 0 to disable timeout.
 # min = 0, max = 172800000
+# 
 # (in milliseconds)
 #_hidden
 #disconnected_application_limit = 0
@@ -722,6 +743,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # The period above which the disconnected Desktop session will be automatically closed by the Session Probe.
 # 0 to disable timeout.
 # min = 0, max = 172800000
+# 
 # (in milliseconds)
 #_hidden
 #disconnected_session_limit = 0
@@ -729,6 +751,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # The period of user inactivity above which the session will be locked by the Session Probe.
 # 0 to disable timeout.
 # min = 0, max = 172800000
+# 
 # (in milliseconds)
 #_hidden
 #idle_session_limit = 0
@@ -736,6 +759,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # The additional period given to the device to make Clipboard redirection available.
 # This parameter is effective only if the Smart launcher is used.
 # If we see the message "Clipboard Virtual Channel is unavailable" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter.
+# 
 # (in milliseconds)
 #_hidden
 #smart_launcher_clipboard_initialization_delay = 2000
@@ -744,6 +768,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # The extra time given to the device before starting the Session Probe launch sequence.
 # This parameter is effective only if the Smart launcher is used.
 # This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened.
+# 
 # (in milliseconds)
 #_hidden
 #smart_launcher_start_delay = 0
@@ -752,6 +777,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # This parameter is effective only if the Smart launcher is used.
 # This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
 # This parameter is usually used together with the 'Smart launcher short delay' parameter.
+# 
 # (in milliseconds)
 #_hidden
 #smart_launcher_long_delay = 500
@@ -760,6 +786,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # This parameter is effective only if the Smart launcher is used.
 # This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
 # This parameter is usually used together with the 'Smart launcher long delay' parameter.
+# 
 # (in milliseconds)
 #_hidden
 #smart_launcher_short_delay = 50
@@ -774,6 +801,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # The purpose of this parameter is to give the target time to gracefully stop some ongoing processing.
 # It is strongly recommended to keep the default value of this parameter.
 # min = 0, max = 300000
+# 
 # (in milliseconds)
 #_hidden
 #launcher_abort_delay = 2000
@@ -826,6 +854,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe.
 # 'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window.
 # min = 0, max = 60000
+# 
 # (in milliseconds)
 #_hidden
 #end_of_session_check_delay_time = 0
@@ -863,6 +892,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x040: disable Inspect Firefox Address/Search bar. Basic web navigation monitoring.
 #   0x080: disable Monitor Internet Explorer event. Advanced web navigation monitoring.
 #   0x100: disable Inspect group membership of user. User identity monitoring.
+# 
 # Note: values can be added (disable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
@@ -940,6 +970,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # The parameter is created to adapt the CPU consumption to the performance of the Windows device.
 # The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption.
 # min = 300, max = 2000
+# 
 # (in milliseconds)
 #_hidden
 #periodic_task_run_interval = 500
@@ -973,6 +1004,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (Bastion notification)
+# 
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -984,6 +1016,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (Bastion notification)
+# 
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -995,6 +1028,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (Bastion notification)
+# 
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -1006,6 +1040,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (Bastion notification)
+# 
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -1017,6 +1052,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (Bastion notification)
+# 
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
@@ -1099,6 +1135,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Time interval between 2 analyzes.
 # Too low a value will affect session reactivity.
+# 
 # (in 1/100 seconds)
 #_advanced
 #interval = 100
@@ -1124,17 +1161,20 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x01: png
 #   0x02: wrm
 #   0x08: ocr
+# 
 # Note: values can be added (enable all: 0x01 + 0x02 + 0x08 = 0x0b)
 #_advanced
 #_hex
 #capture_flags = 11
 
 # Frame interval.
+# 
 # (in 1/10 seconds)
 #_advanced
 #png_interval = 10
 
 # Time between 2 wrm movies.
+# 
 # (in seconds)
 #_advanced
 #break_interval = 600
@@ -1163,6 +1203,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: disable keyboard log in syslog
 #   0x2: disable keyboard log in recorded sessions
 #   0x4: disable keyboard log in recorded meta
+# 
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -1174,6 +1215,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: disable clipboard log in syslog
 #   0x2: disable clipboard log in recorded sessions
 #   0x4: disable clipboard log in recorded meta
+# 
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -1185,6 +1227,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: disable (redirected) file system log in syslog
 #   0x2: disable (redirected) file system log in recorded sessions
 #   0x4: disable (redirected) file system log in recorded meta
+# 
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -1215,7 +1258,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #framerate = 5
 
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
-# /!\ Some browsers and video decoders don't support crf=0
+# ⚠ Some browsers and video decoders don't support crf=0
 #_advanced
 #ffmpeg_options = crf=35 preset=superfast
 
@@ -1251,6 +1294,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #use_redis = 1
 
+# 
 # (in milliseconds)
 #_hidden
 #redis_timeout = 500
@@ -1311,8 +1355,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #log_if_accepted = 1
 
-# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
-# Warning: This value affects the RAM used by the session.
+# ⚠ This value affects the RAM used by the session.
+# 
+# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize.
+# 
+# (in megabytes)
 # min = 0
 #_hidden
 #max_file_size_rejected = 256
@@ -1325,7 +1372,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
-# /!\ Saving files can take up a lot of disk space
+# ⚠ Saving files can take up a lot of disk space
 #   never: Never store transferred files.
 #   always: Always store transferred files.
 #   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
@@ -1458,67 +1505,88 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_image=/var/wab/images/rdp-oem-logo.png
 #logo = )gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #bgcolor = #081F60
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #fgcolor = #FFFFFF
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #separator_color = #CFD5EB
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #focus_color = #004D9C
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #error_color = #FFFF00
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #edit_bgcolor = #FFFFFF
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #edit_fgcolor = #000000
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #edit_focus_color = #004D9C
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #tooltip_bgcolor = #000000
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #tooltip_fgcolor = #FFFF9F
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #tooltip_border_color = #000000
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_line1_bgcolor = #E9ECF6
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_line1_fgcolor = #000000
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_line2_bgcolor = #CFD5EB
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_line2_fgcolor = #000000
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_selected_bgcolor = #4472C4
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_selected_fgcolor = #FFFFFF
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_focus_bgcolor = #004D9C
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_focus_fgcolor = #FFFFFF
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_label_bgcolor = #4472C4
 
-# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_label_fgcolor = #FFFFFF
 
 [debug]

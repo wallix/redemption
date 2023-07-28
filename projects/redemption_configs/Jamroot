@@ -38,7 +38,7 @@ actions generate_cpp_enumeration
 
 actions generate_config_spec
 {
-    $(>) || return 1
+    $(>) || exit 1
 
     # auto gen RDP connection policy
     echo -n '//

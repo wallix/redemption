@@ -23,13 +23,13 @@ vault_transformation_rule = string(default='')
 
 # No automatic disconnection due to inactivity, timer is set on target session.
 # If value is between 1 and 30, then 30 is used.
-# If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.
+# If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.<br/>
 # (in seconds)
 inactivity_timeout = integer(min=0, default=0)
 
 [all_target_mod]
 
-# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.<br/>
 # (in milliseconds)
 #_advanced
 tcp_user_timeout = integer(min=0, max=3600000, default=0)
@@ -49,7 +49,7 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 # &nbsp; &nbsp;   18: MultiOpaqueRect
 # &nbsp; &nbsp;   22: Polyline
 # &nbsp; &nbsp;   25: EllipseSC
-# &nbsp; &nbsp;   27: GlyphIndex
+# &nbsp; &nbsp;   27: GlyphIndex<br/>
 # (values are comma-separated)
 #_advanced
 disabled_orders = string(default='27')
@@ -130,14 +130,14 @@ mode_console = option('allow', 'force', 'forbid', default='allow')
 #_advanced
 auto_reconnection_on_losing_target_link = boolean(default=False)
 
-# The use of this feature is not recommended!
+# ⚠ The use of this feature is not recommended!<br/>
 # If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.
 # This feature should not be used together with the End disconnected session option (section session_probe).
 # The keyboard shortcut is fixed and cannot be changed.
 #_advanced
 allow_session_reconnection_by_shortcut = boolean(default=False)
 
-# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
+# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.<br/>
 # (in milliseconds)
 #_advanced
 session_reconnection_delay = integer(min=0, max=15000, default=0)
@@ -165,7 +165,7 @@ krb_armoring_fallback_user = string(default='')
 #_advanced
 krb_armoring_fallback_password = string(default='')
 
-# Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed.
+# Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed.<br/>
 # (in milliseconds)
 #_advanced
 remote_programs_disconnect_message_delay = integer(min=3000, max=120000, default=3000)
@@ -175,7 +175,7 @@ remote_programs_disconnect_message_delay = integer(min=3000, max=120000, default
 # Otherwise, remote programs will be launched according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol. This latter is the native method.The difference is that Session Probe does not start a new application when its host session is resumed. Conversely, launching applications according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol is not affected by this behavior. However, launching applications via the native method requires them to be published in Remote Desktop Services, which is unnecessary if launched by the Session Probe.
 use_session_probe_to_launch_remote_program = boolean(default=True)
 
-# The use of this feature is not recommended!
+# ⚠ The use of this feature is not recommended!<br/>
 # Replace an empty mouse pointer with normal pointer.
 #_advanced
 replace_null_pointer_by_default_pointer = boolean(default=False)
@@ -209,13 +209,13 @@ enable_launch_mask = boolean(default=True)
 on_launch_failure = option(0, 1, 2, default=1)
 
 # This parameter is used if 'On launch failure' is 1 (disconnect user).
-# 0 to disable timeout.
+# 0 to disable timeout.<br/>
 # (in milliseconds)
 #_advanced
 launch_timeout = integer(min=0, max=300000, default=40000)
 
 # This parameter is used if 'On launch failure' is 0 (ignore failure and continue) or 2 (retry without Session Probe).
-# 0 to disable timeout.
+# 0 to disable timeout.<br/>
 # (in milliseconds)
 #_advanced
 launch_fallback_timeout = integer(min=0, max=300000, default=40000)
@@ -226,7 +226,7 @@ start_launch_timeout_timer_only_after_logon = boolean(default=True)
 # The amount of time that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by 'On keepalive timeout'.
 # If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by 'On keepalive timeout'.
 # The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected.
-# During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate.
+# During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate.<br/>
 # (in milliseconds)
 #_advanced
 keepalive_timeout = integer(min=0, max=60000, default=5000)
@@ -269,26 +269,26 @@ log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
 # (Deprecated!)
 # The period above which the disconnected Application session will be automatically closed by the Session Probe.
-# 0 to disable timeout.
+# 0 to disable timeout.<br/>
 # (in milliseconds)
 #_advanced
 disconnected_application_limit = integer(min=0, max=172800000, default=0)
 
 # The period above which the disconnected Desktop session will be automatically closed by the Session Probe.
-# 0 to disable timeout.
+# 0 to disable timeout.<br/>
 # (in milliseconds)
 #_advanced
 disconnected_session_limit = integer(min=0, max=172800000, default=0)
 
 # The period of user inactivity above which the session will be locked by the Session Probe.
-# 0 to disable timeout.
+# 0 to disable timeout.<br/>
 # (in milliseconds)
 #_advanced
 idle_session_limit = integer(min=0, max=172800000, default=0)
 
 # The additional period given to the device to make Clipboard redirection available.
 # This parameter is effective only if the Smart launcher is used.
-# If we see the message "Clipboard Virtual Channel is unavailable" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter.
+# If we see the message "Clipboard Virtual Channel is unavailable" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter.<br/>
 # (in milliseconds)
 #_advanced
 smart_launcher_clipboard_initialization_delay = integer(min=0, default=2000)
@@ -296,7 +296,7 @@ smart_launcher_clipboard_initialization_delay = integer(min=0, default=2000)
 # For under-performing devices.
 # The extra time given to the device before starting the Session Probe launch sequence.
 # This parameter is effective only if the Smart launcher is used.
-# This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened.
+# This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened.<br/>
 # (in milliseconds)
 #_advanced
 smart_launcher_start_delay = integer(min=0, default=0)
@@ -304,7 +304,7 @@ smart_launcher_start_delay = integer(min=0, default=0)
 # The delay between two simulated keystrokes during the Session Probe launch sequence execution.
 # This parameter is effective only if the Smart launcher is used.
 # This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
-# This parameter is usually used together with the 'Smart launcher short delay' parameter.
+# This parameter is usually used together with the 'Smart launcher short delay' parameter.<br/>
 # (in milliseconds)
 #_advanced
 smart_launcher_long_delay = integer(min=0, default=500)
@@ -312,7 +312,7 @@ smart_launcher_long_delay = integer(min=0, default=500)
 # The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution.
 # This parameter is effective only if the Smart launcher is used.
 # This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
-# This parameter is usually used together with the 'Smart launcher long delay' parameter.
+# This parameter is usually used together with the 'Smart launcher long delay' parameter.<br/>
 # (in milliseconds)
 #_advanced
 smart_launcher_short_delay = integer(min=0, default=50)
@@ -324,7 +324,7 @@ smart_launcher_enable_wabam_affinity = boolean(default=True)
 
 # The time interval between the detection of an error (example: a refusal by the target of the redirected drive) and the actual abandonment of the Session Probe launch.
 # The purpose of this parameter is to give the target time to gracefully stop some ongoing processing.
-# It is strongly recommended to keep the default value of this parameter.
+# It is strongly recommended to keep the default value of this parameter.<br/>
 # (in milliseconds)
 #_advanced
 launcher_abort_delay = integer(min=0, max=300000, default=2000)
@@ -367,7 +367,7 @@ cpu_usage_alarm_action = option(0, 1, default=0)
 # For application session only.
 # The delay between the launch of the application and the start of End of session check.
 # Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe.
-# 'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window.
+# 'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window.<br/>
 # (in milliseconds)
 #_advanced
 end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
@@ -412,7 +412,7 @@ update_disabled_features = boolean(default=True)
 # &nbsp; &nbsp;   0x020: disable Inspect Chrome Address/Search bar. Basic web navigation monitoring.
 # &nbsp; &nbsp;   0x040: disable Inspect Firefox Address/Search bar. Basic web navigation monitoring.
 # &nbsp; &nbsp;   0x080: disable Monitor Internet Explorer event. Advanced web navigation monitoring.
-# &nbsp; &nbsp;   0x100: disable Inspect group membership of user. User identity monitoring.
+# &nbsp; &nbsp;   0x100: disable Inspect group membership of user. User identity monitoring.<br/>
 # Note: values can be added (disable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_advanced
 #_hex
@@ -467,7 +467,7 @@ process_command_line_retrieve_method = option(0, 1, 2, default=2)
 
 # Time between two polling performed by Session Probe.
 # The parameter is created to adapt the CPU consumption to the performance of the Windows device.
-# The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption.
+# The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption.<br/>
 # (in milliseconds)
 #_advanced
 periodic_task_run_interval = integer(min=300, max=2000, default=500)
@@ -494,7 +494,7 @@ server_cert_check = option(0, 1, 2, 3, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -504,7 +504,7 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -514,7 +514,7 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -524,7 +524,7 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 # &nbsp; &nbsp;   0x0: nobody
 # &nbsp; &nbsp;   0x1: message sent to syslog
 # &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)
+# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -545,7 +545,7 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
 # &nbsp; &nbsp;   0x0: none
 # &nbsp; &nbsp;   0x1: disable keyboard log in syslog
-# &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions
+# &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions<br/>
 # Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 #_advanced
 #_hex
@@ -579,15 +579,16 @@ block_invalid_file_down = boolean(default=False)
 #_advanced
 log_if_accepted = boolean(default=True)
 
-# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
-# Warning: This value affects the RAM used by the session.
+# ⚠ This value affects the RAM used by the session.<br/>
+# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize.<br/>
+# (in megabytes)
 #_advanced
 max_file_size_rejected = integer(min=0, default=256)
 
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
-# /!\ Saving files can take up a lot of disk space
+# ⚠ Saving files can take up a lot of disk space
 # &nbsp; &nbsp;   never: Never store transferred files.
 # &nbsp; &nbsp;   always: Always store transferred files.
 # &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).

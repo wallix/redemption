@@ -119,7 +119,7 @@ public:
                 dialog = " ⇒ ";
             }
 
-            if constexpr (std::is_convertible_v<Pack, is_external_attr_t>) {
+            if constexpr (is_convertible_v<Pack, is_external_attr_t>) {
                 this->out << "<sesman only>";
             }
             else {

@@ -100,6 +100,13 @@ struct zstring_view
     [[nodiscard]] constexpr char const * end() const noexcept REDEMPTION_ATTRIBUTE_NONNULL_ARGS
     { return this->data() + this->size(); }
 
+    constexpr void pop_front() noexcept
+    {
+        assert(len);
+        ++s;
+        --len;
+    }
+
     [[nodiscard]] constexpr std::string_view to_sv() const noexcept
     {
         return std::string_view(c_str(), size());

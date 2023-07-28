@@ -480,8 +480,9 @@ namespace cfg
         using mapped_type = std::chrono::milliseconds;
         type value { 0 };
     };
+    /// ⚠ Service need to be manually restarted to take changes into account <br/>
+    ///  <br/>
     /// Enable primary connection on ipv6. <br/>
-    /// Warning: Service need to be manually restarted to take changes into account <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::enable_ipv6 {
@@ -2877,7 +2878,7 @@ namespace cfg
         type value { 5 };
     };
     /// FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264 <br/>
-    /// /!\ Some browsers and video decoders don't support crf=0 <br/>
+    /// ⚠ Some browsers and video decoders don't support crf=0 <br/>
     /// type: std::string <br/>
     /// default: "crf=35 preset=superfast" <br/>
     struct video::ffmpeg_options {
@@ -3186,8 +3187,11 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes). <br/>
-    /// Warning: This value affects the RAM used by the session. <br/>
+    /// ⚠ This value affects the RAM used by the session. <br/>
+    ///  <br/>
+    /// If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize. <br/>
+    ///  <br/>
+    /// (in megabytes) <br/>
     /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: file_verification:max_file_size_rejected <br/>
@@ -3212,7 +3216,7 @@ namespace cfg
     };
 
     /// Enable storage of transferred files (via RDP Clipboard). <br/>
-    /// /!\ Saving files can take up a lot of disk space <br/>
+    /// ⚠ Saving files can take up a lot of disk space <br/>
     /// type: RdpStoreFile <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: file_storage:store_file <br/>

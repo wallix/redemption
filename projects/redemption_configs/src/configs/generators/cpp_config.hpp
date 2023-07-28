@@ -495,7 +495,7 @@ struct CppConfigWriterBase
     {
         Names const& names = infos;
 
-        if constexpr (std::is_convertible_v<Pack, is_external_attr_t>) {
+        if constexpr (is_convertible_v<Pack, is_external_attr_t>) {
             if constexpr (!is_convertible_v<Pack, connection_policy_t>) {
                 auto& ini_name = names.ini_name();
                 this->out_body_parser_ << "        else if (key == \"" << ini_name << "\"_zv) {\n"
