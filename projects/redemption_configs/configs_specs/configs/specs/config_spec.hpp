@@ -2734,7 +2734,7 @@ _.section("theme", [&]
              names{"enable_theme"},
              type_<bool>(),
              set(false),
-             desc{"Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)"});
+             desc{"Enable custom theme color configuration"});
 
     _.member(image_in_gui, no_sesman, L,
              names{
@@ -2752,107 +2752,128 @@ _.section("theme", [&]
     _.member(ini_and_gui, no_sesman, L,
              names{"bgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(DARK_BLUE_BIS)));
+             set(to_rgb(DARK_BLUE_BIS)),
+             desc{"Background color for window, label and button"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"fgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(WHITE)));
+             set(to_rgb(WHITE)),
+             desc{"Foreground color for window, label and button"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"separator_color"},
              type_<types::rgb>(),
-             set(to_rgb(LIGHT_BLUE)));
+             set(to_rgb(LIGHT_BLUE)),
+             desc{"Separator line color used with some widgets"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"focus_color"},
              type_<types::rgb>(),
-             set(to_rgb(WINBLUE)));
+             set(to_rgb(WINBLUE)),
+             desc{"Background color used by buttons when they have focus"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"error_color"},
              type_<types::rgb>(),
-             set(to_rgb(YELLOW)));
+             set(to_rgb(YELLOW)),
+             desc{"Text color for error messages. For example, an authentication error in the login"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"edit_bgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(WHITE)));
+             set(to_rgb(WHITE)),
+             desc{"Background color for editing field"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"edit_fgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(BLACK)));
+             set(to_rgb(BLACK)),
+             desc{"Foreground color for editing field"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"edit_focus_color"},
              type_<types::rgb>(),
-             set(to_rgb(WINBLUE)));
+             set(to_rgb(WINBLUE)),
+             desc{"Outline color for editing field that has focus"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"tooltip_bgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(BLACK)));
+             set(to_rgb(BLACK)),
+             desc{"Background color for tooltip"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"tooltip_fgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(LIGHT_YELLOW)));
+             set(to_rgb(LIGHT_YELLOW)),
+             desc{"Foreground color for tooltip"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"tooltip_border_color"},
              type_<types::rgb>(),
-             set(to_rgb(BLACK)));
+             set(to_rgb(BLACK)),
+             desc{"Border color for tooltip"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"selector_line1_bgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(PALE_BLUE)));
+             set(to_rgb(PALE_BLUE)),
+             desc{"Background color for even rows in the selector widget"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"selector_line1_fgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(BLACK)));
+             set(to_rgb(BLACK)),
+             desc{"Foreground color for even rows in the selector widget"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"selector_line2_bgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(LIGHT_BLUE)));
+             set(to_rgb(LIGHT_BLUE)),
+             desc{"Background color for odd rows in the selector widget"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"selector_line2_fgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(BLACK)));
-
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_selected_bgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(MEDIUM_BLUE)));
-
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_selected_fgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(WHITE)));
+             set(to_rgb(BLACK)),
+             desc{"Foreground color for odd rows in the selector widget"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"selector_focus_bgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(WINBLUE)));
+             set(to_rgb(WINBLUE)),
+             desc{"Background color for the row that has focus in the selector widget"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"selector_focus_fgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(WHITE)));
+             set(to_rgb(WHITE)),
+             desc{"Foreground color for the row that has focus in the selector widget"});
+
+    _.member(ini_and_gui, no_sesman, L,
+             names{"selector_selected_bgcolor"},
+             type_<types::rgb>(),
+             set(to_rgb(MEDIUM_BLUE)),
+             desc{"Background color for the row that is selected in the selector widget but does not have focus"});
+
+    _.member(ini_and_gui, no_sesman, L,
+             names{"selector_selected_fgcolor"},
+             type_<types::rgb>(),
+             set(to_rgb(WHITE)),
+             desc{"Foreground color for the row that is selected in the selector widget but does not have focus"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"selector_label_bgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(MEDIUM_BLUE)));
+             set(to_rgb(MEDIUM_BLUE)),
+             desc{"Background color for name of filter fields in the selector widget"});
 
     _.member(ini_and_gui, no_sesman, L,
              names{"selector_label_fgcolor"},
              type_<types::rgb>(),
-             set(to_rgb(WHITE)));
+             set(to_rgb(WHITE)),
+             desc{"Foreground color for name of filter fields in the selector widget"});
 });
 
 REDEMPTION_DIAGNOSTIC_POP()

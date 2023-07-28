@@ -463,10 +463,10 @@ namespace cfg
         struct selector_line1_fgcolor;
         struct selector_line2_bgcolor;
         struct selector_line2_fgcolor;
-        struct selector_selected_bgcolor;
-        struct selector_selected_fgcolor;
         struct selector_focus_bgcolor;
         struct selector_focus_fgcolor;
+        struct selector_selected_bgcolor;
+        struct selector_selected_fgcolor;
         struct selector_label_bgcolor;
         struct selector_label_fgcolor;
     };

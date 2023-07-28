@@ -1497,7 +1497,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [theme]
 
-# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+# Enable custom theme color configuration
 # value: 0 or 1
 #enable_theme = 0
 
@@ -1505,86 +1505,107 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_image=/var/wab/images/rdp-oem-logo.png
 #logo = )gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(
 
+# Background color for window, label and button
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #bgcolor = #081F60
 
+# Foreground color for window, label and button
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #fgcolor = #FFFFFF
 
+# Separator line color used with some widgets
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #separator_color = #CFD5EB
 
+# Background color used by buttons when they have focus
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #focus_color = #004D9C
 
+# Text color for error messages. For example, an authentication error in the login
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #error_color = #FFFF00
 
+# Background color for editing field
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #edit_bgcolor = #FFFFFF
 
+# Foreground color for editing field
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #edit_fgcolor = #000000
 
+# Outline color for editing field that has focus
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #edit_focus_color = #004D9C
 
+# Background color for tooltip
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #tooltip_bgcolor = #000000
 
+# Foreground color for tooltip
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #tooltip_fgcolor = #FFFF9F
 
+# Border color for tooltip
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #tooltip_border_color = #000000
 
+# Background color for even rows in the selector widget
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_line1_bgcolor = #E9ECF6
 
+# Foreground color for even rows in the selector widget
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_line1_fgcolor = #000000
 
+# Background color for odd rows in the selector widget
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_line2_bgcolor = #CFD5EB
 
+# Foreground color for odd rows in the selector widget
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_line2_fgcolor = #000000
 
-# 
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_selected_bgcolor = #4472C4
-
-# 
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-#selector_selected_fgcolor = #FFFFFF
-
+# Background color for the row that has focus in the selector widget
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_focus_bgcolor = #004D9C
 
+# Foreground color for the row that has focus in the selector widget
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_focus_fgcolor = #FFFFFF
 
+# Background color for the row that is selected in the selector widget but does not have focus
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_selected_bgcolor = #4472C4
+
+# Foreground color for the row that is selected in the selector widget but does not have focus
+# 
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_selected_fgcolor = #FFFFFF
+
+# Background color for name of filter fields in the selector widget
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_label_bgcolor = #4472C4
 
+# Foreground color for name of filter fields in the selector widget
 # 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 #selector_label_fgcolor = #FFFFFF

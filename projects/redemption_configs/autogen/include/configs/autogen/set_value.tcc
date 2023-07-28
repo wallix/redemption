@@ -2245,22 +2245,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "selector_selected_bgcolor"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::theme::selector_selected_bgcolor&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::rgb>{},
-                value
-            );
-        }
-        else if (key == "selector_selected_fgcolor"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::theme::selector_selected_fgcolor&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::rgb>{},
-                value
-            );
-        }
         else if (key == "selector_focus_bgcolor"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -2273,6 +2257,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_focus_fgcolor&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::rgb>{},
+                value
+            );
+        }
+        else if (key == "selector_selected_bgcolor"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::theme::selector_selected_bgcolor&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::rgb>{},
+                value
+            );
+        }
+        else if (key == "selector_selected_fgcolor"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::theme::selector_selected_fgcolor&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );

@@ -4494,7 +4494,7 @@ namespace cfg
         type value { LoginLanguage::Auto };
     };
 
-    /// Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc) <br/>
+    /// Enable custom theme color configuration <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct theme::enable_theme {
@@ -4512,6 +4512,7 @@ namespace cfg
         using mapped_type = std::string;
         type value { REDEMPTION_CONFIG_THEME_LOGO };
     };
+    /// Background color for window, label and button <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 532320 <br/>
     struct theme::bgcolor {
@@ -4520,6 +4521,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 532320 };
     };
+    /// Foreground color for window, label and button <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777215 <br/>
     struct theme::fgcolor {
@@ -4528,6 +4530,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 16777215 };
     };
+    /// Separator line color used with some widgets <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 13620715 <br/>
     struct theme::separator_color {
@@ -4536,6 +4539,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 13620715 };
     };
+    /// Background color used by buttons when they have focus <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 19868 <br/>
     struct theme::focus_color {
@@ -4544,6 +4548,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 19868 };
     };
+    /// Text color for error messages. For example, an authentication error in the login <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16776960 <br/>
     struct theme::error_color {
@@ -4552,6 +4557,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 16776960 };
     };
+    /// Background color for editing field <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777215 <br/>
     struct theme::edit_bgcolor {
@@ -4560,6 +4566,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 16777215 };
     };
+    /// Foreground color for editing field <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 0 <br/>
     struct theme::edit_fgcolor {
@@ -4568,6 +4575,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 0 };
     };
+    /// Outline color for editing field that has focus <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 19868 <br/>
     struct theme::edit_focus_color {
@@ -4576,6 +4584,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 19868 };
     };
+    /// Background color for tooltip <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 0 <br/>
     struct theme::tooltip_bgcolor {
@@ -4584,6 +4593,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 0 };
     };
+    /// Foreground color for tooltip <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777119 <br/>
     struct theme::tooltip_fgcolor {
@@ -4592,6 +4602,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 16777119 };
     };
+    /// Border color for tooltip <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 0 <br/>
     struct theme::tooltip_border_color {
@@ -4600,6 +4611,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 0 };
     };
+    /// Background color for even rows in the selector widget <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 15330550 <br/>
     struct theme::selector_line1_bgcolor {
@@ -4608,6 +4620,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 15330550 };
     };
+    /// Foreground color for even rows in the selector widget <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 0 <br/>
     struct theme::selector_line1_fgcolor {
@@ -4616,6 +4629,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 0 };
     };
+    /// Background color for odd rows in the selector widget <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 13620715 <br/>
     struct theme::selector_line2_bgcolor {
@@ -4624,6 +4638,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 13620715 };
     };
+    /// Foreground color for odd rows in the selector widget <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 0 <br/>
     struct theme::selector_line2_fgcolor {
@@ -4632,22 +4647,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 0 };
     };
-    /// type: ::configs::spec_types::rgb <br/>
-    /// default: 4485828 <br/>
-    struct theme::selector_selected_bgcolor {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = ::configs::spec_types::rgb;
-        using mapped_type = ::configs::spec_types::rgb;
-        type value { 4485828 };
-    };
-    /// type: ::configs::spec_types::rgb <br/>
-    /// default: 16777215 <br/>
-    struct theme::selector_selected_fgcolor {
-        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
-        using type = ::configs::spec_types::rgb;
-        using mapped_type = ::configs::spec_types::rgb;
-        type value { 16777215 };
-    };
+    /// Background color for the row that has focus in the selector widget <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 19868 <br/>
     struct theme::selector_focus_bgcolor {
@@ -4656,6 +4656,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 19868 };
     };
+    /// Foreground color for the row that has focus in the selector widget <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777215 <br/>
     struct theme::selector_focus_fgcolor {
@@ -4664,6 +4665,25 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 16777215 };
     };
+    /// Background color for the row that is selected in the selector widget but does not have focus <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 4485828 <br/>
+    struct theme::selector_selected_bgcolor {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
+        using type = ::configs::spec_types::rgb;
+        using mapped_type = ::configs::spec_types::rgb;
+        type value { 4485828 };
+    };
+    /// Foreground color for the row that is selected in the selector widget but does not have focus <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 16777215 <br/>
+    struct theme::selector_selected_fgcolor {
+        static constexpr unsigned sesman_proxy_communication_flags = 0b00;
+        using type = ::configs::spec_types::rgb;
+        using mapped_type = ::configs::spec_types::rgb;
+        type value { 16777215 };
+    };
+    /// Background color for name of filter fields in the selector widget <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 4485828 <br/>
     struct theme::selector_label_bgcolor {
@@ -4672,6 +4692,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::rgb;
         type value { 4485828 };
     };
+    /// Foreground color for name of filter fields in the selector widget <br/>
     /// type: ::configs::spec_types::rgb <br/>
     /// default: 16777215 <br/>
     struct theme::selector_label_fgcolor {
@@ -5394,10 +5415,10 @@ struct theme
 , cfg::theme::selector_line1_fgcolor
 , cfg::theme::selector_line2_bgcolor
 , cfg::theme::selector_line2_fgcolor
-, cfg::theme::selector_selected_bgcolor
-, cfg::theme::selector_selected_fgcolor
 , cfg::theme::selector_focus_bgcolor
 , cfg::theme::selector_focus_fgcolor
+, cfg::theme::selector_selected_bgcolor
+, cfg::theme::selector_selected_fgcolor
 , cfg::theme::selector_label_bgcolor
 , cfg::theme::selector_label_fgcolor
 { static constexpr bool is_section = true; };
