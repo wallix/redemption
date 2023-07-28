@@ -1,4 +1,4 @@
-In Redemption, color values can be defined as RGB color in hexadecimal (with 0x prefix), or HTML code color (with # prefix)
+In Redemption, color values can be defined as Predefined Colors, RGB color in hexadecimal (with 0x prefix) or HTML code color (with # prefix)
 
  Predefined Colors :
  +-----------------------+----------+---------+
