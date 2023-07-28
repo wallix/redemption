@@ -321,7 +321,7 @@ void WidgetVerticalScrollText::rdp_input_invalidate(Rect clip)
                 }
                 gdi::server_draw_text(
                     this->drawable, this->font,
-                    sx + 3, y + dy + 2,
+                    sx + 2, y + dy + 2,
                     text, this->fg_color, bg,
                     gdi::ColorCtx::depth24(), rect);
             };
