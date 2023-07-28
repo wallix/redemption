@@ -105,7 +105,6 @@ new_pointer_update_support = boolean(default=True)
 
 unicode_keyboard_event_support = boolean(default=True)
 
-# 
 # (in milliseconds)
 #_advanced
 mod_recv_timeout = integer(min=100, max=10000, default=1000)
@@ -239,7 +238,6 @@ bogus_ios_glyph_support_level = boolean(default=True)
 #_advanced
 transform_glyph_to_bitmap = boolean(default=False)
 
-# 
 # (in milliseconds)
 #_advanced
 recv_timeout = integer(min=100, max=10000, default=1000)
@@ -299,7 +297,6 @@ rdp_compression = option(0, 1, 2, 3, 4, default=4)
 #_advanced
 disconnect_on_logon_user_change = boolean(default=False)
 
-# 
 # (in seconds)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
@@ -1084,7 +1081,6 @@ file_permissions = string(default='440')
 #_hidden
 use_redis = boolean(default=True)
 
-# 
 # (in milliseconds)
 #_hidden
 redis_timeout = integer(min=0, default=500)
@@ -1202,12 +1198,10 @@ filename_percent_encoding = boolean(default=False)
 
 [crypto]
 
-# 
 # (in hexadecimal format)
 #_hidden
 encryption_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
 
-# 
 # (in hexadecimal format)
 #_hidden
 sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
@@ -1268,87 +1262,66 @@ enable_theme = boolean(default=False)
 #_image=/var/wab/images/rdp-oem-logo.png
 logo = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 bgcolor = string(default='#081F60')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 fgcolor = string(default='#FFFFFF')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 separator_color = string(default='#CFD5EB')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 focus_color = string(default='#004D9C')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 error_color = string(default='#FFFF00')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 edit_bgcolor = string(default='#FFFFFF')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 edit_fgcolor = string(default='#000000')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 edit_focus_color = string(default='#004D9C')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 tooltip_bgcolor = string(default='#000000')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 tooltip_fgcolor = string(default='#FFFF9F')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 tooltip_border_color = string(default='#000000')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_line1_bgcolor = string(default='#E9ECF6')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_line1_fgcolor = string(default='#000000')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_line2_bgcolor = string(default='#CFD5EB')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_line2_fgcolor = string(default='#000000')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_selected_bgcolor = string(default='#4472C4')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_selected_fgcolor = string(default='#FFFFFF')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_focus_bgcolor = string(default='#004D9C')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_focus_fgcolor = string(default='#FFFFFF')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_label_bgcolor = string(default='#4472C4')
 
-# 
 # (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
 selector_label_fgcolor = string(default='#FFFFFF')
 

@@ -480,12 +480,12 @@ static std::string htmlize(std::string str)
         str.pop_back();
     }
     zstring_view zstr = str;
-    while (zstr[zstr.size()] == '\n') {
+    while (zstr[0] == '\n') {
         zstr.pop_front();
     }
 
     // replace '&' and '<' with "&amp;" and "&lt;"
-    for (char const& c : str) {
+    for (char const& c : zstr) {
         if (c == '&') {
             html += "&amp;";
         }
