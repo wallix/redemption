@@ -66,6 +66,12 @@ namespace
              | mods.test(KeyMod::RShift);
     }
 
+    unsigned meta_01u(kbdtypes::KeyModFlags mods) noexcept
+    {
+        return mods.test(KeyMod::LMeta)
+             | mods.test(KeyMod::RMeta);
+    }
+
     struct KEventKeymaps
     {
         using KEvent = Keymap::KEvent;
@@ -210,6 +216,8 @@ Keymap::DecodedKeys Keymap::event(KbdFlags flags, Scancode scancode) noexcept
         case underlying_cast(KeyCode::RShift): set_mod(KeyMod::RShift); break;
         case underlying_cast(KeyCode::LAlt):   set_mod(KeyMod::LAlt); break;
         case underlying_cast(KeyCode::RAlt):   set_mod(KeyMod::RAlt); break;
+        case underlying_cast(KeyCode::LWin):   set_mod(KeyMod::LMeta); break;
+        case underlying_cast(KeyCode::RWin):   set_mod(KeyMod::RMeta); break;
 
         default:
             if (!(underlying_cast(flags) & underlying_cast(KbdFlags::Release))
@@ -294,6 +302,10 @@ Keymap::KEvent Keymap::last_kevent() const noexcept
 
 bool Keymap::is_tsk_switch_shortcut() const noexcept
 {
+    if (meta_01u(_key_mods) && _decoded_key.keycode == KeyCode::Tab) {
+        return true;
+    }
+
     auto rctrl_is_ctrl = unsigned(_layout.right_ctrl_is_ctrl);
     auto ctrl = ctrl_01u(_key_mods, rctrl_is_ctrl);
 
