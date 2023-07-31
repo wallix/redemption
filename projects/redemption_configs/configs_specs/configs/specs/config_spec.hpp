@@ -643,7 +643,10 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"childless_window_as_unidentified_input_field"}, set(true));
 
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"update_disabled_features"}, set(true));
-        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<SessionProbeDisabledFeature>(), names{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<SessionProbeDisabledFeature>(), names{"disabled_features"},
+            desc{
+                "It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'."
+        }, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
 
         W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"enable_bestsafe_interaction"}, set(false));
 

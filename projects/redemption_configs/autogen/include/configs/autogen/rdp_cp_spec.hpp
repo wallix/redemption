@@ -314,7 +314,8 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #_advanced
 update_disabled_features = boolean(default=True)
 
-#   0x000: none
+# It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'.
+# &nbsp; &nbsp;   0x000: none
 # &nbsp; &nbsp;   0x001: Java Access Bridge
 # &nbsp; &nbsp;   0x002: MS Active Accessbility
 # &nbsp; &nbsp;   0x004: MS UI Automation
