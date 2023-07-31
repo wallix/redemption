@@ -2011,6 +2011,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { true };
     };
+    /// It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'. <br/>
     /// type: SessionProbeDisabledFeature <br/>
     /// connpolicy -> proxy    [name: session_probe::disabled_features] <br/>
     /// sesmanName: mod_rdp:session_probe_disabled_features <br/>
