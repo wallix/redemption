@@ -5169,7 +5169,7 @@ private:
 
         if (this->state == FRONT_UP_AND_RUNNING) {
             if (this->ini.get<cfg::client::disable_tsk_switch_shortcuts>() && this->keymap.is_tsk_switch_shortcut()) {
-                LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
+                LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del, Ctrl+Shift+Esc, Windows+Tab keyboard sequences ignored.");
             }
             else {
                 bool send_to_mod = !this->capture;
