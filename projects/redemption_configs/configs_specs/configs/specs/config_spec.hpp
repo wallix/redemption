@@ -26,6 +26,8 @@
 #include "configs/autogen/enums.hpp"
 #include "configs/type_name.hpp"
 
+#include "configs/generators/config.hpp"
+
 #include "include/debug_verbose_description.hpp"
 
 #include "keyboard/keylayouts.hpp"
@@ -51,34 +53,11 @@ namespace cfg_specs {
     constexpr char const* CONFIG_DESC_COMPRESSION = "";
     constexpr char const* CONFIG_DESC_CACHE = "";
     constexpr char const* CONFIG_DESC_OCR = "";
-
-    // for coloration...
-    struct Writer
-    {
-        void set_sections(std::initializer_list<char const*> l);
-
-        template<class F>
-        void section(char const * name, F closure_section);
-
-        template<class F>
-        void section(cfg_attributes::names, F closure_section);
-
-        template<class... Args>
-        void member(Args...);
-
-        void build();
-    };
-#else
-template<class Writer>
 #endif
-void config_spec_definition(Writer && _)
+inline void config_spec_definition(cfg_generators::GeneratorConfigWrapper& _, type_enumerations const& tenums)
 {
 
-using namespace cfg_attributes;
-
-using namespace cfg_attributes::spec::constants;
-using namespace cfg_attributes::sesman::constants;
-using namespace cfg_attributes::connpolicy::constants;
+using namespace cfg_desc;
 
 // force ordering section
 _.set_sections({
@@ -120,30 +99,41 @@ _.set_sections({
     "debug",
 });
 
-// prefix_value disable_prefix_val{"disable"};
+cfg_generators::EnumAsString enum_as_string{tenums};
+cfg_generators::ValueFromEnum from_enum{tenums};
+using cfg_generators::value;
+using cfg_generators::rdp_policy_value;
+using cfg_generators::vnc_policy_value;
+using cfg_generators::jh_policy_value;
+using spec::proxy_to_acl;
+using spec::acl_to_proxy;
+using spec::acl_rw;
+using spec::no_acl;
 
-// updated by sesman
-constexpr char default_key[] =
+auto L = Loggable::Yes;
+auto NL = Loggable::No;
+auto VNL = Loggable::OnlyWhenContainsPasswordString;
+
+auto reset_back_to_selector = ResetBackToSelector::Yes;
+auto no_reset_back_to_selector = ResetBackToSelector::No;
+
+auto vnc = DestSpecFile::vnc;
+auto rdp_and_jh = DestSpecFile::rdp | DestSpecFile::jh;
+auto rdp_without_jh = DestSpecFile::rdp;
+
+
+// updated by acl
+constexpr auto default_key =
     "\x00\x01\x02\x03\x04\x05\x06\x07"
     "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
     "\x10\x11\x12\x13\x14\x15\x16\x17"
-    "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"_sized_av
 ;
 
-auto L = spec::log_policy::loggable;
-auto NL = spec::log_policy::unloggable;
-auto VNL = spec::log_policy::unloggable_if_value_contains_password;
-
-auto D = Tags{TagList::Debug};
-auto W = Tags{TagList::Workaround};
-
-auto vnc_connpolicy = sesman::connection_policy{"vnc"};
-auto rdp_without_jh_connpolicy = sesman::connection_policy{"rdp"};
-auto jh_without_rdp_connpolicy = sesman::connection_policy{"rdp-jumphost"};
-auto rdp_and_jh_connpolicy = rdp_without_jh_connpolicy | jh_without_rdp_connpolicy;
-auto all_connpolicy = rdp_and_jh_connpolicy | vnc_connpolicy;
-
-char const* disabled_orders_desc =
+std::string_view disabled_orders_desc =
+    "This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause.\n"
+    "In general, disabling RDP orders has a negative impact on performance.\n"
+    "\n"
     "Disables supported drawing orders:\n"
     "   0: DstBlt\n"
     "   1: PatBlt\n"
@@ -165,1674 +155,1912 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wc99-designator")
 
 _.section("globals", [&]
 {
-    auto co_session = connpolicy::section{"session"};
+    _.member({
+        .name = "front_connection_time",
+        .value = value<std::chrono::milliseconds>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+        .desc = "from incoming connection to \"up_and_running\" state",
+    });
 
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"front_connection_time"},
-             type_<std::chrono::milliseconds>(),
-             desc{"from incoming connection to \"up_and_running\" state"});
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"target_connection_time"},
-             type_<std::chrono::milliseconds>(),
-             desc{"from Module rdp creation to \"up_and_running\" state"});
-
-
-    _.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L,
-             names{
-                .all="auth_user",
-                .sesman="login"
-             },
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L,
-             names{
-                .all="host",
-                .sesman="ip_client"
-             },
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{
-                .all="target",
-                .sesman="ip_target"
-             },
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"target_device"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"device_id"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"primary_user_id"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L,
-             names{
-                .all="target_user",
-                .sesman="target_login"
-             },
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"target_application"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"target_application_account"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, NL,
-             names{"target_application_password"},
-             type_<std::string>());
-
-    _.member(advanced_in_gui | iptables_in_gui | logged_in_gui, no_sesman, L,
-             names{"port"},
-             type_<types::unsigned_>(),
-             set(3389),
-             desc{
-                "The port set in this field must not be already used, otherwise the service will not run.\n"
-                "Changing the port number will prevent WALLIX Access Manager from working properly."
-             });
-
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"encryptionLevel"},
-             type_<Level>(),
-             spec::type_<std::string>(),
-             set(Level::low));
-
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"authfile"},
-             type_<std::string>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)),
-             desc{"Socket path or socket address of passthrough / sesman"});
-
-    _.member(ini_and_gui, no_sesman, L,
-             names{"handshake_timeout"},
-             type_<std::chrono::seconds>(),
-             set(10),
-             desc{"Time out during RDP handshake stage."});
-
-    _.member(ini_and_gui, no_sesman, L,
-             names{"base_inactivity_timeout"},
-             type_<std::chrono::seconds>(),
-             set(900),
-             desc{"No automatic disconnection due to inactivity, timer is set on primary authentication.\nIf value is between 1 and 30, then 30 is used.\nIf value is set to 0, then inactivity timeout value is unlimited."});
-
-    _.member(hidden_in_gui, all_connpolicy, co_session, L,
-             names{"inactivity_timeout"},
-             type_<std::chrono::seconds>(),
-             set(0),
-             desc{
-                "No automatic disconnection due to inactivity, timer is set on target session.\n"
-                "If value is between 1 and 30, then 30 is used.\n"
-                "If value is set to 0, then value set in \"Base inactivity timeout\" (in \"RDP Proxy\" configuration option) is used."
-             });
-
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"keepalive_grace_delay"},
-             type_<std::chrono::seconds>(),
-             set(30),
-             desc{"Internal keepalive between sesman and rdp proxy"});
-
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"authentication_timeout"},
-             type_<std::chrono::seconds>(),
-             set(120),
-             desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."});
-
-    _.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"trace_type"},
-             type_<TraceType>(),
-             set(TraceType::localfile_hashed));
-
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"listen_address"},
-             type_<types::ip_string>(),
-             set("0.0.0.0"),
-             desc{"Specify alternate bind address"});
-
-    _.member(iptables_in_gui, no_sesman, L,
-             names{"enable_transparent_mode"},
-             type_<bool>(),
-             set(false),
-             desc{"Allow Transparent mode."});
-
-    _.member(advanced_in_gui | password_in_gui, no_sesman, L,
-             names{"certificate_password"},
-             type_<types::fixed_string<254>>(),
-             set("inquisition"),
-             desc{"Proxy certificate password."});
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"is_rec"},
-             set(false),
-             type_<bool>());
-
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"enable_bitmap_update"},
-             type_<bool>(),
-             set(true),
-             desc{"Support of Bitmap Update."});
+    _.member({
+        .name = "target_connection_time",
+        .value = value<std::chrono::milliseconds>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+        .desc = "from Module rdp creation to \"up_and_running\" state",
+    });
 
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"enable_close_box"},
-             type_<bool>(),
-             set(true),
-             desc{"Show close screen."});
+    _.member({
+        .name = names{
+            .all = "auth_user",
+            .acl = "login",
+        },
+        .value = value<std::string>(),
+        .spec = acl_rw(no_reset_back_to_selector, L),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"close_timeout"},
-             type_<std::chrono::seconds>(),
-             set(600),
-             desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."});
+    _.member({
+        .name = names{
+            .all = "host",
+            .acl = "ip_client",
+        },
+        .value = value<std::string>(),
+        .spec = acl_rw(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = names{
+            .all = "target",
+            .acl = "ip_target",
+        },
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "target_device",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "device_id",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "primary_user_id",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = names{
+            .all = "target_user",
+            .acl = "target_login",
+        },
+        .value = value<std::string>(),
+        .spec = acl_rw(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "target_application",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "target_application_account",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "target_application_password",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, NL),
+    });
+
+    _.member({
+        .name = "port",
+        .value = value<types::unsigned_>(3389),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::iptables | spec::logged),
+        .desc =
+            "The port set in this field must not be already used, otherwise the service will not run.\n"
+            "Changing the port number will prevent WALLIX Access Manager from working properly."
+    });
+
+    _.member({
+        .name = "encryptionLevel",
+        .value = enum_as_string(Level::low),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
+
+    _.member({
+        .name = "authfile",
+        .value = value<std::string>(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)),
+        .spec = spec::ini_only(no_acl),
+        .desc = "Socket path or socket address of passthrough / acl",
+    });
+
+    _.member({
+        .name = "handshake_timeout",
+        .value = value<std::chrono::seconds>(10),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Time out during RDP handshake stage.",
+    });
+
+    _.member({
+        .name = "base_inactivity_timeout",
+        .value = value<std::chrono::seconds>(900),
+        .spec = spec::global_spec(no_acl),
+        .desc =
+            "No automatic disconnection due to inactivity, timer is set on primary authentication.\n"
+            "If value is between 1 and 30, then 30 is used.\n"
+            "If value is set to 0, then inactivity timeout value is unlimited.",
+    });
+
+    _.member({
+        .name = "inactivity_timeout",
+        .connpolicy_section = "session",
+        .value = value<std::chrono::seconds>(),
+        .spec = spec::connpolicy(rdp_and_jh | vnc, L),
+        .desc =
+            "No automatic disconnection due to inactivity, timer is set on target session.\n"
+            "If value is between 1 and 30, then 30 is used.\n"
+            "If value is set to 0, then value set in \"Base inactivity timeout\" (in \"RDP Proxy\" configuration option) is used."
+    });
+
+    _.member({
+        .name = "keepalive_grace_delay",
+        .value = value<std::chrono::seconds>(30),
+        .spec = spec::ini_only(no_acl),
+        .desc = "Internal keepalive between acl and rdp proxy",
+    });
+
+    _.member({
+        .name = "authentication_timeout",
+        .value = value<std::chrono::seconds>(120),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).",
+    });
+
+    _.member({
+        .name = "trace_type",
+        .value = from_enum(TraceType::localfile_hashed),
+        .spec = spec::ini_only(acl_to_proxy(reset_back_to_selector, L)),
+    });
+
+    _.member({
+        .name = "listen_address",
+        .value = value<types::ip_string>("0.0.0.0"),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Specify alternate bind address",
+    });
+
+    _.member({
+        .name = "enable_transparent_mode",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::iptables),
+        .desc = "Allow Transparent mode.",
+    });
+
+    _.member({
+        .name = "certificate_password",
+        .value = value<types::fixed_string<254>>("inquisition"),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::password),
+        .desc = "Proxy certificate password.",
+    });
+
+    _.member({
+        .name = "is_rec",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "enable_bitmap_update",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Support of Bitmap Update.",
+    });
 
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"enable_osd"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "enable_close_box",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Show close screen.",
+    });
 
-    _.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"enable_osd_display_remote_target"},
-             type_<bool>(),
-             set(true),
-             desc{"Show target address with F12."});
+    _.member({
+        .name = "close_timeout",
+        .value = value<std::chrono::seconds>(600),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "Specifies the time to spend on the close box of proxy RDP before closing client window.\n"
+            "⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects."
+    });
 
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"enable_wab_integration"},
-             type_<bool>(),
-             set((CPP_EXPR(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))));
+    _.member({
+        .name = "enable_osd",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
+
+    _.member({
+        .name = "enable_osd_display_remote_target",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
+        .desc = "Show target address with F12.",
+    });
+
+
+    _.member({
+        .name = "enable_wab_integration",
+        .value = value<bool>(CPP_EXPR(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION)),
+        .spec = spec::ini_only(no_acl),
+    });
 
 
     // TODO move to [client]
-    _.member(ini_and_gui, no_sesman, L,
-             names{"allow_using_multiple_monitors"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "allow_using_multiple_monitors",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Sends the client screen count to the server. Not supported in VNC.",
+    });
 
     // TODO move to [client] / [mod_rdp]
-    _.member(ini_and_gui, no_sesman, L,
-             names{"allow_scale_factor"},
-             type_<bool>(),
-             set(false));
+    _.member({
+        .name = "allow_scale_factor",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl),
+        .desc =
+            "Sends the client's zoom factor configuration to the server.\n"
+            "⚠ Title bar detection via OCR will no longer work.\n"
+    });
 
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"bogus_refresh_rect"},
-             type_<bool>(),
-             set(true),
-             desc{"Needed to refresh screen of Windows Server 2012."});
+    _.member({
+        .name = "bogus_refresh_rect",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Needed to refresh screen of Windows Server 2012.",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"large_pointer_support"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "large_pointer_support",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Enable support for pointers of size 96x96",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"new_pointer_update_support"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "new_pointer_update_support",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"unicode_keyboard_event_support"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "unicode_keyboard_event_support",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+    });
 
-    _.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"mod_recv_timeout"},
-             type_<types::range<std::chrono::milliseconds, 100, 10000>>(),
-             set(1000));
+    _.member({
+        .name = "mod_recv_timeout",
+        .value = value<types::range<std::chrono::milliseconds, 100, 10000>>(1000),
+        .spec = spec::global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"experimental_enable_serializer_data_block_size_limit"},
-             type_<bool>(),
-             set(false));
+    _.member({
+        .name = "experimental_enable_serializer_data_block_size_limit",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"experimental_support_resize_session_during_recording"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "experimental_support_resize_session_during_recording",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"support_connection_redirection_during_recording"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "support_connection_redirection_during_recording",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"rdp_keepalive_connection_interval"},
-             type_<std::chrono::milliseconds>(),
-             set(0),
-             desc{
-                "Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"
-                "!!!May cause FreeRDP-based client to CRASH!!!\n"
-                "Set to 0 to disable this feature."
-             });
+    _.member({
+        .name = "rdp_keepalive_connection_interval",
+        .value = value<std::chrono::milliseconds>(),
+        .spec = spec::global_spec(no_acl),
+        .desc =
+            "Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.\n"
+            "!!!May cause FreeRDP-based client to CRASH!!!\n"
+            "Set to 0 to disable this feature."
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"enable_ipv6"},
-             type_<bool>(),
-             set(true),
-             desc{
-                "⚠ Service need to be manually restarted to take changes into account\n\n"
-                "Enable primary connection on ipv6."
-             });
+    _.member({
+        .name = "enable_ipv6",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+        .desc =
+            "⚠ Service need to be manually restarted to take changes into account\n\n"
+            "Enable primary connection on ipv6."
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"minimal_memory_available_before_connection_silently_closed"},
-             type_<types::u64>(),
-             set(100),
-             desc{"In megabytes. 0 for disabled."});
+    _.member({
+        .name = "minimal_memory_available_before_connection_silently_closed",
+        .value = value<types::megabytes<types::u64>>(100),
+        .spec = spec::ini_only(no_acl),
+        .desc = "0 for disabled.",
+    });
 });
 
 _.section("session_log", [&]
 {
-    _.member(ini_and_gui, no_sesman, L,
-             names{"enable_session_log"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "enable_session_log",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"enable_arcsight_log"},
-             type_<bool>(),
-             set(false));
+    _.member({
+        .name = "enable_arcsight_log",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl),
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
-             names{"keyboard_input_masking_level"},
-             type_<KeyboardInputMaskingLevel>(),
-             set(KeyboardInputMaskingLevel::password_and_unidentified),
-             desc{"Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified."});
+    _.member({
+        .name = "keyboard_input_masking_level",
+        .value = from_enum(KeyboardInputMaskingLevel::password_and_unidentified),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc = "Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.",
+    });
 });
 
 _.section("client", [&]
 {
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"keyboard_layout"},
-             type_<types::unsigned_>(),
-             set(0));
+    _.member({
+        .name = "keyboard_layout",
+        .value = value<types::unsigned_>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"ignore_logon_password"},
-             type_<bool>(),
-             set(false),
-             desc{"If true, ignore password provided by RDP client, user need do login manually."});
+    _.member({
+        .name = "ignore_logon_password",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "If true, ignore password provided by RDP client, user need do login manually.",
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"performance_flags_default"},
-             type_<types::u32>(),
-             set(0x80),
-             desc{"Enable font smoothing (0x80)."});
+    _.member({
+        .name = "performance_flags_default",
+        .value = value<types::u32>(0x80),
+        .spec = spec::ini_only(no_acl),
+        .desc = "Enable font smoothing (0x80).",
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"performance_flags_force_present"},
-             type_<types::u32>(),
-             set(0x28),
-             desc{
-                "Disable wallpaper (0x1).\n"
-                "Disable full-window drag (0x2).\n"
-                "Disable menu animations (0x4).\n"
-                "Disable theme (0x8).\n"
-                "Disable mouse cursor shadows (0x20).\n"
-                "Disable cursor blinking (0x40).\n"
-                "Enable font smoothing (0x80).\n"
-                "Enable Desktop Composition (0x100)."
-             });
+    _.member({
+        .name = "performance_flags_force_present",
+        .value = value<types::u32>(0x28),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc =
+            "Disable wallpaper (0x1).\n"
+            "Disable full-window drag (0x2).\n"
+            "Disable menu animations (0x4).\n"
+            "Disable theme (0x8).\n"
+            "Disable mouse cursor shadows (0x20).\n"
+            "Disable cursor blinking (0x40).\n"
+            "Enable font smoothing (0x80).\n"
+            "Enable Desktop Composition (0x100)."
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"performance_flags_force_not_present"},
-             type_<types::u32>(),
-             set(0),
-             desc{"See the comment of \"Performance flags force present\" above for available values."});
+    _.member({
+        .name = "performance_flags_force_not_present",
+        .value = value<types::u32>(0),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = "See the comment of \"Performance flags force present\" above for available values.",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"auto_adjust_performance_flags"},
-             type_<bool>(),
-             set(true),
-             desc{"If enabled, avoid automatically font smoothing in recorded session."});
-
-
-    _.member(ini_and_gui, no_sesman, L,
-             names{"tls_fallback_legacy"},
-             type_<bool>(),
-             set(false),
-             desc{"Fallback to RDP Legacy Encryption if client does not support TLS."});
-
-    _.member(ini_and_gui, no_sesman, L,
-             names{"tls_support"},
-             type_<bool>(),
-             set(true));
-
-    _.member(ini_and_gui, no_sesman, L,
-             names{"tls_min_level"},
-             type_<types::u32>(),
-             set(2),
-             desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"});
-
-    _.member(ini_and_gui, no_sesman, L,
-             names{"tls_max_level"},
-             type_<types::u32>(),
-             set(0),
-             desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"});
-
-    _.member(advanced_in_gui, no_sesman, L, D,
-             names{"show_common_cipher_list"},
-             type_<bool>(),
-             set(false),
-             desc{"Show in the logs the common cipher list supported by client and server"});
+    _.member({
+        .name = "auto_adjust_performance_flags",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "If enabled, avoid automatically font smoothing in recorded session.",
+    });
 
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"enable_nla"},
-             type_<bool>(),
-             set(false),
-             desc{"Needed for primary NTLM or Kerberos connections over NLA."});
+    _.member({
+        .name = "tls_fallback_legacy",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Fallback to RDP Legacy Encryption if client does not support TLS.",
+    });
 
-    _.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"disable_tsk_switch_shortcuts"},
-             type_<bool>(),
-             set(false),
-             desc{"If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences."});
+    _.member({
+        .name = "tls_support",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"rdp_compression"},
-             type_<RdpCompression>(),
-             set(RdpCompression::rdp6_1));
+    _.member({
+        .name = "tls_min_level",
+        .value = value<types::u32>(2),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"max_color_depth"},
-             type_<ColorDepth>(),
-             set(ColorDepth::depth24));
+    _.member({
+        .name = "tls_max_level",
+        .value = value<types::u32>(0),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"persistent_disk_bitmap_cache"},
-             type_<bool>(),
-             set(true),
-             desc{"Persistent Disk Bitmap Cache on the front side."});
+    _.member({
+        .name = "show_common_cipher_list",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .tags = TagList::Debug,
+        .desc = "Show in the logs the common cipher list supported by client and server",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"cache_waiting_list"},
-             type_<bool>(),
-             set(false),
-             desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."});
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"persist_bitmap_cache_on_disk"},
-             type_<bool>(),
-             set(false),
-             desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."});
+    _.member({
+        .name = "enable_nla",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Needed for primary NTLM or Kerberos connections over NLA.",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"bitmap_compression"},
-             type_<bool>(),
-             set(true),
-             desc{"Support of Bitmap Compression."});
+    _.member({
+        .name = "disable_tsk_switch_shortcuts",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
+        .desc = "If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.",
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"fast_path"},
-             type_<bool>(),
-             set(true),
-             desc{"Enables support of Client Fast-Path Input Event PDUs."});
+    _.member({
+        .name = "rdp_compression",
+        .value = from_enum(RdpCompression::rdp6_1),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"enable_suppress_output"},
-             set(true),
-             type_<bool>(),
-             desc{
-                "Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.\n"
-                "If changes occur on the target, they will not be visible in the recordings either."
-             });
+    _.member({
+        .name = "max_color_depth",
+        .value = from_enum(ColorDepth::depth24),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"ssl_cipher_list"},
-             type_<std::string>(),
-             set("HIGH:!ADH:!3DES:!SHA"),
-             desc{
-                "[Not configured]: Compatible with more RDP clients (less secure)\n"
-                "HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)\n"
-                "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)"
-             });
+    _.member({
+        .name = "persistent_disk_bitmap_cache",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Persistent Disk Bitmap Cache on the front side.",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"show_target_user_in_f12_message"},
-             type_<bool>(),
-             set(false));
+    _.member({
+        .name = "cache_waiting_list",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"bogus_ios_glyph_support_level"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "persist_bitmap_cache_on_disk",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "If enabled, the contents of Persistent Bitmap Caches are stored on disk.",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"transform_glyph_to_bitmap"},
-             type_<bool>(),
-             set(false));
+    _.member({
+        .name = "bitmap_compression",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Support of Bitmap Compression.",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"recv_timeout"},
-             type_<types::range<std::chrono::milliseconds, 100, 10000>>(),
-             set(1000));
+    _.member({
+        .name = "fast_path",
+        .value = value<bool>(true),
+        .spec = spec::ini_only(no_acl),
+        .desc = "Enables support of Client Fast-Path Input Event PDUs.",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"enable_osd_4_eyes"},
-             type_<bool>(),
-             set(true),
-             desc{"Enables display of message informing user that his/her session is being audited."});
+    _.member({
+        .name = "enable_suppress_output",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+        .desc =
+            "Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.\n"
+            "If changes occur on the target, they will not be visible in the recordings either."
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"enable_remotefx"},
-             type_<bool>(),
-             set(true),
-             desc{"Enable front remoteFx"});
+    _.member({
+        .name = "ssl_cipher_list",
+        .value = value<std::string>("HIGH:!ADH:!3DES:!SHA"),
+        .spec = spec::global_spec(no_acl),
+        .desc =
+            "[Not configured]: Compatible with more RDP clients (less secure)\n"
+            "HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)\n"
+            "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)"
+    });
 
-    _.member(advanced_in_gui, no_sesman, L, D,
-             names{"disabled_orders"},
-             type_<types::list<types::unsigned_>>(),
-             set("25"),
-             desc{disabled_orders_desc});
+    _.member({
+        .name = "show_target_user_in_f12_message",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl),
+    });
+
+    _.member({
+        .name = "bogus_ios_glyph_support_level",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+    });
+
+    _.member({
+        .name = "transform_glyph_to_bitmap",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
+
+    _.member({
+        .name = "recv_timeout",
+        .value = value<types::range<std::chrono::milliseconds, 100, 10000>>(1000),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
+
+    _.member({
+        .name = "enable_osd_4_eyes",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Enables display of message informing user that his/her session is being audited.",
+    });
+
+    _.member({
+        .name = "enable_remotefx",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Enable front remoteFx",
+    });
+
+    _.member({
+        .name = "disabled_orders",
+        .value = value<types::list<types::unsigned_>>("25"),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .tags = TagList::Debug,
+        .desc = disabled_orders_desc,
+    });
 });
 
 _.section("all_target_mod", [&]
 {
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"connection_establishment_timeout"},
-             type_<types::range<std::chrono::milliseconds, 1000, 10000>>(),
-             set(3000),
-             desc{"The maximum time in milliseconds that the proxy will wait while attempting to connect to an target."});
+    _.member({
+        .name = "connection_establishment_timeout",
+        .value = value<types::range<std::chrono::milliseconds, 1000, 10000>>(3000),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "The maximum time that the proxy will wait while attempting to connect to an target.",
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"tcp_user_timeout"},
-             type_<types::range<std::chrono::milliseconds, 0, 3'600'000>>(),
-             set(0),
-             desc{"This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default."});
+    _.member({
+        .name = "tcp_user_timeout",
+        .value = value<types::range<std::chrono::milliseconds, 0, 3'600'000>>(),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+        .desc = "This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.",
+    });
 });
 
 _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 {
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"rdp_compression"},
-             type_<RdpCompression>(),
-             set(RdpCompression::rdp6_1));
+    _.member({
+        .name = "rdp_compression",
+        .value = from_enum(RdpCompression::rdp6_1),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"disconnect_on_logon_user_change"},
-             type_<bool>(),
-             set(false));
+    _.member({
+        .name = "disconnect_on_logon_user_change",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"open_session_timeout"},
-             type_<std::chrono::seconds>(),
-             set(0));
+    _.member({
+        .name = "open_session_timeout",
+        .value = value<std::chrono::seconds>(),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, D,
-             names{"disabled_orders"},
-             type_<types::list<types::unsigned_>>(),
+    _.member(
              // disable glyph_index / glyph_cache
-             set("27"),
-             desc{disabled_orders_desc});
+             {
+        .name = "disabled_orders",
+        .value = value<types::list<types::unsigned_>>("27"),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+        .tags = TagList::Debug,
+        .desc = disabled_orders_desc,
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"enable_nla"},
-             type_<bool>(),
-             set(true),
-             jh_without_rdp_connpolicy.always(false),
-             desc{"NLA authentication in secondary target."});
+    _.member({
+        .name = "enable_nla",
+        .value = value<bool>(true, jh_policy_value(false).always()),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "NLA authentication in secondary target.",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"enable_kerberos"},
-             type_<bool>(),
-             set(false),
-             desc{
-                "If enabled, NLA authentication will try Kerberos before NTLM.\n"
-                "(if enable_nla is disabled, this value is ignored)."
-             });
+    _.member({
+        .name = "enable_kerberos",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "If enabled, NLA authentication will try Kerberos before NTLM.\n"
+            "(if enable_nla is disabled, this value is ignored)."
+    });
 
-    _.member(no_ini_no_gui, rdp_and_jh_connpolicy, L,
-             names{"tls_min_level"},
-             type_<types::u32>(),
-             set(0),
-             desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"});
+    _.member({
+        .name = "tls_min_level",
+        .value = value<types::u32>(),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc = "Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
+    });
 
-    _.member(no_ini_no_gui, rdp_and_jh_connpolicy, L,
-             names{"tls_max_level"},
-             type_<types::u32>(),
-             set(0),
-             desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"});
+    _.member({
+        .name = "tls_max_level",
+        .value = value<types::u32>(),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc = "Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
+    });
 
-    _.member(no_ini_no_gui, rdp_and_jh_connpolicy, L,
-             names{"cipher_string"},
-             type_<std::string>(),
-             set("ALL"),
-             desc{"TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."});
+    _.member({
+        .name = "cipher_string",
+        .value = value<std::string>("ALL"),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc = "TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.",
+    });
 
-    _.member(no_ini_no_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L, D,
-             names{"show_common_cipher_list"},
-             type_<bool>(),
-             set(false),
-             desc{"Show in the logs the common cipher list supported by client and server"});
+    _.member({
+        .name = "show_common_cipher_list",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+        .tags = TagList::Debug,
+        .desc = "Show in the logs the common cipher list supported by client and server",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"persistent_disk_bitmap_cache"},
-             type_<bool>(),
-             set(true),
-             desc{"Persistent Disk Bitmap Cache on the mod side."});
+    _.member({
+        .name = "persistent_disk_bitmap_cache",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Persistent Disk Bitmap Cache on the mod side.",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"cache_waiting_list"},
-             type_<bool>(),
-             set(true),
-             desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."});
+    _.member({
+        .name = "cache_waiting_list",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"persist_bitmap_cache_on_disk"},
-             type_<bool>(),
-             set(false),
-             desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."});
+    _.member({
+        .name = "persist_bitmap_cache_on_disk",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "If enabled, the contents of Persistent Bitmap Caches are stored on disk.",
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"allowed_channels"},
-             type_<types::list<std::string>>(),
-             set("*"),
-             desc{
-                "List of (comma-separated) enabled (static) virtual channel. If character '*' is used as a name then enables everything.\n"
-                "An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'."
-             });
+    _.member({
+        .name = "allowed_channels",
+        .value = value<types::list<std::string>>("*"),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+        .desc =
+            "List of (comma-separated) enabled (static) virtual channel. If character '*' is used as a name then enables everything.\n"
+            "An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'."
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"denied_channels"},
-             type_<types::list<std::string>>(),
-             desc{
-                "List of (comma-separated) disabled (static) virtual channel. If character '*' is used as a name then disables everything.\n"
-                "An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'."
-             });
+    _.member({
+        .name = "denied_channels",
+        .value = value<types::list<std::string>>(),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+        .desc =
+            "List of (comma-separated) disabled (static) virtual channel. If character '*' is used as a name then disables everything.\n"
+            "An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'."
+    });
 
-    _.member(no_ini_no_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"allowed_dynamic_channels"},
-             type_<std::string>(),
-             set("*"),
-             desc{
-                "List of (comma-separated) enabled dynamic virtual channel. If character '*' is used as a name then enables everything.\n"
-                "An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'."
-             });
+    _.member({
+        .name = "allowed_dynamic_channels",
+        .value = value<std::string>("*"),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+        .desc =
+            "List of (comma-separated) enabled dynamic virtual channel. If character '*' is used as a name then enables everything.\n"
+            "An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'."
+    });
 
-    _.member(no_ini_no_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"denied_dynamic_channels"},
-             type_<std::string>(),
-             desc{
-                "List of (comma-separated) disabled dynamic virtual channel. If character '*' is used as a name then disables everything.\n"
-                "An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'."
-             });
+    _.member({
+        .name = "denied_dynamic_channels",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+        .desc =
+            "List of (comma-separated) disabled dynamic virtual channel. If character '*' is used as a name then disables everything.\n"
+            "An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'."
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"fast_path"},
-             type_<bool>(),
-             set(true),
-             desc{"Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!"});
+    _.member({
+        .name = "fast_path",
+        .value = value<bool>(true),
+        .spec = spec::ini_only(no_acl),
+        .desc = "Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{
-                .all="server_redirection_support",
-                .connpolicy="server_redirection"
-             },
-             type_<bool>(),
-             set(false),
-             desc{"Enables Server Redirection Support."});
+    _.member({
+        .name = names{
+            .all = "server_redirection_support",
+            // TODO rename
+            .connpolicy = "server_redirection",
+            .display = "Enable Server Redirection Support",
+        },
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "The secondary target connection can be redirected to a specific session on another RDP server.",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"client_address_sent"},
-             type_<ClientAddressSent>(),
-             set(ClientAddressSent::no_address),
-             desc{"Client Address to send to target (in InfoPacket)"});
+    _.member({
+        .name = "load_balance_info",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "Load balancing information.\n"
+            "For example 'tsv://MS Terminal Services Plugin.1.Sessions' where 'Sessions' is the name of the targeted RD Collection which works fine."
+    });
 
-    _.member(no_ini_no_gui, rdp_without_jh_connpolicy, L,
-             names{"load_balance_info"},
-             type_<std::string>(),
-             desc{"Load balancing information"});
+    _.member({
+        .name = "client_address_sent",
+        .value = from_enum(ClientAddressSent::no_address),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Client Address to send to target (in InfoPacket)",
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"proxy_managed_drives"},
-             type_<types::list<std::string>>(),
-             desc{"Shared directory between proxy and secondary target.\nRequires rdpdr support."});
+    _.member({
+        .name = "proxy_managed_drives",
+        .value = value<types::list<std::string>>(),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+        .desc = "Shared directory between proxy and secondary target.\nRequires rdpdr support.",
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"ignore_auth_channel"},
-             set(false),
-             type_<bool>());
+    _.member({
+        .name = "ignore_auth_channel",
+        .value = value<bool>(false),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"auth_channel"},
-             type_<types::fixed_string<7>>(),
-             set("*"),
-             desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
+    _.member({
+        .name = "auth_channel",
+        .value = value<types::fixed_string<7>>("*"),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"checkout_channel"},
-             type_<types::fixed_string<7>>(),
-             desc{"Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel."});
+    _.member({
+        .name = "checkout_channel",
+        .value = value<types::fixed_string<7>>(),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel.",
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"alternate_shell"},
-             type_<std::string>());
+    _.member({
+        .name = "alternate_shell",
+        .value = value<std::string>(),
+        .spec = spec::ini_only(acl_to_proxy(reset_back_to_selector, L)),
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"shell_arguments"},
-             type_<std::string>());
+    _.member({
+        .name = "shell_arguments",
+        .value = value<std::string>(),
+        .spec = spec::ini_only(acl_to_proxy(reset_back_to_selector, L)),
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"shell_working_directory"},
-             type_<std::string>());
+    _.member({
+        .name = "shell_working_directory",
+        .value = value<std::string>(),
+        .spec = spec::ini_only(acl_to_proxy(reset_back_to_selector, L)),
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"use_client_provided_alternate_shell"},
-             type_<bool>(),
-             set(false),
-             desc{"As far as possible, use client-provided initial program (Alternate Shell)"});
+    _.member({
+        .name = "use_client_provided_alternate_shell",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "As far as possible, use client-provided initial program (Alternate Shell)",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"use_client_provided_remoteapp"},
-             type_<bool>(),
-             set(false),
-             desc{"As far as possible, use client-provided remote program (RemoteApp)"});
+    _.member({
+        .name = "use_client_provided_remoteapp",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "As far as possible, use client-provided remote program (RemoteApp)",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"use_native_remoteapp_capability"},
-             type_<bool>(),
-             set(true),
-             desc{"As far as possible, use native RemoteApp capability"});
+    _.member({
+        .name = "use_native_remoteapp_capability",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "As far as possible, use native RemoteApp capability",
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"application_driver_exe_or_file"},
-             type_<types::fixed_string<256>>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE)));
+    _.member({
+        .name = "application_driver_exe_or_file",
+        .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE)),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"application_driver_script_argument"},
-             type_<types::fixed_string<256>>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT)));
+    _.member({
+        .name = "application_driver_script_argument",
+        .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT)),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"application_driver_chrome_dt_script"},
-             type_<types::fixed_string<256>>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT)));
+    _.member({
+        .name = "application_driver_chrome_dt_script",
+        .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT)),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"application_driver_chrome_uia_script"},
-             type_<types::fixed_string<256>>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT)));
+    _.member({
+        .name = "application_driver_chrome_uia_script",
+        .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT)),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"application_driver_firefox_uia_script"},
-             type_<types::fixed_string<256>>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_FIREFOX_UIA_SCRIPT)));
+    _.member({
+        .name = "application_driver_firefox_uia_script",
+        .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_FIREFOX_UIA_SCRIPT)),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"application_driver_ie_script"},
-             type_<types::fixed_string<256>>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT)));
+    _.member({
+        .name = "application_driver_ie_script",
+        .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT)),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"hide_client_name"},
-             type_<bool>(),
-             set(true),
-             desc{
-                "Do not transmit client machine name to RDP server.\n"
-                "If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host."
-             });
+    _.member({
+        .name = "hide_client_name",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+        .desc =
+            "Do not transmit client machine name to RDP server.\n"
+            "If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host."
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"use_license_store"},
-             type_<bool>(),
-             set(true),
-             desc{"Stores CALs issued by the terminal servers."});
+    _.member({
+        .name = "use_license_store",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Stores CALs issued by the terminal servers.",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"bogus_ios_rdpdr_virtual_channel"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "bogus_ios_rdpdr_virtual_channel",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"enable_rdpdr_data_analysis"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "enable_rdpdr_data_analysis",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"remoteapp_bypass_legal_notice_delay"},
-             type_<std::chrono::milliseconds>(),
-             set(0),
-             desc{
-                "Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
-                "Set to 0 to disable this feature."
-             });
+    _.member({
+        .name = "remoteapp_bypass_legal_notice_delay",
+        .value = value<std::chrono::milliseconds>(),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
+            "Set to 0 to disable this feature."
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"remoteapp_bypass_legal_notice_timeout"},
-             type_<std::chrono::milliseconds>(),
-             set(20000),
-             desc{
-                "Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
-                "Set to 0 to disable this feature."
-             });
+    _.member({
+        .name = "remoteapp_bypass_legal_notice_timeout",
+        .value = value<std::chrono::milliseconds>(20000),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
+            "Set to 0 to disable this feature."
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"log_only_relevant_clipboard_activities"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "log_only_relevant_clipboard_activities",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"experimental_fix_too_long_cookie"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "experimental_fix_too_long_cookie",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"split_domain"},
-             type_<bool>(),
-             set(false),
-             desc{"Force to split target domain and username with '@' separator."});
+    _.member({
+        .name = "split_domain",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Force to split target domain and username with '@' separator.",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{
-                .all="wabam_uses_translated_remoteapp",
-                .display="Enable translated RemoteAPP with AM",
-             },
-             type_<bool>(),
-             set(false));
+    _.member({
+        .name = names{
+            .all = "wabam_uses_translated_remoteapp",
+            .display = "Enable translated RemoteAPP with AM",
+        },
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"session_shadowing_support"},
-             type_<bool>(),
-             set(true),
-             desc{"Enables Session Shadowing Support."});
+    _.member({
+        .name = "session_shadowing_support",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Enables Session Shadowing Support.",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"enable_remotefx"},
-             type_<bool>(),
-             set(false),
-             desc{"Enables support of the remoteFX codec."});
+    _.member({
+        .name = "enable_remotefx",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "Enables support of the remoteFX codec.",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"accept_monitor_layout_change_if_capture_is_not_started"},
-             set(false),
-             type_<bool>());
+    _.member({
+        .name = "accept_monitor_layout_change_if_capture_is_not_started",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"enable_restricted_admin_mode"},
-             type_<bool>(),
-             set(false),
-             desc{
-                 "Connect to the server in Restricted Admin mode.\n"
-                 "This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.\n"
-                 "NLA must be enabled."
-             });
+    _.member({
+        .name = "enable_restricted_admin_mode",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "Connect to the server in Restricted Admin mode.\n"
+            "This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.\n"
+            "NLA must be enabled."
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
-             names{"force_smartcard_authentication"},
-             type_<bool>(),
-             set(false),
-             desc{
-                "NLA will be disabled.\n"
-                "Target must be set for interactive login, otherwise server connection may not be guaranteed.\n"
-                "Smartcard device must be available on client desktop.\n"
-                "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."
-             });
+    _.member({
+        .name = "force_smartcard_authentication",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc =
+            "NLA will be disabled.\n"
+            "Target must be set for interactive login, otherwise server connection may not be guaranteed.\n"
+            "Smartcard device must be available on client desktop.\n"
+            "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
-             names{"enable_ipv6"},
-             type_<bool>(),
-             set(true),
-             desc{"Enable target connection on ipv6"});
+    _.member({
+        .name = "enable_ipv6",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc = "Enable target connection on ipv6",
+    });
 
-    _.member(no_ini_no_gui, rdp_without_jh_connpolicy, L,
-             names{
-                .all="mode_console",
-                .display="Console mode"
-             },
-             type_<RdpModeConsole>(),
-             spec::type_<std::string>(),
-             set(RdpModeConsole::allow),
-             desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
+    _.member({
+        .name = names{
+            .all = "mode_console",
+            .display = "Console mode"
+        },
+        .value = enum_as_string(RdpModeConsole::allow),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)",
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"auto_reconnection_on_losing_target_link"},
-             type_<bool>(),
-             set(false));
+    _.member({
+        .name = "auto_reconnection_on_losing_target_link",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+        .desc =
+            "Allows the proxy to automatically reconnect to secondary target when a network error occurs.\n"
+            "The server must support reconnection cookie.",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, W,
-             names{"allow_session_reconnection_by_shortcut"},
-             type_<bool>(),
-             set(false),
-             desc{
-                "If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.\n"
-                "This feature should not be used together with the End disconnected session option (section session_probe).\n"
-                "The keyboard shortcut is fixed and cannot be changed."
-             });
+    _.member({
+        .name = "allow_session_reconnection_by_shortcut",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .tags = TagList::Workaround,
+        .desc =
+            "If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.\n"
+            "This feature should not be used together with the End disconnected session option (section session_probe).\n"
+            "The keyboard shortcut is fixed and cannot be changed."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"session_reconnection_delay"},
-             type_<types::range<std::chrono::milliseconds, 0, 15000>>(),
-             set(0),
-             desc{"The delay in milliseconds between a session disconnection and the automatic reconnection that follows."});
+    _.member({
+        .name = "session_reconnection_delay",
+        .value = value<types::range<std::chrono::milliseconds, 0, 15000>>(0),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc = "The delay in milliseconds between a session disconnection and the automatic reconnection that follows.",
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"forward_client_build_number"},
-             type_<bool>(),
-             set(true),
-             desc{
-                "Forward the build number advertised by the client to the server. "
-                "If forwarding is disabled a default (static) build number will be sent to the server."
-             });
+    _.member({
+        .name = "forward_client_build_number",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+        .desc =
+            "Forward the build number advertised by the client to the server. "
+            "If forwarding is disabled a default (static) build number will be sent to the server."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"bogus_monitor_layout_treatment"},
-             type_<bool>(),
-             set(false),
-             desc{"To resolve the session freeze issue with Windows 7/Windows Server 2008 target."});
+    _.member({
+        .name = "bogus_monitor_layout_treatment",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "To resolve the session freeze issue with Windows 7/Windows Server 2008 target.",
+    });
 
-    _.member(external, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"krb_armoring_account"},
-             type_<std::string>(),
-             desc{
+    _.member({
+        .name = "krb_armoring_account",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced | spec::acl_only),
+        .desc =
             "Account to be used for armoring Kerberos tickets. "
             "Must be in the form 'account_name@domain_name[@device_name]'. "
             "If account resolution succeeds the username and password associated with this account will be used; "
             "otherwise the below fallback username and password will be used instead."
-            });
+    });
 
-    _.member(external, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"krb_armoring_realm"},
-             type_<std::string>(),
-             desc{"Realm to be used for armoring Kerberos tickets."});
+    _.member({
+        .name = "krb_armoring_realm",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced | spec::acl_only),
+        .desc = "Realm to be used for armoring Kerberos tickets.",
+    });
 
-    _.member(external, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"krb_armoring_fallback_user"},
-             type_<std::string>(),
-             desc{"Fallback username to be used for armoring Kerberos tickets."}
-    );
+    _.member({
+        .name = "krb_armoring_fallback_user",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced | spec::acl_only),
+        .desc = "Fallback username to be used for armoring Kerberos tickets.",
+    });
 
-    _.member(external, rdp_without_jh_connpolicy | advanced_in_connpolicy, NL,
-             names{"krb_armoring_fallback_password"},
-             type_<std::string>(),
-             desc{"Fallback password to be used for armoring Kerberos tickets."});
+    _.member({
+        .name = "krb_armoring_fallback_password",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(rdp_without_jh, NL, spec::advanced | spec::acl_only),
+        .desc = "Fallback password to be used for armoring Kerberos tickets.",
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"effective_krb_armoring_user"},
-             type_<std::string>(),
-             desc{"Effective username to be used for armoring Kerberos tickets."}
-    );
+    _.member({
+        .name = "effective_krb_armoring_user",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+        .desc = "Effective username to be used for armoring Kerberos tickets.",
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, NL,
-             names{"effective_krb_armoring_password"},
-             type_<std::string>(),
-             desc{"Effective password to be used for armoring Kerberos tickets."}
-    );
+    _.member({
+        .name = "effective_krb_armoring_password",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, NL),
+        .desc = "Effective password to be used for armoring Kerberos tickets.",
+    });
 
-    _.member(no_ini_no_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"remote_programs_disconnect_message_delay"},
-             type_<types::range<std::chrono::milliseconds, 3000, 120000>>(),
-             set(3000),
-             desc{"Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed."});
+    _.member({
+        .name = "remote_programs_disconnect_message_delay",
+        .value = value<types::range<std::chrono::milliseconds, 3000, 120000>>(3000),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc = "Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed.",
+    });
 
-    _.member(no_ini_no_gui, rdp_without_jh_connpolicy, L,
-             names{"use_session_probe_to_launch_remote_program"},
-             type_<bool>(),
-             set(true),
-             desc{
-                "This option only has an effect in RemoteApp sessions (RDS meaning).\n"
-                "If enabled, the RDP Proxy relies on the Session Probe to launch the remote programs.\n"
-                "Otherwise, remote programs will be launched according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol. This latter is the native method."
-                "The difference is that Session Probe does not start a new application when its host session is resumed. Conversely, launching applications according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol is not affected by this behavior. However, launching applications via the native method requires them to be published in Remote Desktop Services, which is unnecessary if launched by the Session Probe."
-             });
+    _.member({
+        .name = "use_session_probe_to_launch_remote_program",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "This option only has an effect in RemoteApp sessions (RDS meaning).\n"
+            "If enabled, the RDP Proxy relies on the Session Probe to launch the remote programs.\n"
+            "Otherwise, remote programs will be launched according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol. This latter is the native method.\n"
+            "The difference is that Session Probe does not start a new application when its host session is resumed. Conversely, launching applications according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol is not affected by this behavior. However, launching applications via the native method requires them to be published in Remote Desktop Services, which is unnecessary if launched by the Session Probe."
+    });
 
-    _.member(no_ini_no_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, W,
-             names{"replace_null_pointer_by_default_pointer"},
-             type_<bool>(),
-             set(false),
-             desc{"Replace an empty mouse pointer with normal pointer."});
+    _.member({
+        .name = "replace_null_pointer_by_default_pointer",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .tags = TagList::Workaround,
+        .desc = "Replace an empty mouse pointer with normal pointer.",
+    });
 });
 
 _.section("protocol", [&]
 {
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"save_session_info_pdu"},
-             type_<RdpSaveSessionInfoPDU>(),
-             set(RdpSaveSessionInfoPDU::UnsupportedOrUnknown));
+    _.member({
+        .name = "save_session_info_pdu",
+        .value = from_enum(RdpSaveSessionInfoPDU::UnsupportedOrUnknown),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+    });
 });
 
 _.section("session_probe", [&]
 {
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"enable_session_probe"},
-             type_<bool>(),
-             set(false),
-             rdp_without_jh_connpolicy.set(true) | jh_without_rdp_connpolicy.always(false));
+    _.member({
+        .name = "enable_session_probe",
+        .value = value<bool>(false,
+            jh_policy_value(false).always(),
+            rdp_policy_value(true)),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"exe_or_file"},
-             type_<types::fixed_string<511>>(),
-             set("||CMD"));
+    _.member({
+        .name = "exe_or_file",
+        .value = value<types::fixed_string<511>>("||CMD"),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"arguments"},
-             type_<types::fixed_string<511>>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)));
+    _.member({
+        .name = "arguments",
+        .value = value<types::fixed_string<511>>(CPP_EXPR(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"use_smart_launcher"},
-             type_<bool>(),
-             set(true),
-             desc{
-                "This parameter only has an effect in Desktop sessions.\n"
-                "It allows you to choose between Smart launcher and Legacy launcher to launch the Session Probe.\n"
-                "The Smart launcher and the Legacy launcher do not have the same technical prerequisites. Detailed information can be found in the Administration guide."
-             });
+    _.member({
+        .name = "use_smart_launcher",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "This parameter only has an effect in Desktop sessions.\n"
+            "It allows you to choose between Smart launcher and Legacy launcher to launch the Session Probe.\n"
+            "The Smart launcher and the Legacy launcher do not have the same technical prerequisites. Detailed information can be found in the Administration guide."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"enable_launch_mask"},
-             type_<bool>(),
-             desc{
-                "This parameter enables or disables the Session Probe’s launch mask.\n"
-                "The Launch mask hides the Session Probe launch steps from the end-users.\n"
-                "Disabling the mask makes it easier to diagnose Session Probe launch issues. It is recommended to enable the mask for normal operation."
-             },
-             set(true));
+    _.member({
+        .name = "enable_launch_mask",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "This parameter enables or disables the Session Probe’s launch mask.\n"
+            "The Launch mask hides the Session Probe launch steps from the end-users.\n"
+            "Disabling the mask makes it easier to diagnose Session Probe launch issues. It is recommended to enable the mask for normal operation."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"on_launch_failure"},
-             type_<SessionProbeOnLaunchFailure>(),
-             desc{"It is recommended to use option 1 (disconnect user)."},
-             set(SessionProbeOnLaunchFailure::disconnect_user));
+    _.member({
+        .name = "on_launch_failure",
+        .value = from_enum(SessionProbeOnLaunchFailure::disconnect_user),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "It is recommended to use option 1 (disconnect user).",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"launch_timeout"},
-             type_<types::range<std::chrono::milliseconds, 0, 300000>>(),
-             set(40000),
-             desc{
-                 "This parameter is used if 'On launch failure' is 1 (disconnect user).\n"
-                 "0 to disable timeout."
-             });
+    _.member({
+        .name = "launch_timeout",
+        .value = value<types::range<std::chrono::milliseconds, 0, 300000>>(40000),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "This parameter is used if 'On launch failure' is 1 (disconnect user).\n"
+            "0 to disable timeout."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"launch_fallback_timeout"},
-             type_<types::range<std::chrono::milliseconds, 0, 300000>>(),
-             set(40000),
-             desc{
-                "This parameter is used if 'On launch failure' is 0 (ignore failure and continue) or 2 (retry without Session Probe).\n"
-                "0 to disable timeout."
-             });
+    _.member({
+        .name = "launch_fallback_timeout",
+        .value = value<types::range<std::chrono::milliseconds, 0, 300000>>(40000),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "This parameter is used if 'On launch failure' is 0 (ignore failure and continue) or 2 (retry without Session Probe).\n"
+            "0 to disable timeout."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"start_launch_timeout_timer_only_after_logon"},
-             type_<bool>(),
-             set(true),
-             desc{"If enabled, the Launch timeout countdown timer will be started only after user logged in Windows. Otherwise, the countdown timer will be started immediately after RDP protocol connexion."});
+    _.member({
+        .name = "start_launch_timeout_timer_only_after_logon",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "If enabled, the Launch timeout countdown timer will be started only after user logged in Windows. Otherwise, the countdown timer will be started immediately after RDP protocol connexion.",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"keepalive_timeout"},
-             type_<types::range<std::chrono::milliseconds, 0, 60000>>(),
-             desc{
-                "The amount of time that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by 'On keepalive timeout'.\n"
-                "If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by 'On keepalive timeout'.\n"
-                "The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected.\n"
-                "During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate."
-             },
-             set(5000));
+    _.member({
+        .name = "keepalive_timeout",
+        .value = value<types::range<std::chrono::milliseconds, 0, 60000>>(5000),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "The amount of time that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by 'On keepalive timeout'.\n"
+            "If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by 'On keepalive timeout'.\n"
+            "The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected.\n"
+            "During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"on_keepalive_timeout"},
-             type_<SessionProbeOnKeepaliveTimeout>(),
-             desc{"This parameter allows us to choose the behavior of the RDP Proxy in case of losing the connection with Session Probe."},
-             set(SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait));
+    _.member({
+        .name = "on_keepalive_timeout",
+        .value = from_enum(SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "This parameter allows us to choose the behavior of the RDP Proxy in case of losing the connection with Session Probe.",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"end_disconnected_session"},
-             type_<bool>(),
-             desc{
-                "The behavior of this parameter is different between the Desktop session and the RemoteApp session (RDS meaning). But in each case, the purpose of enabling this parameter is to not leave disconnected sessions in a state unusable by the RDP proxy.\n"
-                "If enabled, Session Probe will automatically end the disconnected Desktop session. Otherwise, the RDP session and the applications it contains will remain active after user disconnection (unless a parameter defined at the RDS-level decides otherwise).\n"
-                "The parameter in RemoteApp session (RDS meaning) does not cause the latter to be closed but a simple cleanup. However, this makes the session suitable for reuse.\n"
-                "This parameter must be enabled for Web applications because an existing session with a running browser cannot be reused.\n"
-                "It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when 'Use session probe to launch remote program' parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes."
-             },
-             set(false));
+    _.member({
+        .name = "end_disconnected_session",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "The behavior of this parameter is different between the Desktop session and the RemoteApp session (RDS meaning). But in each case, the purpose of enabling this parameter is to not leave disconnected sessions in a state unusable by the RDP proxy.\n"
+            "If enabled, Session Probe will automatically end the disconnected Desktop session. Otherwise, the RDP session and the applications it contains will remain active after user disconnection (unless a parameter defined at the RDS-level decides otherwise).\n"
+            "The parameter in RemoteApp session (RDS meaning) does not cause the latter to be closed but a simple cleanup. However, this makes the session suitable for reuse.\n"
+            "This parameter must be enabled for Web applications because an existing session with a running browser cannot be reused.\n"
+            "It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when 'Use session probe to launch remote program' parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"enable_autodeployed_appdriver_affinity"},
-             type_<bool>(),
-             desc{"If enabled, disconnected auto-deployed Application Driver session will automatically terminate by Session Probe."},
-             set(true));
+    _.member({
+        .name = "enable_autodeployed_appdriver_affinity",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "If enabled, disconnected auto-deployed Application Driver session will automatically terminate by Session Probe."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"enable_log"},
-             type_<bool>(),
-             desc{
-                "This parameter allows you to enable the Windows-side logging of Session Probe.\n"
-                "The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team."},
-             set(false));
+    _.member({
+        .name = "enable_log",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "This parameter allows you to enable the Windows-side logging of Session Probe.\n"
+            "The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"enable_log_rotation"},
-             type_<bool>(),
-             desc{
-                "This parameter enables or disables the Log files rotation for Windows-side logging of Session Probe.\n"
-                "The Log files rotation helps reduce disk space consumption caused by logging. But the interesting information may be lost if the corresponding file is not retrieved in time."},
-             set(false));
+    _.member({
+        .name = "enable_log_rotation",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "This parameter enables or disables the Log files rotation for Windows-side logging of Session Probe.\n"
+            "The Log files rotation helps reduce disk space consumption caused by logging. But the interesting information may be lost if the corresponding file is not retrieved in time."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, D,
-             names{"log_level"},
-             type_<SessionProbeLogLevel>(),
-             desc{"Defines logging severity levels."},
-             set(SessionProbeLogLevel::Debug));
+    _.member({
+        .name = "log_level",
+        .value = from_enum(SessionProbeLogLevel::Debug),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .tags = TagList::Debug,
+        .desc = "Defines logging severity levels.",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"disconnected_application_limit"},
-             type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(),
-             desc{
-                "(Deprecated!)\n"
-                "The period above which the disconnected Application session will be automatically closed by the Session Probe.\n"
-                "0 to disable timeout."},
-             set(0));
+    _.member({
+        .name = "disconnected_application_limit",
+        .value = value<types::range<std::chrono::milliseconds, 0, 172'800'000>>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "(Deprecated!)\n"
+            "The period above which the disconnected Application session will be automatically closed by the Session Probe.\n"
+            "0 to disable timeout."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"disconnected_session_limit"},
-             type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(),
-             desc{
-                "The period above which the disconnected Desktop session will be automatically closed by the Session Probe.\n"
-                "0 to disable timeout."},
-             set(0));
+    _.member({
+        .name = "disconnected_session_limit",
+        .value = value<types::range<std::chrono::milliseconds, 0, 172'800'000>>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "The period above which the disconnected Desktop session will be automatically closed by the Session Probe.\n"
+            "0 to disable timeout."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(),
-             names{"idle_session_limit"},
-             desc{
-                "The period of user inactivity above which the session will be locked by the Session Probe.\n"
-                "0 to disable timeout."},
-             set(0));
+    _.member({
+        .name = "idle_session_limit",
+        .value = value<types::range<std::chrono::milliseconds, 0, 172'800'000>>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "The period of user inactivity above which the session will be locked by the Session Probe.\n"
+            "0 to disable timeout."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"smart_launcher_clipboard_initialization_delay"},
-             type_<std::chrono::milliseconds>(),
-             desc{
-                "The additional period given to the device to make Clipboard redirection available.\n"
-                "This parameter is effective only if the Smart launcher is used.\n"
-                "If we see the message \"Clipboard Virtual Channel is unavailable\" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter."},
-             set(2000));
+    _.member({
+        .name = "smart_launcher_clipboard_initialization_delay",
+        .value = value<std::chrono::milliseconds>(2000),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "The additional period given to the device to make Clipboard redirection available.\n"
+            "This parameter is effective only if the Smart launcher is used.\n"
+            "If we see the message \"Clipboard Virtual Channel is unavailable\" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"smart_launcher_start_delay"},
-             type_<std::chrono::milliseconds>(),
-             desc{
-                "For under-performing devices.\n"
-                "The extra time given to the device before starting the Session Probe launch sequence.\n"
-                "This parameter is effective only if the Smart launcher is used.\n"
-                "This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened."},
-             set(0));
+    _.member({
+        .name = "smart_launcher_start_delay",
+        .value = value<std::chrono::milliseconds>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "For under-performing devices.\n"
+            "The extra time given to the device before starting the Session Probe launch sequence.\n"
+            "This parameter is effective only if the Smart launcher is used.\n"
+            "This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"smart_launcher_long_delay"},
-             type_<std::chrono::milliseconds>(),
-             desc{
-                "The delay between two simulated keystrokes during the Session Probe launch sequence execution.\n"
-                "This parameter is effective only if the Smart launcher is used.\n"
-                "This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.\n"
-                "This parameter is usually used together with the 'Smart launcher short delay' parameter."},
-             set(500));
+    _.member({
+        .name = "smart_launcher_long_delay",
+        .value = value<std::chrono::milliseconds>(500),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "The delay between two simulated keystrokes during the Session Probe launch sequence execution.\n"
+            "This parameter is effective only if the Smart launcher is used.\n"
+            "This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.\n"
+            "This parameter is usually used together with the 'Smart launcher short delay' parameter."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"smart_launcher_short_delay"},
-             type_<std::chrono::milliseconds>(),
-             desc{
-                "The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution.\n"
-                "This parameter is effective only if the Smart launcher is used.\n"
-                "This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.\n"
-                "This parameter is usually used together with the 'Smart launcher long delay' parameter."},
-             set(50));
+    _.member({
+        .name = "smart_launcher_short_delay",
+        .value = value<std::chrono::milliseconds>(50),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution.\n"
+            "This parameter is effective only if the Smart launcher is used.\n"
+            "This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.\n"
+            "This parameter is usually used together with the 'Smart launcher long delay' parameter."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{
-                .all="smart_launcher_enable_wabam_affinity",
-                .display="Enable Smart launcher with AM affinity",
-             },
-             type_<bool>(),
-             desc{
-                "Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the 'Smart launcher clipboard initialization delay' parameter."
-                "This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager."},
-             set(true));
+    _.member({
+        .name = names{
+            .all = "smart_launcher_enable_wabam_affinity",
+            .display = "Enable Smart launcher with AM affinity",
+        },
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the 'Smart launcher clipboard initialization delay' parameter.\n"
+            "This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"launcher_abort_delay"},
-             type_<types::range<std::chrono::milliseconds, 0, 300000>>(),
-             desc{
-                "The time interval between the detection of an error (example: a refusal by the target of the redirected drive) and the actual abandonment of the Session Probe launch.\n"
-                "The purpose of this parameter is to give the target time to gracefully stop some ongoing processing.\n"
-                "It is strongly recommended to keep the default value of this parameter."
-             },
-             set(2000));
+    _.member({
+        .name = "launcher_abort_delay",
+        .value = value<types::range<std::chrono::milliseconds, 0, 300000>>(2000),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "The time interval between the detection of an error (example: a refusal by the target of the redirected drive) and the actual abandonment of the Session Probe launch.\n"
+            "The purpose of this parameter is to give the target time to gracefully stop some ongoing processing.\n"
+            "It is strongly recommended to keep the default value of this parameter."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, D,
-             names{"enable_crash_dump"},
-             type_<bool>(),
-             desc{
-                "This parameter enables or disables the crash dump generation when the Session Probe encounters a fatal error.\n"
-                "The crash dump file is useful for post-modem debugging. It is not designed for normal use.\n"
-                "The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team.\n"
-                "There is no rotation mechanism to limit the number of dump files produced. Extended activation of this parameter can quickly exhaust disk space."
-             },
-             set(false));
+    _.member({
+        .name = "enable_crash_dump",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .tags = TagList::Debug,
+        .desc =
+            "This parameter enables or disables the crash dump generation when the Session Probe encounters a fatal error.\n"
+            "The crash dump file is useful for post-modem debugging. It is not designed for normal use.\n"
+            "The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team.\n"
+            "There is no rotation mechanism to limit the number of dump files produced. Extended activation of this parameter can quickly exhaust disk space."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"handle_usage_limit"},
-             type_<types::range<types::u32, 0, 1000>>(),
-             desc{
-                "Use only if you see unusually high consumption of system object handles by the Session Probe.\n"
-                "The Session Probe will sabotage and then restart it-self if it consumes more handles than what is defined by this parameter.\n"
-                "A value of 0 disables this feature.\n"
-                "This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).\n"
-                "If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect."},
-             set(0));
+    _.member({
+        .name = "handle_usage_limit",
+        .value = value<types::range<types::u32, 0, 1000>>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "Use only if you see unusually high consumption of system object handles by the Session Probe.\n"
+            "The Session Probe will sabotage and then restart it-self if it consumes more handles than what is defined by this parameter.\n"
+            "A value of 0 disables this feature.\n"
+            "This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).\n"
+            "If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"memory_usage_limit"},
-             type_<types::range<types::u32, 0, 200'000'000>>(),
-             desc{
-                "Use only if you see unusually high consumption of memory by the Session Probe.\n"
-                "The Session Probe will sabotage and then restart it-self if it consumes more memory than what is defined by this parameter.\n"
-                "A value of 0 disables this feature.\n"
-                "This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).\n"
-                "If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect."},
-             set(0));
+    _.member({
+        .name = "memory_usage_limit",
+        .value = value<types::range<types::u32, 0, 200'000'000>>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "Use only if you see unusually high consumption of memory by the Session Probe.\n"
+            "The Session Probe will sabotage and then restart it-self if it consumes more memory than what is defined by this parameter.\n"
+            "A value of 0 disables this feature.\n"
+            "This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).\n"
+            "If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"cpu_usage_alarm_threshold"},
-             type_<types::range<types::u32, 0, 10000>>(),
-             desc{
-                "This debugging feature was created to determine the cause of high CPU consumption by Session Probe in certain environments.\n"
-                "As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program execution. The alarm is deactivated if this value of parameter is less than 200 (200%% of reference consumption).\n"
-                "When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by 'Cpu usage alarm action' parameter."
-             },
-             set(0));
+    _.member({
+        .name = "cpu_usage_alarm_threshold",
+        .value = value<types::range<types::u32, 0, 10000>>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "This debugging feature was created to determine the cause of high CPU consumption by Session Probe in certain environments.\n"
+            "As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program execution. The alarm is deactivated if this value of parameter is less than 200 (200%% of reference consumption).\n"
+            "When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by 'Cpu usage alarm action' parameter."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"cpu_usage_alarm_action"},
-             type_<SessionProbeCPUUsageAlarmAction>(),
-             desc{"Additional behavior when CPU consumption exceeds what is allowed. Please refer to the 'Cpu usage alarm threshold' parameter."},
-             set(SessionProbeCPUUsageAlarmAction::Restart));
+    _.member({
+        .name = "cpu_usage_alarm_action",
+        .value = from_enum(SessionProbeCPUUsageAlarmAction::Restart),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc = "Additional behavior when CPU consumption exceeds what is allowed. Please refer to the 'Cpu usage alarm threshold' parameter.",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"end_of_session_check_delay_time"},
-             type_<types::range<std::chrono::milliseconds, 0, 60000>>(),
-             desc{
-                "For application session only.\n"
-                "The delay between the launch of the application and the start of End of session check.\n"
-                "Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe.\n"
-                "'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window."
-             },
-             set(0));
+    _.member({
+        .name = "end_of_session_check_delay_time",
+        .value = value<types::range<std::chrono::milliseconds, 0, 60000>>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "For application session only.\n"
+            "The delay between the launch of the application and the start of End of session check.\n"
+            "Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe.\n"
+            "'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"ignore_ui_less_processes_during_end_of_session_check"},
-             type_<bool>(),
-             desc{
-                "For application session only.\n"
-                "If enabled, during the End of session check, the processes that do not have a visible window will not be counted as active processes of the session. Without active processes, the application session will be logged off by the Session Probe."
-             },
-             set(true));
+    _.member({
+        .name = "ignore_ui_less_processes_during_end_of_session_check",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "For application session only.\n"
+            "If enabled, during the End of session check, the processes that do not have a visible window will not be counted as active processes of the session. Without active processes, the application session will be logged off by the Session Probe."
+    });
 
-    _.member(no_ini_no_gui, rdp_without_jh_connpolicy, L,
-             names{"extra_system_processes"},
-             type_<std::string>(),
-             desc{
-                "This parameter is used to provide the list of (comma-separated) system processes that can be run in the session.\n"
-                "Ex.: dllhos.exe,TSTheme.exe\n"
-                "Unlike user processes, system processes do not keep the session open. A session with no user process will be automatically closed by Session Probe after starting the End of session check."
-             });
+    _.member({
+        .name = "extra_system_processes",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "This parameter is used to provide the list of (comma-separated) system processes that can be run in the session.\n"
+            "Ex.: dllhos.exe,TSTheme.exe\n"
+            "Unlike user processes, system processes do not keep the session open. A session with no user process will be automatically closed by Session Probe after starting the End of session check."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"childless_window_as_unidentified_input_field"},
-             type_<bool>(),
-             desc{
-                "This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log).\n"
-                "Unfortunately, the detection does not work with applications developed in Java, Flash, etc. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata.\n"
-                "One of the specifics of these applications is that their main windows do not have any child window from point of view of WIN32 API. Activating this parameter allows this property to be used to detect applications developed in Java or Flash.\n"
-                "Please refer to the 'Keyboard input masking level' parameter of 'session_log' section."
-             },
-             set(true));
+    _.member({
+        .name = "childless_window_as_unidentified_input_field",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log).\n"
+            "Unfortunately, the detection does not work with applications developed in Java, Flash, etc. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata.\n"
+            "One of the specifics of these applications is that their main windows do not have any child window from point of view of WIN32 API. Activating this parameter allows this property to be used to detect applications developed in Java or Flash.\n"
+            "Please refer to the 'Keyboard input masking level' parameter of 'session_log' section."
+    });
 
-    _.member(no_ini_no_gui, rdp_without_jh_connpolicy, L,
-             names{"windows_of_these_applications_as_unidentified_input_field"},
-             type_<std::string>(),
-             desc{
-                "Comma-separated process names. (Ex.: chrome.exe,ngf.exe)\n"
-                "This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log).\n"
-                "Unfortunately, the detection is not infallible. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata.\n"
-                "This parameter is used to provide the list of processes whose windows are considered as input fields of unknown type.\n"
-                "Please refer to the 'Keyboard input masking level' parameter of 'session_log' section."
-             });
+    _.member({
+        .name = "windows_of_these_applications_as_unidentified_input_field",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "Comma-separated process names. (Ex.: chrome.exe,ngf.exe)\n"
+            "This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log).\n"
+            "Unfortunately, the detection is not infallible. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata.\n"
+            "This parameter is used to provide the list of processes whose windows are considered as input fields of unknown type.\n"
+            "Please refer to the 'Keyboard input masking level' parameter of 'session_log' section."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"update_disabled_features"},
-             type_<bool>(),
-             desc{
-                "This parameter is used when resuming a session hosting a existing Session Probe.\n"
-                "If enabled, the Session Probe will activate or deactivate features according to the value of 'Disabled features' parameter received when resuming its host session. Otherwise, the Session Probe will keep the same set of features that were used during the previous connection.\n"
-                "It is recommended to keep the default value of this parameter."
-             },
-             set(true));
+    _.member({
+        .name = "update_disabled_features",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "This parameter is used when resuming a session hosting a existing Session Probe.\n"
+            "If enabled, the Session Probe will activate or deactivate features according to the value of 'Disabled features' parameter received when resuming its host session. Otherwise, the Session Probe will keep the same set of features that were used during the previous connection.\n"
+            "It is recommended to keep the default value of this parameter."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"disabled_features"},
-             type_<SessionProbeDisabledFeature>(),
-             desc{
-                "This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes.\n"
-                "If 'Java Acccess Bridge' feature is disabled, data entered in the password field of Java applications may be visible in the metadata. "
-                "For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section. "
-                "For more information please also refer to 'Childless window as unidentified input field and Windows of these applications as unidentified input field o"
-                "It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'."
-             },
-             set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
+    _.member({
+        .name = "disabled_features",
+        .value = from_enum(
+            SessionProbeDisabledFeature::chrome_inspection
+          | SessionProbeDisabledFeature::firefox_inspection
+          | SessionProbeDisabledFeature::group_membership),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes.\n"
+            "If 'Java Acccess Bridge' feature is disabled, data entered in the password field of Java applications may be visible in the metadata. "
+            "For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section. "
+            "For more information please also refer to 'Childless window as unidentified input field and Windows of these applications as unidentified input field o"
+            "It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"enable_bestsafe_interaction"},
-             type_<bool>(),
-             desc{
-                "This parameter has no effect on the device without BestSafe.\n"
-                "Is enabled, Session Probe relies on BestSafe to perform the detection of application launches and the detection of outgoing connections.\n"
-                "BestSafe has more efficient mechanisms in these tasks than Session Probe.\n"
-                "For more information please refer to 'Outbound connection monitoring rules' parameter and 'Process monitoring rules' parameter."
-             },
-             set(false));
+    _.member({
+        .name = "enable_bestsafe_interaction",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "This parameter has no effect on the device without BestSafe.\n"
+            "Is enabled, Session Probe relies on BestSafe to perform the detection of application launches and the detection of outgoing connections.\n"
+            "BestSafe has more efficient mechanisms in these tasks than Session Probe.\n"
+            "For more information please refer to 'Outbound connection monitoring rules' parameter and 'Process monitoring rules' parameter."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"on_account_manipulation"},
-             type_<SessionProbeOnAccountManipulation>(),
-             desc{
-                "This parameter has no effect on the device without BestSafe.\n"
-                "BestSafe interaction must be enabled. Please refer to 'Enable bestsafe interaction' parameter.\n"
-                "This parameter allows you to choose the behavior of the RDP Proxy in case of detection of Windows account manipulation.\n"
-                "Detectable account manipulations are the creation, deletion of a Windows account, and the addition and deletion of an account from a Windows user group."
-             },
-             set(SessionProbeOnAccountManipulation::allow));
+    _.member({
+        .name = "on_account_manipulation",
+        .value = from_enum(SessionProbeOnAccountManipulation::allow),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "This parameter has no effect on the device without BestSafe.\n"
+            "BestSafe interaction must be enabled. Please refer to 'Enable bestsafe interaction' parameter.\n"
+            "This parameter allows you to choose the behavior of the RDP Proxy in case of detection of Windows account manipulation.\n"
+            "Detectable account manipulations are the creation, deletion of a Windows account, and the addition and deletion of an account from a Windows user group."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"alternate_directory_environment_variable"},
-             type_<types::fixed_string<3>>(),
-             desc{
-                "This parameter is used to indicate the name of an environment variable, to be set on the Windows device, and pointed to a directory (on the device) that can be used to store and start the Session Probe. The environment variable must be available in the Windows user session.\n"
-                "The environment variable name is limited to 3 characters or less.\n"
-                "By default, the Session Probe will be stored and started from the temporary directory of Windows user.\n"
-                "This parameter is useful if a GPO prevents Session Probe from starting from the Windows user's temporary directory."
-             });
+    _.member({
+        .name = "alternate_directory_environment_variable",
+        .value = value<types::fixed_string<3>>(),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "This parameter is used to indicate the name of an environment variable, to be set on the Windows device, and pointed to a directory (on the device) that can be used to store and start the Session Probe. The environment variable must be available in the Windows user session.\n"
+            "The environment variable name is limited to 3 characters or less.\n"
+            "By default, the Session Probe will be stored and started from the temporary directory of Windows user.\n"
+            "This parameter is useful if a GPO prevents Session Probe from starting from the Windows user's temporary directory."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"public_session"},
-             type_<bool>(),
-             desc{
-                "If enabled, the session, once disconnected, can be resumed by another Bastion user.\n"
-                "Except in special cases, this is usually a security problem.\n"
-                "By default, a session can only be resumed by the Bastion user who created it."
-             },
-             set(false));
+    _.member({
+        .name = "public_session",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "If enabled, the session, once disconnected, can be resumed by another Bastion user.\n"
+            "Except in special cases, this is usually a security problem.\n"
+            "By default, a session can only be resumed by the Bastion user who created it."
+    });
 
-    _.member(no_ini_no_gui, rdp_without_jh_connpolicy, L,
-             names{"outbound_connection_monitoring_rules"},
-             type_<std::string>(),
-             desc{
-                "This parameter is used to provide the list of (comma-separated) rules used to monitor outgoing connections created in the session.\n"
-                "(Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)\n"
-                "(Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)\n"
-                "(Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)\n"
-                "(Ex. for backwards compatibility only: 10.1.0.0/16:22)\n"
-                "BestSafe can be used to perform detection of outgoing connections created in the session. Please refer to 'Enable bestsafe interaction' parameter."
-             });
+    _.member({
+        .name = "outbound_connection_monitoring_rules",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "This parameter is used to provide the list of (comma-separated) rules used to monitor outgoing connections created in the session.\n"
+            "(Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)\n"
+            "(Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)\n"
+            "(Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)\n"
+            "(Ex. for backwards compatibility only: 10.1.0.0/16:22)\n"
+            "BestSafe can be used to perform detection of outgoing connections created in the session. Please refer to 'Enable bestsafe interaction' parameter."
+    });
 
-    _.member(no_ini_no_gui, rdp_without_jh_connpolicy, L,
-             names{"process_monitoring_rules"},
-             type_<std::string>(),
-             desc{
-                "This parameter is used to provide the list of (comma-separated) rules used to monitor the execution of processes in the session.\n"
-                "(Ex.: $deny:taskmgr.exe)\n"
-                "@ = All child processes of (Bastion) application (Ex.: $deny:@)\n"
-                "BestSafe can be used to perform detection of process launched in the session. Please refer to 'Enable bestsafe interaction' parameter."
-             });
+    _.member({
+        .name = "process_monitoring_rules",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc =
+            "This parameter is used to provide the list of (comma-separated) rules used to monitor the execution of processes in the session.\n"
+            "(Ex.: $deny:taskmgr.exe)\n"
+            "@ = All child processes of (Bastion) application (Ex.: $deny:@)\n"
+            "BestSafe can be used to perform detection of process launched in the session. Please refer to 'Enable bestsafe interaction' parameter."
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"customize_executable_name"},
-             type_<bool>(),
-             desc{
-                "If enabled, a string of random characters will be added to the name of the executable of Session Probe.\n"
-                "The result could be: SesProbe-5420.exe\n"
-                "Some other features automatically enable customization of the Session Probe executable name. Application Driver auto-deployment for example."
-             },
-             set(false));
+    _.member({
+        .name = "customize_executable_name",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "If enabled, a string of random characters will be added to the name of the executable of Session Probe.\n"
+            "The result could be: SesProbe-5420.exe\n"
+            "Some other features automatically enable customization of the Session Probe executable name. Application Driver auto-deployment for example."
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{
-                .all="allow_multiple_handshake",
-                .display="Allow multiple handshakes",
-             },
-             type_<bool>(),
-             desc{
-                "If enabled, the RDP Proxy accepts to perform the handshake several times during the same RDP session. "
-                "Otherwise, any new handshake attempt will interrupt the current session with the display of an alert message."
-             },
-             set(false));
+    _.member({
+        .name = names{
+            .all = "allow_multiple_handshake",
+            .display = "Allow multiple handshakes",
+        },
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "If enabled, the RDP Proxy accepts to perform the handshake several times during the same RDP session. "
+            "Otherwise, any new handshake attempt will interrupt the current session with the display of an alert message."
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"at_end_of_session_freeze_connection_and_wait"},
-             type_<bool>(),
-             desc{
-                "If disabled, the RDP proxy disconnects from the session when the Session Probe reports that the session is about to close (old behavior).\n"
-                "The new session end procedure (freeze and wait) prevents another connection from resuming a session that is close to end-of-life."
-             },
-             set(true));
+    _.member({
+        .name = "at_end_of_session_freeze_connection_and_wait",
+        .value = value<bool>(true),
+        .spec = spec::ini_only(no_acl),
+        .desc =
+            "If disabled, the RDP proxy disconnects from the session when the Session Probe reports that the session is about to close (old behavior).\n"
+            "The new session end procedure (freeze and wait) prevents another connection from resuming a session that is close to end-of-life."
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"enable_cleaner"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "enable_cleaner",
+        .value = value<bool>(true),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"clipboard_based_launcher_reset_keyboard_status"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "clipboard_based_launcher_reset_keyboard_status",
+        .value = value<bool>(true),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"process_command_line_retrieve_method"},
-             type_<SessionProbeProcessCommandLineRetrieveMethod>(),
-             set(SessionProbeProcessCommandLineRetrieveMethod::both));
+    _.member({
+        .name = "process_command_line_retrieve_method",
+        .value = from_enum(SessionProbeProcessCommandLineRetrieveMethod::both),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"periodic_task_run_interval"},
-             type_<types::range<std::chrono::milliseconds, 300, 2000>>(),
-             desc{
-                "Time between two polling performed by Session Probe.\n"
-                "The parameter is created to adapt the CPU consumption to the performance of the Windows device.\n"
-                "The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption."
-             },
-             set(500));
+    _.member({
+        .name = "periodic_task_run_interval",
+        .value = value<types::range<std::chrono::milliseconds, 300, 2000>>(500),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "Time between two polling performed by Session Probe.\n"
+            "The parameter is created to adapt the CPU consumption to the performance of the Windows device.\n"
+            "The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption."
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"pause_if_session_is_disconnected"},
-             type_<bool>(),
-             desc{
-                "If enabled, Session Probe activity will be minimized when the user is disconnected from the session. No metadata will be collected during this time.\n"
-                "The purpose of this behavior is to optimize CPU consumption."
-             },
-             set(false));
+    _.member({
+        .name = "pause_if_session_is_disconnected",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "If enabled, Session Probe activity will be minimized when the user is disconnected from the session. No metadata will be collected during this time.\n"
+            "The purpose of this behavior is to optimize CPU consumption."
+    });
 });
 
 _.section(names{"server_cert"}, [&]
 {
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"server_cert_store"},
-             type_<bool>(),
-             set(true),
-             jh_without_rdp_connpolicy.always(false),
-             desc{"Keep known server certificates on Bastion"});
+    _.member({
+        .name = "server_cert_store",
+        .value = value<bool>(true, jh_policy_value(false).always()),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+        .desc = "Keep known server certificates on Bastion",
+    });
 
-    _.member(hidden_in_gui, rdp_without_jh_connpolicy, L,
-             names{"server_cert_check"},
-             type_<ServerCertCheck>(),
-             set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know),
-             jh_without_rdp_connpolicy.always(ServerCertCheck::always_succeed));
+    _.member({
+        .name = "server_cert_check",
+        .value = from_enum(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know,
+            jh_policy_value(ServerCertCheck::always_succeed).always()),
+        .spec = spec::connpolicy(rdp_without_jh, L),
+    });
 
-    struct P { char const * name; char const * desc; };
+    struct P { std::string_view name; char const * desc; };
     for (P p : {
         P{"server_access_allowed_message", "Warn if check allow connexion to server."},
         P{"server_cert_create_message", "Warn that new server certificate file was created."},
         P{"server_cert_success_message", "Warn that server certificate file was successfully checked."},
         P{"server_cert_failure_message", "Warn that server certificate file checking failed."},
     }) {
-        _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
-                 names{p.name},
-                 type_<ServerNotification>(),
-                 set(ServerNotification::syslog),
-                 desc{p.desc});
+        _.member({
+            .name = p.name,
+            .value = from_enum(ServerNotification::syslog),
+            .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+            .desc = p.desc,
+        });
     }
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"error_message"},
-             type_<ServerNotification>(),
-             set(ServerNotification::syslog),
-             desc{"Warn that server certificate check raised some internal error."});
+    _.member({
+        .name = "error_message",
+        .value = from_enum(ServerNotification::syslog),
+        .spec = spec::ini_only(no_acl),
+        .desc = "Warn that server certificate check raised some internal error.",
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"enable_external_validation"},
-             type_<bool>());
+    _.member({
+        .name = "enable_external_validation",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
 
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"external_cert"},
-             type_<std::string>());
+    _.member({
+        .name = "external_cert",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"external_response"},
-             type_<std::string>(),
-             desc{"empty string for wait, 'Ok' or error message"});
+    _.member({
+        .name = "external_response",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+        .desc = "empty string for wait, 'Ok' or error message",
+    });
 });
 
 _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
 {
-    _.member(ini_and_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"clipboard_up"},
-             type_<bool>(),
-             desc{"Enable or disable the clipboard from client (client to server)."});
+    _.member({
+        .name = "clipboard_up",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(acl_to_proxy(no_reset_back_to_selector, L)),
+        .desc = "Enable or disable the clipboard from client (client to server).",
+    });
 
-    _.member(ini_and_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"clipboard_down"},
-             type_<bool>(),
-             desc{"Enable or disable the clipboard from server (server to client)."});
+    _.member({
+        .name = "clipboard_down",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(acl_to_proxy(no_reset_back_to_selector, L)),
+        .desc = "Enable or disable the clipboard from server (server to client).",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"encodings"},
-             type_<types::list<types::int_>>(),
-             desc{
-                "Sets the encoding types in which pixel data can be sent by the VNC server:\n"
-                "  0: Raw\n"
-                "  1: CopyRect\n"
-                "  2: RRE\n"
-                "  16: ZRLE\n"
-                "  -239 (0xFFFFFF11): Cursor pseudo-encoding"
-             });
+    _.member({
+        .name = "encodings",
+        .value = value<types::list<types::int_>>(),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "Sets the encoding types in which pixel data can be sent by the VNC server:\n"
+            "  0: Raw\n"
+            "  1: CopyRect\n"
+            "  2: RRE\n"
+            "  16: ZRLE\n"
+            "  -239 (0xFFFFFF11): Cursor pseudo-encoding"
+    });
 
-    _.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{
-                .all="server_clipboard_encoding_type",
-                .sesman="vnc_server_clipboard_encoding_type"
-             },
-             type_<ClipboardEncodingType>(), spec::type_<std::string>(),
-             set(ClipboardEncodingType::latin1),
-             desc{"VNC server clipboard data encoding type."});
+    _.member({
+        .name = names{
+            .all = "server_clipboard_encoding_type",
+            .acl = "vnc_server_clipboard_encoding_type"
+        },
+        .value = enum_as_string(ClipboardEncodingType::latin1),
+        .spec = spec::global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
+        .desc = "VNC server clipboard data encoding type.",
+    });
 
-    _.member(advanced_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{
-                .all="bogus_clipboard_infinite_loop",
-                .sesman="vnc_bogus_clipboard_infinite_loop"
-             },
-             type_<VncBogusClipboardInfiniteLoop>(),
-             set(VncBogusClipboardInfiniteLoop::delayed));
+    _.member({
+        .name = names{
+            .all = "bogus_clipboard_infinite_loop",
+            .acl = "vnc_bogus_clipboard_infinite_loop"
+        },
+        .value = from_enum(VncBogusClipboardInfiniteLoop::delayed),
+        .spec = spec::global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
+    });
 
-    _.member(hidden_in_gui, vnc_connpolicy, L,
-             names{"server_is_macos"},
-             type_<bool>(),
-             set(false));
+    _.member({
+        .name = "server_is_macos",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(vnc, L),
+    });
 
-    _.member(hidden_in_gui, vnc_connpolicy, L,
-             names{"server_unix_alt"},
-             type_<bool>(),
-             set(false),
-             desc{"When disabled, Ctrl + Alt becomes AltGr (Windows behavior)"});
+    _.member({
+        .name = "server_unix_alt",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(vnc, L),
+        .desc = "When disabled, Ctrl + Alt becomes AltGr (Windows behavior)",
+    });
 
-    _.member(hidden_in_gui, vnc_connpolicy, L,
-             names{"support_cursor_pseudo_encoding"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "support_cursor_pseudo_encoding",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(vnc, L),
+    });
 
-    _.member(hidden_in_gui, vnc_connpolicy, L,
-             names{"enable_ipv6"},
-             type_<bool>(),
-             set(true),
-             desc{"Enable target connection on ipv6" });
+    _.member({
+        .name = "enable_ipv6",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(vnc, L),
+        .desc = "Enable target connection on ipv6" ,
+    });
 });
 
 _.section(names{"vnc_over_ssh"}, [&]
 {
-    _.member(external, vnc_connpolicy, L,
-             names{"enable"},
-             type_<bool>(),
-             set(false));
-
-    _.member(external, vnc_connpolicy, L,
-             names{"ssh_port"},
-             type_<types::unsigned_>(),
-             set(22),
-             desc{"Port to be used for SSH tunneling"});
-
-    _.member(external, vnc_connpolicy, L,
-             names{"tunneling_credential_source"},
-             type_<VncTunnelingCredentialSource>(),
-             spec::type_<std::string>(),
-             set(VncTunnelingCredentialSource::scenario_account),
-             desc{
-                 "static_login: Static values provided in \"Ssh login\" & \"Ssh password\" fields will be used to establish the SSH tunnel.\n"
-                 "scenario_account: Scenario account provided in \"Scenario account name\" field will be used to establish the SSH tunnel. (Recommended)"
-             });
-
-    _.member(external, vnc_connpolicy, L,
-             names{"ssh_login"},
-             type_<std::string>(),
-             desc{"Login to be used for SSH tunneling."});
-
-    _.member(external, vnc_connpolicy, NL,
-             names{"ssh_password"},
-             type_<std::string>(),
-             desc{"Password to be used for SSH tunneling."});
-
-    _.member(external, vnc_connpolicy, L,
-             names{"scenario_account_name"},
-             type_<std::string>(),
-             desc{
-        "With the following syntax: \"account_name@domain_name[@[device_name]]\".\n"
-        "\n"
-        "Syntax for using global domain scenario account:\n"
-        "  \"account_name@global_domain_name\"\n"
-        "\n"
-        "Syntax for using local domain scenario account (with automatic device name deduction):\n"
-        "  \"account_name@local_domain_name@\""
+    _.member({
+        .name = "enable",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(vnc, L, spec::acl_only),
     });
 
-    _.member(external, vnc_connpolicy | advanced_in_connpolicy, L,
-             names{"tunneling_type"},
-             type_<VncTunnelingType>(),
-             spec::type_<std::string>(),
-             set(VncTunnelingType::pxssh), desc{"Only for debugging purposes."});
+    _.member({
+        .name = "ssh_port",
+        .value = value<types::unsigned_>(22),
+        .spec = spec::connpolicy(vnc, L, spec::acl_only),
+        .desc = "Port to be used for SSH tunneling",
+    });
+
+    _.member({
+        .name = "tunneling_credential_source",
+        .value = enum_as_string(VncTunnelingCredentialSource::scenario_account),
+        .spec = spec::connpolicy(vnc, L, spec::acl_only),
+        .desc =
+            "static_login: Static values provided in \"Ssh login\" & \"Ssh password\" fields will be used to establish the SSH tunnel.\n"
+            "scenario_account: Scenario account provided in \"Scenario account name\" field will be used to establish the SSH tunnel. (Recommended)"
+    });
+
+    _.member({
+        .name = "ssh_login",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(vnc, L, spec::acl_only),
+        .desc = "Login to be used for SSH tunneling.",
+    });
+
+    _.member({
+        .name = "ssh_password",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(vnc, NL, spec::acl_only),
+        .desc = "Password to be used for SSH tunneling.",
+    });
+
+    _.member({
+        .name = "scenario_account_name",
+        .value = value<std::string>(),
+        .spec = spec::connpolicy(vnc, L, spec::acl_only),
+        .desc =
+            "With the following syntax: \"account_name@domain_name[@[device_name]]\".\n"
+            "\n"
+            "Syntax for using global domain scenario account:\n"
+            "  \"account_name@global_domain_name\"\n"
+            "\n"
+            "Syntax for using local domain scenario account (with automatic device name deduction):\n"
+            "  \"account_name@local_domain_name@\""
+    });
+
+    _.member({
+        .name = "tunneling_type",
+        .value = enum_as_string(VncTunnelingType::pxssh),
+        .spec = spec::connpolicy(vnc, L, spec::acl_only | spec::advanced),
+        .desc = "Only for debugging purposes.",
+    });
 });
 
 _.section("file_verification", [&]
 {
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"socket_path"},
-             type_<std::string>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
+    _.member({
+        .name = "socket_path",
+        .value = value<std::string>(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
-             names{"enable_up"},
-             type_<bool>(),
-             desc{"Enable use of ICAP service for file verification on upload."});
+    _.member({
+        .name = "enable_up",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc = "Enable use of ICAP service for file verification on upload.",
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
-             names{"enable_down"},
-             type_<bool>(),
-             desc{"Enable use of ICAP service for file verification on download."});
+    _.member({
+        .name = "enable_down",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc = "Enable use of ICAP service for file verification on download.",
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
-             names{"clipboard_text_up"},
-             type_<bool>(),
-             desc{
-                "Verify text data via clipboard from client to server.\n"
-                "File verification on upload must be enabled via option Enable up."
-             });
+    _.member({
+        .name = "clipboard_text_up",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc =
+            "Verify text data via clipboard from client to server.\n"
+            "File verification on upload must be enabled via option Enable up."
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
-             names{"clipboard_text_down"},
-             type_<bool>(),
-             desc{
-                "Verify text data via clipboard from server to client\n"
-                "File verification on download must be enabled via option Enable down."
-             });
+    _.member({
+        .name = "clipboard_text_down",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc =
+            "Verify text data via clipboard from server to client\n"
+            "File verification on download must be enabled via option Enable down."
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
-             names{"block_invalid_file_up"},
-             type_<bool>(),
-             set(false),
-             desc{
-                "Block file transfer from client to server on invalid file verification.\n"
-                "File verification on upload must be enabled via option Enable up."
-             });
+    _.member({
+        .name = "block_invalid_file_up",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc =
+            "Block file transfer from client to server on invalid file verification.\n"
+            "File verification on upload must be enabled via option Enable up."
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
-             names{"block_invalid_file_down"},
-             type_<bool>(),
-             set(false),
-             desc{
-                "Block file transfer from server to client on invalid file verification.\n"
-                "File verification on download must be enabled via option Enable down."
-             });
+    _.member({
+        .name = "block_invalid_file_down",
+        .value = value<bool>(false),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc =
+            "Block file transfer from server to client on invalid file verification.\n"
+            "File verification on download must be enabled via option Enable down."
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"block_invalid_clipboard_text_up"},
-             type_<bool>(),
-             set(false),
-             desc{
-                "Block text transfer from client to server on invalid text verification.\n"
-                "Text verification on upload must be enabled via option Clipboard text up."
-             });
+    _.member({
+        .name = "block_invalid_clipboard_text_up",
+        .value = value<bool>(false),
+        .spec = spec::ini_only(no_acl),
+        .desc =
+            "Block text transfer from client to server on invalid text verification.\n"
+            "Text verification on upload must be enabled via option Clipboard text up."
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"block_invalid_clipboard_text_down"},
-             type_<bool>(),
-             set(false),
-             desc{
-                "Block text transfer from server to client on invalid text verification.\n"
-                "Text verification on download must be enabled via option Clipboard text down."
-             });
+    _.member({
+        .name = "block_invalid_clipboard_text_down",
+        .value = value<bool>(false),
+        .spec = spec::ini_only(no_acl),
+        .desc =
+            "Block text transfer from server to client on invalid text verification.\n"
+            "Text verification on download must be enabled via option Clipboard text down."
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"log_if_accepted"},
-             type_<bool>(),
-             set(true),
-             desc{"Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged."});
+    _.member({
+        .name = "log_if_accepted",
+        .value = value<bool>(true),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+        .desc = "Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged.",
+    });
 
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
-             names{"max_file_size_rejected"},
-             type_<types::u32>(),
-             set(256),
-             desc{
-                "⚠ This value affects the RAM used by the session.\n\n"
-                "If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize.\n\n"
-                "(in megabytes)"
-             });
+    _.member({
+        .name = "max_file_size_rejected",
+        .value = value<types::megabytes<types::u32>>(256),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+        .desc =
+            "⚠ This value affects the RAM used by the session.\n\n"
+            "If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize."
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"tmpdir"},
-             type_<types::dirpath>(),
-             set("/tmp/"),
-             desc{"Temporary path used when files take up too much memory."});
+    _.member({
+        .name = "tmpdir",
+        .value = value<types::dirpath>("/tmp/"),
+        .spec = spec::ini_only(no_acl),
+        .desc = "Temporary path used when files take up too much memory.",
+    });
 });
 
 _.section("file_storage", [&]
 {
-    _.member(hidden_in_gui, rdp_and_jh_connpolicy, L,
-             names{"store_file"},
-             type_<RdpStoreFile>(),
-             spec::type_<std::string>(),
-             set(RdpStoreFile::never),
-             desc{
-                "Enable storage of transferred files (via RDP Clipboard).\n"
-                "⚠ Saving files can take up a lot of disk space"
-             });
+    _.member({
+        .name = "store_file",
+        .value = enum_as_string(RdpStoreFile::never),
+        .spec = spec::connpolicy(rdp_and_jh, L),
+        .desc =
+            "Enable storage of transferred files (via RDP Clipboard).\n"
+            "⚠ Saving files can take up a lot of disk space"
+    });
 });
 
 // for validator only
@@ -1841,459 +2069,560 @@ for (char const* section_name : {"icap_server_down", "icap_server_up"}) {
     // please, update $REDEMPTION/tools/c++-analyzer/lua-checker/checkers/config.lua for each changement of value
     _.section(section_name, [&]
     {
-        _.member(external | ini_and_gui, no_sesman, L,
-                 names{"host"},
-                 type_<std::string>(),
-                 desc{"Ip or fqdn of ICAP server"});
+        _.member({
+            .name = "host",
+            .value = value<std::string>(),
+            .spec = spec::external(),
+            .desc = "Ip or fqdn of ICAP server",
+        });
 
-        _.member(external | ini_and_gui, no_sesman, L,
-                 names{"port"},
-                 type_<types::unsigned_>(),
-                 set(1344),
-                 desc{"Port of ICAP server"});
+        _.member({
+            .name = "port",
+            .value = value<types::unsigned_>(1344),
+            .spec = spec::external(),
+            .desc = "Port of ICAP server",
+        });
 
-        _.member(external | ini_and_gui, no_sesman, L,
-                 names{"service_name"},
-                 type_<std::string>(),
-                 set("avscan"),
-                 desc{"Service name on ICAP server"});
+        _.member({
+            .name = "service_name",
+            .value = value<std::string>("avscan"),
+            .spec = spec::external(),
+            .desc = "Service name on ICAP server",
+        });
 
-        _.member(external | ini_and_gui, no_sesman, L,
-                 names{"tls"},
-                 type_<bool>(),
-                 desc{"ICAP server uses tls"});
+        _.member({
+            .name = "tls",
+            .value = value<bool>(false),
+            .spec = spec::external(),
+            .desc = "ICAP server uses tls",
+        });
 
-        _.member(external | advanced_in_gui, no_sesman, L,
-                 names{"enable_x_context"},
-                 type_<bool>(),
-                 set(true),
-                 desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"});
+        _.member({
+            .name = "enable_x_context",
+            .value = value<bool>(true),
+            .spec = spec::external(spec::advanced),
+            .desc = "Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server",
+        });
 
-        _.member(external | advanced_in_gui, no_sesman, L,
-                 names{"filename_percent_encoding"},
-                 type_<bool>(),
-                 set(false),
-                 desc{"Filename sent to ICAP as percent encoding"});
+        _.member({
+            .name = "filename_percent_encoding",
+            .value = value<bool>(false),
+            .spec = spec::external(spec::advanced),
+            .desc = "Filename sent to ICAP as percent encoding",
+        });
     });
 }
 
 _.section("mod_replay", [&]
 {
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"replay_path"},
-             type_<types::dirpath>(),
-             set("/tmp/"));
+    _.member({
+        .name = "replay_path",
+        .value = value<types::dirpath>("/tmp/"),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"on_end_of_data"},
-             type_<bool>(),
-             set(false),
-             desc{"0 - Wait for Escape, 1 - End session"});
+    _.member({
+        .name = "on_end_of_data",
+        .value = value<bool>(false),
+        .spec = spec::ini_only(no_acl),
+        .desc = "0 - Wait for Escape, 1 - End session",
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"replay_on_loop"},
-             type_<bool>(),
-             set(false),
-             desc{"0 - replay once, 1 - loop replay"});
+    _.member({
+        .name = "replay_on_loop",
+        .value = value<bool>(false),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+        .desc = "0 - replay once, 1 - loop replay",
+    });
 });
 
 _.section("ocr", [&]
 {
-    _.member(ini_and_gui, no_sesman, L,
-             names{"version"},
-             type_<OcrVersion>(),
-             set(OcrVersion::v2));
+    _.member({
+        .name = "version",
+        .value = from_enum(OcrVersion::v2),
+        .spec = spec::global_spec(no_acl),
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"locale"},
-             type_<OcrLocale>(),
-             spec::type_<std::string>(),
-             set(OcrLocale::latin));
+    _.member({
+        .name = "locale",
+        .value = enum_as_string(OcrLocale::latin),
+        .spec = spec::global_spec(no_acl),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"interval"},
-             type_<std::chrono::duration<unsigned, std::centi>>(),
-             set(100),
-             desc{
-                 "Time interval between 2 analyzes.\n"
-                 "Too low a value will affect session reactivity."
-             });
+    _.member({
+        .name = "interval",
+        .value = value<std::chrono::duration<unsigned, std::centi>>(100),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "Time interval between 2 analyzes.\n"
+            "Too low a value will affect session reactivity."
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"on_title_bar_only"},
-             type_<bool>(),
-             set(true),
-             desc{"Checks shape and color to determine if the text is on a title bar"});
+    _.member({
+        .name = "on_title_bar_only",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Checks shape and color to determine if the text is on a title bar",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"max_unrecog_char_rate"},
-             type_<types::range<types::unsigned_, 0, 100>>(),
-             set(40),
-             desc{
-                 "Expressed in percentage,\n"
-                 "  0   - all of characters need be recognized\n"
-                 "  100 - accept all results"
-             });
+    _.member({
+        .name = "max_unrecog_char_rate",
+        .value = value<types::range<types::unsigned_, 0, 100>>(40),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "Expressed in percentage,\n"
+            "  0   - all of characters need be recognized\n"
+            "  100 - accept all results"
+    });
 });
 
 _.section("video", [&]
 {
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"capture_flags"},
-             type_<CaptureFlags>(),
-             set(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr));
+    _.member({
+        .name = "capture_flags",
+        .value = from_enum(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"png_interval"},
-             type_<std::chrono::duration<unsigned, std::deci>>(),
-             set(10),
-             desc{"Frame interval."});
+    _.member({
+        .name = "png_interval",
+        .value = value<std::chrono::duration<unsigned, std::deci>>(10),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Frame interval.",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"break_interval"},
-             type_<std::chrono::seconds>(),
-             set(600),
-             desc{"Time between 2 wrm movies."});
+    _.member({
+        .name = "break_interval",
+        .value = value<std::chrono::seconds>(600),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "Time between 2 wrm recording file.\n"
+            "⚠ A value that is too small increases the disk space required for recordings."
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"png_limit"},
-             type_<types::unsigned_>(),
-             set(5),
-             desc{"Number of png captures to keep."});
+    _.member({
+        .name = "png_limit",
+        .value = value<types::unsigned_>(5),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Number of png captures to keep.",
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"hash_path"},
-             type_<types::dirpath>(),
-             set(CPP_EXPR(app_path(AppPath::Hash))));
+    _.member({
+        .name = "hash_path",
+        .value = value<types::dirpath>(CPP_EXPR(app_path(AppPath::Hash))),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"record_tmp_path"},
-             type_<types::dirpath>(),
-             set(CPP_EXPR(app_path(AppPath::RecordTmp))));
+    _.member({
+        .name = "record_tmp_path",
+        .value = value<types::dirpath>(CPP_EXPR(app_path(AppPath::RecordTmp))),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"record_path"},
-             type_<types::dirpath>(),
-             set(CPP_EXPR(app_path(AppPath::Record))));
+    _.member({
+        .name = "record_path",
+        .value = value<types::dirpath>(CPP_EXPR(app_path(AppPath::Record))),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"disable_keyboard_log"},
-             type_<KeyboardLogFlags>(),
-             set(KeyboardLogFlags::syslog),
-             desc{
-                "Disable keyboard log:\n"
-                "(Please see also \"Keyboard input masking level\" in \"session_log\".)"
-             });
+    _.member({
+        .name = "disable_keyboard_log",
+        .value = from_enum(KeyboardLogFlags::syslog),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "Disable keyboard log:\n"
+            "(Please see also \"Keyboard input masking level\" in \"session_log\".)"
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"disable_clipboard_log"},
-             type_<ClipboardLogFlags>(),
-             set(ClipboardLogFlags::syslog),
-             desc{"Disable clipboard log:"});
+    _.member({
+        .name = "disable_clipboard_log",
+        .value = from_enum(ClipboardLogFlags::syslog),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Disable clipboard log:",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"disable_file_system_log"},
-             type_<FileSystemLogFlags>(),
-             set(FileSystemLogFlags::syslog),
-             desc{"Disable (redirected) file system log:"});
+    _.member({
+        .name = "disable_file_system_log",
+        .value = from_enum(FileSystemLogFlags::syslog),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Disable (redirected) file system log:",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"wrm_color_depth_selection_strategy"},
-             type_<ColorDepthSelectionStrategy>(),
-             set(ColorDepthSelectionStrategy::depth16));
+    _.member({
+        .name = "wrm_color_depth_selection_strategy",
+        .value = from_enum(ColorDepthSelectionStrategy::depth16),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"wrm_compression_algorithm"},
-             type_<WrmCompressionAlgorithm>(),
-             set(WrmCompressionAlgorithm::gzip));
+    _.member({
+        .name = "wrm_compression_algorithm",
+        .value = from_enum(WrmCompressionAlgorithm::gzip),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"codec_id"},
-             type_<std::string>(),
-             set("mp4"));
+    _.member({
+        .name = "codec_id",
+        .value = value<std::string>("mp4"),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{
-                .all="framerate",
-                .display="Frame rate"
-             },
-             type_<types::range<types::unsigned_, 1, 120>>(),
-             set(5));
+    _.member({
+        .name = names{
+            .all = "framerate",
+            .display = "Frame rate"
+        },
+        .value = value<types::range<types::unsigned_, 1, 120>>(5),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "Maximum number of images per second for video generation.\n"
+            "A higher value will produce smoother videos, but the file weight is higher and the generation time longer."
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"ffmpeg_options"},
-             type_<std::string>(),
-             set("crf=35 preset=superfast"),
-             desc{
-                 "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
-                 "⚠ Some browsers and video decoders don't support crf=0"
-             });
+    _.member({
+        .name = "ffmpeg_options",
+        .value = value<std::string>("crf=35 preset=superfast"),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
+            "⚠ Some browsers and video decoders don't support crf=0"
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"notimestamp"},
-             type_<bool>(),
-             set(false),
-             desc{"Remove the top left banner that adds the date of the video"});
+    _.member({
+        .name = "notimestamp",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Remove the top left banner that adds the date of the video",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"smart_video_cropping"},
-             type_<SmartVideoCropping>(),
-             set(SmartVideoCropping::v2));
+    _.member({
+        .name = "smart_video_cropping",
+        .value = from_enum(SmartVideoCropping::v2),
+        .spec = spec::global_spec(no_acl),
+    });
 
     // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"play_video_with_corrupted_bitmap"},
-             type_<bool>(),
-             set(false),
-             desc{"Needed to play a video with corrupted Bitmap Update."});
+    _.member({
+        .name = "play_video_with_corrupted_bitmap",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Needed to play a video with corrupted Bitmap Update.",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"allow_rt_without_recording"},
-             type_<bool>(),
-             set(false),
-             desc{"Allow real-time view (4 eyes) without session recording enabled in the authorization"});
+    _.member({
+        .name = "allow_rt_without_recording",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Allow real-time view (4 eyes) without session recording enabled in the authorization",
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"file_permissions"},
-             type_<FilePermissions>(),
-             set(0440),
-             desc{"Allow to control permissions on recorded files with octal number"});
+    _.member({
+        .name = "file_permissions",
+        .value = value<FilePermissions>(0440),
+        .spec = spec::ini_only(no_acl),
+        .desc = "Allow to control permissions on recorded files",
+    });
 });
 
 _.section("capture", [&]
 {
-    auto co_video = connpolicy::section{"video"};
+    _.member({
+        .name = "record_filebase",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+        .desc = "basename without extension",
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"record_filebase"},
-             type_<std::string>(),
-             desc{"basename without extension"});
+    _.member({
+        .name = "record_subdirectory",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+        .desc = "subdirectory of record_path (video section)",
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"record_subdirectory"},
-             type_<std::string>(),
-             desc{"subdirectory of record_path (video section)"});
+    _.member({
+        .name = "fdx_path",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
 
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"fdx_path"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, co_video, L,
-             names{"disable_keyboard_log"},
-             type_<KeyboardLogFlagsCP>(),
-             set(KeyboardLogFlagsCP::syslog),
-             desc{
-                "Disable keyboard log:\n"
-                "(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
-             });
+    _.member({
+        .name = "disable_keyboard_log",
+        .connpolicy_section = "video",
+        .value = from_enum(KeyboardLogFlagsCP::syslog),
+        .spec = spec::connpolicy(rdp_and_jh, L, spec::advanced),
+        .desc =
+            "Disable keyboard log:\n"
+            "(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
+    });
 });
 
 _.section("audit", [&]
 {
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"rt_display"},
-             type_<bool>(),
-             set(false));
+    _.member({
+        .name = "rt_display",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"use_redis"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "use_redis",
+        .value = value<bool>(true),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"redis_timeout"},
-             type_<std::chrono::milliseconds>(),
-             set(500));
+    _.member({
+        .name = "redis_timeout",
+        .value = value<std::chrono::milliseconds>(500),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"redis_address"},
-             type_<std::string>());
+    _.member({
+        .name = "redis_address",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"redis_port"},
-             type_<types::unsigned_>());
+    _.member({
+        .name = "redis_port",
+        .value = value<types::unsigned_>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"redis_password"},
-             type_<std::string>());
+    _.member({
+        .name = "redis_password",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, NL),
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"redis_db"},
-             type_<types::unsigned_>());
+    _.member({
+        .name = "redis_db",
+        .value = value<types::unsigned_>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"redis_use_tls"},
-             type_<bool>());
+    _.member({
+        .name = "redis_use_tls",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"redis_tls_cacert"},
-             type_<std::string>());
+    _.member({
+        .name = "redis_tls_cacert",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"redis_tls_cert"},
-             type_<std::string>());
+    _.member({
+        .name = "redis_tls_cert",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
 
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"redis_tls_key"},
-             type_<std::string>());
+    _.member({
+        .name = "redis_tls_key",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
 });
 
 _.section("crypto", [&]
 {
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, NL,
-             names{"encryption_key"},
-             type_<types::fixed_binary<32>>(),
-             set(default_key));
+    _.member({
+        .name = "encryption_key",
+        .value = value<types::fixed_binary<32>>(default_key),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, NL)),
+    });
 
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, NL,
-             names{"sign_key"},
-             type_<types::fixed_binary<32>>(),
-             set(default_key));
+    _.member({
+        .name = "sign_key",
+        .value = value<types::fixed_binary<32>>(default_key),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, NL)),
+    });
 });
 
 _.section("websocket", [&]
 {
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"enable_websocket"},
-             type_<bool>(),
-             set(false),
-             desc{"Enable websocket protocol (ws or wss with use_tls=1)"});
+    _.member({
+        .name = "enable_websocket",
+        .value = value<bool>(false),
+        .spec = spec::ini_only(no_acl),
+        .desc = "Enable websocket protocol (ws or wss with use_tls=1)",
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"use_tls"},
-             type_<bool>(),
-             set(true),
-             desc{"Use TLS with websocket (wss)"});
+    _.member({
+        .name = "use_tls",
+        .value = value<bool>(true),
+        .spec = spec::ini_only(no_acl),
+        .desc = "Use TLS with websocket (wss)",
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"listen_address"},
-             type_<std::string>(),
-             set(":3390"),
-             desc{"${addr}:${port} or ${port} or ${unix_socket_path}"});
+    _.member({
+        .name = "listen_address",
+        .value = value<std::string>(":3390"),
+        .spec = spec::ini_only(no_acl),
+        .desc = "${addr}:${port} or ${port} or ${unix_socket_path}",
+    });
 });
 
 _.section("debug", [&]
 {
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"fake_target_ip"},
-             type_<std::string>());
+    _.member({
+        .name = "fake_target_ip",
+        .value = value<std::string>(),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"capture"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_CAPTURE});
+    _.member({
+        .name = "capture",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_CAPTURE,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"auth"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_AUTH});
+    _.member({
+        .name = "auth",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_AUTH,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"session"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_SESSION});
+    _.member({
+        .name = "session",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_SESSION,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"front"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_FRONT});
+    _.member({
+        .name = "front",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_FRONT,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"mod_rdp"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_RDP});
+    _.member({
+        .name = "mod_rdp",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_RDP,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"mod_vnc"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_VNC});
+    _.member({
+        .name = "mod_vnc",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_VNC,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"mod_internal"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_MOD_INTERNAL});
+    _.member({
+        .name = "mod_internal",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_MOD_INTERNAL,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"sck_mod"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_SCK});
+    _.member({
+        .name = "sck_mod",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_SCK,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"sck_front"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_SCK});
+    _.member({
+        .name = "sck_front",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_SCK,
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"password"},
-             type_<types::u32>());
+    _.member({
+        .name = "password",
+        .value = value<types::u32>(),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"compression"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_COMPRESSION});
+    _.member({
+        .name = "compression",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_COMPRESSION,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"cache"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_CACHE});
+    _.member({
+        .name = "cache",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_CACHE,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"ocr"},
-             type_<types::u32>(),
-             desc{CONFIG_DESC_OCR});
+    _.member({
+        .name = "ocr",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = CONFIG_DESC_OCR,
+    });
 
-    _.member(advanced_in_gui | hex_in_gui, no_sesman, L,
-             names{"ffmpeg"},
-             type_<types::u32>(),
-             desc{"avlog level"});
+    _.member({
+        .name = "ffmpeg",
+        .value = value<types::u32>(),
+        .spec = spec::global_spec(no_acl, spec::advanced | spec::hex),
+        .desc = "Value passed to function av_log_set_level()\nSee https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html",
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"config"},
-             type_<types::unsigned_>(),
-             spec::type_<bool>(),
-             set(2));
+    _.member({
+        .name = "config",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Log unknown members or sections",
+    });
 
-    _.member(hidden_in_gui, no_sesman, L,
-             names{"mod_rdp_use_failure_simulation_socket_transport"},
-             type_<ModRdpUseFailureSimulationSocketTransport>(),
-             set(ModRdpUseFailureSimulationSocketTransport::Off));
+    _.member({
+        .name = "mod_rdp_use_failure_simulation_socket_transport",
+        .value = from_enum(ModRdpUseFailureSimulationSocketTransport::Off),
+        .spec = spec::ini_only(no_acl),
+    });
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"probe_client_addresses"},
-             type_<types::list<std::string>>(),
-             desc{"List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs"});
+    _.member({
+        .name = "probe_client_addresses",
+        .value = value<types::list<std::string>>(),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs",
+    });
 });
 
 _.section("remote_program", [&]
 {
-    _.member(ini_and_gui, no_sesman, L,
-             names{"allow_resize_hosted_desktop"},
-             type_<bool>(),
-             set(true));
+    _.member({
+        .name = "allow_resize_hosted_desktop",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl),
+    });
 });
 
 _.section("translation", [&]
 {
-    _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"language"},
-             type_<Language>{},
-             spec::type_<std::string>(),
-             set(Language::en));
+    _.member({
+        .name = "language",
+        .value = enum_as_string(Language::en),
+        .spec = spec::ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+    });
 
-    _.member(advanced_in_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"login_language"},
-             type_<LoginLanguage>(),
-             spec::type_<std::string>(),
-             set(LoginLanguage::Auto));
+    _.member({
+        .name = "login_language",
+        .value = enum_as_string(LoginLanguage::Auto),
+        .spec = spec::global_spec(proxy_to_acl(no_reset_back_to_selector), spec::advanced),
+    });
 });
 
 _.section("internal_mod", [&]
 {
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"enable_target_field"},
-             type_<bool>(),
-             set(true),
-             desc{"Enable target edit field in login page."});
+    _.member({
+        .name = "enable_target_field",
+        .value = value<bool>(true),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc = "Enable target edit field in login page.",
+    });
 
     // to_string()
     std::string keyboard_layout_proposals_desc;
@@ -2305,592 +2634,779 @@ _.section("internal_mod", [&]
         keyboard_layout_proposals_desc.resize(keyboard_layout_proposals_desc.size() - 2);
     }
 
-    _.member(advanced_in_gui, no_sesman, L,
-             names{"keyboard_layout_proposals"},
-             type_<types::list<std::string>>(),
-             set("en-US, fr-FR, de-DE, ru-RU"),
-             desc{
-                 "List of keyboard layouts available by the internal pages button located at bottom left of some internal pages (login, selector, etc).\n"
-                 "Possible values: " + keyboard_layout_proposals_desc
-             });
+    _.member({
+        .name = "keyboard_layout_proposals",
+        .value = value<types::list<std::string>>("en-US, fr-FR, de-DE, ru-RU"),
+        .spec = spec::global_spec(no_acl, spec::advanced),
+        .desc =
+            "List of keyboard layouts available by the internal pages button located at bottom left of some internal pages (login, selector, etc).\n"
+            "Possible values: " + keyboard_layout_proposals_desc
+    });
 });
 
 _.section("context", [&]
 {
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"psid"},
-             type_<std::string>(),
-             desc{"Proxy session log id"});
+    _.member({
+        .name = "psid",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+        .desc = "Proxy session log id",
+    });
 
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{
-                .all="opt_bpp",
-                .sesman="bpp"
-             },
-             type_<ColorDepth>(),
-             set(ColorDepth::depth24));
+    _.member({
+        .name = names{
+            .all = "opt_bpp",
+            .acl = "bpp"
+        },
+        .value = from_enum(ColorDepth::depth24),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
 
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{
-                .all="opt_height",
-                .sesman="height"
-             },
-             type_<types::u16>(),
-             set(600));
+    _.member({
+        .name = names{
+            .all = "opt_height",
+            .acl = "height"
+        },
+        .value = value<types::u16>(600),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
 
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{
-                .all="opt_width",
-                .sesman="width"
-             },
-             type_<types::u16>(),
-             set(800));
+    _.member({
+        .name = names{
+            .all = "opt_width",
+            .acl = "width"
+        },
+        .value = value<types::u16>(800),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
 
     // auth_error_message is left as std::string type because SocketTransport and ReplayMod
     // take it as argument on constructor and modify it as a std::string
-    _.member(no_ini_no_gui, no_sesman, L,
-             names{"auth_error_message"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"selector"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L,
-             names{"selector_current_page"},
-             type_<types::unsigned_>(),
-             set(1));
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"selector_device_filter"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"selector_group_filter"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"selector_proto_filter"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L,
-             names{"selector_lines_per_page"},
-             type_<types::unsigned_>(),
-             set(0));
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"selector_number_of_pages"},
-             type_<types::unsigned_>(),
-             set(1));
-
-    _.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, NL,
-             names{"target_password"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L,
-             names{"target_host"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"tunneling_target_host"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"target_str"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"target_service"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"target_port"},
-             type_<types::unsigned_>(),
-             set(3389));
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{
-                .all="target_protocol",
-                .sesman="proto_dest"
-             },
-             type_<std::string>(),
-             set("RDP"));
-
-    _.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, NL,
-             names{"password"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"reporting"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, VNL,
-             names{"auth_channel_answer"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"auth_channel_target"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"message"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"display_link"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"mod_timeout"},
-             type_<std::chrono::seconds>(),
-             set(0));
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"accept_message"},
-             type_<bool>());
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"display_message"},
-             type_<bool>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"rejected"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"keepalive"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"session_id"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{
-                .all="end_date_cnx",
-                .sesman="timeclose"
-             },
-             type_<std::chrono::seconds>(),
-             set(0));
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"real_target_device"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"authentication_challenge"},
-             type_<bool>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"ticket"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"comment"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"duration"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"duration_max"},
-             type_<std::chrono::minutes>(),
-             set(0));
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"waitinforeturn"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"showform"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"formflag"},
-             type_<types::unsigned_>(),
-             set(0));
-
-    _.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L,
-             names{"module"},
-             type_<ModuleName>(),
-             spec::type_<std::string>(),
-             set(ModuleName::login));
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"try_alternate_target"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"has_more_target"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             type_<std::string>(),
-             names{"proxy_opt"});
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"pattern_kill"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"pattern_notify"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"opt_message"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"login_message"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"disconnect_reason"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"disconnect_reason_ack"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, no_sesman, L,
-             names{"ip_target"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"recording_started"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L,
-             names{"rt_ready"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"sharing_ready"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"auth_command"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"auth_notify"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"auth_notify_rail_exec_flags"},
-             type_<types::unsigned_>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"auth_notify_rail_exec_exe_or_file"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"auth_command_rail_exec_exec_result"},
-             type_<types::u16>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"auth_command_rail_exec_flags"},
-             type_<types::u16>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"auth_command_rail_exec_original_exe_or_file"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"auth_command_rail_exec_exe_or_file"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"auth_command_rail_exec_working_dir"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"auth_command_rail_exec_arguments"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"auth_command_rail_exec_account"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, NL,
-             names{"auth_command_rail_exec_password"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"session_probe_launch_error_message"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, no_sesman, L,
-             names{"close_box_extra_message"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"is_wabam"},
-             type_<bool>(),
-             set(false));
-
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"pm_response"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"pm_request"},
-             type_<std::string>());
-
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"native_session_id"},
-             type_<types::u32>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"rd_shadow_available"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, sesman_rw, reset_back_to_selector, L,
-             names{"rd_shadow_userdata"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"rd_shadow_type"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"rd_shadow_invitation_error_code"},
-             type_<types::u32>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"rd_shadow_invitation_error_message"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"rd_shadow_invitation_id"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"rd_shadow_invitation_addr"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"rd_shadow_invitation_port"},
-             type_<types::u16>());
-
-    _.member(no_ini_no_gui, sesman_rw, no_reset_back_to_selector, L,
-             names{"session_sharing_userdata"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"session_sharing_enable_control"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"session_sharing_ttl"},
-             type_<std::chrono::seconds>(),
-             set(60*10));
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"session_sharing_invitation_error_code"},
-             type_<types::u32>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"session_sharing_invitation_error_message"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, NL,
-             names{"session_sharing_invitation_id"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"session_sharing_invitation_addr"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"session_sharing_target_ip"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, proxy_to_sesman, no_reset_back_to_selector, L,
-             names{"session_sharing_target_login"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, no_sesman, L,
-             names{"rail_module_host_mod_is_active"},
-             type_<bool>(),
-             set(false));
-
-    _.member(no_ini_no_gui, proxy_to_sesman, reset_back_to_selector, L,
-             names{"smartcard_login"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"banner_message"},
-             type_<std::string>());
-
-    _.member(no_ini_no_gui, sesman_to_proxy, reset_back_to_selector, L,
-             names{"banner_type"},
-             type_<BannerType>());
-
-    _.member(no_ini_no_gui, no_sesman, L,
-             names{"redirection_password_or_cookie"},
-             type_<std::vector<uint8_t>>());
+    _.member({
+        .name = "auth_error_message",
+        .value = value<std::string>(),
+        .spec = no_acl,
+    });
+
+    _.member({
+        .name = "selector",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "selector_current_page",
+        .value = value<types::unsigned_>(1),
+        .spec = acl_rw(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "selector_device_filter",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "selector_group_filter",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "selector_proto_filter",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "selector_lines_per_page",
+        .value = value<types::unsigned_>(0),
+        .spec = acl_rw(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "selector_number_of_pages",
+        .value = value<types::unsigned_>(1),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "target_password",
+        .value = value<std::string>(),
+        .spec = acl_rw(reset_back_to_selector, NL),
+    });
+
+    _.member({
+        .name = "target_host",
+        .value = value<std::string>(),
+        .spec = acl_rw(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "tunneling_target_host",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "target_str",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "target_service",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "target_port",
+        .value = value<types::unsigned_>(3389),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = names{
+            .all = "target_protocol",
+            .acl = "proto_dest",
+        },
+        .value = value<std::string>("RDP"),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "password",
+        .value = value<std::string>(),
+        .spec = acl_rw(no_reset_back_to_selector, NL),
+    });
+
+    _.member({
+        .name = "reporting",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "auth_channel_answer",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, VNL),
+    });
+
+    _.member({
+        .name = "auth_channel_target",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "message",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "display_link",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "mod_timeout",
+        .value = value<std::chrono::seconds>(0),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "accept_message",
+        .value = value<bool>(false),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "display_message",
+        .value = value<bool>(false),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "rejected",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "keepalive",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "session_id",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = names{
+            .all = "end_date_cnx",
+            .acl = "timeclose"
+        },
+        .value = value<std::chrono::seconds>(0),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "real_target_device",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "authentication_challenge",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "ticket",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "comment",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "duration",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "duration_max",
+        .value = value<std::chrono::minutes>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "waitinforeturn",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "showform",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "formflag",
+        .value = value<types::unsigned_>(0),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "module",
+        .value = enum_as_string(ModuleName::login),
+        .spec = acl_rw(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "try_alternate_target",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "has_more_target",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "proxy_opt",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "pattern_kill",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "pattern_notify",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "opt_message",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "login_message",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "disconnect_reason",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "disconnect_reason_ack",
+        .value = value<bool>(false),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "ip_target",
+        .value = value<std::string>(),
+        .spec = no_acl,
+    });
+
+    _.member({
+        .name = "recording_started",
+        .value = value<bool>(false),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "rt_ready",
+        .value = value<bool>(false),
+        .spec = acl_rw(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "sharing_ready",
+        .value = value<bool>(false),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "auth_command",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "auth_notify",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "auth_notify_rail_exec_flags",
+        .value = value<types::unsigned_>(0),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "auth_notify_rail_exec_exe_or_file",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "auth_command_rail_exec_exec_result",
+        .value = value<types::u16>(0),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "auth_command_rail_exec_flags",
+        .value = value<types::u16>(0),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "auth_command_rail_exec_original_exe_or_file",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "auth_command_rail_exec_exe_or_file",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "auth_command_rail_exec_working_dir",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "auth_command_rail_exec_arguments",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "auth_command_rail_exec_account",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "auth_command_rail_exec_password",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, NL),
+    });
+
+    _.member({
+        .name = "session_probe_launch_error_message",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "close_box_extra_message",
+        .value = value<std::string>(),
+        .spec = no_acl,
+    });
+
+    _.member({
+        .name = "is_wabam",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+
+    _.member({
+        .name = "pm_response",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "pm_request",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+
+    _.member({
+        .name = "native_session_id",
+        .value = value<types::u32>(0),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "rd_shadow_available",
+        .value = value<bool>(false),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "rd_shadow_userdata",
+        .value = value<std::string>(),
+        .spec = acl_rw(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "rd_shadow_type",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "rd_shadow_invitation_error_code",
+        .value = value<types::u32>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "rd_shadow_invitation_error_message",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "rd_shadow_invitation_id",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "rd_shadow_invitation_addr",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "rd_shadow_invitation_port",
+        .value = value<types::u16>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "session_sharing_userdata",
+        .value = value<std::string>(),
+        .spec = acl_rw(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "session_sharing_enable_control",
+        .value = value<bool>(false),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "session_sharing_ttl",
+        .value = value<std::chrono::seconds>(600),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "session_sharing_invitation_error_code",
+        .value = value<types::u32>(0),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "session_sharing_invitation_error_message",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "session_sharing_invitation_id",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "session_sharing_invitation_addr",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "session_sharing_target_ip",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "session_sharing_target_login",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "rail_module_host_mod_is_active",
+        .value = value<bool>(false),
+        .spec = no_acl,
+    });
+
+    _.member({
+        .name = "smartcard_login",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(reset_back_to_selector),
+    });
+
+    _.member({
+        .name = "banner_message",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "banner_type",
+        .value = from_enum(BannerType::info),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member({
+        .name = "redirection_password_or_cookie",
+        .value = value<std::vector<uint8_t>>(),
+        .spec = no_acl,
+    });
 });
 
 _.section("theme", [&]
 {
-    _.member(ini_and_gui, no_sesman, L,
-             names{"enable_theme"},
-             type_<bool>(),
-             set(false),
-             desc{"Enable custom theme color configuration"});
+    _.member({
+        .name = "enable_theme",
+        .value = value<bool>(false),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Enable custom theme color configuration",
+    });
 
-    _.member(image_in_gui, no_sesman, L,
-             names{
-                .all="logo_path",
-                .ini="logo"
-             },
-             type_<std::string>(),
-             set(CPP_EXPR(REDEMPTION_CONFIG_THEME_LOGO)),
-             desc{"Logo displayed when theme is enabled"});
+    _.member({
+        .name = names{
+            .all = "logo_path",
+            .ini = "logo",
+        },
+        .value = value<std::string>(CPP_EXPR(REDEMPTION_CONFIG_THEME_LOGO)),
+        .spec = spec::global_spec(no_acl, spec::image("/var/wab/images/rdp-oem-logo.png")),
+        .desc = "Logo displayed when theme is enabled",
+    });
 
+    // TODO remove that
     auto to_rgb = [](NamedBGRColor color){
         return BGRColor(BGRasRGBColor(color)).as_u32();
     };
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"bgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(DARK_BLUE_BIS)),
-             desc{"Background color for window, label and button"});
+    _.member({
+        .name = "bgcolor",
+        .value = value<types::rgb>(to_rgb(DARK_BLUE_BIS)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Background color for window, label and button",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"fgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(WHITE)),
-             desc{"Foreground color for window, label and button"});
+    _.member({
+        .name = "fgcolor",
+        .value = value<types::rgb>(to_rgb(WHITE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Foreground color for window, label and button",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"separator_color"},
-             type_<types::rgb>(),
-             set(to_rgb(LIGHT_BLUE)),
-             desc{"Separator line color used with some widgets"});
+    _.member({
+        .name = "separator_color",
+        .value = value<types::rgb>(to_rgb(LIGHT_BLUE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Separator line color used with some widgets",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"focus_color"},
-             type_<types::rgb>(),
-             set(to_rgb(WINBLUE)),
-             desc{"Background color used by buttons when they have focus"});
+    _.member({
+        .name = "focus_color",
+        .value = value<types::rgb>(to_rgb(WINBLUE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Background color used by buttons when they have focus",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"error_color"},
-             type_<types::rgb>(),
-             set(to_rgb(YELLOW)),
-             desc{"Text color for error messages. For example, an authentication error in the login"});
+    _.member({
+        .name = "error_color",
+        .value = value<types::rgb>(to_rgb(YELLOW)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Text color for error messages. For example, an authentication error in the login",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"edit_bgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(WHITE)),
-             desc{"Background color for editing field"});
+    _.member({
+        .name = "edit_bgcolor",
+        .value = value<types::rgb>(to_rgb(WHITE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Background color for editing field",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"edit_fgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(BLACK)),
-             desc{"Foreground color for editing field"});
+    _.member({
+        .name = "edit_fgcolor",
+        .value = value<types::rgb>(to_rgb(BLACK)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Foreground color for editing field",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"edit_focus_color"},
-             type_<types::rgb>(),
-             set(to_rgb(WINBLUE)),
-             desc{"Outline color for editing field that has focus"});
+    _.member({
+        .name = "edit_focus_color",
+        .value = value<types::rgb>(to_rgb(WINBLUE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Outline color for editing field that has focus",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"tooltip_bgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(BLACK)),
-             desc{"Background color for tooltip"});
+    _.member({
+        .name = "tooltip_bgcolor",
+        .value = value<types::rgb>(to_rgb(BLACK)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Background color for tooltip",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"tooltip_fgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(LIGHT_YELLOW)),
-             desc{"Foreground color for tooltip"});
+    _.member({
+        .name = "tooltip_fgcolor",
+        .value = value<types::rgb>(to_rgb(LIGHT_YELLOW)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Foreground color for tooltip",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"tooltip_border_color"},
-             type_<types::rgb>(),
-             set(to_rgb(BLACK)),
-             desc{"Border color for tooltip"});
+    _.member({
+        .name = "tooltip_border_color",
+        .value = value<types::rgb>(to_rgb(BLACK)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Border color for tooltip",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_line1_bgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(PALE_BLUE)),
-             desc{"Background color for even rows in the selector widget"});
+    _.member({
+        .name = "selector_line1_bgcolor",
+        .value = value<types::rgb>(to_rgb(PALE_BLUE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Background color for even rows in the selector widget",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_line1_fgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(BLACK)),
-             desc{"Foreground color for even rows in the selector widget"});
+    _.member({
+        .name = "selector_line1_fgcolor",
+        .value = value<types::rgb>(to_rgb(BLACK)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Foreground color for even rows in the selector widget",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_line2_bgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(LIGHT_BLUE)),
-             desc{"Background color for odd rows in the selector widget"});
+    _.member({
+        .name = "selector_line2_bgcolor",
+        .value = value<types::rgb>(to_rgb(LIGHT_BLUE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Background color for odd rows in the selector widget",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_line2_fgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(BLACK)),
-             desc{"Foreground color for odd rows in the selector widget"});
+    _.member({
+        .name = "selector_line2_fgcolor",
+        .value = value<types::rgb>(to_rgb(BLACK)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Foreground color for odd rows in the selector widget",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_focus_bgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(WINBLUE)),
-             desc{"Background color for the row that has focus in the selector widget"});
+    _.member({
+        .name = "selector_focus_bgcolor",
+        .value = value<types::rgb>(to_rgb(WINBLUE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Background color for the row that has focus in the selector widget",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_focus_fgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(WHITE)),
-             desc{"Foreground color for the row that has focus in the selector widget"});
+    _.member({
+        .name = "selector_focus_fgcolor",
+        .value = value<types::rgb>(to_rgb(WHITE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Foreground color for the row that has focus in the selector widget",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_selected_bgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(MEDIUM_BLUE)),
-             desc{"Background color for the row that is selected in the selector widget but does not have focus"});
+    _.member({
+        .name = "selector_selected_bgcolor",
+        .value = value<types::rgb>(to_rgb(MEDIUM_BLUE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Background color for the row that is selected in the selector widget but does not have focus",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_selected_fgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(WHITE)),
-             desc{"Foreground color for the row that is selected in the selector widget but does not have focus"});
+    _.member({
+        .name = "selector_selected_fgcolor",
+        .value = value<types::rgb>(to_rgb(WHITE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Foreground color for the row that is selected in the selector widget but does not have focus",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_label_bgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(MEDIUM_BLUE)),
-             desc{"Background color for name of filter fields in the selector widget"});
+    _.member({
+        .name = "selector_label_bgcolor",
+        .value = value<types::rgb>(to_rgb(MEDIUM_BLUE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Background color for name of filter fields in the selector widget",
+    });
 
-    _.member(ini_and_gui, no_sesman, L,
-             names{"selector_label_fgcolor"},
-             type_<types::rgb>(),
-             set(to_rgb(WHITE)),
-             desc{"Foreground color for name of filter fields in the selector widget"});
+    _.member({
+        .name = "selector_label_fgcolor",
+        .value = value<types::rgb>(to_rgb(WHITE)),
+        .spec = spec::global_spec(no_acl),
+        .desc = "Foreground color for name of filter fields in the selector widget",
+    });
 });
 
 REDEMPTION_DIAGNOSTIC_POP()

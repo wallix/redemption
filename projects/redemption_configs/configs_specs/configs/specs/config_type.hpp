@@ -51,7 +51,7 @@ inline void config_type_definition(type_enumerations & e)
     e.enumeration_flags("CaptureFlags", "Specifies the type of data to be captured:")
       .value("none")
       .value("png")
-      .value("wrm")
+      .value("wrm", "wrm: Session recording file. Also know as native video capture.")
       .value("video").exclude()
       .value("ocr")
     ;
@@ -103,10 +103,10 @@ inline void config_type_definition(type_enumerations & e)
 
     e.enumeration_set("ColorDepth", "Specifies the maximum color resolution (color depth) for client session:")
       .value("depth8", 8, "8-bit")
-      .value("depth15", 15, "15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)")
-      .value("depth16", 16, "16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)")
-      .value("depth24", 24, "24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)")
-      .value("depth32", 32, "32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)")
+      .value("depth15", 15, "15-bit 555 RGB mask")
+      .value("depth16", 16, "16-bit 565 RGB mask")
+      .value("depth24", 24, "24-bit RGB mask")
+      .value("depth32", 32, "32-bit RGB mask (24-bit RGB + alpha)")
     ;
 
     e.enumeration_flags("ServerNotification")
@@ -153,10 +153,10 @@ inline void config_type_definition(type_enumerations & e)
       .value("depth16", "16-bit")
     ;
 
-    e.enumeration_list("WrmCompressionAlgorithm", "The compression method of native video capture:")
+    e.enumeration_list("WrmCompressionAlgorithm", "The compression method of wrm recording file:")
       .value("no_compression")
-      .value("gzip")
-      .value("snappy")
+      .value("gzip", "GZip: Files are better compressed, but this takes more time and CPU load")
+      .value("snappy", "Snappy: Faster than GZip, but files are less compressed")
     ;
 
     e.enumeration_list("RdpCompression", "Specifies the highest compression package support available on the front side")
@@ -173,8 +173,8 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("OcrLocale")
-      .value("latin")
-      .value("cyrillic")
+      .value("latin", "Recognizes Latin characters")
+      .value("cyrillic", "Recognizes Latin and Cyrillic characters")
     ;
 
     e.enumeration_list("SessionProbeOnKeepaliveTimeout")
@@ -243,7 +243,7 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("LoginLanguage")
-      .value("Auto")
+      .value("Auto", "The language will be deduced according to the keyboard layout announced by the client")
       .value("EN")
       .value("FR")
     ;

@@ -23,64 +23,33 @@
 #include <cstddef>
 #include <type_traits>
 
-#include <string>
-#include <vector>
-#include <stdexcept>
+#include <string_view>
 
 #include <cassert>
 
-#include "utils/strutils.hpp"
-
-#if __has_include(<linux/limits.h>)
-# include <linux/limits.h>
-namespace cfg_attributes {
-namespace globals {
-    constexpr std::size_t path_max = PATH_MAX;
-}
-}
-#else
-namespace cfg_attributes {
-namespace globals {
-    constexpr std::size_t path_max = 4096;
-}
-}
-#endif
+#include "utils/sugar/array_view.hpp"
 
 
-namespace cfg_attributes
+namespace cfg_desc
 {
 
-#define TYPE_REQUIEREMENT(T)                                                   \
-    static_assert(!std::is_integral<T>::value || std::is_same<T, bool>::value, \
-        "T cannot be a integral type, "                                        \
-        "use types::u8, types::u16, types::s16, etc instead, "                 \
+#define TYPE_REQUIEREMENT(T)                                           \
+    static_assert(!std::is_arithmetic_v<T> || std::is_same_v<T, bool>, \
+        "T cannot be an arithmetic type, "                             \
+        "use types::u8, types::u16, types::s16, etc instead, "         \
         "eventually types::int_ or types::unsigned_")
 
-template<class T>
-struct type_
-{
-    TYPE_REQUIEREMENT(T);
-    using type = T;
-};
 
-template<class T>
-struct default_
-{
-    using type = T;
-    T value;
-};
+#define MK_ENUM_OP(T)                                                     \
+    constexpr T operator | (T x, T y)                                     \
+    { return static_cast<T>(static_cast<int>(x) | static_cast<int>(y)); } \
+    constexpr T operator & (T x, T y)                                     \
+    { return static_cast<T>(static_cast<int>(x) & static_cast<int>(y)); } \
+    constexpr T operator ~ (T x)                                          \
+    { return static_cast<T>(~static_cast<int>(x)); }                      \
+    constexpr T& operator |= (T& x, T y) { x = x | y; return x; }         \
+    constexpr T& operator &= (T& x, T y) { x = x & y; return x; }
 
-template<class T>
-default_<T> set(T const & x)
-{ return {x}; }
-
-template<std::size_t N>
-default_<std::string> set(char const (&x)[N])
-{ return {std::string(x+0, x+N-1)}; }
-
-struct desc { std::string value; };
-
-struct prefix_value { char const * value; };
 
 enum class TagList : unsigned
 {
@@ -88,61 +57,67 @@ enum class TagList : unsigned
     Debug,
     Workaround,
 };
-
-constexpr TagList operator | (TagList x, TagList y)
-{
-    return static_cast<TagList>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
-}
-
-constexpr TagList operator & (TagList x, TagList y)
-{
-    return static_cast<TagList>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
-}
+MK_ENUM_OP(TagList)
 
 struct Tags
 {
     TagList value = TagList::None;
 };
 
+enum class DestSpecFile : uint8_t
+{
+    none         = 0,
+    ini_only     = 1 << 0,
+    global_spec  = 1 << 1,
+    rdp          = 1 << 2,
+    vnc          = 1 << 3,
+    jh           = 1 << 4,
+};
+MK_ENUM_OP(DestSpecFile)
+
+
+enum class ResetBackToSelector : bool { No, Yes };
+
+enum class Loggable : uint8_t { No, Yes, OnlyWhenContainsPasswordString, };
+
+
 struct names
 {
-    std::string all;
-    std::string ini {};
-    std::string sesman {};
-    std::string connpolicy {};
-    std::string display {};
+    std::string_view all;
+    std::string_view ini {};
+    std::string_view acl {};
+    std::string_view connpolicy {};
+    std::string_view display {};
 
-    std::string const& cpp_name() const { assert(!all.empty()); return all; }
-    std::string const& ini_name() const { return ini.empty() ? all : ini; }
-    std::string const& sesman_name() const { return sesman.empty() ? all : sesman; }
-    std::string const& connpolicy_name() const { return connpolicy.empty() ? all : connpolicy; }
+    std::string_view cpp_name() const { assert(!all.empty()); return all; }
+    std::string_view ini_name() const { return ini.empty() ? all : ini; }
+    std::string_view acl_name() const { return acl.empty() ? all : acl; }
+    std::string_view connpolicy_name() const { return connpolicy.empty() ? all : connpolicy; }
 };
 
-
-namespace types
+namespace impl
 {
     struct integer_base {};
     struct signed_base : integer_base {};
     struct unsigned_base : integer_base {};
+}
 
-    struct u8 : unsigned_base { u8(long long = 0) {} };
-    struct u16 : unsigned_base { u16(long long = 0) {} };
-    struct u32 : unsigned_base { u32(long long = 0) {} };
-    struct u64 : unsigned_base { u64(long long = 0) {} };
+namespace types
+{
+    struct u8 : impl::unsigned_base {};
+    struct u16 : impl::unsigned_base {};
+    struct u32 : impl::unsigned_base {};
+    struct u64 : impl::unsigned_base {};
 
-    struct s8 : signed_base { s8(long long = 0) {} };
-    struct s16 : signed_base { s16(long long = 0) {} };
-    struct s32 : signed_base { s32(long long = 0) {} };
-    struct s64 : signed_base { s64(long long = 0) {} };
+    struct i8 : impl::signed_base {};
+    struct i16 : impl::signed_base {};
+    struct i32 : impl::signed_base {};
+    struct i64 : impl::signed_base {};
 
-    struct unsigned_ : unsigned_base { unsigned_(unsigned = 0) {} };
-    struct int_ : signed_base { int_(int = 0) {} };
+    struct unsigned_ : impl::unsigned_base {};
+    struct int_ : impl::signed_base {};
 
-    struct rgb
-    {
-        rgb(int = 0) {}
-        rgb(char const* = nullptr) {}
-    };
+    struct rgb {};
 
     template<unsigned Len> struct fixed_string {};
     template<unsigned Len> struct fixed_binary {};
@@ -162,293 +137,189 @@ namespace types
     {
         TYPE_REQUIEREMENT(T);
     };
-}
-
-namespace traits
-{
-    template<class T>
-    constexpr bool is_integer_v = std::is_base_of_v<types::integer_base, T>;
 
     template<class T>
-    constexpr bool is_signed_v = std::is_base_of_v<types::signed_base, T>;
-
-    template<class T>
-    constexpr bool is_unsigned_v = std::is_base_of_v<types::unsigned_base, T>;
+    struct megabytes
+    {
+        static_assert(std::is_base_of_v<impl::unsigned_base, T>);
+    };
 }
 
 namespace cpp
 {
     struct expr { char const * value; };
-    #define CPP_EXPR(expression) ::cfg_attributes::cpp::expr{#expression}
+    #define CPP_EXPR(expression) ::cfg_desc::cpp::expr{#expression}
 }
 
+
+
+enum class SpecAttributes : uint16_t
+{
+    none            = 0,
+    logged          = 1 << 0,
+    hex             = 1 << 1,
+    advanced        = 1 << 2,
+    iptables        = 1 << 3,
+    password        = 1 << 4,
+    image           = 1 << 5,
+    external        = 1 << 6,
+    restart_service = 1 << 7,
+};
+
+MK_ENUM_OP(SpecAttributes)
+
+
+enum class SesmanIO : uint8_t
+{
+    no_acl       = 0,
+    acl_to_proxy = 1 << 0,
+    proxy_to_acl = 1 << 1,
+    rw           = acl_to_proxy | proxy_to_acl,
+};
+
+MK_ENUM_OP(SesmanIO)
+
+struct SpecInfo
+{
+    DestSpecFile dest;
+    SesmanIO acl_io;
+    SpecAttributes attributes;
+    ResetBackToSelector reset_back_to_selector;
+    Loggable loggable;
+    std::string_view image_path;
+};
+
+struct SesmanInfo
+{
+    SesmanIO acl_io;
+    ResetBackToSelector reset_back_to_selector;
+    Loggable loggable;
+
+    operator SpecInfo () const
+    {
+        return {
+            DestSpecFile::none,
+            acl_io,
+            SpecAttributes::none,
+            reset_back_to_selector,
+            loggable,
+            std::string_view(),
+        };
+    }
+};
+
+template<bool has_image, bool is_compatible_connpolicy>
+struct CheckedSpecAttributes
+{
+    SpecAttributes attr;
+    std::string_view image_path {};
+
+    template<bool has_image2, bool is_compatible_connpolicy2>
+    constexpr CheckedSpecAttributes<
+        has_image || has_image2,
+        is_compatible_connpolicy || is_compatible_connpolicy2
+    >
+    operator | (CheckedSpecAttributes<has_image2, is_compatible_connpolicy2> other) const
+    {
+        static_assert(!(has_image && has_image2), "Image specified twice");
+
+        return {
+            attr | other.attr,
+            has_image ? image_path : other.image_path,
+        };
+    }
+};
 
 namespace spec
 {
-    template<class T>
-    struct type_
-    {
-        TYPE_REQUIEREMENT(T);
+    constexpr inline CheckedSpecAttributes<false, true> hex {SpecAttributes::hex};
+    constexpr inline CheckedSpecAttributes<false, true> advanced {SpecAttributes::advanced};
+    constexpr inline CheckedSpecAttributes<false, false> iptables {SpecAttributes::iptables};
+    constexpr inline CheckedSpecAttributes<false, true> password {SpecAttributes::password};
+    constexpr inline CheckedSpecAttributes<false, true> acl_only {SpecAttributes::external};
+    constexpr inline CheckedSpecAttributes<false, false> restart_service {SpecAttributes::restart_service};
+    constexpr inline CheckedSpecAttributes<false, false> logged {SpecAttributes::logged};
 
-        ::cfg_attributes::type_<T> to_type() const
-        {
-            return {};
-        }
-    };
-
-    namespace internal
+    constexpr CheckedSpecAttributes<true, false> image(std::string_view image_path)
     {
-        enum class attr {
-            no_ini_no_gui   = 1 << 0,
-            ini_and_gui     = 1 << 1,
-            hidden_in_gui   = 1 << 2,
-            hex_in_gui      = 1 << 3,
-            advanced_in_gui = 1 << 4,
-            iptables_in_gui = 1 << 5,
-            password_in_gui = 1 << 6,
-            image_in_gui    = 1 << 7,
-            external        = 1 << 8,
-            restart_service = 1 << 9,
-            logged_in_gui   = 1 << 10,
-            // /!\ newline is stored as \r\n
-            // multiline       = 1 << 11,
+        return {SpecAttributes::image, image_path};
+    }
+
+
+    constexpr inline SesmanInfo no_acl {SesmanIO::no_acl, ResetBackToSelector::No, Loggable::No};
+
+    constexpr SesmanInfo acl_to_proxy(ResetBackToSelector reset_back_to_selector, Loggable loggable)
+    {
+        return {SesmanIO::acl_to_proxy, reset_back_to_selector, loggable};
+    }
+
+    constexpr SesmanInfo proxy_to_acl(ResetBackToSelector reset_back_to_selector)
+    {
+        return {SesmanIO::proxy_to_acl, reset_back_to_selector, Loggable::No};
+    }
+
+    constexpr SesmanInfo acl_rw(ResetBackToSelector reset_back_to_selector, Loggable loggable)
+    {
+        return {SesmanIO::rw, reset_back_to_selector, loggable};
+    }
+
+
+    template<bool is_compatible_connpolicy = true>
+    constexpr SpecInfo ini_only(SesmanInfo acl)
+    {
+        return {
+            DestSpecFile::ini_only,
+            acl.acl_io,
+            SpecAttributes(),
+            acl.reset_back_to_selector,
+            acl.loggable,
+            std::string_view(),
         };
-
-        constexpr attr operator | (attr x, attr y) {
-            return static_cast<attr>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
-        }
-
-        constexpr attr operator & (attr x, attr y) {
-            return static_cast<attr>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
-        }
-
-        template<attr value>
-        using spec_attr_t = std::integral_constant<attr, value>;
-
-        template<internal::attr v1, internal::attr v2>
-        spec_attr_t<v1 | v2>
-        operator | (spec_attr_t<v1>, spec_attr_t<v2>)
-        {
-            static_assert(!bool(v1 & attr::no_ini_no_gui), "no_ini_no_gui is incompatible with other values");
-            static_assert(!bool(v2 & attr::no_ini_no_gui), "no_ini_no_gui is incompatible with other values");
-            constexpr auto in_gui
-                = attr::hidden_in_gui
-                | attr::hex_in_gui
-                | attr::advanced_in_gui
-                | attr::iptables_in_gui
-                | attr::password_in_gui
-                | attr::image_in_gui
-                | attr::restart_service
-                | attr::logged_in_gui
-            ;
-            static_assert(!(bool(v1 & attr::hidden_in_gui) && bool(v2 & in_gui)), "hidden_in_gui is incompatible with *_in_gui values");
-            static_assert(!(bool(v2 & attr::hidden_in_gui) && bool(v1 & in_gui)), "hidden_in_gui is incompatible with *_in_gui values");
-            return {};
-        }
     }
 
-    enum class log_policy : unsigned char
+    template<bool has_image = false, bool is_compatible_connpolicy = true>
+    constexpr SpecInfo global_spec(
+        SesmanInfo acl,
+        CheckedSpecAttributes<has_image, is_compatible_connpolicy> checked_attr = {})
     {
-        loggable,
-        unloggable,
-        unloggable_if_value_contains_password,
-    };
-
-    inline namespace constants
-    {
-        inline constexpr internal::spec_attr_t<internal::attr::no_ini_no_gui>   no_ini_no_gui{};
-        inline constexpr internal::spec_attr_t<internal::attr::ini_and_gui>     ini_and_gui{};
-        inline constexpr internal::spec_attr_t<internal::attr::hidden_in_gui>   hidden_in_gui{};
-        inline constexpr internal::spec_attr_t<internal::attr::hex_in_gui>      hex_in_gui{};
-        inline constexpr internal::spec_attr_t<internal::attr::advanced_in_gui> advanced_in_gui{};
-        inline constexpr internal::spec_attr_t<internal::attr::iptables_in_gui> iptables_in_gui{};
-        inline constexpr internal::spec_attr_t<internal::attr::password_in_gui> password_in_gui{};
-        inline constexpr internal::spec_attr_t<internal::attr::image_in_gui>    image_in_gui{};
-        inline constexpr internal::spec_attr_t<internal::attr::external>        external{};
-        inline constexpr internal::spec_attr_t<internal::attr::restart_service> restart_service{};
-        inline constexpr internal::spec_attr_t<internal::attr::logged_in_gui>   logged_in_gui{};
-    }
-}
-
-
-namespace connpolicy
-{
-    struct section { char const* name; };
-
-    template<class T>
-    struct default_
-    {
-        struct Value
-        {
-            bool always;
-            T value;
-            std::string connpolicy_name;
+        return {
+            DestSpecFile::global_spec,
+            acl.acl_io,
+            checked_attr.attr,
+            acl.reset_back_to_selector,
+            acl.loggable,
+            checked_attr.image_path,
         };
-
-        using type = T;
-        std::vector<Value> values;
-    };
-
-    template<class T>
-    default_<T> operator | (default_<T> const& a, default_<T> b)
-    {
-        if (a.values.empty() && b.values.empty()) {
-            throw std::runtime_error("duplicated connpolicy_name on set()");
-        }
-
-        for (auto& x : a.values) {
-            for (auto& y : b.values) {
-                if (x.connpolicy_name == y.connpolicy_name) {
-                    throw std::runtime_error(str_concat(
-                        "duplicated connpolicy_name \"", x.connpolicy_name, "\" on set()"
-                    ));
-                }
-            }
-        }
-
-        b.values.insert(b.values.begin(), a.values.begin(), a.values.end());
-        return b;
     }
 
-    template<class T>
-    default_<T> set(T const & x)
+    template<bool has_image = false, bool is_compatible_connpolicy = true>
+    constexpr SpecInfo external(
+        CheckedSpecAttributes<has_image, is_compatible_connpolicy> checked_attr = {})
     {
-        return {{typename default_<T>::Value{false, x, {}}}};
-    }
-
-    template<std::size_t N>
-    default_<std::string> set(char const (&x)[N])
-    {
-        return {{default_<std::string>::Value{false, std::string(x+0, x+N-1), {}}}};
-    }
-
-    namespace internal
-    {
-        enum class attr {
-            unspecified            = 1 << 0,
-            hex_in_connpolicy      = 1 << 1,
-            advanced_in_connpolicy = 1 << 2,
+        return {
+            DestSpecFile::global_spec,
+            SesmanIO(),
+            checked_attr.attr | SpecAttributes::external,
+            ResetBackToSelector::No,
+            Loggable::No,
+            checked_attr.image_path,
         };
-
-        constexpr attr operator | (attr x, attr y)
-        {
-            return static_cast<attr>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
-        }
-
-        constexpr attr operator & (attr x, attr y)
-        {
-            return static_cast<attr>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
-        }
     }
 
-    namespace constants
+    constexpr SpecInfo connpolicy(
+        DestSpecFile dest,
+        Loggable loggable,
+        CheckedSpecAttributes<false, true> checked_attr = {})
     {
-        constexpr auto hex_in_connpolicy = internal::attr::hex_in_connpolicy;
-        constexpr auto advanced_in_connpolicy = internal::attr::advanced_in_connpolicy;
-    }
-}
-
-
-namespace sesman
-{
-    namespace internal
-    {
-        enum class io {
-            none,
-            sesman_to_proxy = 1 << 0,
-            proxy_to_sesman = 1 << 1,
-            rw = sesman_to_proxy | proxy_to_sesman,
+        return {
+            dest,
+            SesmanIO::acl_to_proxy,
+            checked_attr.attr,
+            ResetBackToSelector::No,
+            loggable,
+            std::string_view(),
         };
-
-        inline io operator | (io x, io y) {
-            return static_cast<io>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
-        }
-
-        inline io operator & (io x, io y) {
-            return static_cast<io>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
-        }
-
-        template<io value>
-        using sesman_io_t = std::integral_constant<io, value>;
-    }
-
-    inline namespace constants
-    {
-        inline constexpr internal::sesman_io_t<internal::io::none>              no_sesman{};
-        inline constexpr internal::sesman_io_t<internal::io::proxy_to_sesman>   proxy_to_sesman{};
-        inline constexpr internal::sesman_io_t<internal::io::sesman_to_proxy>   sesman_to_proxy{};
-        inline constexpr internal::sesman_io_t<internal::io::rw>                sesman_rw{};
-    }
-
-    struct connection_policy
-    {
-        std::vector<std::string> files;
-        connpolicy::internal::attr spec = {};
-
-        explicit connection_policy(std::string file)
-        : files(1u, std::move(file))
-        {}
-
-        template<class T>
-        connpolicy::default_<T> set(T const & x)
-        {
-            connpolicy::default_<T> d;
-            for (auto& file : files) {
-                d.values.push_back({false, x, file});
-            }
-            return d;
-        }
-
-        template<class T>
-        connpolicy::default_<T> always(T const & x)
-        {
-            connpolicy::default_<T> d;
-            for (auto& file : files) {
-                d.values.push_back({true, x, file});
-            }
-            return d;
-        }
-
-        template<std::size_t N>
-        connpolicy::default_<std::string> set(char const (&x)[N])
-        {
-            return set(std::string(x+0, x+N-1));
-        }
-    };
-
-    inline connection_policy operator | (connection_policy const& x, connpolicy::internal::attr y)
-    {
-        connection_policy conn{x};
-        conn.spec = conn.spec | y;
-        return conn;
-    }
-
-    inline connection_policy operator | (connection_policy const& x, connection_policy const& y)
-    {
-        assert(x.spec == y.spec);
-        connection_policy conn{x};
-        conn.files.insert(conn.files.end(), y.files.begin(), y.files.end());
-        return conn;
-    }
-
-    namespace internal
-    {
-        enum class reset_back_to_selector : bool;
-
-        template<reset_back_to_selector value>
-        using reset_back_to_selector_t = std::integral_constant<reset_back_to_selector, value>;
-    }
-
-    inline namespace constants
-    {
-        inline constexpr internal::reset_back_to_selector_t<internal::reset_back_to_selector(true)>
-        reset_back_to_selector{};
-
-        inline constexpr internal::reset_back_to_selector_t<internal::reset_back_to_selector(false)>
-        no_reset_back_to_selector{};
     }
 }
 
 }
-
-#undef TYPE_REQUIEREMENT

@@ -14,11 +14,7 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 port = integer(min=0, default=3389)
 
 #_advanced
-encryptionLevel = option('low', 'medium', 'high', default='low')
-
-# Socket path or socket address of passthrough / sesman
-#_hidden
-authfile = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(')
+encryptionLevel = option('low', 'medium', 'high', default="low")
 
 # Time out during RDP handshake stage.<br/>
 # (in seconds)
@@ -30,34 +26,14 @@ handshake_timeout = integer(min=0, default=10)
 # (in seconds)
 base_inactivity_timeout = integer(min=0, default=900)
 
-# No automatic disconnection due to inactivity, timer is set on target session.
-# If value is between 1 and 30, then 30 is used.
-# If value is set to 0, then value set in "Base inactivity timeout" (in "RDP Proxy" configuration option) is used.<br/>
-# (in seconds)
-#_hidden
-inactivity_timeout = integer(min=0, default=0)
-
-# Internal keepalive between sesman and rdp proxy<br/>
-# (in seconds)
-#_hidden
-keepalive_grace_delay = integer(min=0, default=30)
-
 # Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).<br/>
 # (in seconds)
 #_advanced
 authentication_timeout = integer(min=0, default=120)
 
-# Session record options.
-# &nbsp; &nbsp;   0: No encryption (faster).
-# &nbsp; &nbsp;   1: No encryption, with checksum.
-# &nbsp; &nbsp;   2: Encryption enabled.
-# When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.
-#_hidden
-trace_type = option(0, 1, 2, default=1)
-
 # Specify alternate bind address
 #_advanced
-listen_address = ip_addr(default='0.0.0.0')
+listen_address = ip_addr(default="0.0.0.0")
 
 # ⚠ IP tables rules are reloaded and active sessions will be disconnected.<br/>
 # Allow Transparent mode.
@@ -67,7 +43,7 @@ enable_transparent_mode = boolean(default=False)
 # Proxy certificate password.
 #_advanced
 #_password
-certificate_password = string(max=254, default='inquisition')
+certificate_password = string(max=254, default="inquisition")
 
 # Support of Bitmap Update.
 #_advanced
@@ -76,7 +52,8 @@ enable_bitmap_update = boolean(default=True)
 # Show close screen.
 enable_close_box = boolean(default=True)
 
-# Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).<br/>
+# Specifies the time to spend on the close box of proxy RDP before closing client window.
+# ⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects.<br/>
 # (in seconds)
 #_advanced
 close_timeout = integer(min=0, default=600)
@@ -88,17 +65,18 @@ enable_osd = boolean(default=True)
 #_advanced
 enable_osd_display_remote_target = boolean(default=True)
 
-#_hidden
-enable_wab_integration = boolean(default=)gen_config_ini" << (REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) << R"gen_config_ini()
-
+# Sends the client screen count to the server. Not supported in VNC.
 allow_using_multiple_monitors = boolean(default=True)
 
+# Sends the client's zoom factor configuration to the server.
+# ⚠ Title bar detection via OCR will no longer work.
 allow_scale_factor = boolean(default=False)
 
 # Needed to refresh screen of Windows Server 2012.
 #_advanced
 bogus_refresh_rect = boolean(default=True)
 
+# Enable support for pointers of size 96x96
 #_advanced
 large_pointer_support = boolean(default=True)
 
@@ -119,7 +97,7 @@ experimental_support_resize_session_during_recording = boolean(default=True)
 #_advanced
 support_connection_redirection_during_recording = boolean(default=True)
 
-# Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.
+# Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
 # Set to 0 to disable this feature.<br/>
 # (in milliseconds)
@@ -129,19 +107,11 @@ rdp_keepalive_connection_interval = integer(min=0, default=0)
 # Enable primary connection on ipv6.
 enable_ipv6 = boolean(default=True)
 
-# In megabytes. 0 for disabled.
-#_hidden
-minimal_memory_available_before_connection_silently_closed = integer(min=0, default=100)
-
 [client]
 
 # If true, ignore password provided by RDP client, user need do login manually.
 #_advanced
 ignore_logon_password = boolean(default=False)
-
-# Enable font smoothing (0x80).
-#_hidden
-performance_flags_default = integer(min=0, default=128)
 
 # Disable wallpaper (0x1).
 # Disable full-window drag (0x2).
@@ -198,10 +168,10 @@ rdp_compression = option(0, 1, 2, 3, 4, default=4)
 
 # Specifies the maximum color resolution (color depth) for client session:
 # &nbsp; &nbsp;   8: 8-bit
-# &nbsp; &nbsp;   15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)
-# &nbsp; &nbsp;   16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)
-# &nbsp; &nbsp;   24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
-# &nbsp; &nbsp;   32: 32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)
+# &nbsp; &nbsp;   15: 15-bit 555 RGB mask
+# &nbsp; &nbsp;   16: 16-bit 565 RGB mask
+# &nbsp; &nbsp;   24: 24-bit RGB mask
+# &nbsp; &nbsp;   32: 32-bit RGB mask (24-bit RGB + alpha)
 #_advanced
 max_color_depth = option(8, 15, 16, 24, 32, default=24)
 
@@ -221,10 +191,6 @@ persist_bitmap_cache_on_disk = boolean(default=False)
 #_advanced
 bitmap_compression = boolean(default=True)
 
-# Enables support of Client Fast-Path Input Event PDUs.
-#_hidden
-fast_path = boolean(default=True)
-
 # Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.
 # If changes occur on the target, they will not be visible in the recordings either.
 enable_suppress_output = boolean(default=True)
@@ -232,7 +198,7 @@ enable_suppress_output = boolean(default=True)
 # [Not configured]: Compatible with more RDP clients (less secure)
 # HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
 # HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
-ssl_cipher_list = string(default='HIGH:!ADH:!3DES:!SHA')
+ssl_cipher_list = string(default="HIGH:!ADH:!3DES:!SHA")
 
 show_target_user_in_f12_message = boolean(default=False)
 
@@ -252,6 +218,8 @@ enable_osd_4_eyes = boolean(default=True)
 #_advanced
 enable_remotefx = boolean(default=True)
 
+# This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause.
+# In general, disabling RDP orders has a negative impact on performance.<br/>
 # Disables supported drawing orders:
 # &nbsp; &nbsp;    0: DstBlt
 # &nbsp; &nbsp;    1: PatBlt
@@ -268,19 +236,14 @@ enable_remotefx = boolean(default=True)
 # &nbsp; &nbsp;   27: GlyphIndex<br/>
 # (values are comma-separated)
 #_advanced
-disabled_orders = string(default='25')
+disabled_orders = string(default="25")
 
 [all_target_mod]
 
-# The maximum time in milliseconds that the proxy will wait while attempting to connect to an target.<br/>
+# The maximum time that the proxy will wait while attempting to connect to an target.<br/>
 # (in milliseconds)
 #_advanced
 connection_establishment_timeout = integer(min=1000, max=10000, default=3000)
-
-# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.<br/>
-# (in milliseconds)
-#_hidden
-tcp_user_timeout = integer(min=0, max=3600000, default=0)
 
 [remote_program]
 
@@ -304,33 +267,6 @@ disconnect_on_logon_user_change = boolean(default=False)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
 
-# Disables supported drawing orders:
-# &nbsp; &nbsp;    0: DstBlt
-# &nbsp; &nbsp;    1: PatBlt
-# &nbsp; &nbsp;    2: ScrBlt
-# &nbsp; &nbsp;    3: MemBlt
-# &nbsp; &nbsp;    4: Mem3Blt
-# &nbsp; &nbsp;    9: LineTo
-# &nbsp; &nbsp;   15: MultiDstBlt
-# &nbsp; &nbsp;   16: MultiPatBlt
-# &nbsp; &nbsp;   17: MultiScrBlt
-# &nbsp; &nbsp;   18: MultiOpaqueRect
-# &nbsp; &nbsp;   22: Polyline
-# &nbsp; &nbsp;   25: EllipseSC
-# &nbsp; &nbsp;   27: GlyphIndex<br/>
-# (values are comma-separated)
-#_hidden
-disabled_orders = string(default='27')
-
-# NLA authentication in secondary target.
-#_hidden
-enable_nla = boolean(default=True)
-
-# If enabled, NLA authentication will try Kerberos before NTLM.
-# (if enable_nla is disabled, this value is ignored).
-#_hidden
-enable_kerberos = boolean(default=False)
-
 # Persistent Disk Bitmap Cache on the mod side.
 #_advanced
 persistent_disk_bitmap_cache = boolean(default=True)
@@ -343,27 +279,6 @@ cache_waiting_list = boolean(default=True)
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
 
-# List of (comma-separated) enabled (static) virtual channel. If character '*' is used as a name then enables everything.
-# An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.<br/>
-# (values are comma-separated)
-#_hidden
-allowed_channels = string(default='*')
-
-# List of (comma-separated) disabled (static) virtual channel. If character '*' is used as a name then disables everything.
-# An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.<br/>
-# (values are comma-separated)
-#_hidden
-denied_channels = string(default='')
-
-# Enables support of Client/Server Fast-Path Input/Update PDUs.
-# Fast-Path is required for Windows Server 2012 (or more recent)!
-#_hidden
-fast_path = boolean(default=True)
-
-# Enables Server Redirection Support.
-#_hidden
-server_redirection_support = boolean(default=False)
-
 # Client Address to send to target (in InfoPacket)
 # &nbsp; &nbsp;   0: Send 0.0.0.0
 # &nbsp; &nbsp;   1: Send proxy client address or target connexion
@@ -371,59 +286,11 @@ server_redirection_support = boolean(default=False)
 #_advanced
 client_address_sent = option(0, 1, 2, default=0)
 
-# Shared directory between proxy and secondary target.
-# Requires rdpdr support.<br/>
-# (values are comma-separated)
-#_hidden
-proxy_managed_drives = string(default='')
-
-#_hidden
-ignore_auth_channel = boolean(default=False)
-
 # Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.
-auth_channel = string(max=7, default='*')
+auth_channel = string(max=7, default="*")
 
 # Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel.
-checkout_channel = string(max=7, default='')
-
-#_hidden
-alternate_shell = string(default='')
-
-#_hidden
-shell_arguments = string(default='')
-
-#_hidden
-shell_working_directory = string(default='')
-
-# As far as possible, use client-provided initial program (Alternate Shell)
-#_hidden
-use_client_provided_alternate_shell = boolean(default=False)
-
-# As far as possible, use client-provided remote program (RemoteApp)
-#_hidden
-use_client_provided_remoteapp = boolean(default=False)
-
-# As far as possible, use native RemoteApp capability
-#_hidden
-use_native_remoteapp_capability = boolean(default=True)
-
-#_hidden
-application_driver_exe_or_file = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(')
-
-#_hidden
-application_driver_script_argument = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT) << R"gen_config_ini(')
-
-#_hidden
-application_driver_chrome_dt_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT) << R"gen_config_ini(')
-
-#_hidden
-application_driver_chrome_uia_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT) << R"gen_config_ini(')
-
-#_hidden
-application_driver_firefox_uia_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_FIREFOX_UIA_SCRIPT) << R"gen_config_ini(')
-
-#_hidden
-application_driver_ie_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(')
+checkout_channel = string(max=7, default="")
 
 # Do not transmit client machine name to RDP server.
 # If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host.
@@ -434,9 +301,6 @@ hide_client_name = boolean(default=True)
 use_license_store = boolean(default=True)
 
 bogus_ios_rdpdr_virtual_channel = boolean(default=True)
-
-#_hidden
-enable_rdpdr_data_analysis = boolean(default=True)
 
 # Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.<br/>
@@ -460,329 +324,14 @@ experimental_fix_too_long_cookie = boolean(default=True)
 #_advanced
 split_domain = boolean(default=False)
 
-#_hidden
-#_display_name=Enable translated RemoteAPP with AM
-wabam_uses_translated_remoteapp = boolean(default=False)
-
 # Enables Session Shadowing Support.
 #_advanced
 session_shadowing_support = boolean(default=True)
 
-# Enables support of the remoteFX codec.
-#_hidden
-enable_remotefx = boolean(default=False)
-
 #_advanced
 accept_monitor_layout_change_if_capture_is_not_started = boolean(default=False)
 
-# Connect to the server in Restricted Admin mode.
-# This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
-# NLA must be enabled.
-#_hidden
-enable_restricted_admin_mode = boolean(default=False)
-
-# NLA will be disabled.
-# Target must be set for interactive login, otherwise server connection may not be guaranteed.
-# Smartcard device must be available on client desktop.
-# Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
-#_hidden
-force_smartcard_authentication = boolean(default=False)
-
-# Enable target connection on ipv6
-#_hidden
-enable_ipv6 = boolean(default=True)
-
-#_hidden
-auto_reconnection_on_losing_target_link = boolean(default=False)
-
-# ⚠ The use of this feature is not recommended!<br/>
-# If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.
-# This feature should not be used together with the End disconnected session option (section session_probe).
-# The keyboard shortcut is fixed and cannot be changed.
-#_hidden
-allow_session_reconnection_by_shortcut = boolean(default=False)
-
-# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.<br/>
-# (in milliseconds)
-#_hidden
-session_reconnection_delay = integer(min=0, max=15000, default=0)
-
-# Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
-#_hidden
-forward_client_build_number = boolean(default=True)
-
-# To resolve the session freeze issue with Windows 7/Windows Server 2008 target.
-#_hidden
-bogus_monitor_layout_treatment = boolean(default=False)
-
-[protocol]
-
-# &nbsp; &nbsp;   0: Windows
-# &nbsp; &nbsp;   1: Bastion, xrdp or others
-#_hidden
-save_session_info_pdu = option(0, 1, default=1)
-
 [session_probe]
-
-#_hidden
-enable_session_probe = boolean(default=False)
-
-#_hidden
-exe_or_file = string(max=511, default='||CMD')
-
-#_hidden
-arguments = string(max=511, default=')gen_config_ini" << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << R"gen_config_ini(')
-
-# This parameter only has an effect in Desktop sessions.
-# It allows you to choose between Smart launcher and Legacy launcher to launch the Session Probe.
-# The Smart launcher and the Legacy launcher do not have the same technical prerequisites. Detailed information can be found in the Administration guide.
-#_hidden
-use_smart_launcher = boolean(default=True)
-
-# This parameter enables or disables the Session Probe’s launch mask.
-# The Launch mask hides the Session Probe launch steps from the end-users.
-# Disabling the mask makes it easier to diagnose Session Probe launch issues. It is recommended to enable the mask for normal operation.
-#_hidden
-enable_launch_mask = boolean(default=True)
-
-# It is recommended to use option 1 (disconnect user).
-# &nbsp; &nbsp;   0: The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
-# &nbsp; &nbsp;   1: This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of 'Launch timeout' to the performance of the target.
-# &nbsp; &nbsp;   2: We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
-#_hidden
-on_launch_failure = option(0, 1, 2, default=1)
-
-# This parameter is used if 'On launch failure' is 1 (disconnect user).
-# 0 to disable timeout.<br/>
-# (in milliseconds)
-#_hidden
-launch_timeout = integer(min=0, max=300000, default=40000)
-
-# This parameter is used if 'On launch failure' is 0 (ignore failure and continue) or 2 (retry without Session Probe).
-# 0 to disable timeout.<br/>
-# (in milliseconds)
-#_hidden
-launch_fallback_timeout = integer(min=0, max=300000, default=40000)
-
-# If enabled, the Launch timeout countdown timer will be started only after user logged in Windows. Otherwise, the countdown timer will be started immediately after RDP protocol connexion.
-#_hidden
-start_launch_timeout_timer_only_after_logon = boolean(default=True)
-
-# The amount of time that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by 'On keepalive timeout'.
-# If our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by 'On keepalive timeout'.
-# The KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected.
-# During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate.<br/>
-# (in milliseconds)
-#_hidden
-keepalive_timeout = integer(min=0, max=60000, default=5000)
-
-# This parameter allows us to choose the behavior of the RDP Proxy in case of losing the connection with Session Probe.
-# &nbsp; &nbsp;   0: Designed to minimize the impact on the user experience if the Session Probe is unstable. It should not be used when Session Probe is working well. An attacker can take advantage of this setting by simulating a Session Probe crash in order to bypass the surveillance.
-# &nbsp; &nbsp;   1: Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the 'End disconnected session' parameter (or an equivalent setting at the RDS-level) is enabled.
-# &nbsp; &nbsp;   2: This is the recommended setting. User actions will be blocked until contact with the Session Probe (reply to KeepAlive message or something else) is resumed.
-#_hidden
-on_keepalive_timeout = option(0, 1, 2, default=2)
-
-# The behavior of this parameter is different between the Desktop session and the RemoteApp session (RDS meaning). But in each case, the purpose of enabling this parameter is to not leave disconnected sessions in a state unusable by the RDP proxy.
-# If enabled, Session Probe will automatically end the disconnected Desktop session. Otherwise, the RDP session and the applications it contains will remain active after user disconnection (unless a parameter defined at the RDS-level decides otherwise).
-# The parameter in RemoteApp session (RDS meaning) does not cause the latter to be closed but a simple cleanup. However, this makes the session suitable for reuse.
-# This parameter must be enabled for Web applications because an existing session with a running browser cannot be reused.
-# It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when 'Use session probe to launch remote program' parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes.
-#_hidden
-end_disconnected_session = boolean(default=False)
-
-# If enabled, disconnected auto-deployed Application Driver session will automatically terminate by Session Probe.
-#_hidden
-enable_autodeployed_appdriver_affinity = boolean(default=True)
-
-# This parameter allows you to enable the Windows-side logging of Session Probe.
-# The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team.
-#_hidden
-enable_log = boolean(default=False)
-
-# This parameter enables or disables the Log files rotation for Windows-side logging of Session Probe.
-# The Log files rotation helps reduce disk space consumption caused by logging. But the interesting information may be lost if the corresponding file is not retrieved in time.
-#_hidden
-enable_log_rotation = boolean(default=False)
-
-# Defines logging severity levels.
-# &nbsp; &nbsp;   1: The Fatal level designates very severe error events that will presumably lead the application to abort.
-# &nbsp; &nbsp;   2: The Error level designates error events that might still allow the application to continue running.
-# &nbsp; &nbsp;   3: The Info level designates informational messages that highlight the progress of the application at coarse-grained level.
-# &nbsp; &nbsp;   4: The Warning level designates potentially harmful situations.
-# &nbsp; &nbsp;   5: The Debug level designates fine-grained informational events that are mostly useful to debug an application.
-# &nbsp; &nbsp;   6: The Detail level designates finer-grained informational events than Debug.
-#_hidden
-log_level = option(1, 2, 3, 4, 5, 6, default=5)
-
-# (Deprecated!)
-# The period above which the disconnected Application session will be automatically closed by the Session Probe.
-# 0 to disable timeout.<br/>
-# (in milliseconds)
-#_hidden
-disconnected_application_limit = integer(min=0, max=172800000, default=0)
-
-# The period above which the disconnected Desktop session will be automatically closed by the Session Probe.
-# 0 to disable timeout.<br/>
-# (in milliseconds)
-#_hidden
-disconnected_session_limit = integer(min=0, max=172800000, default=0)
-
-# The period of user inactivity above which the session will be locked by the Session Probe.
-# 0 to disable timeout.<br/>
-# (in milliseconds)
-#_hidden
-idle_session_limit = integer(min=0, max=172800000, default=0)
-
-# The additional period given to the device to make Clipboard redirection available.
-# This parameter is effective only if the Smart launcher is used.
-# If we see the message "Clipboard Virtual Channel is unavailable" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter.<br/>
-# (in milliseconds)
-#_hidden
-smart_launcher_clipboard_initialization_delay = integer(min=0, default=2000)
-
-# For under-performing devices.
-# The extra time given to the device before starting the Session Probe launch sequence.
-# This parameter is effective only if the Smart launcher is used.
-# This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened.<br/>
-# (in milliseconds)
-#_hidden
-smart_launcher_start_delay = integer(min=0, default=0)
-
-# The delay between two simulated keystrokes during the Session Probe launch sequence execution.
-# This parameter is effective only if the Smart launcher is used.
-# This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
-# This parameter is usually used together with the 'Smart launcher short delay' parameter.<br/>
-# (in milliseconds)
-#_hidden
-smart_launcher_long_delay = integer(min=0, default=500)
-
-# The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution.
-# This parameter is effective only if the Smart launcher is used.
-# This parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.
-# This parameter is usually used together with the 'Smart launcher long delay' parameter.<br/>
-# (in milliseconds)
-#_hidden
-smart_launcher_short_delay = integer(min=0, default=50)
-
-# Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the 'Smart launcher clipboard initialization delay' parameter.This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager.
-#_hidden
-#_display_name=Enable Smart launcher with AM affinity
-smart_launcher_enable_wabam_affinity = boolean(default=True)
-
-# The time interval between the detection of an error (example: a refusal by the target of the redirected drive) and the actual abandonment of the Session Probe launch.
-# The purpose of this parameter is to give the target time to gracefully stop some ongoing processing.
-# It is strongly recommended to keep the default value of this parameter.<br/>
-# (in milliseconds)
-#_hidden
-launcher_abort_delay = integer(min=0, max=300000, default=2000)
-
-# This parameter enables or disables the crash dump generation when the Session Probe encounters a fatal error.
-# The crash dump file is useful for post-modem debugging. It is not designed for normal use.
-# The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team.
-# There is no rotation mechanism to limit the number of dump files produced. Extended activation of this parameter can quickly exhaust disk space.
-#_hidden
-enable_crash_dump = boolean(default=False)
-
-# Use only if you see unusually high consumption of system object handles by the Session Probe.
-# The Session Probe will sabotage and then restart it-self if it consumes more handles than what is defined by this parameter.
-# A value of 0 disables this feature.
-# This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).
-# If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect.
-#_hidden
-handle_usage_limit = integer(min=0, max=1000, default=0)
-
-# Use only if you see unusually high consumption of memory by the Session Probe.
-# The Session Probe will sabotage and then restart it-self if it consumes more memory than what is defined by this parameter.
-# A value of 0 disables this feature.
-# This feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).
-# If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect.
-#_hidden
-memory_usage_limit = integer(min=0, max=200000000, default=0)
-
-# This debugging feature was created to determine the cause of high CPU consumption by Session Probe in certain environments.
-# As a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program execution. The alarm is deactivated if this value of parameter is less than 200 (200%% of reference consumption).
-# When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by 'Cpu usage alarm action' parameter.
-#_hidden
-cpu_usage_alarm_threshold = integer(min=0, max=10000, default=0)
-
-# Additional behavior when CPU consumption exceeds what is allowed. Please refer to the 'Cpu usage alarm threshold' parameter.
-# &nbsp; &nbsp;   0: Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section and 'Allow multiple handshakes' parameter of 'Configuration options'.
-# &nbsp; &nbsp;   1: Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section.
-#_hidden
-cpu_usage_alarm_action = option(0, 1, default=0)
-
-# For application session only.
-# The delay between the launch of the application and the start of End of session check.
-# Sometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe.
-# 'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window.<br/>
-# (in milliseconds)
-#_hidden
-end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
-
-# For application session only.
-# If enabled, during the End of session check, the processes that do not have a visible window will not be counted as active processes of the session. Without active processes, the application session will be logged off by the Session Probe.
-#_hidden
-ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
-
-# This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log).
-# Unfortunately, the detection does not work with applications developed in Java, Flash, etc. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata.
-# One of the specifics of these applications is that their main windows do not have any child window from point of view of WIN32 API. Activating this parameter allows this property to be used to detect applications developed in Java or Flash.
-# Please refer to the 'Keyboard input masking level' parameter of 'session_log' section.
-#_hidden
-childless_window_as_unidentified_input_field = boolean(default=True)
-
-# This parameter is used when resuming a session hosting a existing Session Probe.
-# If enabled, the Session Probe will activate or deactivate features according to the value of 'Disabled features' parameter received when resuming its host session. Otherwise, the Session Probe will keep the same set of features that were used during the previous connection.
-# It is recommended to keep the default value of this parameter.
-#_hidden
-update_disabled_features = boolean(default=True)
-
-# This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes.
-# If 'Java Acccess Bridge' feature is disabled, data entered in the password field of Java applications may be visible in the metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section. For more information please also refer to 'Childless window as unidentified input field and Windows of these applications as unidentified input field oIt is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'.
-# &nbsp; &nbsp;   0x000: none
-# &nbsp; &nbsp;   0x001: disable Java Access Bridge. General user activity monitoring in the Java applications (including detection of password fields).
-# &nbsp; &nbsp;   0x002: disable MS Active Accessbility. General user activity monitoring (including detection of password fields). (legacy API)
-# &nbsp; &nbsp;   0x004: disable MS UI Automation. General user activity monitoring (including detection of password fields). (new API)
-# &nbsp; &nbsp;   0x010: disable Inspect Edge location URL. Basic web navigation monitoring.
-# &nbsp; &nbsp;   0x020: disable Inspect Chrome Address/Search bar. Basic web navigation monitoring.
-# &nbsp; &nbsp;   0x040: disable Inspect Firefox Address/Search bar. Basic web navigation monitoring.
-# &nbsp; &nbsp;   0x080: disable Monitor Internet Explorer event. Advanced web navigation monitoring.
-# &nbsp; &nbsp;   0x100: disable Inspect group membership of user. User identity monitoring.<br/>
-# Note: values can be added (disable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
-#_hidden
-#_hex
-disabled_features = integer(min=0, max=511, default=352)
-
-# This parameter has no effect on the device without BestSafe.
-# Is enabled, Session Probe relies on BestSafe to perform the detection of application launches and the detection of outgoing connections.
-# BestSafe has more efficient mechanisms in these tasks than Session Probe.
-# For more information please refer to 'Outbound connection monitoring rules' parameter and 'Process monitoring rules' parameter.
-#_hidden
-enable_bestsafe_interaction = boolean(default=False)
-
-# This parameter has no effect on the device without BestSafe.
-# BestSafe interaction must be enabled. Please refer to 'Enable bestsafe interaction' parameter.
-# This parameter allows you to choose the behavior of the RDP Proxy in case of detection of Windows account manipulation.
-# Detectable account manipulations are the creation, deletion of a Windows account, and the addition and deletion of an account from a Windows user group.
-# &nbsp; &nbsp;   0: User action will be accepted
-# &nbsp; &nbsp;   1: (Same thing as 'allow') 
-# &nbsp; &nbsp;   2: User action will be rejected
-#_hidden
-on_account_manipulation = option(0, 1, 2, default=0)
-
-# This parameter is used to indicate the name of an environment variable, to be set on the Windows device, and pointed to a directory (on the device) that can be used to store and start the Session Probe. The environment variable must be available in the Windows user session.
-# The environment variable name is limited to 3 characters or less.
-# By default, the Session Probe will be stored and started from the temporary directory of Windows user.
-# This parameter is useful if a GPO prevents Session Probe from starting from the Windows user's temporary directory.
-#_hidden
-alternate_directory_environment_variable = string(max=3, default='')
-
-# If enabled, the session, once disconnected, can be resumed by another Bastion user.
-# Except in special cases, this is usually a security problem.
-# By default, a session can only be resumed by the Bastion user who created it.
-#_hidden
-public_session = boolean(default=False)
 
 # If enabled, a string of random characters will be added to the name of the executable of Session Probe.
 # The result could be: SesProbe-5420.exe
@@ -794,100 +343,6 @@ customize_executable_name = boolean(default=False)
 #_advanced
 #_display_name=Allow multiple handshakes
 allow_multiple_handshake = boolean(default=False)
-
-# If disabled, the RDP proxy disconnects from the session when the Session Probe reports that the session is about to close (old behavior).
-# The new session end procedure (freeze and wait) prevents another connection from resuming a session that is close to end-of-life.
-#_hidden
-at_end_of_session_freeze_connection_and_wait = boolean(default=True)
-
-#_hidden
-enable_cleaner = boolean(default=True)
-
-#_hidden
-clipboard_based_launcher_reset_keyboard_status = boolean(default=True)
-
-# &nbsp; &nbsp;   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
-# &nbsp; &nbsp;   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
-# &nbsp; &nbsp;   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
-#_hidden
-process_command_line_retrieve_method = option(0, 1, 2, default=2)
-
-# Time between two polling performed by Session Probe.
-# The parameter is created to adapt the CPU consumption to the performance of the Windows device.
-# The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption.<br/>
-# (in milliseconds)
-#_hidden
-periodic_task_run_interval = integer(min=300, max=2000, default=500)
-
-# If enabled, Session Probe activity will be minimized when the user is disconnected from the session. No metadata will be collected during this time.
-# The purpose of this behavior is to optimize CPU consumption.
-#_hidden
-pause_if_session_is_disconnected = boolean(default=False)
-
-[server_cert]
-
-# Keep known server certificates on Bastion
-#_hidden
-server_cert_store = boolean(default=True)
-
-# Behavior of certificates check.
-# &nbsp; &nbsp;   0: fails if certificates doesn't match or miss.
-# &nbsp; &nbsp;   1: fails if certificate doesn't match, succeed if no known certificate.
-# &nbsp; &nbsp;   2: succeed if certificates exists (not checked), fails if missing.
-# &nbsp; &nbsp;   3: always succeed.
-# System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
-#_hidden
-server_cert_check = option(0, 1, 2, 3, default=1)
-
-# Warn if check allow connexion to server.
-# &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-server_access_allowed_message = integer(min=0, max=7, default=1)
-
-# Warn that new server certificate file was created.
-# &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-server_cert_create_message = integer(min=0, max=7, default=1)
-
-# Warn that server certificate file was successfully checked.
-# &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-server_cert_success_message = integer(min=0, max=7, default=1)
-
-# Warn that server certificate file checking failed.
-# &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-server_cert_failure_message = integer(min=0, max=7, default=1)
-
-# Warn that server certificate check raised some internal error.
-# &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
-#_hidden
-#_hex
-error_message = integer(min=0, max=7, default=1)
 
 [mod_vnc]
 
@@ -905,11 +360,11 @@ clipboard_down = boolean(default=False)
 # &nbsp; &nbsp;   -239 (0xFFFFFF11): Cursor pseudo-encoding<br/>
 # (values are comma-separated)
 #_advanced
-encodings = string(default='')
+encodings = string(default="")
 
 # VNC server clipboard data encoding type.
 #_advanced
-server_clipboard_encoding_type = option('utf-8', 'latin1', default='latin1')
+server_clipboard_encoding_type = option('utf-8', 'latin1', default="latin1")
 
 # &nbsp; &nbsp;   0: delayed
 # &nbsp; &nbsp;   1: duplicated
@@ -917,33 +372,11 @@ server_clipboard_encoding_type = option('utf-8', 'latin1', default='latin1')
 #_advanced
 bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)
 
-#_hidden
-server_is_macos = boolean(default=False)
-
-# When disabled, Ctrl + Alt becomes AltGr (Windows behavior)
-#_hidden
-server_unix_alt = boolean(default=False)
-
-#_hidden
-support_cursor_pseudo_encoding = boolean(default=True)
-
-# Enable target connection on ipv6
-#_hidden
-enable_ipv6 = boolean(default=True)
-
 [session_log]
 
 enable_session_log = boolean(default=True)
 
 enable_arcsight_log = boolean(default=False)
-
-# Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.
-# &nbsp; &nbsp;   0: keyboard input are not masked
-# &nbsp; &nbsp;   1: only passwords are masked
-# &nbsp; &nbsp;   2: passwords and unidentified texts are masked
-# &nbsp; &nbsp;   3: keyboard inputs are not logged
-#_hidden
-keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
 [ocr]
 
@@ -951,7 +384,9 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 # &nbsp; &nbsp;   2: v2
 version = option(1, 2, default=2)
 
-locale = option('latin', 'cyrillic', default='latin')
+# &nbsp; &nbsp;   latin: Recognizes Latin characters
+# &nbsp; &nbsp;   cyrillic: Recognizes Latin and Cyrillic characters
+locale = option('latin', 'cyrillic', default="latin")
 
 # Time interval between 2 analyzes.
 # Too low a value will affect session reactivity.<br/>
@@ -972,11 +407,11 @@ max_unrecog_char_rate = integer(min=0, max=100, default=40)
 [video]
 
 # Specifies the type of data to be captured:
-# &nbsp; &nbsp;   0x00: none
-# &nbsp; &nbsp;   0x01: png
-# &nbsp; &nbsp;   0x02: wrm
-# &nbsp; &nbsp;   0x08: ocr<br/>
-# Note: values can be added (enable all: 0x01 + 0x02 + 0x08 = 0x0b)
+# &nbsp; &nbsp;   0x0: none
+# &nbsp; &nbsp;   0x1: png
+# &nbsp; &nbsp;   0x2: wrm: Session recording file. Also know as native video capture.
+# &nbsp; &nbsp;   0x8: ocr<br/>
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x8 = 0xb)
 #_advanced
 #_hex
 capture_flags = integer(min=0, max=15, default=11)
@@ -986,7 +421,8 @@ capture_flags = integer(min=0, max=15, default=11)
 #_advanced
 png_interval = integer(min=0, default=10)
 
-# Time between 2 wrm movies.<br/>
+# Time between 2 wrm recording file.
+# ⚠ A value that is too small increases the disk space required for recordings.<br/>
 # (in seconds)
 #_advanced
 break_interval = integer(min=0, default=600)
@@ -994,15 +430,6 @@ break_interval = integer(min=0, default=600)
 # Number of png captures to keep.
 #_advanced
 png_limit = integer(min=0, default=5)
-
-#_hidden
-hash_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Hash)) << R"gen_config_ini(')
-
-#_hidden
-record_tmp_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::RecordTmp)) << R"gen_config_ini(')
-
-#_hidden
-record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(')
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log".)
@@ -1041,16 +468,15 @@ disable_file_system_log = integer(min=0, max=7, default=1)
 #_advanced
 wrm_color_depth_selection_strategy = option(0, 1, default=1)
 
-# The compression method of native video capture:
+# The compression method of wrm recording file:
 # &nbsp; &nbsp;   0: no compression
-# &nbsp; &nbsp;   1: gzip
-# &nbsp; &nbsp;   2: snappy
+# &nbsp; &nbsp;   1: GZip: Files are better compressed, but this takes more time and CPU load
+# &nbsp; &nbsp;   2: Snappy: Faster than GZip, but files are less compressed
 #_advanced
 wrm_compression_algorithm = option(0, 1, 2, default=1)
 
-#_advanced
-codec_id = string(default='mp4')
-
+# Maximum number of images per second for video generation.
+# A higher value will produce smoother videos, but the file weight is higher and the generation time longer.
 #_advanced
 #_display_name=Frame rate
 framerate = integer(min=1, max=120, default=5)
@@ -1058,7 +484,7 @@ framerate = integer(min=1, max=120, default=5)
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
 # ⚠ Some browsers and video decoders don't support crf=0
 #_advanced
-ffmpeg_options = string(default='crf=35 preset=superfast')
+ffmpeg_options = string(default="crf=35 preset=superfast")
 
 # Remove the top left banner that adds the date of the video
 #_advanced
@@ -1076,97 +502,16 @@ play_video_with_corrupted_bitmap = boolean(default=False)
 # Allow real-time view (4 eyes) without session recording enabled in the authorization
 allow_rt_without_recording = boolean(default=False)
 
-# Allow to control permissions on recorded files with octal number<br/>
-# (in octal or symbolic mode format (as chmod Linux command))
-#_hidden
-file_permissions = string(default='440')
-
-[audit]
-
-#_hidden
-use_redis = boolean(default=True)
-
-# (in milliseconds)
-#_hidden
-redis_timeout = integer(min=0, default=500)
-
-[file_verification]
-
-#_hidden
-socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
-
-# Enable use of ICAP service for file verification on upload.
-#_hidden
-enable_up = boolean(default=False)
-
-# Enable use of ICAP service for file verification on download.
-#_hidden
-enable_down = boolean(default=False)
-
-# Verify text data via clipboard from client to server.
-# File verification on upload must be enabled via option Enable up.
-#_hidden
-clipboard_text_up = boolean(default=False)
-
-# Verify text data via clipboard from server to client
-# File verification on download must be enabled via option Enable down.
-#_hidden
-clipboard_text_down = boolean(default=False)
-
-# Block file transfer from client to server on invalid file verification.
-# File verification on upload must be enabled via option Enable up.
-#_hidden
-block_invalid_file_up = boolean(default=False)
-
-# Block file transfer from server to client on invalid file verification.
-# File verification on download must be enabled via option Enable down.
-#_hidden
-block_invalid_file_down = boolean(default=False)
-
-# Block text transfer from client to server on invalid text verification.
-# Text verification on upload must be enabled via option Clipboard text up.
-#_hidden
-block_invalid_clipboard_text_up = boolean(default=False)
-
-# Block text transfer from server to client on invalid text verification.
-# Text verification on download must be enabled via option Clipboard text down.
-#_hidden
-block_invalid_clipboard_text_down = boolean(default=False)
-
-# Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged.
-#_hidden
-log_if_accepted = boolean(default=True)
-
-# ⚠ This value affects the RAM used by the session.<br/>
-# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize.<br/>
-# (in megabytes)
-#_hidden
-max_file_size_rejected = integer(min=0, default=256)
-
-# Temporary path used when files take up too much memory.
-#_hidden
-tmpdir = string(max=4096, default='/tmp/')
-
-[file_storage]
-
-# Enable storage of transferred files (via RDP Clipboard).
-# ⚠ Saving files can take up a lot of disk space
-# &nbsp; &nbsp;   never: Never store transferred files.
-# &nbsp; &nbsp;   always: Always store transferred files.
-# &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
-#_hidden
-store_file = option('never', 'always', 'on_invalid_verification', default='never')
-
 [icap_server_down]
 
 # Ip or fqdn of ICAP server
-host = string(default='')
+host = string(default="")
 
 # Port of ICAP server
 port = integer(min=0, default=1344)
 
 # Service name on ICAP server
-service_name = string(default='avscan')
+service_name = string(default="avscan")
 
 # ICAP server uses tls
 tls = boolean(default=False)
@@ -1182,13 +527,13 @@ filename_percent_encoding = boolean(default=False)
 [icap_server_up]
 
 # Ip or fqdn of ICAP server
-host = string(default='')
+host = string(default="")
 
 # Port of ICAP server
 port = integer(min=0, default=1344)
 
 # Service name on ICAP server
-service_name = string(default='avscan')
+service_name = string(default="avscan")
 
 # ICAP server uses tls
 tls = boolean(default=False)
@@ -1201,30 +546,6 @@ enable_x_context = boolean(default=True)
 #_advanced
 filename_percent_encoding = boolean(default=False)
 
-[crypto]
-
-# (in hexadecimal format)
-#_hidden
-encryption_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
-
-# (in hexadecimal format)
-#_hidden
-sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
-
-[websocket]
-
-# Enable websocket protocol (ws or wss with use_tls=1)
-#_hidden
-enable_websocket = boolean(default=False)
-
-# Use TLS with websocket (wss)
-#_hidden
-use_tls = boolean(default=True)
-
-# ${addr}:${port} or ${port} or ${unix_socket_path}
-#_hidden
-listen_address = string(default=':3390')
-
 [internal_mod]
 
 # Enable target edit field in login page.
@@ -1235,28 +556,15 @@ enable_target_field = boolean(default=True)
 # Possible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy<br/>
 # (values are comma-separated)
 #_advanced
-keyboard_layout_proposals = string(default='en-US, fr-FR, de-DE, ru-RU')
-
-[mod_replay]
-
-#_hidden
-replay_path = string(max=4096, default='/tmp/')
-
-# 0 - Wait for Escape, 1 - End session
-#_hidden
-on_end_of_data = boolean(default=False)
-
-# 0 - replay once, 1 - loop replay
-#_hidden
-replay_on_loop = boolean(default=False)
+keyboard_layout_proposals = string(default="en-US, fr-FR, de-DE, ru-RU")
 
 [translation]
 
-#_hidden
-language = option('en', 'fr', default='en')
-
+# &nbsp; &nbsp;   Auto: The language will be deduced according to the keyboard layout announced by the client
+# &nbsp; &nbsp;   EN: 
+# &nbsp; &nbsp;   FR: 
 #_advanced
-login_language = option('Auto', 'EN', 'FR', default='Auto')
+login_language = option('Auto', 'EN', 'FR', default="Auto")
 
 [theme]
 
@@ -1265,96 +573,93 @@ enable_theme = boolean(default=False)
 
 # Logo displayed when theme is enabled
 #_image=/var/wab/images/rdp-oem-logo.png
-logo = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(')
+logo = string(default=")gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(")
 
 # Background color for window, label and button<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-bgcolor = string(default='#081F60')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+bgcolor = string(default="#081F60")
 
 # Foreground color for window, label and button<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-fgcolor = string(default='#FFFFFF')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+fgcolor = string(default="#FFFFFF")
 
 # Separator line color used with some widgets<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-separator_color = string(default='#CFD5EB')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+separator_color = string(default="#CFD5EB")
 
 # Background color used by buttons when they have focus<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-focus_color = string(default='#004D9C')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+focus_color = string(default="#004D9C")
 
 # Text color for error messages. For example, an authentication error in the login<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-error_color = string(default='#FFFF00')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+error_color = string(default="#FFFF00")
 
 # Background color for editing field<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-edit_bgcolor = string(default='#FFFFFF')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+edit_bgcolor = string(default="#FFFFFF")
 
 # Foreground color for editing field<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-edit_fgcolor = string(default='#000000')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+edit_fgcolor = string(default="#000000")
 
 # Outline color for editing field that has focus<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-edit_focus_color = string(default='#004D9C')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+edit_focus_color = string(default="#004D9C")
 
 # Background color for tooltip<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-tooltip_bgcolor = string(default='#000000')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+tooltip_bgcolor = string(default="#000000")
 
 # Foreground color for tooltip<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-tooltip_fgcolor = string(default='#FFFF9F')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+tooltip_fgcolor = string(default="#FFFF9F")
 
 # Border color for tooltip<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-tooltip_border_color = string(default='#000000')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+tooltip_border_color = string(default="#000000")
 
 # Background color for even rows in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_line1_bgcolor = string(default='#E9ECF6')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+selector_line1_bgcolor = string(default="#E9ECF6")
 
 # Foreground color for even rows in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_line1_fgcolor = string(default='#000000')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+selector_line1_fgcolor = string(default="#000000")
 
 # Background color for odd rows in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_line2_bgcolor = string(default='#CFD5EB')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+selector_line2_bgcolor = string(default="#CFD5EB")
 
 # Foreground color for odd rows in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_line2_fgcolor = string(default='#000000')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+selector_line2_fgcolor = string(default="#000000")
 
 # Background color for the row that has focus in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_focus_bgcolor = string(default='#004D9C')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+selector_focus_bgcolor = string(default="#004D9C")
 
 # Foreground color for the row that has focus in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_focus_fgcolor = string(default='#FFFFFF')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+selector_focus_fgcolor = string(default="#FFFFFF")
 
 # Background color for the row that is selected in the selector widget but does not have focus<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_selected_bgcolor = string(default='#4472C4')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+selector_selected_bgcolor = string(default="#4472C4")
 
 # Foreground color for the row that is selected in the selector widget but does not have focus<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_selected_fgcolor = string(default='#FFFFFF')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+selector_selected_fgcolor = string(default="#FFFFFF")
 
 # Background color for name of filter fields in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_label_bgcolor = string(default='#4472C4')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+selector_label_bgcolor = string(default="#4472C4")
 
 # Foreground color for name of filter fields in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
-selector_label_fgcolor = string(default='#FFFFFF')
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+selector_label_fgcolor = string(default="#FFFFFF")
 
 [debug]
-
-#_hidden
-fake_target_ip = string(default='')
 
 # - kbd / ocr when != 0<br/>
 # (Wrm)
@@ -1491,9 +796,6 @@ sck_mod = integer(min=0, default=0)
 #_hex
 sck_front = integer(min=0, default=0)
 
-#_hidden
-password = integer(min=0, default=0)
-
 # - when != 0
 #_advanced
 #_hex
@@ -1510,23 +812,19 @@ cache = integer(min=0, default=0)
 #_hex
 ocr = integer(min=0, default=0)
 
-# avlog level
+# Value passed to function av_log_set_level()
+# See https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html
 #_advanced
 #_hex
 ffmpeg = integer(min=0, default=0)
 
+# Log unknown members or sections
 #_advanced
 config = boolean(default=True)
-
-# &nbsp; &nbsp;   0: Off
-# &nbsp; &nbsp;   1: SimulateErrorRead
-# &nbsp; &nbsp;   2: SimulateErrorWrite
-#_hidden
-mod_rdp_use_failure_simulation_socket_transport = option(0, 1, 2, default=0)
 
 # List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs<br/>
 # (values are comma-separated)
 #_advanced
-probe_client_addresses = string(default='')
+probe_client_addresses = string(default="")
 
 )gen_config_ini"

@@ -36,6 +36,8 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 
 [rdp]
 
+# This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause.
+# In general, disabling RDP orders has a negative impact on performance.<br/>
 # Disables supported drawing orders:
 # &nbsp; &nbsp;    0: DstBlt
 # &nbsp; &nbsp;    1: PatBlt
@@ -52,7 +54,7 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 # &nbsp; &nbsp;   27: GlyphIndex<br/>
 # (values are comma-separated)
 #_advanced
-disabled_orders = string(default='27')
+disabled_orders = string(default="27")
 
 # NLA authentication in secondary target.
 enable_nla = boolean(default=True)
@@ -68,7 +70,7 @@ tls_min_level = integer(min=0, default=0)
 tls_max_level = integer(min=0, default=0)
 
 # TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
-cipher_string = string(default='ALL')
+cipher_string = string(default="ALL")
 
 # Show in the logs the common cipher list supported by client and server
 #_advanced
@@ -77,18 +79,20 @@ show_common_cipher_list = boolean(default=False)
 # List of (comma-separated) enabled dynamic virtual channel. If character '*' is used as a name then enables everything.
 # An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'.
 #_advanced
-allowed_dynamic_channels = string(default='*')
+allowed_dynamic_channels = string(default="*")
 
 # List of (comma-separated) disabled dynamic virtual channel. If character '*' is used as a name then disables everything.
 # An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'.
 #_advanced
-denied_dynamic_channels = string(default='')
+denied_dynamic_channels = string(default="")
 
-# Enables Server Redirection Support.
+# The secondary target connection can be redirected to a specific session on another RDP server.
+#_display_name=Enable Server Redirection Support
 server_redirection = boolean(default=False)
 
-# Load balancing information
-load_balance_info = string(default='')
+# Load balancing information.
+# For example 'tsv://MS Terminal Services Plugin.1.Sessions' where 'Sessions' is the name of the targeted RD Collection which works fine.
+load_balance_info = string(default="")
 
 # As far as possible, use client-provided initial program (Alternate Shell)
 use_client_provided_alternate_shell = boolean(default=False)
@@ -127,8 +131,10 @@ enable_ipv6 = boolean(default=True)
 # &nbsp; &nbsp;   force: Force Console mode on target regardless of client request.
 # &nbsp; &nbsp;   forbid: Block Console mode request from client.
 #_display_name=Console mode
-mode_console = option('allow', 'force', 'forbid', default='allow')
+mode_console = option('allow', 'force', 'forbid', default="allow")
 
+# Allows the proxy to automatically reconnect to secondary target when a network error occurs.
+# The server must support reconnection cookie.
 #_advanced
 auto_reconnection_on_losing_target_link = boolean(default=False)
 
@@ -153,19 +159,19 @@ bogus_monitor_layout_treatment = boolean(default=False)
 
 # Account to be used for armoring Kerberos tickets. Must be in the form 'account_name@domain_name[@device_name]'. If account resolution succeeds the username and password associated with this account will be used; otherwise the below fallback username and password will be used instead.
 #_advanced
-krb_armoring_account = string(default='')
+krb_armoring_account = string(default="")
 
 # Realm to be used for armoring Kerberos tickets.
 #_advanced
-krb_armoring_realm = string(default='')
+krb_armoring_realm = string(default="")
 
 # Fallback username to be used for armoring Kerberos tickets.
 #_advanced
-krb_armoring_fallback_user = string(default='')
+krb_armoring_fallback_user = string(default="")
 
 # Fallback password to be used for armoring Kerberos tickets.
 #_advanced
-krb_armoring_fallback_password = string(default='')
+krb_armoring_fallback_password = string(default="")
 
 # Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed.<br/>
 # (in milliseconds)
@@ -174,7 +180,8 @@ remote_programs_disconnect_message_delay = integer(min=3000, max=120000, default
 
 # This option only has an effect in RemoteApp sessions (RDS meaning).
 # If enabled, the RDP Proxy relies on the Session Probe to launch the remote programs.
-# Otherwise, remote programs will be launched according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol. This latter is the native method.The difference is that Session Probe does not start a new application when its host session is resumed. Conversely, launching applications according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol is not affected by this behavior. However, launching applications via the native method requires them to be published in Remote Desktop Services, which is unnecessary if launched by the Session Probe.
+# Otherwise, remote programs will be launched according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol. This latter is the native method.
+# The difference is that Session Probe does not start a new application when its host session is resumed. Conversely, launching applications according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol is not affected by this behavior. However, launching applications via the native method requires them to be published in Remote Desktop Services, which is unnecessary if launched by the Session Probe.
 use_session_probe_to_launch_remote_program = boolean(default=True)
 
 # ⚠ The use of this feature is not recommended!<br/>
@@ -319,7 +326,8 @@ smart_launcher_long_delay = integer(min=0, default=500)
 #_advanced
 smart_launcher_short_delay = integer(min=0, default=50)
 
-# Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the 'Smart launcher clipboard initialization delay' parameter.This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager.
+# Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the 'Smart launcher clipboard initialization delay' parameter.
+# This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager.
 #_advanced
 #_display_name=Enable Smart launcher with AM affinity
 smart_launcher_enable_wabam_affinity = boolean(default=True)
@@ -382,7 +390,7 @@ ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 # This parameter is used to provide the list of (comma-separated) system processes that can be run in the session.
 # Ex.: dllhos.exe,TSTheme.exe
 # Unlike user processes, system processes do not keep the session open. A session with no user process will be automatically closed by Session Probe after starting the End of session check.
-extra_system_processes = string(default='')
+extra_system_processes = string(default="")
 
 # This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log).
 # Unfortunately, the detection does not work with applications developed in Java, Flash, etc. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata.
@@ -396,7 +404,7 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 # Unfortunately, the detection is not infallible. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata.
 # This parameter is used to provide the list of processes whose windows are considered as input fields of unknown type.
 # Please refer to the 'Keyboard input masking level' parameter of 'session_log' section.
-windows_of_these_applications_as_unidentified_input_field = string(default='')
+windows_of_these_applications_as_unidentified_input_field = string(default="")
 
 # This parameter is used when resuming a session hosting a existing Session Probe.
 # If enabled, the Session Probe will activate or deactivate features according to the value of 'Disabled features' parameter received when resuming its host session. Otherwise, the Session Probe will keep the same set of features that were used during the previous connection.
@@ -415,7 +423,7 @@ update_disabled_features = boolean(default=True)
 # &nbsp; &nbsp;   0x040: disable Inspect Firefox Address/Search bar. Basic web navigation monitoring.
 # &nbsp; &nbsp;   0x080: disable Monitor Internet Explorer event. Advanced web navigation monitoring.
 # &nbsp; &nbsp;   0x100: disable Inspect group membership of user. User identity monitoring.<br/>
-# Note: values can be added (disable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
+# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 + 0x10 + 0x20 + 0x40 + 0x80 + 0x100 = 0x1f7)
 #_advanced
 #_hex
 disabled_features = integer(min=0, max=511, default=352)
@@ -440,7 +448,7 @@ on_account_manipulation = option(0, 1, 2, default=0)
 # By default, the Session Probe will be stored and started from the temporary directory of Windows user.
 # This parameter is useful if a GPO prevents Session Probe from starting from the Windows user's temporary directory.
 #_advanced
-alternate_directory_environment_variable = string(max=3, default='')
+alternate_directory_environment_variable = string(max=3, default="")
 
 # If enabled, the session, once disconnected, can be resumed by another Bastion user.
 # Except in special cases, this is usually a security problem.
@@ -453,13 +461,13 @@ public_session = boolean(default=False)
 # (Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)
 # (Ex. for backwards compatibility only: 10.1.0.0/16:22)
 # BestSafe can be used to perform detection of outgoing connections created in the session. Please refer to 'Enable bestsafe interaction' parameter.
-outbound_connection_monitoring_rules = string(default='')
+outbound_connection_monitoring_rules = string(default="")
 
 # This parameter is used to provide the list of (comma-separated) rules used to monitor the execution of processes in the session.
 # (Ex.: $deny:taskmgr.exe)
 # @ = All child processes of (Bastion) application (Ex.: $deny:@)
 # BestSafe can be used to perform detection of process launched in the session. Please refer to 'Enable bestsafe interaction' parameter.
-process_monitoring_rules = string(default='')
+process_monitoring_rules = string(default="")
 
 # &nbsp; &nbsp;   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
 # &nbsp; &nbsp;   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
@@ -594,5 +602,5 @@ max_file_size_rejected = integer(min=0, default=256)
 # &nbsp; &nbsp;   never: Never store transferred files.
 # &nbsp; &nbsp;   always: Always store transferred files.
 # &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
-store_file = option('never', 'always', 'on_invalid_verification', default='never')
+store_file = option('never', 'always', 'on_invalid_verification', default="never")
 

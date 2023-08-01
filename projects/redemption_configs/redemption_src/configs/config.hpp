@@ -46,7 +46,7 @@
 
 #include "config_variant.hpp"
 #include "configs/loggable.hpp"
-#include "configs/sesman_proxy_communication_mask.hpp"
+#include "configs/acl_proxy_communication_mask.hpp"
 
 #include "configs/autogen/enums.hpp"
 #include "configs/autogen/variables_configuration_fwd.hpp"
@@ -75,28 +75,28 @@ public:
     template<class T>
     [[nodiscard]] typename T::type & get_mutable_ref() noexcept
     {
-        static_assert(!(T::sesman_proxy_communication_flags & configs::proxy_to_sesman_mask), "reference to a writable variable isn't safe");
+        static_assert(!(T::acl_proxy_communication_flags & configs::proxy_to_acl_mask), "reference to a writable variable isn't safe");
         return static_cast<T&>(this->variables).value;
     }
 
     template<class T, class... Args>
     void set(Args && ... args)
     {
-        static_assert(!(T::sesman_proxy_communication_flags & configs::proxy_to_sesman_mask), "T is writable, use set_acl<T>() instead.");
+        static_assert(!(T::acl_proxy_communication_flags & configs::proxy_to_acl_mask), "T is writable, use set_acl<T>() instead.");
         this->set_value<T>(static_cast<Args&&>(args)...);
     }
 
     template<class T, class... Args>
     void set_acl(Args && ... args)
     {
-        static_assert(T::sesman_proxy_communication_flags & configs::proxy_to_sesman_mask, "T isn't writable, use set<T>() instead.");
+        static_assert(T::acl_proxy_communication_flags & configs::proxy_to_acl_mask, "T isn't writable, use set<T>() instead.");
         this->set_value<T>(static_cast<Args&&>(args)...);
     }
 
     template<class T>
     void send()
     {
-        static_assert(T::sesman_proxy_communication_flags & configs::proxy_to_sesman_mask, "T isn't writable.");
+        static_assert(T::acl_proxy_communication_flags & configs::proxy_to_acl_mask, "T isn't writable.");
         this->to_send_index.insert(T::index);
         this->asked_table.clear(T::index);
     }
@@ -104,7 +104,7 @@ public:
     template<class T>
     void ask() noexcept
     {
-        static_assert(T::sesman_proxy_communication_flags & configs::sesman_to_proxy_mask, "T isn't askable");
+        static_assert(T::acl_proxy_communication_flags & configs::acl_to_proxy_mask, "T isn't askable");
         this->to_send_index.insert(T::index);
         this->asked_table.set(T::index);
     }
@@ -112,7 +112,7 @@ public:
     template<class T>
     bool is_asked() const noexcept
     {
-        static_assert(T::sesman_proxy_communication_flags & configs::sesman_to_proxy_mask, "T isn't askable");
+        static_assert(T::acl_proxy_communication_flags & configs::acl_to_proxy_mask, "T isn't askable");
         return this->asked_table.get(T::index);
     }
 
@@ -135,8 +135,6 @@ public:
         char const* section_name = "";
         configs::VariablesConfiguration & variables;
     };
-
-    static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
     using ZStringBuffer = std::array<char, configs::max_str_buffer_size + 1>;
 
@@ -416,7 +414,7 @@ private:
     template<class T>
     void push_to_send_index() noexcept
     {
-        static_assert(T::sesman_proxy_communication_flags & configs::proxy_to_sesman_mask, "is not writable");
+        static_assert(T::acl_proxy_communication_flags & configs::proxy_to_acl_mask, "is not writable");
         this->to_send_index.insert(T::index);
     }
 
@@ -554,11 +552,11 @@ private:
         set_value_impl<std::remove_reference_t<decltype(value)>, typename T::mapped_type>
             ::impl(value, static_cast<Args&&>(args)...);
 
-        if constexpr (T::sesman_proxy_communication_flags & configs::proxy_to_sesman_mask) {
+        if constexpr (T::acl_proxy_communication_flags & configs::proxy_to_acl_mask) {
             this->to_send_index.insert(T::index);
         }
 
-        if constexpr (T::sesman_proxy_communication_flags) {
+        if constexpr (T::acl_proxy_communication_flags) {
             this->asked_table.clear(T::index);
         }
     }

@@ -27,7 +27,7 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include "configs/autogen/str_authid.hpp"
-#include "configs/autogen/sesman_and_spec_type.hpp"
+#include "configs/autogen/acl_and_spec_type.hpp"
 
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wunused-function")
@@ -70,7 +70,7 @@ namespace
             return !log_acl_parse_err(
                 parse_from_cfg(
                     static_cast<Cfg&>(variables).value,
-                    configs::spec_type<typename configs::sesman_and_spec_type<Cfg>::type>{},
+                    configs::spec_type<typename configs::acl_and_spec_type<Cfg>::type>{},
                     value),
                 configs::authstr[unsigned(Cfg::index)],
                 value);
@@ -82,7 +82,7 @@ namespace
         {
             return assign_zbuf_from_cfg(
                 buffer,
-                cfg_s_type<typename configs::sesman_and_spec_type<Cfg>::type>{},
+                cfg_s_type<typename configs::acl_and_spec_type<Cfg>::type>{},
                 static_cast<Cfg const&>(variables).value
             );
         }

@@ -5200,7 +5200,7 @@ public:
                 this->is_server_auto_reconnec_packet_received = true;
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice.garbage();
+                this->remoteapp_one_shot_bypass_window_legalnotice.garbage();
 #endif
             }
 

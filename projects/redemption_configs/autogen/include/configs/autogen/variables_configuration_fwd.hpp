@@ -113,8 +113,8 @@ namespace cfg
         struct denied_dynamic_channels;
         struct fast_path;
         struct server_redirection_support;
-        struct client_address_sent;
         struct load_balance_info;
+        struct client_address_sent;
         struct proxy_managed_drives;
         struct ignore_auth_channel;
         struct auth_channel;

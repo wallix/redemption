@@ -18,62 +18,43 @@
 *   Author(s): Jonathan Poelen
 */
 
-#include "configs/generators/connection_policy.hpp"
-#include "configs/generators/cpp_config.hpp"
-#include "configs/generators/ini.hpp"
-#include "configs/generators/python_spec.hpp"
-#include "configs/generators/sesman_dialog.hpp"
-#include "configs/generators/sesman_default_map.hpp"
+#include "configs/generators/config.hpp"
 #include "configs/specs/config_spec.hpp"
 #include "configs/specs/config_type.hpp"
 
 int main()
 {
-    auto evaluate = [](auto&&... writers){
-        auto dispatch = [&](auto&& f){ return f(writers...); };
-        cfg_generators::ConfigSpecWrapper<decltype(dispatch)> config{dispatch};
+    cfg_generators::GeneratorConfigWrapper generator{
+        cfg_generators::GeneratorConfig(
+            "autogen/include/configs/autogen/str_ini.hpp",
 
-#ifndef IN_IDE_PARSER
-        cfg_specs::config_type_definition(config.enums);
-#endif
+            "autogen/include/configs/autogen/str_python_spec.hpp",
 
-        (writers.do_init(), ...);
+            "../../tools/sesman/sesmanworker/sesmanbacktoselector.py",
 
-#ifndef IN_IDE_PARSER
-        cfg_specs::config_spec_definition(config);
-#endif
+            "autogen/doc/acl_dialog.txt",
 
-        int error_code = 0;
-        int err;
-        ((error_code = (err = writers.do_finish()) ? err : error_code), ...);
-        return error_code;
+            "autogen/spec/",
+            "../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py",
+
+            {
+                "autogen/include/configs/autogen/authid.hpp",
+                "autogen/include/configs/autogen/str_authid.hpp",
+                "autogen/include/configs/autogen/variables_configuration_fwd.hpp",
+                "autogen/include/configs/autogen/variables_configuration.hpp",
+                "autogen/include/configs/autogen/set_value.tcc",
+                "autogen/include/configs/autogen/cfg_ini_pack.hpp",
+                "autogen/include/configs/autogen/acl_and_spec_type.hpp",
+                "autogen/include/configs/autogen/max_str_buffer_size.hpp",
+            }
+        )
     };
 
-    using PythonSpec = cfg_generators::python_spec_writer::PythonSpecWriterBase;
-    using Ini = cfg_generators::ini_writer::IniWriterBase;
-    using Cpp = cfg_generators::cpp_config_writer::CppConfigWriterBase;
-    using ConnPolicy = cfg_generators::connection_policy_writer::ConnectionPolicyWriterBase;
-    using SesmanDialog = cfg_generators::sesman_dialog_writer::SesmanDialogWriterBase;
-    using SesmanDefaultMap = cfg_generators::sesman_default_map::SesmanDefaultMapBase;
+    type_enumerations enums;
 
-    return evaluate(
-        PythonSpec("autogen/include/configs/autogen/str_python_spec.hpp"),
-        Ini("autogen/include/configs/autogen/str_ini.hpp"),
-        Cpp({
-            "autogen/include/configs/autogen/authid.hpp",
-            "autogen/include/configs/autogen/str_authid.hpp",
-            "autogen/include/configs/autogen/variables_configuration_fwd.hpp",
-            "autogen/include/configs/autogen/variables_configuration.hpp",
-            "autogen/include/configs/autogen/set_value.tcc",
-            "autogen/include/configs/autogen/cfg_ini_pack.hpp",
-            "autogen/include/configs/autogen/sesman_and_spec_type.hpp",
-            "autogen/include/configs/autogen/max_str_buffer_size.hpp",
-        }),
-        ConnPolicy(
-            "autogen/spec/",
-            "../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py"
-        ),
-        SesmanDefaultMap("../../tools/sesman/sesmanworker/sesmanbacktoselector.py"),
-        SesmanDialog("autogen/doc/sesman_dialog.txt")
-    );
+    cfg_specs::config_type_definition(enums);
+    cfg_specs::config_spec_definition(generator, enums);
+
+    int err = generator.writer.do_finish();
+    return err ? err : 0;
 }

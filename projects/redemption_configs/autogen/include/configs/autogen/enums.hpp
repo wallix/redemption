@@ -41,6 +41,7 @@ enum class CaptureFlags : uint8_t
 {
     none = 0,
     png = 1,
+    // wrm: Session recording file. Also know as native video capture.
     wrm = 2,
     video = 4,
     ocr = 8,
@@ -272,13 +273,13 @@ enum class ColorDepth : uint8_t
 {
     // 8-bit
     depth8 = 8,
-    // 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)
+    // 15-bit 555 RGB mask
     depth15 = 15,
-    // 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)
+    // 16-bit 565 RGB mask
     depth16 = 16,
-    // 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
+    // 24-bit RGB mask
     depth24 = 24,
-    // 32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)
+    // 32-bit RGB mask (24-bit RGB + alpha)
     depth32 = 32,
 };
 
@@ -434,11 +435,13 @@ template<> struct is_valid_enum_value<ColorDepthSelectionStrategy>
     constexpr static bool is_valid(uint64_t n) { return n <= 1; }
 };
 
-// The compression method of native video capture:
+// The compression method of wrm recording file:
 enum class WrmCompressionAlgorithm : uint8_t
 {
     no_compression = 0,
+    // GZip: Files are better compressed, but this takes more time and CPU load
     gzip = 1,
+    // Snappy: Faster than GZip, but files are less compressed
     snappy = 2,
 };
 
@@ -489,7 +492,9 @@ template<> struct is_valid_enum_value<OcrVersion>
 
 enum class OcrLocale : uint8_t
 {
+    // Recognizes Latin characters
     latin = 0,
+    // Recognizes Latin and Cyrillic characters
     cyrillic = 1,
 };
 
@@ -678,6 +683,7 @@ template<> struct is_valid_enum_value<ModRdpUseFailureSimulationSocketTransport>
 
 enum class LoginLanguage : uint8_t
 {
+    // The language will be deduced according to the keyboard layout announced by the client
     Auto = 0,
     EN = 1,
     FR = 2,

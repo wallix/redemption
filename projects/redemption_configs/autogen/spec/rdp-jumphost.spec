@@ -36,6 +36,8 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 
 [rdp]
 
+# This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause.
+# In general, disabling RDP orders has a negative impact on performance.<br/>
 # Disables supported drawing orders:
 # &nbsp; &nbsp;    0: DstBlt
 # &nbsp; &nbsp;    1: PatBlt
@@ -52,7 +54,7 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 # &nbsp; &nbsp;   27: GlyphIndex<br/>
 # (values are comma-separated)
 #_advanced
-disabled_orders = string(default='27')
+disabled_orders = string(default="27")
 
 # Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 tls_min_level = integer(min=0, default=0)
@@ -61,7 +63,7 @@ tls_min_level = integer(min=0, default=0)
 tls_max_level = integer(min=0, default=0)
 
 # TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
-cipher_string = string(default='ALL')
+cipher_string = string(default="ALL")
 
 # Show in the logs the common cipher list supported by client and server
 #_advanced
@@ -70,12 +72,12 @@ show_common_cipher_list = boolean(default=False)
 # List of (comma-separated) enabled dynamic virtual channel. If character '*' is used as a name then enables everything.
 # An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'.
 #_advanced
-allowed_dynamic_channels = string(default='*')
+allowed_dynamic_channels = string(default="*")
 
 # List of (comma-separated) disabled dynamic virtual channel. If character '*' is used as a name then disables everything.
 # An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'.
 #_advanced
-denied_dynamic_channels = string(default='')
+denied_dynamic_channels = string(default="")
 
 #_advanced
 enable_rdpdr_data_analysis = boolean(default=True)
@@ -89,6 +91,8 @@ force_smartcard_authentication = boolean(default=False)
 # Enable target connection on ipv6
 enable_ipv6 = boolean(default=True)
 
+# Allows the proxy to automatically reconnect to secondary target when a network error occurs.
+# The server must support reconnection cookie.
 #_advanced
 auto_reconnection_on_losing_target_link = boolean(default=False)
 
@@ -200,5 +204,5 @@ max_file_size_rejected = integer(min=0, default=256)
 # &nbsp; &nbsp;   never: Never store transferred files.
 # &nbsp; &nbsp;   always: Always store transferred files.
 # &nbsp; &nbsp;   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
-store_file = option('never', 'always', 'on_invalid_verification', default='never')
+store_file = option('never', 'always', 'on_invalid_verification', default="never")
 

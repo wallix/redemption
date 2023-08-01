@@ -192,7 +192,6 @@ REDEMPTION_DIAGNOSTIC_POP()
         int incoming_sck, bool forkable, unsigned uid, unsigned gid,
         char const* config_filename,
         uint64_t minimal_memory_available_kibi,
-        bool debug_config,
         SocketType socket_type, Font const& font)
     {
         union
@@ -229,7 +228,6 @@ REDEMPTION_DIAGNOSTIC_POP()
                                       || source_ip.to_sv() == "::1"sv;
 
         auto parse_ini_and_prevent_early_log = [&](Inifile& ini){
-            ini.set<cfg::debug::config>(debug_config);
             configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), config_filename);
 
             return source_is_localhost
@@ -249,10 +247,12 @@ REDEMPTION_DIAGNOSTIC_POP()
             select(sck + 1, nullptr, &wfds, &efds, &delay);
             close(sck);
 
-            Inifile ini;
-            if (!parse_ini_and_prevent_early_log(ini)) {
-                LOG(LOG_ERR, "memory less than %" PRIu64 "MiB, connection rejected",
-                    minimal_memory_available_kibi / 1024);
+            if (!source_is_localhost) {
+                Inifile ini;
+                if (!parse_ini_and_prevent_early_log(ini)) {
+                    LOG(LOG_ERR, "memory less than %" PRIu64 "MiB, connection rejected",
+                        minimal_memory_available_kibi / 1024);
+                }
             }
             return;
         }
@@ -548,7 +548,6 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
     const auto minimal_memory_available_kibi
       = ini.get<cfg::globals::minimal_memory_available_before_connection_silently_closed>()
       * 1024;
-    const bool debug_config = (ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     const EnableTransparentMode enable_transparent_mode
       = EnableTransparentMode(ini.get<cfg::globals::enable_transparent_mode>());
     const bool enable_ipv6 = ini.get<cfg::globals::enable_ipv6>();
@@ -576,8 +575,7 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
                     : SocketType::Ws
                 : SocketType::Tls;
             session_server_start(sck, forkable, uid, gid, config_filename_s,
-                                 minimal_memory_available_kibi,
-                                 debug_config, socket_type, font);
+                                 minimal_memory_available_kibi, socket_type, font);
             return true;
         });
     }
@@ -586,8 +584,7 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
         unique_server_loop(std::move(sck1), [&](int sck)
         {
             session_server_start(sck, forkable, uid, gid, config_filename_s,
-                                 minimal_memory_available_kibi,
-                                 debug_config, SocketType::Tls, font);
+                                 minimal_memory_available_kibi, SocketType::Tls, font);
             return true;
         });
     }

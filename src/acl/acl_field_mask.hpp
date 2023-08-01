@@ -21,7 +21,7 @@
 #pragma once
 
 #include "configs/autogen/authid.hpp"
-#include "configs/sesman_proxy_communication_mask.hpp"
+#include "configs/acl_proxy_communication_mask.hpp"
 
 #include <cstdint>
 
@@ -36,7 +36,7 @@ struct AclFieldMask
     template<class Cfg>
     bool has() const noexcept
     {
-        static_assert(Cfg::sesman_proxy_communication_flags & configs::sesman_to_proxy_mask);
+        static_assert(Cfg::acl_proxy_communication_flags & configs::acl_to_proxy_mask);
         return has(Cfg::index);
     }
 

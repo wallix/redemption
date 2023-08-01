@@ -248,6 +248,7 @@ namespace
                     }
                 }
                 else {
+                    // copy key value because invalidated by reader.read_value()
                     char sauthid[256];
                     std::size_t const min = std::min(std::size(sauthid)-1, key.size());
                     memcpy(sauthid, key.data(), min);

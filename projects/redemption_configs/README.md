@@ -1,19 +1,17 @@
 1. [Add/Modify variable](#addmodify-variable)
-    1. [Ini (spec::*)](#ini-spec)
-        1. [log_policy (spec::constants::*)](#log_policy-specconstants)
-        2. [spec_attr (spec::constants::*)](#spec_attr-specconstants)
-    2. [Sesman (sesman::*)](#sesman-sesman)
-        1. [sesman_io (sesman::constants::*)](#sesman_io-sesmanconstants)
-        2. [(no_)reset_back_to_selector (sesman::constants::*)](#no_reset_back_to_selector-sesmanconstants)
-    3. [Connection Policy (connpolicy::*)](#connection-policy-connpolicy)
-        1. [connpolicy_attr (connpolicy::constants::*)](#connpolicy_attr-connpolicyconstants)
-    4. [Cpp (cpp::*)](#cpp-cpp)
-    5. [type](#type)
-        1. [special cpp_type](#special-cpp_type)
-    6. [names](#names)
-    7. [desc](#desc)
-    8. [default_value](#default_value)
-    9. [prefix](#prefix)
+    1. [MemberInfo.value](#memberinfovalue)
+        1. [Special values](#special-values)
+        2. [Special types](#special-types)
+        3. [Conn Policy Value](#conn-policy-value)
+    2. [MemberInfo.spec](#memberinfospec)
+        1. [SesmanInfo](#sesmaninfo)
+            1. [ResetBackToSelector](#resetbacktoselector)
+            2. [Loggable](#loggable)
+        2. [Ini only](#ini-only)
+        3. [Global Spec](#global-spec)
+            1. [Attributes](#attributes)
+        4. [Conn Policy](#conn-policy)
+            1. [Attributes](#attributes-1)
 2. [Add/Modify enumeration type](#addmodify-enumeration-type)
 3. [Build](#build)
 
@@ -22,157 +20,109 @@
 
 Edit `configs_specs/configs/specs/config_spec.hpp`
 
-- `CONFIG_DEFINE_TYPE` macro: declare a redemption type (forward declaration)
-- `W.section(names{section_name}, [&]{ /* members... */ })`
-- `W.section(names{.cpp=name, .ini=name, .sesman=name, .connpolicy=name}, [&]{ /* members... */ })`
-- `W.section(names, [&]{ /* members... */ })`
-- `W.member(spec_attr, sesman_io | connpolicy[, back_to_selector_policy], log_policy, type, names[, desc][, default_value][, ...])`. Ordering value is not significant.
-- `W.sep()`: empty line (human readable)
 
+## MemberInfo.value
 
+- `enum_as_string(value, conn_policy_value...)`: Initialize with an enum and use string parser for `.spec`
+- `from_enum(value, conn_policy_value...)`: Initialize with an enum and use integer parser for `.spec`
+- `value<T>(value, conn_policy_value...)`: Initialize with a type `T`
+- `value<T>()`: equivalent to `value<T>(T{})`
 
-## Ini (spec::*)
+### Special values
 
-- `spec::type_<cpp_type>{}`
-
-
-### log_policy (spec::constants::*)
-
-- `loggable` (or `L` in const_spec.hpp)
-- `unloggable` (or `NL` in const_spec.hpp)
-- `unloggable_if_value_contains_password` (or `VNL` in const_spec.hpp)
-
-
-### spec_attr (spec::constants::*)
-
-- `no_ini_no_gui` incompatible with other value
-- `ini_and_gui`
-- `hidden_in_gui` incompatible with hex, advanced, iptable and password
-- `hex_in_gui`
-- `advanced_in_gui`
-- `iptables_in_gui`
-- `password_in_gui`
-- `external` value not managed by the proxy
-- `logged_in_gui`
-
-
-
-## Sesman (sesman::*)
-
-- `sesman::type_<cpp_type>{}`
-- `sesman::connection_policy{filetype[, connpolicy_attr]}` enable connpolicy. Combinable with `connpolicy_attr`
-
-
-### sesman_io (sesman::constants::*)
-
-- `no_sesman`
-- `proxy_to_sesman`
-- `sesman_to_proxy`
-- `sesman_rw` (`proxy_to_sesman + sesman_to_proxy`)
-
-
-### (no_)reset_back_to_selector (sesman::constants::*)
-
-Only with `proxy_to_sesman`, `sesman_to_proxy` and `sesman_rw`. Sesman should send value before the connection to target.
-
-- `reset_back_to_selector`
-- `no_reset_back_to_selector`
-
-
-
-## Connection Policy (connpolicy::*)
-
-- `connpolicy::section{"name"}` overwrite section name
-
-
-### connpolicy_attr (connpolicy::constants::*)
-
-- `hex_in_connpolicy`
-- `advanced_in_connpolicy`
-
-Combination with `|`: `sesman::connection_policy{"rdp"} | advanced_in_connpolicy | hex_in_connpolicy`.
-
-
-
-## Cpp (cpp::*)
-
-- `cpp::name{"variable name"}`
-- `cpp::type_<cpp_type>{}`
 - `cpp::expr{"expr as string"}`
-- `CPP_EXPR(expression)` (for macro: `CPP_EXPR(MACRO_NAME)`). equivalent to cpp::expr{#expression"}
+- `CPP_EXPR(expression)` (for macro: `CPP_EXPR(MACRO_NAME)`). Equivalent to `cpp::expr{#expression"}`
 
+### Special types
 
-
-## type
-
-- `type_<cpp_type>()`: ini, sesman, connpolicy and cpp type
-- `spec::type_<cpp_type>()`: ini type
-- `sesman::type_<cpp_type>()`: connpolicy type
-- `connpolicy::type_<cpp_type>()`: sesman type
-- `cpp::type_<cpp_type>()`: cpp type
-
-Note: `W.member(type_<int>(), sesman::type_<bool>(), ...)` is ok.
-
-### special cpp_type
-
-- `types::u16` instead of uint16_t
-- `types::u32` instead of uint32_t
-- `types::u64` instead of uint64_t
-- `types::list<cpp_type>`: comma-separated values (cf: `0, 3, 4`)
+- `types::u8` for `uint8_t`
+- `types::u16` for `uint16_t`
+- `types::u32` for `uint32_t`
+- `types::u64` for `uint64_t`
+- `types::i8` for `int8_t`
+- `types::i16` for `int16_t`
+- `types::i32` for `int32_t`
+- `types::i64` for `int64_t`
+- `types::int_` for `int`
+- `types::unsigned_` for `unsigned`
+- `types::list<type>`: comma-separated values (cf: `0, 3, 4`)
 - `types::ip_string`
 - `types::dirpath`: always `/` terminated. Note: use `std::string` for file path type.
-- `types::range<cpp_type, min, max>`
+- `types::range<type, min, max>`
 - `types::fixed_string<n>`: size without zero-terminal.
 - `types::fixed_binary<n>`: size without zero-terminal.
-- `types::file_permission`
+- `types::megabytes<type>`: value in magabytes
+- `types::rgb`: a color
 
 
+### Conn Policy Value
 
-## names
+- `rdp_policy_value(value)`: Default value for rdp.spec
+- `vnc_policy_value(value)`: Default value for vnc.spec
+- `jh_policy_value(value)`: Default value for jh.spec
 
-```cpp
-struct names
-{
-    std::string cpp; // cpp name and default value for ini, sesman and connpolicy
-    std::string ini {};
-    std::string sesman {};
-    std::string connpolicy {};
-};
-```
-
-```cpp
-W.member(names{.cpp="fish", .ini="superfish", .sesman="netfish"}, ...);
-```
+- `rdp/vnc/jh_policy_value(value).always()`: The value is not configurable through `.spec` and is always initialized with the specified value.
 
 
+## MemberInfo.spec
 
-## desc
+### SesmanInfo
 
-- `desc{"desc..."}`
+- `no_acl`
+- `proxy_to_acl(ResetBackToSelector)`
+- `acl_to_proxy(ResetBackToSelector, Loggable)`
+- `acl_rw(ResetBackToSelector, Loggable)`
 
+#### ResetBackToSelector
 
-
-## default_value
-
-- `set(CPP_EXPR(MACRO_NAME))`: instead of `MACRO_NAME` (cf: `set(CPP_MACRO(HASH_PATH)))`)
-- `set(any_value)`
-- `connpolicy::set(any_value)`
-- `sesman::connection_policy{...}.set(any_value)`
-- `sesman::connection_policy{...}.always(any_value)`
-
-By default, initialized with `{}` (cf: `type value = {}`).
-
-Combination of connpolicy with `|`:
+Indicates whether acls should send value before the connection to target.
 
 ```cpp
-connpolicy::set(any_value) |
-sesman::connection_policy{"rdp"}.set(any_value) |
-sesman::connection_policy{"rdp-jumphost"}.always(any_value)
+auto reset_back_to_selector = ResetBackToSelector::Yes;
+auto no_reset_back_to_selector = ResetBackToSelector::No;
 ```
 
-## prefix
+#### Loggable
 
-- `prefix_value`: `prefix_value disable_prefix_val{"disable"}` in `const_spec.hpp`
+Indicates how to display values when debug logging is enabled.
+
+```cpp
+auto L = Loggable::Yes;
+auto NL = Loggable::No;
+auto VNL = Loggable::OnlyWhenContainsPasswordString;
+```
+
+### Ini only
+
+- `spec::ini_only(SesmanInfo)`
+
+### Global Spec
+
+- `spec::global_spec(SesmanInfo, attributes = {})`
+- `spec::external(attributes = {})`
+
+#### Attributes
+
+- `spec::hex`: preferably display as hex
+- `spec::advanced`: mark as advanced option
+- `spec::iptables`: reconfigure iptable
+- `spec::password`: the field is a password
+- `spec::acl_only`: implicit with `spec::external`
+- `spec::restart_service`: the service will be restarted
+- `spec::logged`: logged the modifications
+- `spec::image(path)`: the field is an image
+
+### Conn Policy
+
+- `spec::connpolicy(vnc | rdp_and_jh | rdp_without_jh, SesmanInfo, attributes = {})`
+
+#### Attributes
+
+- `spec::hex`: preferably display as hex
+- `spec::advanced`: mark as advanced option
+- `spec::password`: the field is a password
+- `spec::acl_only`: the field is sent to the proxy only for logging
+
 
 
 # Add/Modify enumeration type

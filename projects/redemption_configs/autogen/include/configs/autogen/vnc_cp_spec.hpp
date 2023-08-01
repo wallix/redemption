@@ -52,23 +52,23 @@ ssh_port = integer(min=0, default=22)
 
 # static_login: Static values provided in "Ssh login" &amp; "Ssh password" fields will be used to establish the SSH tunnel.
 # scenario_account: Scenario account provided in "Scenario account name" field will be used to establish the SSH tunnel. (Recommended)
-tunneling_credential_source = option('static_login', 'scenario_account', default='scenario_account')
+tunneling_credential_source = option('static_login', 'scenario_account', default="scenario_account")
 
 # Login to be used for SSH tunneling.
-ssh_login = string(default='')
+ssh_login = string(default="")
 
 # Password to be used for SSH tunneling.
-ssh_password = string(default='')
+ssh_password = string(default="")
 
 # With the following syntax: "account_name@domain_name[@[device_name]]".<br/>
 # Syntax for using global domain scenario account:
 # &nbsp; &nbsp;   "account_name@global_domain_name"<br/>
 # Syntax for using local domain scenario account (with automatic device name deduction):
 # &nbsp; &nbsp;   "account_name@local_domain_name@"
-scenario_account_name = string(default='')
+scenario_account_name = string(default="")
 
 # Only for debugging purposes.
 #_advanced
-tunneling_type = option('pxssh', 'pexpect', 'popen', default='pxssh')
+tunneling_type = option('pxssh', 'pexpect', 'popen', default="pxssh")
 
 )xxxyyyzzz"

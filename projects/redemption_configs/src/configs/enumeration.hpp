@@ -36,25 +36,25 @@ struct type_enumeration
 
     struct value_type
     {
-        char const * name;
-        char const * desc;
-        char const * alias;
+        std::string_view name;
+        std::string_view desc;
+        std::string_view alias;
         uint64_t val;
         // bool is_negative;
         bool exclude = false;
 
-        char const * get_name() const { return alias ? alias : name; }
+        std::string_view get_name() const { return alias.empty() ? name : alias; }
     };
 
-    char const * name;
-    char const * desc;
-    char const * info;
+    std::string_view name;
+    std::string_view desc;
+    std::string_view info;
 
     Category cat;
 
     std::vector<value_type> values;
 
-    type_enumeration(char const * name, char const * desc, char const * info, Category cat)
+    type_enumeration(std::string_view name, std::string_view desc, std::string_view info, Category cat)
     : name(name)
     , desc(desc)
     , info(info)
@@ -101,9 +101,9 @@ struct type_enumeration
     }
 
 protected:
-    void _alias(char const * s)
+    void _alias(std::string_view s)
     {
-        if (this->values.back().alias) {
+        if (!this->values.back().alias.empty()) {
             throw std::runtime_error("'alias' is already defined");
         }
         this->values.back().alias = s;
@@ -114,13 +114,13 @@ struct type_enumeration_inc : type_enumeration
 {
     using type_enumeration::type_enumeration;
 
-    type_enumeration_inc & value(char const * name, char const * desc = nullptr)
+    type_enumeration_inc & value(std::string_view name, std::string_view desc = {})
     {
         uint64_t value = this->values.size();
         if (cat == Category::flags && value) {
             value = 1ull << (value - 1u);
         }
-        this->values.push_back({name, desc, nullptr, value});
+        this->values.push_back({name, desc, std::string_view(), value});
         return *this;
     }
 
@@ -130,7 +130,7 @@ struct type_enumeration_inc : type_enumeration
         return *this;
     }
 
-    type_enumeration_inc & alias(char const * s)
+    type_enumeration_inc & alias(std::string_view s)
     {
         this->_alias(s);
         return *this;
@@ -139,13 +139,13 @@ struct type_enumeration_inc : type_enumeration
 
 struct type_enumeration_set : type_enumeration
 {
-    type_enumeration_set & value(char const * name, unsigned long long val, char const * desc = nullptr)
+    type_enumeration_set & value(std::string_view name, unsigned long long val, std::string_view desc = {})
     {
-        this->values.push_back({name, desc, nullptr, val});
+        this->values.push_back({name, desc, std::string_view(), val});
         return *this;
     }
 
-    type_enumeration_set & alias(char const * s)
+    type_enumeration_set & alias(std::string_view s)
     {
         this->_alias(s);
         return *this;
@@ -158,22 +158,22 @@ struct type_enumerations
     std::vector<type_enumeration> enumerations_;
 
     type_enumeration_inc & enumeration_flags(
-        char const * name, char const * desc = nullptr, char const * info = nullptr
-    ) {
+        std::string_view name, std::string_view desc = {}, std::string_view info = {})
+    {
         this->enumerations_.push_back({name, desc, info, type_enumeration::Category::flags});
         return static_cast<type_enumeration_inc&>(this->enumerations_.back());
     }
 
     type_enumeration_inc & enumeration_list(
-        char const * name, char const * desc = nullptr, char const * info = nullptr
-    ) {
+        std::string_view name, std::string_view desc = {}, std::string_view info = {})
+    {
         this->enumerations_.push_back({name, desc, info, type_enumeration::Category::autoincrement});
         return static_cast<type_enumeration_inc&>(this->enumerations_.back());
     }
 
     type_enumeration_set & enumeration_set(
-        char const * name, char const * desc = nullptr, char const * info = nullptr
-    ) {
+        std::string_view name, std::string_view desc = {}, std::string_view info = {})
+    {
         this->enumerations_.push_back({name, desc, info, type_enumeration::Category::set});
         return static_cast<type_enumeration_set&>(this->enumerations_.back());
     }
@@ -190,7 +190,7 @@ private:
         auto p = std::find_if(
             enumerations_.begin(),
             enumerations_.end(),
-            [&str_tname](auto & value){ return str_tname == value.name; }
+            [&str_tname](type_enumeration const& e){ return str_tname == e.name; }
         );
 
         if (p != enumerations_.end()) {

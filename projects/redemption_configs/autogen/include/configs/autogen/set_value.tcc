@@ -36,44 +36,47 @@ void Inifile::ConfigurationHolder::set_section(zstring_view section) {
     else if (section == "ocr"_zv) {
         this->section_id = 11;
     }
-    else if (section == "video"_zv) {
+    else if (section == "capture"_zv) {
         this->section_id = 12;
     }
-    else if (section == "audit"_zv) {
+    else if (section == "video"_zv) {
         this->section_id = 13;
     }
-    else if (section == "file_verification"_zv) {
+    else if (section == "audit"_zv) {
         this->section_id = 14;
     }
-    else if (section == "file_storage"_zv) {
+    else if (section == "file_verification"_zv) {
         this->section_id = 15;
     }
-    else if (section == "icap_server_down"_zv) {
+    else if (section == "file_storage"_zv) {
         this->section_id = 16;
     }
-    else if (section == "icap_server_up"_zv) {
+    else if (section == "icap_server_down"_zv) {
         this->section_id = 17;
     }
-    else if (section == "crypto"_zv) {
+    else if (section == "icap_server_up"_zv) {
         this->section_id = 18;
     }
-    else if (section == "websocket"_zv) {
+    else if (section == "crypto"_zv) {
         this->section_id = 19;
     }
-    else if (section == "internal_mod"_zv) {
+    else if (section == "websocket"_zv) {
         this->section_id = 20;
     }
-    else if (section == "mod_replay"_zv) {
+    else if (section == "internal_mod"_zv) {
         this->section_id = 21;
     }
-    else if (section == "translation"_zv) {
+    else if (section == "mod_replay"_zv) {
         this->section_id = 22;
     }
-    else if (section == "theme"_zv) {
+    else if (section == "translation"_zv) {
         this->section_id = 23;
     }
-    else if (section == "debug"_zv) {
+    else if (section == "theme"_zv) {
         this->section_id = 24;
+    }
+    else if (section == "debug"_zv) {
+        this->section_id = 25;
     }
     else if (static_cast<cfg::debug::config>(this->variables).value) {
         LOG(LOG_WARNING, "unknown section [%s]", section);
@@ -663,6 +666,38 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "tls_min_level"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::tls_min_level&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "tls_max_level"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::tls_max_level&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "cipher_string"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::cipher_string&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+        else if (key == "show_common_cipher_list"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::show_common_cipher_list&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
         else if (key == "persistent_disk_bitmap_cache"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -703,6 +738,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "allowed_dynamic_channels"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::allowed_dynamic_channels&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+        else if (key == "denied_dynamic_channels"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::denied_dynamic_channels&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
         else if (key == "fast_path"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -716,6 +767,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::server_redirection_support&>(this->variables).value,
                 ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "load_balance_info"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::load_balance_info&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
                 value
             );
         }
@@ -983,6 +1042,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "mode_console"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::mode_console&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
         else if (key == "auto_reconnection_on_losing_target_link"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -1019,6 +1086,30 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::bogus_monitor_layout_treatment&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "remote_programs_disconnect_message_delay"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::remote_programs_disconnect_message_delay&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 3000, 120000>>{},
+                value
+            );
+        }
+        else if (key == "use_session_probe_to_launch_remote_program"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::use_session_probe_to_launch_remote_program&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "replace_null_pointer_by_default_pointer"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::replace_null_pointer_by_default_pointer&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -1303,11 +1394,27 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "extra_system_processes"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::extra_system_processes&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
         else if (key == "childless_window_as_unidentified_input_field"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::session_probe::childless_window_as_unidentified_input_field&>(this->variables).value,
                 ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "windows_of_these_applications_as_unidentified_input_field"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::windows_of_these_applications_as_unidentified_input_field&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
                 value
             );
         }
@@ -1356,6 +1463,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::session_probe::public_session&>(this->variables).value,
                 ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "outbound_connection_monitoring_rules"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::outbound_connection_monitoring_rules&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+        else if (key == "process_monitoring_rules"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::session_probe::process_monitoring_rules&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
                 value
             );
         }
@@ -1655,6 +1778,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     }
     else if (this->section_id == 12) {
         if (0) {}
+        else if (key == "disable_keyboard_log"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::disable_keyboard_log&>(this->variables).value,
+                ::configs::spec_type<KeyboardLogFlagsCP>{},
+                value
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
+                key, this->section_name);
+        }
+    }
+    else if (this->section_id == 13) {
+        if (0) {}
         else if (key == "capture_flags"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -1811,7 +1950,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::video::file_permissions&>(this->variables).value,
-                ::configs::spec_type<::FilePermissions>{},
+                ::configs::spec_type<FilePermissions>{},
                 value
             );
         }
@@ -1821,7 +1960,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 13) {
+    else if (this->section_id == 14) {
         if (0) {}
         else if (key == "use_redis"_zv) {
             ::config_parse_and_log(
@@ -1845,7 +1984,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 14) {
+    else if (this->section_id == 15) {
         if (0) {}
         else if (key == "socket_path"_zv) {
             ::config_parse_and_log(
@@ -1949,7 +2088,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 15) {
+    else if (this->section_id == 16) {
         if (0) {}
         else if (key == "store_file"_zv) {
             ::config_parse_and_log(
@@ -1965,13 +2104,13 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 16) {
-        // all members are external
-    }
     else if (this->section_id == 17) {
         // all members are external
     }
     else if (this->section_id == 18) {
+        // all members are external
+    }
+    else if (this->section_id == 19) {
         if (0) {}
         else if (key == "encryption_key"_zv) {
             ::config_parse_and_log(
@@ -1995,7 +2134,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 19) {
+    else if (this->section_id == 20) {
         if (0) {}
         else if (key == "enable_websocket"_zv) {
             ::config_parse_and_log(
@@ -2027,7 +2166,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 20) {
+    else if (this->section_id == 21) {
         if (0) {}
         else if (key == "enable_target_field"_zv) {
             ::config_parse_and_log(
@@ -2051,7 +2190,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 21) {
+    else if (this->section_id == 22) {
         if (0) {}
         else if (key == "replay_path"_zv) {
             ::config_parse_and_log(
@@ -2083,7 +2222,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 22) {
+    else if (this->section_id == 23) {
         if (0) {}
         else if (key == "language"_zv) {
             ::config_parse_and_log(
@@ -2107,7 +2246,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 23) {
+    else if (this->section_id == 24) {
         if (0) {}
         else if (key == "enable_theme"_zv) {
             ::config_parse_and_log(
@@ -2299,7 +2438,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 24) {
+    else if (this->section_id == 25) {
         if (0) {}
         else if (key == "fake_target_ip"_zv) {
             ::config_parse_and_log(
