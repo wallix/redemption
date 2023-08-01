@@ -70,8 +70,8 @@ void file_verification_error(
 // READ PROXY_OPT
 ChannelsAuthorizations make_channels_authorizations(Inifile const& ini)
 {
-    auto const& allow = ini.get<cfg::mod_rdp::allow_channels>();
-    auto const& deny = ini.get<cfg::mod_rdp::deny_channels>();
+    auto const& allow = ini.get<cfg::mod_rdp::allowed_channels>();
+    auto const& deny = ini.get<cfg::mod_rdp::denied_channels>();
 
     if (ini.get<cfg::globals::enable_wab_integration>()) {
         auto result = compute_authorized_channels(allow, deny, ini.get<cfg::context::proxy_opt>());

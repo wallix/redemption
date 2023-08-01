@@ -214,15 +214,15 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::globals::target_user>(s);
     ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
-    ini.set<cfg::mod_rdp::allow_channels>(cslist);
-    ini.set<cfg::mod_rdp::allow_channels>(slist);
+    ini.set<cfg::mod_rdp::allowed_channels>(cslist);
+    ini.set<cfg::mod_rdp::allowed_channels>(slist);
     ini.set<cfg::mod_rdp::alternate_shell>(cs);
     ini.set<cfg::mod_rdp::alternate_shell>(s);
     ini.set<cfg::mod_rdp::auth_channel>(cs);
     ini.set<cfg::mod_rdp::auth_channel>(s);
     ini.set<cfg::mod_rdp::cache_waiting_list>(true);
-    ini.set<cfg::mod_rdp::deny_channels>(cslist);
-    ini.set<cfg::mod_rdp::deny_channels>(slist);
+    ini.set<cfg::mod_rdp::denied_channels>(cslist);
+    ini.set<cfg::mod_rdp::denied_channels>(slist);
     ini.set<cfg::mod_rdp::disconnect_on_logon_user_change>(true);
     ini.set<cfg::mod_rdp::enable_kerberos>(true);
     ini.set<cfg::mod_rdp::enable_nla>(true);

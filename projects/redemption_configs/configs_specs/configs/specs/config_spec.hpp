@@ -293,7 +293,8 @@ _.section("globals", [&]
     _.member(advanced_in_gui, no_sesman, L,
              names{"listen_address"},
              type_<types::ip_string>(),
-             set("0.0.0.0"));
+             set("0.0.0.0"),
+             desc{"Specify alternate bind address"});
 
     _.member(iptables_in_gui, no_sesman, L,
              names{"enable_transparent_mode"},
@@ -581,7 +582,11 @@ _.section("client", [&]
     _.member(ini_and_gui, no_sesman, L,
              names{"enable_suppress_output"},
              set(true),
-             type_<bool>());
+             type_<bool>(),
+             desc{
+                "Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.\n"
+                "If changes occur on the target, they will not be visible in the recordings either."
+             });
 
     _.member(ini_and_gui, no_sesman, L,
              names{"ssl_cipher_list"},
@@ -730,26 +735,38 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
              desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."});
 
     _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"allow_channels"},
+             names{"allowed_channels"},
              type_<types::list<std::string>>(),
              set("*"),
-             desc{"List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority."});
+             desc{
+                "List of (comma-separated) enabled (static) virtual channel. If character '*' is used as a name then enables everything.\n"
+                "An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'."
+             });
 
     _.member(hidden_in_gui, sesman_to_proxy, no_reset_back_to_selector, L,
-             names{"deny_channels"},
+             names{"denied_channels"},
              type_<types::list<std::string>>(),
-             desc{"List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
+             desc{
+                "List of (comma-separated) disabled (static) virtual channel. If character '*' is used as a name then disables everything.\n"
+                "An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'."
+             });
 
     _.member(no_ini_no_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
              names{"allowed_dynamic_channels"},
              type_<std::string>(),
              set("*"),
-             desc{"List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all."});
+             desc{
+                "List of (comma-separated) enabled dynamic virtual channel. If character '*' is used as a name then enables everything.\n"
+                "An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'."
+             });
 
     _.member(no_ini_no_gui, rdp_and_jh_connpolicy | advanced_in_connpolicy, L,
              names{"denied_dynamic_channels"},
              type_<std::string>(),
-             desc{"List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all."});
+             desc{
+                "List of (comma-separated) disabled dynamic virtual channel. If character '*' is used as a name then disables everything.\n"
+                "An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'."
+             });
 
     _.member(hidden_in_gui, no_sesman, L,
              names{"fast_path"},

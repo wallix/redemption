@@ -107,8 +107,8 @@ namespace cfg
         struct persistent_disk_bitmap_cache;
         struct cache_waiting_list;
         struct persist_bitmap_cache_on_disk;
-        struct allow_channels;
-        struct deny_channels;
+        struct allowed_channels;
+        struct denied_channels;
         struct allowed_dynamic_channels;
         struct denied_dynamic_channels;
         struct fast_path;

@@ -74,11 +74,13 @@ cipher_string = string(default='ALL')
 #_advanced
 show_common_cipher_list = boolean(default=False)
 
-# List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all.
+# List of (comma-separated) enabled dynamic virtual channel. If character '*' is used as a name then enables everything.
+# An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'.
 #_advanced
 allowed_dynamic_channels = string(default='*')
 
-# List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all.
+# List of (comma-separated) disabled dynamic virtual channel. If character '*' is used as a name then disables everything.
+# An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'.
 #_advanced
 denied_dynamic_channels = string(default='')
 

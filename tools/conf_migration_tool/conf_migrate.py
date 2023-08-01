@@ -418,6 +418,12 @@ migration_defs: List[MigrationType] = [
             'hide_non_printable_kbd_input': RemoveItem(),
         },
     }),
+    (RedemptionVersion("10.5.31"), {
+        'mod_rdp': {
+            'allow_channels': UpdateItem(key='allowed_channels'),
+            'deny_channels': UpdateItem(key='denied_channels'),
+        },
+    }),
 ]
 
 

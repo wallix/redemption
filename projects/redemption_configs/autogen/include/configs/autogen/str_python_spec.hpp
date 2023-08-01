@@ -55,6 +55,7 @@ authentication_timeout = integer(min=0, default=120)
 #_hidden
 trace_type = option(0, 1, 2, default=1)
 
+# Specify alternate bind address
 #_advanced
 listen_address = ip_addr(default='0.0.0.0')
 
@@ -224,6 +225,8 @@ bitmap_compression = boolean(default=True)
 #_hidden
 fast_path = boolean(default=True)
 
+# Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.
+# If changes occur on the target, they will not be visible in the recordings either.
 enable_suppress_output = boolean(default=True)
 
 # [Not configured]: Compatible with more RDP clients (less secure)
@@ -340,15 +343,17 @@ cache_waiting_list = boolean(default=True)
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
 
-# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.<br/>
+# List of (comma-separated) enabled (static) virtual channel. If character '*' is used as a name then enables everything.
+# An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.<br/>
 # (values are comma-separated)
 #_hidden
-allow_channels = string(default='*')
+allowed_channels = string(default='*')
 
-# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.<br/>
+# List of (comma-separated) disabled (static) virtual channel. If character '*' is used as a name then disables everything.
+# An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.<br/>
 # (values are comma-separated)
 #_hidden
-deny_channels = string(default='')
+denied_channels = string(default='')
 
 # Enables support of Client/Server Fast-Path Input/Update PDUs.
 # Fast-Path is required for Windows Server 2012 (or more recent)!

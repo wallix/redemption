@@ -290,6 +290,7 @@ namespace cfg
         using mapped_type = TraceType;
         type value { TraceType::localfile_hashed };
     };
+    /// Specify alternate bind address <br/>
     /// type: std::string <br/>
     /// default: "0.0.0.0" <br/>
     struct globals::listen_address {
@@ -692,6 +693,8 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth. <br/>
+    /// If changes occur on the target, they will not be visible in the recordings either. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::enable_suppress_output {
@@ -980,11 +983,12 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority. <br/>
+    /// List of (comma-separated) enabled (static) virtual channel. If character '*' is used as a name then enables everything. <br/>
+    /// An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'. <br/>
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: "*" <br/>
-    struct mod_rdp::allow_channels {
+    struct mod_rdp::allowed_channels {
         static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -993,11 +997,12 @@ namespace cfg
         using mapped_type = ::configs::spec_types::list<std::string>;
         type value { "*" };
     };
-    /// List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority. <br/>
+    /// List of (comma-separated) disabled (static) virtual channel. If character '*' is used as a name then disables everything. <br/>
+    /// An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'. <br/>
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
-    struct mod_rdp::deny_channels {
+    struct mod_rdp::denied_channels {
         static constexpr unsigned sesman_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
@@ -1006,7 +1011,8 @@ namespace cfg
         using mapped_type = ::configs::spec_types::list<std::string>;
         type value {  };
     };
-    /// List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all. <br/>
+    /// List of (comma-separated) enabled dynamic virtual channel. If character '*' is used as a name then enables everything. <br/>
+    /// An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'. <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:allowed_dynamic_channels <br/>
@@ -1020,7 +1026,8 @@ namespace cfg
         using mapped_type = std::string;
         type value { "*" };
     };
-    /// List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all. <br/>
+    /// List of (comma-separated) disabled dynamic virtual channel. If character '*' is used as a name then disables everything. <br/>
+    /// An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'. <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:denied_dynamic_channels <br/>
@@ -5069,8 +5076,8 @@ struct mod_rdp
 , cfg::mod_rdp::persistent_disk_bitmap_cache
 , cfg::mod_rdp::cache_waiting_list
 , cfg::mod_rdp::persist_bitmap_cache_on_disk
-, cfg::mod_rdp::allow_channels
-, cfg::mod_rdp::deny_channels
+, cfg::mod_rdp::allowed_channels
+, cfg::mod_rdp::denied_channels
 , cfg::mod_rdp::fast_path
 , cfg::mod_rdp::server_redirection_support
 , cfg::mod_rdp::client_address_sent
@@ -5502,8 +5509,8 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::tls_max_level
 , cfg::mod_rdp::cipher_string
 , cfg::mod_rdp::show_common_cipher_list
-, cfg::mod_rdp::allow_channels
-, cfg::mod_rdp::deny_channels
+, cfg::mod_rdp::allowed_channels
+, cfg::mod_rdp::denied_channels
 , cfg::mod_rdp::allowed_dynamic_channels
 , cfg::mod_rdp::denied_dynamic_channels
 , cfg::mod_rdp::server_redirection_support

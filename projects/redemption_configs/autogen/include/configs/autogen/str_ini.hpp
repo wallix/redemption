@@ -62,6 +62,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #trace_type = 1
 
+# Specify alternate bind address
 #_advanced
 #listen_address = 0.0.0.0
 
@@ -271,6 +272,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #fast_path = 1
 
+# Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.
+# If changes occur on the target, they will not be visible in the recordings either.
 # value: 0 or 1
 #enable_suppress_output = 1
 
@@ -406,13 +409,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #persist_bitmap_cache_on_disk = 0
 
-# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# List of (comma-separated) enabled (static) virtual channel. If character '*' is used as a name then enables everything.
+# An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.
 #_hidden
-#allow_channels = *
+#allowed_channels = *
 
-# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# List of (comma-separated) disabled (static) virtual channel. If character '*' is used as a name then disables everything.
+# An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.
 #_hidden
-#deny_channels = 
+#denied_channels = 
 
 # Enables support of Client/Server Fast-Path Input/Update PDUs.
 # Fast-Path is required for Windows Server 2012 (or more recent)!

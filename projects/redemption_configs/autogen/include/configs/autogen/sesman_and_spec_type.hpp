@@ -97,8 +97,8 @@ template<> struct sesman_and_spec_type<cfg::mod_rdp::show_common_cipher_list> { 
 template<> struct sesman_and_spec_type<cfg::mod_rdp::persistent_disk_bitmap_cache> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::cache_waiting_list> { using type = bool; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::persist_bitmap_cache_on_disk> { using type = bool; };
-template<> struct sesman_and_spec_type<cfg::mod_rdp::allow_channels> { using type = ::configs::spec_types::list<std::string>; };
-template<> struct sesman_and_spec_type<cfg::mod_rdp::deny_channels> { using type = ::configs::spec_types::list<std::string>; };
+template<> struct sesman_and_spec_type<cfg::mod_rdp::allowed_channels> { using type = ::configs::spec_types::list<std::string>; };
+template<> struct sesman_and_spec_type<cfg::mod_rdp::denied_channels> { using type = ::configs::spec_types::list<std::string>; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::allowed_dynamic_channels> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::denied_dynamic_channels> { using type = std::string; };
 template<> struct sesman_and_spec_type<cfg::mod_rdp::fast_path> { using type = bool; };

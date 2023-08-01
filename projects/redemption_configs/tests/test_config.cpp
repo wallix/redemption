@@ -178,8 +178,8 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
+    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allowed_channels>());
+    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::denied_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
@@ -307,8 +307,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "persistent_disk_bitmap_cache=false\n"
         "cache_waiting_list=no\n"
         "persist_bitmap_cache_on_disk=true\n"
-        "allow_channels=audin\n"
-        "deny_channels=*\n"
+        "allowed_channels=audin\n"
+        "denied_channels=*\n"
         "fast_path=no\n"
         "proxy_managed_drives=\n"
         "alternate_shell=C:\\WINDOWS\\NOTEPAD.EXE\n"
@@ -440,8 +440,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL("audin",                          ini.get<cfg::mod_rdp::allow_channels>());
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::deny_channels>());
+    RED_CHECK_EQUAL("audin",                          ini.get<cfg::mod_rdp::allowed_channels>());
+    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::denied_channels>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::fast_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
@@ -776,8 +776,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
+    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allowed_channels>());
+    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::denied_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
@@ -937,8 +937,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
+    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allowed_channels>());
+    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::denied_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
@@ -1077,8 +1077,8 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
+    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allowed_channels>());
+    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::denied_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
@@ -1216,8 +1216,8 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
+    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allowed_channels>());
+    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::denied_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     RED_CHECK_EQUAL("docs,apps",                      ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
@@ -1342,8 +1342,8 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
+    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allowed_channels>());
+    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::denied_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
@@ -1469,8 +1469,8 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allow_channels>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::deny_channels>());
+    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allowed_channels>());
+    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::denied_channels>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
 

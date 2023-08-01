@@ -687,18 +687,18 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "allow_channels"_zv) {
+        else if (key == "allowed_channels"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::allow_channels&>(this->variables).value,
+                static_cast<cfg::mod_rdp::allowed_channels&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 value
             );
         }
-        else if (key == "deny_channels"_zv) {
+        else if (key == "denied_channels"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::deny_channels&>(this->variables).value,
+                static_cast<cfg::mod_rdp::denied_channels&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 value
             );
