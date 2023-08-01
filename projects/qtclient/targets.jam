@@ -39,6 +39,7 @@ constant main_qt_client_redemption :
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/nla/kerberos.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
@@ -306,6 +307,7 @@ obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp
 obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
+obj src/core/RDP/nla/kerberos.o : $(REDEMPTION_SRC_PATH)/core/RDP/nla/kerberos.cpp ;
 obj src/core/RDP/orders/remoteFx.o : $(REDEMPTION_SRC_PATH)/core/RDP/orders/remoteFx.cpp ;
 obj src/core/RDP/rdp_pointer.o : $(REDEMPTION_SRC_PATH)/core/RDP/rdp_pointer.cpp ;
 obj src/core/RDP/rlgr.o : $(REDEMPTION_SRC_PATH)/core/RDP/rlgr.cpp ;
@@ -415,6 +417,7 @@ explicit
   src/core/RDP/dwt.o
   src/core/RDP/mppc.o
   src/core/RDP/nego.o
+  src/core/RDP/nla/kerberos.o
   src/core/RDP/orders/remoteFx.o
   src/core/RDP/rdp_pointer.o
   src/core/RDP/rlgr.o
