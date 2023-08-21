@@ -99,7 +99,7 @@ public:
         using namespace std::literals::chrono_literals;
 
         if (this->last_delay.count()) {
-            // ajust minutes
+            // adjust minutes
             fn(std::chrono::duration_cast<std::chrono::minutes>(this->last_delay + 30s));
             this->last_delay = this->last_delay.zero();
         }
