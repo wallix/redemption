@@ -13,12 +13,13 @@ do
 
     patternVar = Ct(After(Ct(
         'struct ' * C(Ident)
-      * ' {\n        static constexpr unsigned sesman_proxy_communication_flags = ' * C(peg.Until(';'))
+      * ' {\n        static constexpr unsigned acl_proxy_communication_flags = ' * C(peg.Until(';'))
     ))^0)
 
     patternVarSearch = Ct(After( Ct(C(P'get_mutable_ref' + 'get' + 'set_acl' + 'set' + 'ask' + 'send')
                                     * '<cfg::' * C(Ident) * S'>')
-                               + '(cfg::' * C(Ident) * (P'()' + '{}')
+                               + (P'to_bgr' + 'has_field')
+                                    * '(cfg::' * C(Ident) * (P'()' + '{}') * ')'
                                )^0)
 
     patternType = Ct((After('.enumeration_') * After('"') * C(peg.Until('"')))^0)
@@ -29,18 +30,14 @@ local config_type_path = 'projects/redemption_configs/configs_specs/configs/spec
 local variables_configuration_path = 'projects/redemption_configs/autogen/include/configs/autogen/variables_configuration.hpp'
 
 local ask_only = {
-    ['context::keepalive']=true,
     -- TODO check that
     ['context::selector']=true,
     ['context::password']=true,
-    -- TODO remove that
-    ['context::nla_password_hash']=true,
-    ['globals::nla_auth_user']=true,
 }
 
 local match_and_setk = utils.match_and_setk
 
--- {used:bool, sesman_to_proxy:bool, proxy_to_sesman:bool, get:bool, set:bool, ask:bool}
+-- {used:bool, acl_to_proxy:bool, proxy_to_acl:bool, get:bool, set:bool, ask:bool}
 local values = {}
 local types
 
@@ -55,8 +52,8 @@ function init(args)
     for _,v in ipairs(patternVar:match(utils.readall(variables_configuration_path))) do
         values[v[1]] = {
             used=false,
-            is_sesman_to_proxy = v[2]:byte(3) == 49 --[[ '1' ]],
-            is_proxy_to_sesman = v[2]:byte(2) == 49 --[[ '1' ]],
+            is_acl_to_proxy = v[2]:byte(3) == 49 --[[ '1' ]],
+            is_proxy_to_acl = v[2]:byte(2) == 49 --[[ '1' ]],
         }
     end
 end
@@ -80,7 +77,9 @@ function file(content)
                     t.set = true
                 end
             else
-                values[v].used = true
+                t = values[v]
+                t.used = true
+                t.get = true
             end
         end
     end
@@ -93,16 +92,16 @@ function terminate()
         if not t.used then
             errors[#errors+1] = name .. " not used"
         else
-            if not t.get and t.is_sesman_to_proxy then
+            if not t.get and t.is_acl_to_proxy then
                 if not ask_only[name] or not t.ask then
-                    local real_type = t.is_sesman_to_proxy and t.is_proxy_to_sesman
-                        and 'sesman_rw'
-                        or 'sesman_to_proxy'
-                    errors[#errors+1] = name .. " is " .. real_type .. " but never read (should be proxy_to_sesman)"
+                    local real_type = t.is_acl_to_proxy and t.is_proxy_to_acl
+                        and 'acl_rw'
+                        or 'acl_to_proxy'
+                    errors[#errors+1] = name .. " is " .. real_type .. " but never read (should be proxy_to_acl)"
                 end
             end
-            if not t.set and t.is_proxy_to_sesman then
-                errors[#errors+1] = name .. " is proxy_to_sesman but never write (should be sesman_to_proxy)"
+            if not t.set and t.is_proxy_to_acl then
+                errors[#errors+1] = name .. " is proxy_to_acl but never write (should be acl_to_proxy)"
             end
         end
     end
