@@ -50,6 +50,7 @@ certificate_password = string(max=254, default="inquisition")
 enable_bitmap_update = boolean(default=True)
 
 # Show close screen.
+# This displays errors related to the secondary connection then closes automatically after a timeout specified by "close_timeout" or on user request.
 enable_close_box = boolean(default=True)
 
 # Specifies the time to spend on the close box of proxy RDP before closing client window.
@@ -58,6 +59,8 @@ enable_close_box = boolean(default=True)
 #_advanced
 close_timeout = integer(min=0, default=600)
 
+# Displays a reminder box at the top of the session when a session duration is configured.
+# The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed.
 #_advanced
 enable_osd = boolean(default=True)
 
@@ -68,7 +71,8 @@ enable_osd_display_remote_target = boolean(default=True)
 # Sends the client screen count to the server. Not supported in VNC.
 allow_using_multiple_monitors = boolean(default=True)
 
-# Sends the client's zoom factor configuration to the server.
+# Sends Scale &amp; Layout configuration to the server.
+# On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.
 # ⚠ Title bar detection via OCR will no longer work.
 allow_scale_factor = boolean(default=False)
 
@@ -76,12 +80,15 @@ allow_scale_factor = boolean(default=False)
 #_advanced
 bogus_refresh_rect = boolean(default=True)
 
-# Enable support for pointers of size 96x96
+# Enable support for pointers of size 96x96.
+# ⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.
 #_advanced
 large_pointer_support = boolean(default=True)
 
 new_pointer_update_support = boolean(default=True)
 
+# Allows the client to use unicode characters.
+# This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.
 unicode_keyboard_event_support = boolean(default=True)
 
 # (in milliseconds)

@@ -340,6 +340,7 @@ namespace cfg
         type value { true };
     };
     /// Show close screen. <br/>
+    /// This displays errors related to the secondary connection then closes automatically after a timeout specified by "close_timeout" or on user request. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::enable_close_box {
@@ -358,6 +359,8 @@ namespace cfg
         using mapped_type = std::chrono::seconds;
         type value { 600 };
     };
+    /// Displays a reminder box at the top of the session when a session duration is configured. <br/>
+    /// The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::enable_osd {
@@ -396,7 +399,8 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Sends the client's zoom factor configuration to the server. <br/>
+    /// Sends Scale & Layout configuration to the server. <br/>
+    /// On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display. <br/>
     /// ⚠ Title bar detection via OCR will no longer work. <br/>
     /// type: bool <br/>
     /// default: false <br/>
@@ -415,7 +419,8 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Enable support for pointers of size 96x96 <br/>
+    /// Enable support for pointers of size 96x96. <br/>
+    /// ⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::large_pointer_support {
@@ -432,6 +437,8 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// Allows the client to use unicode characters. <br/>
+    /// This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::unicode_keyboard_event_support {

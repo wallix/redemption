@@ -71,6 +71,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_bitmap_update = 1
 
 # Show close screen.
+# This displays errors related to the secondary connection then closes automatically after a timeout specified by "close_timeout" or on user request.
 # (type: boolean (0/no/false or 1/yes/true))
 #enable_close_box = 1
 
@@ -80,6 +81,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #close_timeout = 600
 
+# Displays a reminder box at the top of the session when a session duration is configured.
+# The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #enable_osd = 1
@@ -97,7 +100,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #allow_using_multiple_monitors = 1
 
-# Sends the client's zoom factor configuration to the server.
+# Sends Scale & Layout configuration to the server.
+# On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.
 # ⚠ Title bar detection via OCR will no longer work.
 # 
 # (type: boolean (0/no/false or 1/yes/true))
@@ -108,7 +112,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #bogus_refresh_rect = 1
 
-# Enable support for pointers of size 96x96
+# Enable support for pointers of size 96x96.
+# ⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #large_pointer_support = 1
@@ -116,6 +121,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #new_pointer_update_support = 1
 
+# Allows the client to use unicode characters.
+# This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.
 # (type: boolean (0/no/false or 1/yes/true))
 #unicode_keyboard_event_support = 1
 
