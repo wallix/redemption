@@ -615,7 +615,7 @@ _.section("client", [&]
         .name = "disable_tsk_switch_shortcuts",
         .value = value<bool>(false),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
-        .desc = "If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.",
+        .desc = "If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences.",
     });
 
     _.member(MemberInfo{
@@ -688,6 +688,7 @@ _.section("client", [&]
         .name = "show_target_user_in_f12_message",
         .value = value<bool>(false),
         .spec = global_spec(no_acl),
+        .desc = "Show in session the target username when F12 is pressed",
     });
 
     _.member(MemberInfo{
@@ -745,6 +746,18 @@ _.section("all_target_mod", [&]
         .value = value<types::range<std::chrono::milliseconds, 0, 3'600'000>>(),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .desc = "This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.",
+    });
+});
+
+_.section("remote_program", [&]
+{
+    _.member(MemberInfo{
+        .name = "allow_resize_hosted_desktop",
+        .value = value<bool>(true),
+        .spec = global_spec(no_acl),
+        .desc =
+            "Allows resizing of a desktop session opened in a RemoteApp window.\n"
+            "This happens when an RDP client opened in RemoteApp accesses a desktop target."
     });
 });
 
@@ -2600,15 +2613,6 @@ _.section("debug", [&]
         .value = value<types::list<std::string>>(),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs",
-    });
-});
-
-_.section("remote_program", [&]
-{
-    _.member(MemberInfo{
-        .name = "allow_resize_hosted_desktop",
-        .value = value<bool>(true),
-        .spec = global_spec(no_acl),
     });
 });
 

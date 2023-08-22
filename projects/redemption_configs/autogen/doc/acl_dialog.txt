@@ -35,7 +35,7 @@ cfg::globals::mod_recv_timeout ⇐ mod_recv_timeout   [std::chrono::milliseconds
 
 cfg::client::keyboard_layout ⇒ keyboard_layout   [unsigned]
 cfg::client::disable_tsk_switch_shortcuts ⇐ disable_tsk_switch_shortcuts   [bool]
-    If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
+    If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences.
 
 cfg::all_target_mod::tcp_user_timeout ⇐ all_target_mod:tcp_user_timeout   [std::chrono::milliseconds]
     This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.

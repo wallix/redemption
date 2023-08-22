@@ -621,7 +621,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences. <br/>
+    /// If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences. <br/>
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>
     /// default: false <br/>
@@ -718,6 +718,7 @@ namespace cfg
         using mapped_type = std::string;
         type value { "HIGH:!ADH:!3DES:!SHA" };
     };
+    /// Show in session the target username when F12 is pressed <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::show_target_user_in_f12_message {
@@ -818,6 +819,8 @@ namespace cfg
         type value {  };
     };
 
+    /// Allows resizing of a desktop session opened in a RemoteApp window. <br/>
+    /// This happens when an RDP client opened in RemoteApp accesses a desktop target. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct remote_program::allow_resize_hosted_desktop {

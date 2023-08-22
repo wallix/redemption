@@ -214,7 +214,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #enable_nla = 0
 
-# If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
+# If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 # (acl config: proxy ⇐ disable_tsk_switch_shortcuts)
@@ -272,6 +272,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
 #ssl_cipher_list = HIGH:!ADH:!3DES:!SHA
 
+# Show in session the target username when F12 is pressed
 # (type: boolean (0/no/false or 1/yes/true))
 #show_target_user_in_f12_message = 0
 
@@ -331,6 +332,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [remote_program]
 
+# Allows resizing of a desktop session opened in a RemoteApp window.
+# This happens when an RDP client opened in RemoteApp accesses a desktop target.
 # (type: boolean (0/no/false or 1/yes/true))
 #allow_resize_hosted_desktop = 1
 

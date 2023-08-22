@@ -156,7 +156,7 @@ show_common_cipher_list = boolean(default=False)
 #_advanced
 enable_nla = boolean(default=False)
 
-# If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
+# If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences.
 #_advanced
 disable_tsk_switch_shortcuts = boolean(default=False)
 
@@ -203,6 +203,7 @@ enable_suppress_output = boolean(default=True)
 # HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
 ssl_cipher_list = string(default="HIGH:!ADH:!3DES:!SHA")
 
+# Show in session the target username when F12 is pressed
 show_target_user_in_f12_message = boolean(default=False)
 
 bogus_ios_glyph_support_level = boolean(default=True)
@@ -250,6 +251,8 @@ connection_establishment_timeout = integer(min=1000, max=10000, default=3000)
 
 [remote_program]
 
+# Allows resizing of a desktop session opened in a RemoteApp window.
+# This happens when an RDP client opened in RemoteApp accesses a desktop target.
 allow_resize_hosted_desktop = boolean(default=True)
 
 [mod_rdp]
