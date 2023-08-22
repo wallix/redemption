@@ -75,7 +75,7 @@ with f:
                     special_type = line[6:-1]
             elif line.startswith('#_display_name='):
                 display_name = line[15:]
-            elif not line.startswith('#_'):
+            elif not line.startswith('#_') and not line.startswith('##'):
                 if in_list_elem:
                     in_list_elem = False
                     comments.append('</dl>\n<p>\n')
