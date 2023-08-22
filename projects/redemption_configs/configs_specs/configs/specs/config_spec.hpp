@@ -105,6 +105,7 @@ using cfg_generators::value;
 using cfg_generators::rdp_policy_value;
 using cfg_generators::vnc_policy_value;
 using cfg_generators::jh_policy_value;
+using cfg_generators::MemberInfo;
 using spec::proxy_to_acl;
 using spec::acl_to_proxy;
 using spec::acl_rw;
@@ -158,14 +159,14 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wc99-designator")
 
 _.section("globals", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "front_connection_time",
         .value = value<std::chrono::milliseconds>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
         .desc = "from incoming connection to \"up_and_running\" state",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "target_connection_time",
         .value = value<std::chrono::milliseconds>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
@@ -173,7 +174,7 @@ _.section("globals", [&]
     });
 
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "auth_user",
             .acl = "login",
@@ -182,7 +183,7 @@ _.section("globals", [&]
         .spec = acl_rw(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "host",
             .acl = "ip_client",
@@ -191,7 +192,7 @@ _.section("globals", [&]
         .spec = acl_rw(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "target",
             .acl = "ip_target",
@@ -200,25 +201,25 @@ _.section("globals", [&]
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "target_device",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "device_id",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "primary_user_id",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "target_user",
             .acl = "target_login",
@@ -227,25 +228,25 @@ _.section("globals", [&]
         .spec = acl_rw(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "target_application",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "target_application_account",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "target_application_password",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, NL),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "port",
         .value = value<types::unsigned_>(3389),
         .spec = global_spec(no_acl, spec::advanced | spec::iptables | spec::logged),
@@ -254,27 +255,27 @@ _.section("globals", [&]
             "Changing the port number will prevent WALLIX Access Manager from working properly."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "encryptionLevel",
         .value = enum_as_string(Level::low),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "authfile",
         .value = value<std::string>(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)),
         .spec = ini_only(no_acl),
         .desc = "Socket path or socket address of passthrough / acl",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "handshake_timeout",
         .value = value<std::chrono::seconds>(10),
         .spec = global_spec(no_acl),
         .desc = "Time out during RDP handshake stage.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "base_inactivity_timeout",
         .value = value<std::chrono::seconds>(900),
         .spec = global_spec(no_acl),
@@ -284,7 +285,7 @@ _.section("globals", [&]
             "If value is set to 0, then inactivity timeout value is unlimited.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "inactivity_timeout",
         .connpolicy_section = "session",
         .value = value<std::chrono::seconds>(),
@@ -295,54 +296,54 @@ _.section("globals", [&]
             "If value is set to 0, then value set in \"Base inactivity timeout\" (in \"RDP Proxy\" configuration option) is used."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "keepalive_grace_delay",
         .value = value<std::chrono::seconds>(30),
         .spec = ini_only(no_acl),
         .desc = "Internal keepalive between acl and rdp proxy",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "authentication_timeout",
         .value = value<std::chrono::seconds>(120),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "trace_type",
         .value = from_enum(TraceType::localfile_hashed),
         .spec = ini_only(acl_to_proxy(reset_back_to_selector, L)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "listen_address",
         .value = value<types::ip_string>("0.0.0.0"),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Specify alternate bind address",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_transparent_mode",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::iptables),
         .desc = "Allow Transparent mode.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "certificate_password",
         .value = value<types::fixed_string<254>>("inquisition"),
         .spec = global_spec(no_acl, spec::advanced | spec::password),
         .desc = "Proxy certificate password.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "is_rec",
         .value = value<bool>(false),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_bitmap_update",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
@@ -351,7 +352,7 @@ _.section("globals", [&]
 
 
     // TODO move to [internal_mod]
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_close_box",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
@@ -361,7 +362,7 @@ _.section("globals", [&]
     });
 
     // TODO move to [internal_mod] and rename to close_box_timeout
-    _.member({
+    _.member(MemberInfo{
         .name = "close_timeout",
         .value = value<std::chrono::seconds>(600),
         .spec = global_spec(no_acl, spec::advanced),
@@ -371,7 +372,7 @@ _.section("globals", [&]
     });
 
     // TODO rename to enable_end_time_warning_osd ?
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_osd",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
@@ -380,7 +381,7 @@ _.section("globals", [&]
             "The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_osd_display_remote_target",
         .value = value<bool>(true),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
@@ -388,7 +389,7 @@ _.section("globals", [&]
     });
 
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_wab_integration",
         .value = value<bool>(CPP_EXPR(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION)),
         .spec = ini_only(no_acl),
@@ -396,7 +397,7 @@ _.section("globals", [&]
 
 
     // TODO move to [client]
-    _.member({
+    _.member(MemberInfo{
         .name = "allow_using_multiple_monitors",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
@@ -404,7 +405,7 @@ _.section("globals", [&]
     });
 
     // TODO move to [client] / [mod_rdp]
-    _.member({
+    _.member(MemberInfo{
         .name = "allow_scale_factor",
         .value = value<bool>(false),
         .spec = global_spec(no_acl),
@@ -415,14 +416,14 @@ _.section("globals", [&]
     });
 
 
-    _.member({
+    _.member(MemberInfo{
         .name = "bogus_refresh_rect",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Needed to refresh screen of Windows Server 2012.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "large_pointer_support",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
@@ -431,14 +432,14 @@ _.section("globals", [&]
             "⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "new_pointer_update_support",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
     });
 
     // TODO move to [client]
-    _.member({
+    _.member(MemberInfo{
         .name = "unicode_keyboard_event_support",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
@@ -447,31 +448,31 @@ _.section("globals", [&]
             "This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "mod_recv_timeout",
         .value = value<types::range<std::chrono::milliseconds, 100, 10000>>(1000),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "experimental_enable_serializer_data_block_size_limit",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "experimental_support_resize_session_during_recording",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "support_connection_redirection_during_recording",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rdp_keepalive_connection_interval",
         .value = value<std::chrono::milliseconds>(),
         .spec = global_spec(no_acl),
@@ -481,7 +482,7 @@ _.section("globals", [&]
             "Set to 0 to disable this feature."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_ipv6",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
@@ -490,7 +491,7 @@ _.section("globals", [&]
             "Enable primary connection on ipv6."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "minimal_memory_available_before_connection_silently_closed",
         .value = value<types::megabytes<types::u64>>(100),
         .spec = ini_only(no_acl),
@@ -500,19 +501,19 @@ _.section("globals", [&]
 
 _.section("session_log", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_session_log",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_arcsight_log",
         .value = value<bool>(false),
         .spec = global_spec(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "keyboard_input_masking_level",
         .value = from_enum(KeyboardInputMaskingLevel::password_and_unidentified),
         .spec = connpolicy(rdp_and_jh, L),
@@ -522,27 +523,27 @@ _.section("session_log", [&]
 
 _.section("client", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "keyboard_layout",
         .value = value<types::unsigned_>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ignore_logon_password",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "If true, ignore password provided by RDP client, user need do login manually.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "performance_flags_default",
         .value = value<types::u32>(0x80),
         .spec = ini_only(no_acl),
         .desc = "Enable font smoothing (0x80).",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "performance_flags_force_present",
         .value = value<types::u32>(0x28),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
@@ -557,14 +558,14 @@ _.section("client", [&]
             "Enable Desktop Composition (0x100)."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "performance_flags_force_not_present",
         .value = value<types::u32>(0),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = "See the comment of \"Performance flags force present\" above for available values.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auto_adjust_performance_flags",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
@@ -572,34 +573,34 @@ _.section("client", [&]
     });
 
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tls_fallback_legacy",
         .value = value<bool>(false),
         .spec = global_spec(no_acl),
         .desc = "Fallback to RDP Legacy Encryption if client does not support TLS.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tls_support",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tls_min_level",
         .value = value<types::u32>(2),
         .spec = global_spec(no_acl),
         .desc = "Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tls_max_level",
         .value = value<types::u32>(0),
         .spec = global_spec(no_acl),
         .desc = "Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "show_common_cipher_list",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
@@ -608,68 +609,68 @@ _.section("client", [&]
     });
 
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_nla",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Needed for primary NTLM or Kerberos connections over NLA.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disable_tsk_switch_shortcuts",
         .value = value<bool>(false),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
         .desc = "If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rdp_compression",
         .value = from_enum(RdpCompression::rdp6_1),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "max_color_depth",
         .value = from_enum(ColorDepth::depth24),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "persistent_disk_bitmap_cache",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Persistent Disk Bitmap Cache on the front side.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "cache_waiting_list",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "persist_bitmap_cache_on_disk",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "If enabled, the contents of Persistent Bitmap Caches are stored on disk.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "bitmap_compression",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Support of Bitmap Compression.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "fast_path",
         .value = value<bool>(true),
         .spec = ini_only(no_acl),
         .desc = "Enables support of Client Fast-Path Input Event PDUs.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_suppress_output",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
@@ -678,7 +679,7 @@ _.section("client", [&]
             "If changes occur on the target, they will not be visible in the recordings either."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ssl_cipher_list",
         .value = value<std::string>("HIGH:!ADH:!3DES:!SHA"),
         .spec = global_spec(no_acl),
@@ -688,45 +689,45 @@ _.section("client", [&]
             "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)"
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "show_target_user_in_f12_message",
         .value = value<bool>(false),
         .spec = global_spec(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "bogus_ios_glyph_support_level",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "transform_glyph_to_bitmap",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "recv_timeout",
         .value = value<types::range<std::chrono::milliseconds, 100, 10000>>(1000),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_osd_4_eyes",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
         .desc = "Enables display of message informing user that his/her session is being audited.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_remotefx",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Enable front remoteFx",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disabled_orders",
         .value = value<types::list<types::unsigned_>>("25"),
         .spec = global_spec(no_acl, spec::advanced),
@@ -737,14 +738,14 @@ _.section("client", [&]
 
 _.section("all_target_mod", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "connection_establishment_timeout",
         .value = value<types::range<std::chrono::milliseconds, 1000, 10000>>(3000),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "The maximum time that the proxy will wait while attempting to connect to an target.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tcp_user_timeout",
         .value = value<types::range<std::chrono::milliseconds, 0, 3'600'000>>(),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
@@ -754,42 +755,41 @@ _.section("all_target_mod", [&]
 
 _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "rdp_compression",
         .value = from_enum(RdpCompression::rdp6_1),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disconnect_on_logon_user_change",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "open_session_timeout",
         .value = value<std::chrono::seconds>(),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member(
-             // disable glyph_index / glyph_cache
-             {
+    _.member(MemberInfo{
         .name = "disabled_orders",
+        // disable glyph_index / glyph_cache
         .value = value<types::list<types::unsigned_>>("27"),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .tags = TagList::Debug,
         .desc = disabled_orders_desc,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_nla",
         .value = value<bool>(true, jh_policy_value(false).always()),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "NLA authentication in secondary target.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_kerberos",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
@@ -798,28 +798,28 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "(if enable_nla is disabled, this value is ignored)."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tls_min_level",
         .value = value<types::u32>(),
         .spec = connpolicy(rdp_and_jh, L),
         .desc = "Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tls_max_level",
         .value = value<types::u32>(),
         .spec = connpolicy(rdp_and_jh, L),
         .desc = "Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "cipher_string",
         .value = value<std::string>("ALL"),
         .spec = connpolicy(rdp_and_jh, L),
         .desc = "TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "show_common_cipher_list",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
@@ -827,28 +827,28 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .desc = "Show in the logs the common cipher list supported by client and server",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "persistent_disk_bitmap_cache",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Persistent Disk Bitmap Cache on the mod side.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "cache_waiting_list",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "persist_bitmap_cache_on_disk",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "If enabled, the contents of Persistent Bitmap Caches are stored on disk.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "allowed_channels",
         .value = value<types::list<std::string>>("*"),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
@@ -857,7 +857,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "denied_channels",
         .value = value<types::list<std::string>>(),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
@@ -866,7 +866,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "allowed_dynamic_channels",
         .value = value<std::string>("*"),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
@@ -875,7 +875,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "denied_dynamic_channels",
         .value = value<std::string>(),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
@@ -884,14 +884,14 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "fast_path",
         .value = value<bool>(true),
         .spec = ini_only(no_acl),
         .desc = "Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "server_redirection_support",
             // TODO rename
@@ -903,7 +903,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .desc = "The secondary target connection can be redirected to a specific session on another RDP server.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "load_balance_info",
         .value = value<std::string>(),
         .spec = connpolicy(rdp_without_jh, L),
@@ -912,116 +912,116 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "For example 'tsv://MS Terminal Services Plugin.1.Sessions' where 'Sessions' is the name of the targeted RD Collection which works fine."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "client_address_sent",
         .value = from_enum(ClientAddressSent::no_address),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Client Address to send to target (in InfoPacket)",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "proxy_managed_drives",
         .value = value<types::list<std::string>>(),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
         .desc = "Shared directory between proxy and secondary target.\nRequires rdpdr support.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ignore_auth_channel",
         .value = value<bool>(false),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_channel",
         .value = value<types::fixed_string<7>>("*"),
         .spec = global_spec(no_acl),
         .desc = "Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "checkout_channel",
         .value = value<types::fixed_string<7>>(),
         .spec = global_spec(no_acl),
         .desc = "Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "alternate_shell",
         .value = value<std::string>(),
         .spec = ini_only(acl_to_proxy(reset_back_to_selector, L)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "shell_arguments",
         .value = value<std::string>(),
         .spec = ini_only(acl_to_proxy(reset_back_to_selector, L)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "shell_working_directory",
         .value = value<std::string>(),
         .spec = ini_only(acl_to_proxy(reset_back_to_selector, L)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "use_client_provided_alternate_shell",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "As far as possible, use client-provided initial program (Alternate Shell)",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "use_client_provided_remoteapp",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "As far as possible, use client-provided remote program (RemoteApp)",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "use_native_remoteapp_capability",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "As far as possible, use native RemoteApp capability",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "application_driver_exe_or_file",
         .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE)),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "application_driver_script_argument",
         .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT)),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "application_driver_chrome_dt_script",
         .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT)),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "application_driver_chrome_uia_script",
         .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT)),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "application_driver_firefox_uia_script",
         .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_FIREFOX_UIA_SCRIPT)),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "application_driver_ie_script",
         .value = value<types::fixed_string<256>>(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT)),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "hide_client_name",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
@@ -1030,26 +1030,26 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "use_license_store",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Stores CALs issued by the terminal servers.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "bogus_ios_rdpdr_virtual_channel",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_rdpdr_data_analysis",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "remoteapp_bypass_legal_notice_delay",
         .value = value<std::chrono::milliseconds>(),
         .spec = global_spec(no_acl, spec::advanced),
@@ -1058,7 +1058,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "Set to 0 to disable this feature."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "remoteapp_bypass_legal_notice_timeout",
         .value = value<std::chrono::milliseconds>(20000),
         .spec = global_spec(no_acl, spec::advanced),
@@ -1067,26 +1067,26 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "Set to 0 to disable this feature."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "log_only_relevant_clipboard_activities",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "experimental_fix_too_long_cookie",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "split_domain",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Force to split target domain and username with '@' separator.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "wabam_uses_translated_remoteapp",
             .display = "Enable translated RemoteAPP with AM",
@@ -1095,27 +1095,27 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .spec = connpolicy(rdp_without_jh, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_shadowing_support",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Enables Session Shadowing Support.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_remotefx",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "Enables support of the remoteFX codec.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "accept_monitor_layout_change_if_capture_is_not_started",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_restricted_admin_mode",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1125,7 +1125,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "NLA must be enabled."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "force_smartcard_authentication",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_and_jh, L),
@@ -1136,14 +1136,14 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_ipv6",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_and_jh, L),
         .desc = "Enable target connection on ipv6",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "mode_console",
             .display = "Console mode"
@@ -1153,7 +1153,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .desc = "Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auto_reconnection_on_losing_target_link",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
@@ -1162,7 +1162,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "The server must support reconnection cookie.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "allow_session_reconnection_by_shortcut",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1173,14 +1173,14 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "The keyboard shortcut is fixed and cannot be changed."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_reconnection_delay",
         .value = value<types::range<std::chrono::milliseconds, 0, 15000>>(0),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc = "The delay in milliseconds between a session disconnection and the automatic reconnection that follows.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "forward_client_build_number",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
@@ -1189,14 +1189,14 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "If forwarding is disabled a default (static) build number will be sent to the server."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "bogus_monitor_layout_treatment",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "To resolve the session freeze issue with Windows 7/Windows Server 2008 target.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "krb_armoring_account",
         .value = value<std::string>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced | spec::acl_only),
@@ -1207,49 +1207,49 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "otherwise the below fallback username and password will be used instead."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "krb_armoring_realm",
         .value = value<std::string>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced | spec::acl_only),
         .desc = "Realm to be used for armoring Kerberos tickets.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "krb_armoring_fallback_user",
         .value = value<std::string>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced | spec::acl_only),
         .desc = "Fallback username to be used for armoring Kerberos tickets.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "krb_armoring_fallback_password",
         .value = value<std::string>(),
         .spec = connpolicy(rdp_without_jh, NL, spec::advanced | spec::acl_only),
         .desc = "Fallback password to be used for armoring Kerberos tickets.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "effective_krb_armoring_user",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
         .desc = "Effective username to be used for armoring Kerberos tickets.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "effective_krb_armoring_password",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, NL),
         .desc = "Effective password to be used for armoring Kerberos tickets.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "remote_programs_disconnect_message_delay",
         .value = value<types::range<std::chrono::milliseconds, 3000, 120000>>(3000),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc = "Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "use_session_probe_to_launch_remote_program",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1260,7 +1260,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "The difference is that Session Probe does not start a new application when its host session is resumed. Conversely, launching applications according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol is not affected by this behavior. However, launching applications via the native method requires them to be published in Remote Desktop Services, which is unnecessary if launched by the Session Probe."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "replace_null_pointer_by_default_pointer",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1271,7 +1271,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
 _.section("protocol", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "save_session_info_pdu",
         .value = from_enum(RdpSaveSessionInfoPDU::UnsupportedOrUnknown),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1280,7 +1280,7 @@ _.section("protocol", [&]
 
 _.section("session_probe", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_session_probe",
         .value = value<bool>(false,
             jh_policy_value(false).always(),
@@ -1288,19 +1288,19 @@ _.section("session_probe", [&]
         .spec = connpolicy(rdp_without_jh, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "exe_or_file",
         .value = value<types::fixed_string<511>>("||CMD"),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "arguments",
         .value = value<types::fixed_string<511>>(CPP_EXPR(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "use_smart_launcher",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1310,7 +1310,7 @@ _.section("session_probe", [&]
             "The Smart launcher and the Legacy launcher do not have the same technical prerequisites. Detailed information can be found in the Administration guide."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_launch_mask",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1320,14 +1320,14 @@ _.section("session_probe", [&]
             "Disabling the mask makes it easier to diagnose Session Probe launch issues. It is recommended to enable the mask for normal operation."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "on_launch_failure",
         .value = from_enum(SessionProbeOnLaunchFailure::disconnect_user),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "It is recommended to use option 1 (disconnect user).",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "launch_timeout",
         .value = value<types::range<std::chrono::milliseconds, 0, 300000>>(40000),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1336,7 +1336,7 @@ _.section("session_probe", [&]
             "0 to disable timeout."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "launch_fallback_timeout",
         .value = value<types::range<std::chrono::milliseconds, 0, 300000>>(40000),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1345,14 +1345,14 @@ _.section("session_probe", [&]
             "0 to disable timeout."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "start_launch_timeout_timer_only_after_logon",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "If enabled, the Launch timeout countdown timer will be started only after user logged in Windows. Otherwise, the countdown timer will be started immediately after RDP protocol connexion.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "keepalive_timeout",
         .value = value<types::range<std::chrono::milliseconds, 0, 60000>>(5000),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1363,14 +1363,14 @@ _.section("session_probe", [&]
             "During the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "on_keepalive_timeout",
         .value = from_enum(SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "This parameter allows us to choose the behavior of the RDP Proxy in case of losing the connection with Session Probe.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "end_disconnected_session",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1382,14 +1382,14 @@ _.section("session_probe", [&]
             "It is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when 'Use session probe to launch remote program' parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_autodeployed_appdriver_affinity",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "If enabled, disconnected auto-deployed Application Driver session will automatically terminate by Session Probe."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_log",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1398,7 +1398,7 @@ _.section("session_probe", [&]
             "The generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_log_rotation",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1407,7 +1407,7 @@ _.section("session_probe", [&]
             "The Log files rotation helps reduce disk space consumption caused by logging. But the interesting information may be lost if the corresponding file is not retrieved in time."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "log_level",
         .value = from_enum(SessionProbeLogLevel::Debug),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1415,7 +1415,7 @@ _.section("session_probe", [&]
         .desc = "Defines logging severity levels.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disconnected_application_limit",
         .value = value<types::range<std::chrono::milliseconds, 0, 172'800'000>>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1425,7 +1425,7 @@ _.section("session_probe", [&]
             "0 to disable timeout."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disconnected_session_limit",
         .value = value<types::range<std::chrono::milliseconds, 0, 172'800'000>>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1434,7 +1434,7 @@ _.section("session_probe", [&]
             "0 to disable timeout."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "idle_session_limit",
         .value = value<types::range<std::chrono::milliseconds, 0, 172'800'000>>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1443,7 +1443,7 @@ _.section("session_probe", [&]
             "0 to disable timeout."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "smart_launcher_clipboard_initialization_delay",
         .value = value<std::chrono::milliseconds>(2000),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1453,7 +1453,7 @@ _.section("session_probe", [&]
             "If we see the message \"Clipboard Virtual Channel is unavailable\" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "smart_launcher_start_delay",
         .value = value<std::chrono::milliseconds>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1464,7 +1464,7 @@ _.section("session_probe", [&]
             "This parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "smart_launcher_long_delay",
         .value = value<std::chrono::milliseconds>(500),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1475,7 +1475,7 @@ _.section("session_probe", [&]
             "This parameter is usually used together with the 'Smart launcher short delay' parameter."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "smart_launcher_short_delay",
         .value = value<std::chrono::milliseconds>(50),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1486,7 +1486,7 @@ _.section("session_probe", [&]
             "This parameter is usually used together with the 'Smart launcher long delay' parameter."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "smart_launcher_enable_wabam_affinity",
             .display = "Enable Smart launcher with AM affinity",
@@ -1498,7 +1498,7 @@ _.section("session_probe", [&]
             "This parameter is effective only if the Smart launcher is used and the RDP client is Access Manager."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "launcher_abort_delay",
         .value = value<types::range<std::chrono::milliseconds, 0, 300000>>(2000),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1508,7 +1508,7 @@ _.section("session_probe", [&]
             "It is strongly recommended to keep the default value of this parameter."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_crash_dump",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1520,7 +1520,7 @@ _.section("session_probe", [&]
             "There is no rotation mechanism to limit the number of dump files produced. Extended activation of this parameter can quickly exhaust disk space."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "handle_usage_limit",
         .value = value<types::range<types::u32, 0, 1000>>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1532,7 +1532,7 @@ _.section("session_probe", [&]
             "If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "memory_usage_limit",
         .value = value<types::range<types::u32, 0, 200'000'000>>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1544,7 +1544,7 @@ _.section("session_probe", [&]
             "If 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "cpu_usage_alarm_threshold",
         .value = value<types::range<types::u32, 0, 10000>>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1554,14 +1554,14 @@ _.section("session_probe", [&]
             "When CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by 'Cpu usage alarm action' parameter."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "cpu_usage_alarm_action",
         .value = from_enum(SessionProbeCPUUsageAlarmAction::Restart),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc = "Additional behavior when CPU consumption exceeds what is allowed. Please refer to the 'Cpu usage alarm threshold' parameter.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "end_of_session_check_delay_time",
         .value = value<types::range<std::chrono::milliseconds, 0, 60000>>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1572,7 +1572,7 @@ _.section("session_probe", [&]
             "'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ignore_ui_less_processes_during_end_of_session_check",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1581,7 +1581,7 @@ _.section("session_probe", [&]
             "If enabled, during the End of session check, the processes that do not have a visible window will not be counted as active processes of the session. Without active processes, the application session will be logged off by the Session Probe."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "extra_system_processes",
         .value = value<std::string>(),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1591,7 +1591,7 @@ _.section("session_probe", [&]
             "Unlike user processes, system processes do not keep the session open. A session with no user process will be automatically closed by Session Probe after starting the End of session check."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "childless_window_as_unidentified_input_field",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1602,7 +1602,7 @@ _.section("session_probe", [&]
             "Please refer to the 'Keyboard input masking level' parameter of 'session_log' section."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "windows_of_these_applications_as_unidentified_input_field",
         .value = value<std::string>(),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1614,7 +1614,7 @@ _.section("session_probe", [&]
             "Please refer to the 'Keyboard input masking level' parameter of 'session_log' section."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "update_disabled_features",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1624,7 +1624,7 @@ _.section("session_probe", [&]
             "It is recommended to keep the default value of this parameter."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disabled_features",
         .value = from_enum(
             SessionProbeDisabledFeature::chrome_inspection
@@ -1639,7 +1639,7 @@ _.section("session_probe", [&]
             "It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_bestsafe_interaction",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1650,7 +1650,7 @@ _.section("session_probe", [&]
             "For more information please refer to 'Outbound connection monitoring rules' parameter and 'Process monitoring rules' parameter."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "on_account_manipulation",
         .value = from_enum(SessionProbeOnAccountManipulation::allow),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1661,7 +1661,7 @@ _.section("session_probe", [&]
             "Detectable account manipulations are the creation, deletion of a Windows account, and the addition and deletion of an account from a Windows user group."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "alternate_directory_environment_variable",
         .value = value<types::fixed_string<3>>(),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1672,7 +1672,7 @@ _.section("session_probe", [&]
             "This parameter is useful if a GPO prevents Session Probe from starting from the Windows user's temporary directory."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "public_session",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1682,7 +1682,7 @@ _.section("session_probe", [&]
             "By default, a session can only be resumed by the Bastion user who created it."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "outbound_connection_monitoring_rules",
         .value = value<std::string>(),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1695,7 +1695,7 @@ _.section("session_probe", [&]
             "BestSafe can be used to perform detection of outgoing connections created in the session. Please refer to 'Enable bestsafe interaction' parameter."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "process_monitoring_rules",
         .value = value<std::string>(),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1706,7 +1706,7 @@ _.section("session_probe", [&]
             "BestSafe can be used to perform detection of process launched in the session. Please refer to 'Enable bestsafe interaction' parameter."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "customize_executable_name",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
@@ -1716,7 +1716,7 @@ _.section("session_probe", [&]
             "Some other features automatically enable customization of the Session Probe executable name. Application Driver auto-deployment for example."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "allow_multiple_handshake",
             .display = "Allow multiple handshakes",
@@ -1728,7 +1728,7 @@ _.section("session_probe", [&]
             "Otherwise, any new handshake attempt will interrupt the current session with the display of an alert message."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "at_end_of_session_freeze_connection_and_wait",
         .value = value<bool>(true),
         .spec = ini_only(no_acl),
@@ -1737,25 +1737,25 @@ _.section("session_probe", [&]
             "The new session end procedure (freeze and wait) prevents another connection from resuming a session that is close to end-of-life."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_cleaner",
         .value = value<bool>(true),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "clipboard_based_launcher_reset_keyboard_status",
         .value = value<bool>(true),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "process_command_line_retrieve_method",
         .value = from_enum(SessionProbeProcessCommandLineRetrieveMethod::both),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "periodic_task_run_interval",
         .value = value<types::range<std::chrono::milliseconds, 300, 2000>>(500),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1765,7 +1765,7 @@ _.section("session_probe", [&]
             "The longer this interval, the less detailed the session metadata collection and the lower the CPU consumption."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "pause_if_session_is_disconnected",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
@@ -1777,14 +1777,14 @@ _.section("session_probe", [&]
 
 _.section(names{"server_cert"}, [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "server_cert_store",
         .value = value<bool>(true, jh_policy_value(false).always()),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "Keep known server certificates on Bastion",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "server_cert_check",
         .value = from_enum(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know,
             jh_policy_value(ServerCertCheck::always_succeed).always()),
@@ -1798,7 +1798,7 @@ _.section(names{"server_cert"}, [&]
         P{"server_cert_success_message", "Warn that server certificate file was successfully checked."},
         P{"server_cert_failure_message", "Warn that server certificate file checking failed."},
     }) {
-        _.member({
+        _.member(MemberInfo{
             .name = p.name,
             .value = from_enum(ServerNotification::syslog),
             .spec = connpolicy(rdp_and_jh, L, spec::advanced),
@@ -1806,26 +1806,26 @@ _.section(names{"server_cert"}, [&]
         });
     }
 
-    _.member({
+    _.member(MemberInfo{
         .name = "error_message",
         .value = from_enum(ServerNotification::syslog),
         .spec = ini_only(no_acl),
         .desc = "Warn that server certificate check raised some internal error.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_external_validation",
         .value = value<bool>(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "external_cert",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "external_response",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
@@ -1835,21 +1835,21 @@ _.section(names{"server_cert"}, [&]
 
 _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "clipboard_up",
         .value = value<bool>(false),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L)),
         .desc = "Enable or disable the clipboard from client (client to server).",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "clipboard_down",
         .value = value<bool>(false),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L)),
         .desc = "Enable or disable the clipboard from server (server to client).",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "encodings",
         .value = value<types::list<types::int_>>(),
         .spec = global_spec(no_acl, spec::advanced),
@@ -1862,7 +1862,7 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
             "  -239 (0xFFFFFF11): Cursor pseudo-encoding"
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "server_clipboard_encoding_type",
             .acl = "vnc_server_clipboard_encoding_type"
@@ -1872,7 +1872,7 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
         .desc = "VNC server clipboard data encoding type.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "bogus_clipboard_infinite_loop",
             .acl = "vnc_bogus_clipboard_infinite_loop"
@@ -1881,26 +1881,26 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "server_is_macos",
         .value = value<bool>(false),
         .spec = connpolicy(vnc, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "server_unix_alt",
         .value = value<bool>(false),
         .spec = connpolicy(vnc, L),
         .desc = "When disabled, Ctrl + Alt becomes AltGr (Windows behavior)",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "support_cursor_pseudo_encoding",
         .value = value<bool>(true),
         .spec = connpolicy(vnc, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_ipv6",
         .value = value<bool>(true),
         .spec = connpolicy(vnc, L),
@@ -1910,20 +1910,20 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
 
 _.section(names{"vnc_over_ssh"}, [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "enable",
         .value = value<bool>(false),
         .spec = connpolicy(vnc, L, spec::acl_only),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ssh_port",
         .value = value<types::unsigned_>(22),
         .spec = connpolicy(vnc, L, spec::acl_only),
         .desc = "Port to be used for SSH tunneling",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tunneling_credential_source",
         .value = enum_as_string(VncTunnelingCredentialSource::scenario_account),
         .spec = connpolicy(vnc, L, spec::acl_only),
@@ -1932,21 +1932,21 @@ _.section(names{"vnc_over_ssh"}, [&]
             "scenario_account: Scenario account provided in \"Scenario account name\" field will be used to establish the SSH tunnel. (Recommended)"
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ssh_login",
         .value = value<std::string>(),
         .spec = connpolicy(vnc, L, spec::acl_only),
         .desc = "Login to be used for SSH tunneling.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ssh_password",
         .value = value<std::string>(),
         .spec = connpolicy(vnc, NL, spec::acl_only),
         .desc = "Password to be used for SSH tunneling.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "scenario_account_name",
         .value = value<std::string>(),
         .spec = connpolicy(vnc, L, spec::acl_only),
@@ -1960,7 +1960,7 @@ _.section(names{"vnc_over_ssh"}, [&]
             "  \"account_name@local_domain_name@\""
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tunneling_type",
         .value = enum_as_string(VncTunnelingType::pxssh),
         .spec = connpolicy(vnc, L, spec::acl_only | spec::advanced),
@@ -1970,27 +1970,27 @@ _.section(names{"vnc_over_ssh"}, [&]
 
 _.section("file_verification", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "socket_path",
         .value = value<std::string>(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_up",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_and_jh, L),
         .desc = "Enable use of ICAP service for file verification on upload.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_down",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_and_jh, L),
         .desc = "Enable use of ICAP service for file verification on download.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "clipboard_text_up",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_and_jh, L),
@@ -1999,7 +1999,7 @@ _.section("file_verification", [&]
             "File verification on upload must be enabled via option Enable up."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "clipboard_text_down",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_and_jh, L),
@@ -2008,7 +2008,7 @@ _.section("file_verification", [&]
             "File verification on download must be enabled via option Enable down."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "block_invalid_file_up",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_and_jh, L),
@@ -2017,7 +2017,7 @@ _.section("file_verification", [&]
             "File verification on upload must be enabled via option Enable up."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "block_invalid_file_down",
         .value = value<bool>(false),
         .spec = connpolicy(rdp_and_jh, L),
@@ -2026,7 +2026,7 @@ _.section("file_verification", [&]
             "File verification on download must be enabled via option Enable down."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "block_invalid_clipboard_text_up",
         .value = value<bool>(false),
         .spec = ini_only(no_acl),
@@ -2035,7 +2035,7 @@ _.section("file_verification", [&]
             "Text verification on upload must be enabled via option Clipboard text up."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "block_invalid_clipboard_text_down",
         .value = value<bool>(false),
         .spec = ini_only(no_acl),
@@ -2044,14 +2044,14 @@ _.section("file_verification", [&]
             "Text verification on download must be enabled via option Clipboard text down."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "log_if_accepted",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .desc = "Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "max_file_size_rejected",
         .value = value<types::megabytes<types::u32>>(256),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
@@ -2060,7 +2060,7 @@ _.section("file_verification", [&]
             "If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tmpdir",
         .value = value<types::dirpath>("/tmp/"),
         .spec = ini_only(no_acl),
@@ -2070,7 +2070,7 @@ _.section("file_verification", [&]
 
 _.section("file_storage", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "store_file",
         .value = enum_as_string(RdpStoreFile::never),
         .spec = connpolicy(rdp_and_jh, L),
@@ -2086,42 +2086,42 @@ for (char const* section_name : {"icap_server_down", "icap_server_up"}) {
     // please, update $REDEMPTION/tools/c++-analyzer/lua-checker/checkers/config.lua for each changement of value
     _.section(section_name, [&]
     {
-        _.member({
+        _.member(MemberInfo{
             .name = "host",
             .value = value<std::string>(),
             .spec = spec::external(),
             .desc = "Ip or fqdn of ICAP server",
         });
 
-        _.member({
+        _.member(MemberInfo{
             .name = "port",
             .value = value<types::unsigned_>(1344),
             .spec = spec::external(),
             .desc = "Port of ICAP server",
         });
 
-        _.member({
+        _.member(MemberInfo{
             .name = "service_name",
             .value = value<std::string>("avscan"),
             .spec = spec::external(),
             .desc = "Service name on ICAP server",
         });
 
-        _.member({
+        _.member(MemberInfo{
             .name = "tls",
             .value = value<bool>(false),
             .spec = spec::external(),
             .desc = "ICAP server uses tls",
         });
 
-        _.member({
+        _.member(MemberInfo{
             .name = "enable_x_context",
             .value = value<bool>(true),
             .spec = spec::external(spec::advanced),
             .desc = "Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server",
         });
 
-        _.member({
+        _.member(MemberInfo{
             .name = "filename_percent_encoding",
             .value = value<bool>(false),
             .spec = spec::external(spec::advanced),
@@ -2132,20 +2132,20 @@ for (char const* section_name : {"icap_server_down", "icap_server_up"}) {
 
 _.section("mod_replay", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "replay_path",
         .value = value<types::dirpath>("/tmp/"),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "on_end_of_data",
         .value = value<bool>(false),
         .spec = ini_only(no_acl),
         .desc = "0 - Wait for Escape, 1 - End session",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "replay_on_loop",
         .value = value<bool>(false),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
@@ -2155,19 +2155,19 @@ _.section("mod_replay", [&]
 
 _.section("ocr", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "version",
         .value = from_enum(OcrVersion::v2),
         .spec = global_spec(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "locale",
         .value = enum_as_string(OcrLocale::latin),
         .spec = global_spec(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "interval",
         .value = value<std::chrono::duration<unsigned, std::centi>>(100),
         .spec = global_spec(no_acl, spec::advanced),
@@ -2176,14 +2176,14 @@ _.section("ocr", [&]
             "Too low a value will affect session reactivity."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "on_title_bar_only",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Checks shape and color to determine if the text is on a title bar",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "max_unrecog_char_rate",
         .value = value<types::range<types::unsigned_, 0, 100>>(40),
         .spec = global_spec(no_acl, spec::advanced),
@@ -2196,20 +2196,20 @@ _.section("ocr", [&]
 
 _.section("video", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "capture_flags",
         .value = from_enum(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "png_interval",
         .value = value<std::chrono::duration<unsigned, std::deci>>(10),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Frame interval.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "break_interval",
         .value = value<std::chrono::seconds>(600),
         .spec = global_spec(no_acl, spec::advanced),
@@ -2218,32 +2218,32 @@ _.section("video", [&]
             "⚠ A value that is too small increases the disk space required for recordings."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "png_limit",
         .value = value<types::unsigned_>(5),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Number of png captures to keep.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "hash_path",
         .value = value<types::dirpath>(CPP_EXPR(app_path(AppPath::Hash))),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "record_tmp_path",
         .value = value<types::dirpath>(CPP_EXPR(app_path(AppPath::RecordTmp))),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "record_path",
         .value = value<types::dirpath>(CPP_EXPR(app_path(AppPath::Record))),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disable_keyboard_log",
         .value = from_enum(KeyboardLogFlags::syslog),
         .spec = global_spec(no_acl, spec::advanced),
@@ -2252,39 +2252,39 @@ _.section("video", [&]
             "(Please see also \"Keyboard input masking level\" in \"session_log\".)"
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disable_clipboard_log",
         .value = from_enum(ClipboardLogFlags::syslog),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Disable clipboard log:",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disable_file_system_log",
         .value = from_enum(FileSystemLogFlags::syslog),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Disable (redirected) file system log:",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "wrm_color_depth_selection_strategy",
         .value = from_enum(ColorDepthSelectionStrategy::depth16),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "wrm_compression_algorithm",
         .value = from_enum(WrmCompressionAlgorithm::gzip),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "codec_id",
         .value = value<std::string>("mp4"),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "framerate",
             .display = "Frame rate"
@@ -2296,7 +2296,7 @@ _.section("video", [&]
             "A higher value will produce smoother videos, but the file weight is higher and the generation time longer."
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ffmpeg_options",
         .value = value<std::string>("crf=35 preset=superfast"),
         .spec = global_spec(no_acl, spec::advanced),
@@ -2305,35 +2305,35 @@ _.section("video", [&]
             "⚠ Some browsers and video decoders don't support crf=0"
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "notimestamp",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Remove the top left banner that adds the date of the video",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "smart_video_cropping",
         .value = from_enum(SmartVideoCropping::v2),
         .spec = global_spec(no_acl),
     });
 
     // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
-    _.member({
+    _.member(MemberInfo{
         .name = "play_video_with_corrupted_bitmap",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Needed to play a video with corrupted Bitmap Update.",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "allow_rt_without_recording",
         .value = value<bool>(false),
         .spec = global_spec(no_acl),
         .desc = "Allow real-time view (4 eyes) without session recording enabled in the authorization",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "file_permissions",
         .value = value<FilePermissions>(0440),
         .spec = ini_only(no_acl),
@@ -2343,27 +2343,27 @@ _.section("video", [&]
 
 _.section("capture", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "record_filebase",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
         .desc = "basename without extension",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "record_subdirectory",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
         .desc = "subdirectory of record_path (video section)",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "fdx_path",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disable_keyboard_log",
         .connpolicy_section = "video",
         .value = from_enum(KeyboardLogFlagsCP::syslog),
@@ -2376,67 +2376,67 @@ _.section("capture", [&]
 
 _.section("audit", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "rt_display",
         .value = value<bool>(false),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "use_redis",
         .value = value<bool>(true),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "redis_timeout",
         .value = value<std::chrono::milliseconds>(500),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "redis_address",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "redis_port",
         .value = value<types::unsigned_>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "redis_password",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, NL),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "redis_db",
         .value = value<types::unsigned_>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "redis_use_tls",
         .value = value<bool>(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "redis_tls_cacert",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "redis_tls_cert",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "redis_tls_key",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
@@ -2445,13 +2445,13 @@ _.section("audit", [&]
 
 _.section("crypto", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "encryption_key",
         .value = value<types::fixed_binary<32>>(default_key),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, NL)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "sign_key",
         .value = value<types::fixed_binary<32>>(default_key),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, NL)),
@@ -2460,21 +2460,21 @@ _.section("crypto", [&]
 
 _.section("websocket", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_websocket",
         .value = value<bool>(false),
         .spec = ini_only(no_acl),
         .desc = "Enable websocket protocol (ws or wss with use_tls=1)",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "use_tls",
         .value = value<bool>(true),
         .spec = ini_only(no_acl),
         .desc = "Use TLS with websocket (wss)",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "listen_address",
         .value = value<std::string>(":3390"),
         .spec = ini_only(no_acl),
@@ -2484,123 +2484,123 @@ _.section("websocket", [&]
 
 _.section("debug", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "fake_target_ip",
         .value = value<std::string>(),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "capture",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_CAPTURE,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_AUTH,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_SESSION,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "front",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_FRONT,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "mod_rdp",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_RDP,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "mod_vnc",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_VNC,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "mod_internal",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_MOD_INTERNAL,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "sck_mod",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_SCK,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "sck_front",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_SCK,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "password",
         .value = value<types::u32>(),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "compression",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_COMPRESSION,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "cache",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_CACHE,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ocr",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = CONFIG_DESC_OCR,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ffmpeg",
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = "Value passed to function av_log_set_level()\nSee https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "config",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Log unknown members or sections",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "mod_rdp_use_failure_simulation_socket_transport",
         .value = from_enum(ModRdpUseFailureSimulationSocketTransport::Off),
         .spec = ini_only(no_acl),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "probe_client_addresses",
         .value = value<types::list<std::string>>(),
         .spec = global_spec(no_acl, spec::advanced),
@@ -2610,7 +2610,7 @@ _.section("debug", [&]
 
 _.section("remote_program", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "allow_resize_hosted_desktop",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
@@ -2619,13 +2619,13 @@ _.section("remote_program", [&]
 
 _.section("translation", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "language",
         .value = enum_as_string(Language::en),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "login_language",
         .value = enum_as_string(LoginLanguage::Auto),
         .spec = global_spec(proxy_to_acl(no_reset_back_to_selector), spec::advanced),
@@ -2634,7 +2634,7 @@ _.section("translation", [&]
 
 _.section("internal_mod", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_target_field",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
@@ -2651,7 +2651,7 @@ _.section("internal_mod", [&]
         keyboard_layout_proposals_desc.resize(keyboard_layout_proposals_desc.size() - 2);
     }
 
-    _.member({
+    _.member(MemberInfo{
         .name = "keyboard_layout_proposals",
         .value = value<types::list<std::string>>("en-US, fr-FR, de-DE, ru-RU"),
         .spec = global_spec(no_acl, spec::advanced),
@@ -2663,14 +2663,14 @@ _.section("internal_mod", [&]
 
 _.section("context", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "psid",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
         .desc = "Proxy session log id",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "opt_bpp",
             .acl = "bpp"
@@ -2679,7 +2679,7 @@ _.section("context", [&]
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "opt_height",
             .acl = "height"
@@ -2688,7 +2688,7 @@ _.section("context", [&]
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "opt_width",
             .acl = "width"
@@ -2699,91 +2699,91 @@ _.section("context", [&]
 
     // auth_error_message is left as std::string type because SocketTransport and ReplayMod
     // take it as argument on constructor and modify it as a std::string
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_error_message",
         .value = value<std::string>(),
         .spec = no_acl,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector",
         .value = value<bool>(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_current_page",
         .value = value<types::unsigned_>(1),
         .spec = acl_rw(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_device_filter",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_group_filter",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_proto_filter",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_lines_per_page",
         .value = value<types::unsigned_>(0),
         .spec = acl_rw(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_number_of_pages",
         .value = value<types::unsigned_>(1),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "target_password",
         .value = value<std::string>(),
         .spec = acl_rw(reset_back_to_selector, NL),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "target_host",
         .value = value<std::string>(),
         .spec = acl_rw(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tunneling_target_host",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "target_str",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "target_service",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "target_port",
         .value = value<types::unsigned_>(3389),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "target_protocol",
             .acl = "proto_dest",
@@ -2792,79 +2792,79 @@ _.section("context", [&]
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "password",
         .value = value<std::string>(),
         .spec = acl_rw(no_reset_back_to_selector, NL),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "reporting",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_channel_answer",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, VNL),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_channel_target",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "message",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "display_link",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "mod_timeout",
         .value = value<std::chrono::seconds>(0),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "accept_message",
         .value = value<bool>(false),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "display_message",
         .value = value<bool>(false),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rejected",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "keepalive",
         .value = value<bool>(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_id",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "end_date_cnx",
             .acl = "timeclose"
@@ -2873,381 +2873,381 @@ _.section("context", [&]
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "real_target_device",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "authentication_challenge",
         .value = value<bool>(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ticket",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "comment",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "duration",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "duration_max",
         .value = value<std::chrono::minutes>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "waitinforeturn",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "showform",
         .value = value<bool>(false),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "formflag",
         .value = value<types::unsigned_>(0),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "module",
         .value = enum_as_string(ModuleName::login),
         .spec = acl_rw(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "try_alternate_target",
         .value = value<bool>(false),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "has_more_target",
         .value = value<bool>(false),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "proxy_opt",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "pattern_kill",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "pattern_notify",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "opt_message",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "login_message",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disconnect_reason",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "disconnect_reason_ack",
         .value = value<bool>(false),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "ip_target",
         .value = value<std::string>(),
         .spec = no_acl,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "recording_started",
         .value = value<bool>(false),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rt_ready",
         .value = value<bool>(false),
         .spec = acl_rw(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "sharing_ready",
         .value = value<bool>(false),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_command",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_notify",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_notify_rail_exec_flags",
         .value = value<types::unsigned_>(0),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_notify_rail_exec_exe_or_file",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_command_rail_exec_exec_result",
         .value = value<types::u16>(0),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_command_rail_exec_flags",
         .value = value<types::u16>(0),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_command_rail_exec_original_exe_or_file",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_command_rail_exec_exe_or_file",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_command_rail_exec_working_dir",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_command_rail_exec_arguments",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_command_rail_exec_account",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "auth_command_rail_exec_password",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, NL),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_probe_launch_error_message",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "close_box_extra_message",
         .value = value<std::string>(),
         .spec = no_acl,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "is_wabam",
         .value = value<bool>(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
 
-    _.member({
+    _.member(MemberInfo{
         .name = "pm_response",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "pm_request",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
 
-    _.member({
+    _.member(MemberInfo{
         .name = "native_session_id",
         .value = value<types::u32>(0),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rd_shadow_available",
         .value = value<bool>(false),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rd_shadow_userdata",
         .value = value<std::string>(),
         .spec = acl_rw(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rd_shadow_type",
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rd_shadow_invitation_error_code",
         .value = value<types::u32>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rd_shadow_invitation_error_message",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rd_shadow_invitation_id",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rd_shadow_invitation_addr",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rd_shadow_invitation_port",
         .value = value<types::u16>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_sharing_userdata",
         .value = value<std::string>(),
         .spec = acl_rw(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_sharing_enable_control",
         .value = value<bool>(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_sharing_ttl",
         .value = value<std::chrono::seconds>(600),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_sharing_invitation_error_code",
         .value = value<types::u32>(0),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_sharing_invitation_error_message",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_sharing_invitation_id",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_sharing_invitation_addr",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_sharing_target_ip",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "session_sharing_target_login",
         .value = value<std::string>(),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "rail_module_host_mod_is_active",
         .value = value<bool>(false),
         .spec = no_acl,
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "smartcard_login",
         .value = value<std::string>(),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "banner_message",
         .value = value<std::string>(),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "banner_type",
         .value = from_enum(BannerType::info),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "redirection_password_or_cookie",
         .value = value<std::vector<uint8_t>>(),
         .spec = no_acl,
@@ -3256,14 +3256,14 @@ _.section("context", [&]
 
 _.section("theme", [&]
 {
-    _.member({
+    _.member(MemberInfo{
         .name = "enable_theme",
         .value = value<bool>(false),
         .spec = global_spec(no_acl),
         .desc = "Enable custom theme color configuration",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = names{
             .all = "logo_path",
             .ini = "logo",
@@ -3278,147 +3278,147 @@ _.section("theme", [&]
         return BGRColor(BGRasRGBColor(color)).as_u32();
     };
 
-    _.member({
+    _.member(MemberInfo{
         .name = "bgcolor",
         .value = value<types::rgb>(to_rgb(DARK_BLUE_BIS)),
         .spec = global_spec(no_acl),
         .desc = "Background color for window, label and button",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "fgcolor",
         .value = value<types::rgb>(to_rgb(WHITE)),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for window, label and button",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "separator_color",
         .value = value<types::rgb>(to_rgb(LIGHT_BLUE)),
         .spec = global_spec(no_acl),
         .desc = "Separator line color used with some widgets",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "focus_color",
         .value = value<types::rgb>(to_rgb(WINBLUE)),
         .spec = global_spec(no_acl),
         .desc = "Background color used by buttons when they have focus",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "error_color",
         .value = value<types::rgb>(to_rgb(YELLOW)),
         .spec = global_spec(no_acl),
         .desc = "Text color for error messages. For example, an authentication error in the login",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "edit_bgcolor",
         .value = value<types::rgb>(to_rgb(WHITE)),
         .spec = global_spec(no_acl),
         .desc = "Background color for editing field",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "edit_fgcolor",
         .value = value<types::rgb>(to_rgb(BLACK)),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for editing field",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "edit_focus_color",
         .value = value<types::rgb>(to_rgb(WINBLUE)),
         .spec = global_spec(no_acl),
         .desc = "Outline color for editing field that has focus",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tooltip_bgcolor",
         .value = value<types::rgb>(to_rgb(BLACK)),
         .spec = global_spec(no_acl),
         .desc = "Background color for tooltip",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tooltip_fgcolor",
         .value = value<types::rgb>(to_rgb(LIGHT_YELLOW)),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for tooltip",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "tooltip_border_color",
         .value = value<types::rgb>(to_rgb(BLACK)),
         .spec = global_spec(no_acl),
         .desc = "Border color for tooltip",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_line1_bgcolor",
         .value = value<types::rgb>(to_rgb(PALE_BLUE)),
         .spec = global_spec(no_acl),
         .desc = "Background color for even rows in the selector widget",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_line1_fgcolor",
         .value = value<types::rgb>(to_rgb(BLACK)),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for even rows in the selector widget",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_line2_bgcolor",
         .value = value<types::rgb>(to_rgb(LIGHT_BLUE)),
         .spec = global_spec(no_acl),
         .desc = "Background color for odd rows in the selector widget",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_line2_fgcolor",
         .value = value<types::rgb>(to_rgb(BLACK)),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for odd rows in the selector widget",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_focus_bgcolor",
         .value = value<types::rgb>(to_rgb(WINBLUE)),
         .spec = global_spec(no_acl),
         .desc = "Background color for the row that has focus in the selector widget",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_focus_fgcolor",
         .value = value<types::rgb>(to_rgb(WHITE)),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for the row that has focus in the selector widget",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_selected_bgcolor",
         .value = value<types::rgb>(to_rgb(MEDIUM_BLUE)),
         .spec = global_spec(no_acl),
         .desc = "Background color for the row that is selected in the selector widget but does not have focus",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_selected_fgcolor",
         .value = value<types::rgb>(to_rgb(WHITE)),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for the row that is selected in the selector widget but does not have focus",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_label_bgcolor",
         .value = value<types::rgb>(to_rgb(MEDIUM_BLUE)),
         .spec = global_spec(no_acl),
         .desc = "Background color for name of filter fields in the selector widget",
     });
 
-    _.member({
+    _.member(MemberInfo{
         .name = "selector_label_fgcolor",
         .value = value<types::rgb>(to_rgb(WHITE)),
         .spec = global_spec(no_acl),

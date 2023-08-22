@@ -981,7 +981,7 @@ template<class T, class V>
 ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
 {
     if constexpr (std::is_same_v<T, std::string>) {
-        return {
+        return ValueAsStrings{
             .prefix_spec_type = "string("s,
             .cpp_type = "std::string"s,
             .spec_str_buffer_size = 0,
@@ -989,7 +989,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         };
     }
     else if constexpr (std::is_same_v<T, bool>) {
-        return {
+        return ValueAsStrings{
             .prefix_spec_type = "boolean("s,
             .cpp_type = "bool"s,
             .spec_str_buffer_size = 5,
@@ -998,7 +998,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         };
     }
     else if constexpr (std::is_same_v<T, types::dirpath>) {
-        return {
+        return ValueAsStrings{
             .prefix_spec_type = str_concat("string(max="_av, path_max_as_str, ", "_av),
             .cpp_type = "::configs::spec_types::directory_path"s,
             .spec_str_buffer_size = 0,
@@ -1007,7 +1007,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         };
     }
     else if constexpr (std::is_same_v<T, types::ip_string>) {
-        return {
+        return ValueAsStrings{
             .prefix_spec_type = "ip_addr("s,
             .cpp_type = "std::string"s,
             .spec_type = "::configs::spec_types::ip"s,
@@ -1016,7 +1016,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         };
     }
     else if constexpr (std::is_same_v<T, types::rgb>) {
-        return {
+        return ValueAsStrings{
             .prefix_spec_type = "string("s,
             .cpp_type = "::configs::spec_types::rgb"s,
             .spec_str_buffer_size = 7,
@@ -1025,7 +1025,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         };
     }
     else if constexpr (std::is_same_v<T, FilePermissions>) {
-        return {
+        return ValueAsStrings{
             .prefix_spec_type = "string("s,
             .cpp_type = "FilePermissions"s,
             .spec_str_buffer_size = integral_buffer_size_v<uint16_t>,
@@ -1034,7 +1034,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         };
     }
     else if constexpr (std::is_base_of_v<impl::unsigned_base, T>) {
-        return {
+        return ValueAsStrings{
             .prefix_spec_type = "integer(min=0, "s,
             .cpp_type = std::string(type_name<T>()),
             .spec_str_buffer_size = integral_buffer_size_v<T>,
@@ -1044,7 +1044,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         };
     }
     else if constexpr (std::is_base_of_v<impl::signed_base, T>) {
-        return {
+        return ValueAsStrings{
             .prefix_spec_type = "integer("s,
             .cpp_type = std::string(type_name<T>()),
             .spec_str_buffer_size = integral_buffer_size_v<T>,
@@ -1054,7 +1054,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
     }
     // TODO remove that when redirection_password_or_cookie is removed
     else if constexpr (std::is_same_v<T, std::vector<uint8_t>>) {
-        return {
+        return ValueAsStrings{
             .prefix_spec_type = {},
             .cpp_type = "std::vector<uint8_t>"s,
             .spec_str_buffer_size = 0,
@@ -1101,7 +1101,7 @@ ValueAsStrings compute_value_as_strings(
         static_assert(!Num && !Denom, "missing implementation");
     }
 
-    return {
+    return ValueAsStrings{
         .prefix_spec_type = "integer(min=0, "s,
         .cpp_type = std::string(type_name<std::chrono::duration<T, std::ratio<Num, Denom>>>()),
         .spec_str_buffer_size = integral_buffer_size_v<T>,
@@ -1115,7 +1115,7 @@ template<unsigned N, class V>
 ValueAsStrings compute_value_as_strings(type_<types::fixed_string<N>>, V const& value)
 {
     auto d = int_to_decimal_chars(N);
-    return {
+    return ValueAsStrings{
         .prefix_spec_type = str_concat("string(max="_av, d, ", "_av),
         .cpp_type = str_concat("char["_av, d, "+1]"_av),
         .spec_type = "::configs::spec_types::fixed_string"s,
@@ -1130,7 +1130,7 @@ template<unsigned N, class V>
 ValueAsStrings compute_value_as_strings(type_<types::fixed_binary<N>>, V const& value)
 {
     auto d = int_to_decimal_chars(N);
-    return {
+    return ValueAsStrings{
         .prefix_spec_type = str_concat("string(min="_av, d, ", max="_av, d, ", "_av),
         .cpp_type = str_concat("std::array<unsigned char, "_av, d, '>'),
         .spec_type = "::configs::spec_types::fixed_binary"s,
@@ -1144,7 +1144,7 @@ ValueAsStrings compute_value_as_strings(type_<types::fixed_binary<N>>, V const& 
 template<class T, class V>
 ValueAsStrings compute_value_as_strings(type_<types::list<T>>, V const& value)
 {
-    return {
+    return ValueAsStrings{
         .prefix_spec_type = "string(",
         .cpp_type = "std::string",
         .spec_type = str_concat("::configs::spec_types::list<"_av, type_name<T>(), '>'),
@@ -1182,7 +1182,7 @@ ValueAsStrings compute_value_as_strings(type_<types::range<Int, min, max>>, V co
         }
     }
 
-    return {
+    return ValueAsStrings{
         .prefix_spec_type = str_concat("integer(min="_av, smin, ", max="_av, smax, ", "_av),
         .cpp_type = std::string(type_name<Int>()),
         .spec_type = str_concat("::configs::spec_types::range<"_av, type_name<Int>(), ", "_av, smin, ", "_av, smax, ">"_av),
@@ -1271,7 +1271,7 @@ inline std::string_view get_enum_value_data(uint64_t value, type_enumeration con
 inline ValueAsStrings compute_string_enum_as_strings(uint64_t value, type_enumeration const& e)
 {
     auto name = get_enum_value_data(value, e);
-    return {
+    return ValueAsStrings{
         .prefix_spec_type = enum_options_to_prefix_spec_type(e),
         .cpp_type = std::string(e.name),
         .spec_type = "std::string"s,
@@ -1402,7 +1402,7 @@ inline std::string enum_to_cpp_string(
 inline ValueAsStrings compute_integer_enum_as_strings(uint64_t value, type_enumeration const& e)
 {
     auto d = int_to_decimal_chars(value);
-    return {
+    return ValueAsStrings{
         .prefix_spec_type = enum_to_prefix_spec_type(e),
         .cpp_type = std::string(e.name),
         .spec_str_buffer_size = integral_buffer_size_v<uint64_t>,
