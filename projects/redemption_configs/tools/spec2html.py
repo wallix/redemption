@@ -90,7 +90,7 @@ with f:
             section_name_displayed = to_display_section(section_name)
             options = []
             sections.append((section_name, options))
-            html.append(f'<section>\n<h2 id={section_name}><a href=#{section_name}>Section: {section_name_displayed}</a></h2>')
+            html.append(f'<section>\n<h2 id={section_name}>Section: {section_name_displayed}</h2>')
 
         # declare option
         elif line:
@@ -109,8 +109,7 @@ with f:
             options.append(display_name)
 
             html.append(f'<div class=option><h3 id={section_name}-{option_name}>'
-                        f'<a href=#{section_name}-{option_name}>'
-                        f'[{section_name_displayed}] {display_name}</a></h3>\n'
+                        f'[{section_name_displayed}] {display_name}</h3>\n'
                         f'<p>(type: {special_type or option_type}{extra} '
                         f'| default: <code>{default_value}</code>)</p>\n'
                         f'{desc}</div>')
