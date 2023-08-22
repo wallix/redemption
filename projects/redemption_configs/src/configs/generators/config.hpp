@@ -174,19 +174,19 @@ inline /*constexpr*/ DataAsStrings novalue_to_string {
     .cpp_comment = "\"\"",
 };
 
-inline DataAsStrings string_value_to_string_converters(types::dirpath)
+inline DataAsStrings string_value_to_strings(types::dirpath)
 {
     return novalue_to_string;
 }
 
 template<class T>
-DataAsStrings string_value_to_string_converters(types::list<T>)
+DataAsStrings string_value_to_strings(types::list<T>)
 {
     return novalue_to_string;
 }
 
 template<unsigned n>
-DataAsStrings string_value_to_string_converters(types::fixed_string<n>)
+DataAsStrings string_value_to_strings(types::fixed_string<n>)
 {
     return novalue_to_string;
 }
@@ -196,7 +196,7 @@ inline std::string cpp_expr_to_string(cpp::expr expr)
     return str_concat(end_raw_string, " << ("_av, expr.value, ") << "_av, begin_raw_string);
 }
 
-inline DataAsStrings string_value_to_string_converters(cpp::expr expr)
+inline DataAsStrings string_value_to_strings(cpp::expr expr)
 {
     auto s = cpp_expr_to_string(expr);
     return {
@@ -206,13 +206,13 @@ inline DataAsStrings string_value_to_string_converters(cpp::expr expr)
     };
 }
 
-inline DataAsStrings string_value_to_string_converters(std::string_view str)
+inline DataAsStrings string_value_to_strings(std::string_view str)
 {
     return DataAsStrings::quoted(std::string(str));
 }
 
 template<std::size_t N>
-inline DataAsStrings binary_string_value_to_string_converters(sized_array_view<char, N> av)
+inline DataAsStrings binary_string_value_to_strings(sized_array_view<char, N> av)
 {
     char* p;
 
@@ -255,9 +255,9 @@ inline DataAsStrings binary_string_value_to_string_converters(sized_array_view<c
 }
 
 
-inline DataAsStrings integer_value_to_string_converters(bool) = delete;
+inline DataAsStrings integer_value_to_strings(bool) = delete;
 
-inline DataAsStrings integer_value_to_string_converters(cpp::expr expr)
+inline DataAsStrings integer_value_to_strings(cpp::expr expr)
 {
     auto s = cpp_expr_to_string(expr);
     return {
@@ -268,7 +268,7 @@ inline DataAsStrings integer_value_to_string_converters(cpp::expr expr)
 }
 
 template<class T>
-inline DataAsStrings integer_value_to_string_converters(T const& value)
+inline DataAsStrings integer_value_to_strings(T const& value)
 {
     if constexpr (std::is_base_of_v<impl::integer_base, T>) {
         return {
@@ -282,7 +282,7 @@ inline DataAsStrings integer_value_to_string_converters(T const& value)
 }
 
 template<class T, class Ratio>
-DataAsStrings integer_value_to_string_converters(std::chrono::duration<T, Ratio> value)
+DataAsStrings integer_value_to_strings(std::chrono::duration<T, Ratio> value)
 {
     if (value.count()) {
         return DataAsStrings::from_integer(value.count());
@@ -296,13 +296,13 @@ DataAsStrings integer_value_to_string_converters(std::chrono::duration<T, Ratio>
 }
 
 template<class Int, long min, long max>
-DataAsStrings integer_value_to_string_converters(types::range<Int, min, max>)
+DataAsStrings integer_value_to_strings(types::range<Int, min, max>)
 {
     static_assert(!min, "unspecified value but 'min' isn't 0");
-    return integer_value_to_string_converters(Int());
+    return integer_value_to_strings(Int());
 }
 
-inline DataAsStrings bool_value_to_string_converters(bool value)
+inline DataAsStrings bool_value_to_strings(bool value)
 {
     if (value) {
         return {
@@ -320,7 +320,7 @@ inline DataAsStrings bool_value_to_string_converters(bool value)
     }
 }
 
-inline DataAsStrings bool_value_to_string_converters(cpp::expr expr)
+inline DataAsStrings bool_value_to_strings(cpp::expr expr)
 {
     auto s = cpp_expr_to_string(expr);
     return {
@@ -330,9 +330,9 @@ inline DataAsStrings bool_value_to_string_converters(cpp::expr expr)
     };
 }
 
-inline DataAsStrings color_value_to_string_converters(types::rgb) = delete;
+inline DataAsStrings color_value_to_strings(types::rgb) = delete;
 
-inline DataAsStrings color_value_to_string_converters(uint32_t color)
+inline DataAsStrings color_value_to_strings(uint32_t color)
 {
     assert(!(color >> 24));
 
@@ -356,7 +356,7 @@ inline DataAsStrings color_value_to_string_converters(uint32_t color)
     };
 }
 
-inline DataAsStrings file_permission_value_to_string_converters(unsigned permissions)
+inline DataAsStrings file_permission_value_to_strings(unsigned permissions)
 {
     std::array<char, 16> d;
     d[0] = '0';
@@ -978,14 +978,14 @@ struct type_
 };
 
 template<class T, class V>
-ValueAsStrings compute_converters(type_<T>, V const& value)
+ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
 {
     if constexpr (std::is_same_v<T, std::string>) {
         return {
             .prefix_spec_type = "string("s,
             .cpp_type = "std::string"s,
             .spec_str_buffer_size = 0,
-            .values = string_value_to_string_converters(value),
+            .values = string_value_to_strings(value),
         };
     }
     else if constexpr (std::is_same_v<T, bool>) {
@@ -993,7 +993,7 @@ ValueAsStrings compute_converters(type_<T>, V const& value)
             .prefix_spec_type = "boolean("s,
             .cpp_type = "bool"s,
             .spec_str_buffer_size = 5,
-            .values = bool_value_to_string_converters(value),
+            .values = bool_value_to_strings(value),
             .ini_note = "type: boolean (0/no/false or 1/yes/true)"s,
         };
     }
@@ -1002,7 +1002,7 @@ ValueAsStrings compute_converters(type_<T>, V const& value)
             .prefix_spec_type = str_concat("string(max="_av, path_max_as_str, ", "_av),
             .cpp_type = "::configs::spec_types::directory_path"s,
             .spec_str_buffer_size = 0,
-            .values = string_value_to_string_converters(value),
+            .values = string_value_to_strings(value),
             .ini_note = str_concat("maxlen = "_av, path_max_as_str),
         };
     }
@@ -1012,7 +1012,7 @@ ValueAsStrings compute_converters(type_<T>, V const& value)
             .cpp_type = "std::string"s,
             .spec_type = "::configs::spec_types::ip"s,
             .spec_str_buffer_size = 0,
-            .values = string_value_to_string_converters(value),
+            .values = string_value_to_strings(value),
         };
     }
     else if constexpr (std::is_same_v<T, types::rgb>) {
@@ -1020,7 +1020,7 @@ ValueAsStrings compute_converters(type_<T>, V const& value)
             .prefix_spec_type = "string("s,
             .cpp_type = "::configs::spec_types::rgb"s,
             .spec_str_buffer_size = 7,
-            .values = color_value_to_string_converters(value),
+            .values = color_value_to_strings(value),
             .spec_note = "in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)"s,
         };
     }
@@ -1029,7 +1029,7 @@ ValueAsStrings compute_converters(type_<T>, V const& value)
             .prefix_spec_type = "string("s,
             .cpp_type = "FilePermissions"s,
             .spec_str_buffer_size = integral_buffer_size_v<uint16_t>,
-            .values = file_permission_value_to_string_converters(value),
+            .values = file_permission_value_to_strings(value),
             .spec_note = "in octal or symbolic mode format (as chmod Linux command)"s,
         };
     }
@@ -1039,7 +1039,7 @@ ValueAsStrings compute_converters(type_<T>, V const& value)
             .cpp_type = std::string(type_name<T>()),
             .spec_str_buffer_size = integral_buffer_size_v<T>,
             // TODO hexconverter
-            .values = integer_value_to_string_converters(value),
+            .values = integer_value_to_strings(value),
             .ini_note = "min = 0"s,
         };
     }
@@ -1049,7 +1049,7 @@ ValueAsStrings compute_converters(type_<T>, V const& value)
             .cpp_type = std::string(type_name<T>()),
             .spec_str_buffer_size = integral_buffer_size_v<T>,
             // TODO hexconverter
-            .values = integer_value_to_string_converters(value),
+            .values = integer_value_to_strings(value),
         };
     }
     // TODO remove that when redirection_password_or_cookie is removed
@@ -1072,7 +1072,7 @@ ValueAsStrings compute_converters(type_<T>, V const& value)
 }
 
 template<class T, std::intmax_t Num, std::intmax_t Denom, class V>
-ValueAsStrings compute_converters(
+ValueAsStrings compute_value_as_strings(
     type_<std::chrono::duration<T, std::ratio<Num, Denom>>>, V const& value)
 {
     std::string_view note;
@@ -1105,14 +1105,14 @@ ValueAsStrings compute_converters(
         .prefix_spec_type = "integer(min=0, "s,
         .cpp_type = std::string(type_name<std::chrono::duration<T, std::ratio<Num, Denom>>>()),
         .spec_str_buffer_size = integral_buffer_size_v<T>,
-        .values = integer_value_to_string_converters(value),
+        .values = integer_value_to_strings(value),
         .spec_note = std::string(note),
         .acl_diag_note = {},
     };
 }
 
 template<unsigned N, class V>
-ValueAsStrings compute_converters(type_<types::fixed_string<N>>, V const& value)
+ValueAsStrings compute_value_as_strings(type_<types::fixed_string<N>>, V const& value)
 {
     auto d = int_to_decimal_chars(N);
     return {
@@ -1121,13 +1121,13 @@ ValueAsStrings compute_converters(type_<types::fixed_string<N>>, V const& value)
         .spec_type = "::configs::spec_types::fixed_string"s,
         .acl_diag_type = str_concat("std::string(maxlen="_av, d, ")"_av),
         .spec_str_buffer_size = 0,
-        .values = string_value_to_string_converters(value),
+        .values = string_value_to_strings(value),
         .ini_note = str_concat("maxlen = "_av, d),
     };
 }
 
 template<unsigned N, class V>
-ValueAsStrings compute_converters(type_<types::fixed_binary<N>>, V const& value)
+ValueAsStrings compute_value_as_strings(type_<types::fixed_binary<N>>, V const& value)
 {
     auto d = int_to_decimal_chars(N);
     return {
@@ -1135,29 +1135,29 @@ ValueAsStrings compute_converters(type_<types::fixed_binary<N>>, V const& value)
         .cpp_type = str_concat("std::array<unsigned char, "_av, d, '>'),
         .spec_type = "::configs::spec_types::fixed_binary"s,
         .spec_str_buffer_size = N * 2,
-        .values = binary_string_value_to_string_converters<N>(value),
+        .values = binary_string_value_to_strings<N>(value),
         .spec_note = "in hexadecimal format"s,
         .ini_note = str_concat("hexadecimal string of length "_av, d),
     };
 }
 
 template<class T, class V>
-ValueAsStrings compute_converters(type_<types::list<T>>, V const& value)
+ValueAsStrings compute_value_as_strings(type_<types::list<T>>, V const& value)
 {
     return {
         .prefix_spec_type = "string(",
         .cpp_type = "std::string",
         .spec_type = str_concat("::configs::spec_types::list<"_av, type_name<T>(), '>'),
         .spec_str_buffer_size = 0,
-        .values = string_value_to_string_converters(value),
+        .values = string_value_to_strings(value),
         .spec_note = "values are comma-separated"s
     };
 }
 
 template<class T, class V>
-ValueAsStrings compute_converters(type_<types::megabytes<T>>, V const& value)
+ValueAsStrings compute_value_as_strings(type_<types::megabytes<T>>, V const& value)
 {
-    auto res = compute_converters(type_<T>(), value);
+    auto res = compute_value_as_strings(type_<T>(), value);
     auto note = "in megabytes"sv;
     res.spec_note = std::string(note);
     res.ini_note = std::string(note);
@@ -1167,7 +1167,7 @@ ValueAsStrings compute_converters(type_<types::megabytes<T>>, V const& value)
 }
 
 template<class Int, long min, long max, class V>
-ValueAsStrings compute_converters(type_<types::range<Int, min, max>>, V const& value)
+ValueAsStrings compute_value_as_strings(type_<types::range<Int, min, max>>, V const& value)
 {
     std::string spec_note;
     chars_view sep = ""_av;
@@ -1176,7 +1176,7 @@ ValueAsStrings compute_converters(type_<types::range<Int, min, max>>, V const& v
     auto smax = int_to_decimal_chars(max);
 
     if constexpr (!std::is_base_of_v<impl::unsigned_base, Int>) {
-        spec_note = compute_converters(type_<Int>(), Int()).ini_note;
+        spec_note = compute_value_as_strings(type_<Int>(), Int()).ini_note;
         if (!spec_note.empty()) {
             sep = " | "_av;
         }
@@ -1188,7 +1188,7 @@ ValueAsStrings compute_converters(type_<types::range<Int, min, max>>, V const& v
         .spec_type = str_concat("::configs::spec_types::range<"_av, type_name<Int>(), ", "_av, smin, ", "_av, smax, ">"_av),
         .spec_str_buffer_size = integral_buffer_size_v<Int>,
         // TODO hexconverter
-        .values = integer_value_to_string_converters(value),
+        .values = integer_value_to_strings(value),
         .spec_note = spec_note,
         .ini_note = str_concat(spec_note, sep, "min = "_av, smin, ", max = "_av, smax),
     };
@@ -1268,7 +1268,7 @@ inline std::string_view get_enum_value_data(uint64_t value, type_enumeration con
     ));
 }
 
-inline ValueAsStrings compute_enum_as_string_converters(uint64_t value, type_enumeration const& e)
+inline ValueAsStrings compute_string_enum_as_strings(uint64_t value, type_enumeration const& e)
 {
     auto name = get_enum_value_data(value, e);
     return {
@@ -1399,7 +1399,7 @@ inline std::string enum_to_cpp_string(
     return str_concat(e.name, '{', int_converted, '}');
 }
 
-inline ValueAsStrings compute_enum_converters(uint64_t value, type_enumeration const& e)
+inline ValueAsStrings compute_integer_enum_as_strings(uint64_t value, type_enumeration const& e)
 {
     auto d = int_to_decimal_chars(value);
     return {
@@ -1484,11 +1484,11 @@ struct EnumAsString
         check_policy({conn_policy_value.policy_type...});
 
         auto& e = tenums.get_enum<Enum>();
-        auto ret = compute_enum_as_string_converters(safe_int(underlying_cast(value)), e);
+        auto ret = compute_string_enum_as_strings(safe_int(underlying_cast(value)), e);
 
         (..., (ret.values.connection_policies.push_back({
             conn_policy_value.policy_type,
-            compute_enum_as_string_converters(
+            compute_string_enum_as_strings(
                 safe_int(underlying_cast(Enum{conn_policy_value.value})),
                 e
             ).values.py,
@@ -1512,11 +1512,11 @@ struct ValueFromEnum
         check_policy({conn_policy_value.policy_type...});
 
         auto& e = tenums.get_enum<Enum>();
-        auto ret = compute_enum_converters(safe_int(underlying_cast(value)), e);
+        auto ret = compute_integer_enum_as_strings(safe_int(underlying_cast(value)), e);
 
         (..., (ret.values.connection_policies.push_back({
             conn_policy_value.policy_type,
-            compute_enum_converters(
+            compute_integer_enum_as_strings(
                 safe_int(underlying_cast(Enum{conn_policy_value.value})),
                 e
             ).values.py,
@@ -1536,11 +1536,11 @@ ValueAsStrings value(U const& value = T(), TConnPolicy const&... conn_policy_val
 
     check_policy({conn_policy_value.policy_type...});
 
-    auto ret = compute_converters(type_<T>(), value);
+    auto ret = compute_value_as_strings(type_<T>(), value);
 
     (..., (ret.values.connection_policies.push_back({
         conn_policy_value.policy_type,
-        compute_converters(type_<T>(), conn_policy_value.value).values.py,
+        compute_value_as_strings(type_<T>(), conn_policy_value.value).values.py,
         conn_policy_value.forced
     })));
 
