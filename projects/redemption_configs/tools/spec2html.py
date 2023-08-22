@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 import re
 import sys
+from typing import List
 
 
 sanitize_html_re = re.compile(r"^(<br/>)+|<p>(<br/>|\n)*</p>\n?|(<br/>+|\n)(?=</p>)")
+MIN_DESC_CHARS = 80
 
-def htmlize_comment(comments: list[str]) -> str:
+
+def is_documented(section_name: str, option_name: str,
+                  comment: List[str]) -> bool:
+    return ((sum(map(len, comment)) > MIN_DESC_CHARS)
+            or section_name == "theme")
+
+
+def htmlize_comment(comments: List[str]) -> str:
     desc = ''.join(comments).replace('<br/><br/>', '</p>\n<p>')
     desc = f'<p>{desc}</p>\n'
     desc = sanitize_html_re.sub('</p>', desc)
@@ -18,6 +27,7 @@ def to_display_section(s: str) -> str:
 
 declare_option_re = re.compile(r'^([^ ]+) = ([^(]+)\(.*default="?(.*?)"?\)')
 desc_list_re = re.compile(r"^# &nbsp; &nbsp; +([^:]+)(?:: )?(.*)")
+nb_desc = 0
 
 if len(sys.argv) < 2:
     print(f'{sys.argv[0]} {{file.spec|-}}', file=sys.stderr)
@@ -90,6 +100,7 @@ with f:
             if in_list_elem:
                 comments.append('</dl>\n')
             desc = htmlize_comment(comments) if comments else ''
+            nb_desc += is_documented(section_name, option_name, comments)
 
             extra = '| advanced' if advanced else ''
 
@@ -105,7 +116,6 @@ with f:
                         f'{desc}</div>')
 
             comments = []
-            hidden = False
             advanced = False
             display_name = ''
             in_list_elem = False
@@ -123,6 +133,7 @@ for section_name, options in sections:
         option_name_max_len = max(option_name_max_len, len(option_name))
     nav.append('</p>')
 nav.append('</nav>')
+nb_options = sum(len(options) for section_name, options in sections)
 
 css_column_width = int(option_name_max_len / 1.8)
 
@@ -186,5 +197,6 @@ nav {{
 </style></head><body>\n<h1>{filename}</h1>
 ''')
 print('\n'.join(nav))
+print(f"<p>Number of documented parameters = {nb_desc} / {nb_options}</p>")
 print('\n'.join(html))
 print('</section></body></html>')
