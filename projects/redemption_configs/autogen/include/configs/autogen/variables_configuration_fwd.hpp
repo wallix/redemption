@@ -45,7 +45,6 @@ namespace cfg
         struct unicode_keyboard_event_support;
         struct mod_recv_timeout;
         struct experimental_enable_serializer_data_block_size_limit;
-        struct support_connection_redirection_during_recording;
         struct rdp_keepalive_connection_interval;
         struct enable_ipv6;
         struct minimal_memory_available_before_connection_silently_closed;

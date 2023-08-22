@@ -461,12 +461,6 @@ _.section("globals", [&]
     });
 
     _.member(MemberInfo{
-        .name = "support_connection_redirection_during_recording",
-        .value = value<bool>(true),
-        .spec = global_spec(no_acl, spec::advanced),
-    });
-
-    _.member(MemberInfo{
         .name = "rdp_keepalive_connection_interval",
         .value = value<std::chrono::milliseconds>(),
         .spec = global_spec(no_acl),

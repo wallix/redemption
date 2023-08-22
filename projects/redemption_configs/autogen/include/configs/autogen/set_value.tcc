@@ -298,14 +298,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "support_connection_redirection_during_recording"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::globals::support_connection_redirection_during_recording&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
         else if (key == "rdp_keepalive_connection_interval"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),

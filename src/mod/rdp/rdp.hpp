@@ -1824,8 +1824,6 @@ class mod_rdp : public mod_api, public rdp_api, public sespro_api
 
     bool delayed_start_capture = false;
 
-    const bool support_connection_redirection_during_recording;
-
     size_t recv_bmp_update = 0;
 
     rdp_mppc_unified_dec mppc_dec;
@@ -1996,7 +1994,6 @@ public:
                 }
                 return client_support - disabled_orders;
             }(info.order_caps.orderSupport, mod_rdp_params.disabled_orders))
-        , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , gd(gd)
         , events_guard(events)
@@ -3503,15 +3500,9 @@ public:
             catch(Error const & e){
                 LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception = %s", e.errmsg());
 
-                if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED)
-                {
-                    throw;
-                }
-
-                if (e.id == ERR_RDP_SERVER_REDIR) {
-                    if (!this->support_connection_redirection_during_recording) {
-                        this->front.must_be_stop_capture();
-                    }
+                if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED
+                 || e.id == ERR_RDP_SERVER_REDIR
+                ) {
                     throw;
                 }
 

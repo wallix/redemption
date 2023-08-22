@@ -467,14 +467,6 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct globals::support_connection_redirection_during_recording {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
     /// Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client. <br/>
     /// !!!May cause FreeRDP-based client to CRASH!!! <br/>
     /// Set to 0 to disable this feature. <br/>
@@ -5039,7 +5031,6 @@ struct globals
 , cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
 , cfg::globals::experimental_enable_serializer_data_block_size_limit
-, cfg::globals::support_connection_redirection_during_recording
 , cfg::globals::enable_ipv6
 , cfg::globals::minimal_memory_available_before_connection_silently_closed
 { static constexpr bool is_section = true; };

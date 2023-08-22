@@ -98,9 +98,6 @@ mod_recv_timeout = integer(min=100, max=10000, default=1000)
 #_advanced
 experimental_enable_serializer_data_block_size_limit = boolean(default=False)
 
-#_advanced
-support_connection_redirection_during_recording = boolean(default=True)
-
 # Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
 # Set to 0 to disable this feature.<br/>
