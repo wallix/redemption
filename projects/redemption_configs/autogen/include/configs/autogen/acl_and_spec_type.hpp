@@ -47,7 +47,6 @@ template<> struct acl_and_spec_type<cfg::globals::new_pointer_update_support> { 
 template<> struct acl_and_spec_type<cfg::globals::unicode_keyboard_event_support> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::globals::mod_recv_timeout> { using type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>; };
 template<> struct acl_and_spec_type<cfg::globals::experimental_enable_serializer_data_block_size_limit> { using type = bool; };
-template<> struct acl_and_spec_type<cfg::globals::experimental_support_resize_session_during_recording> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::globals::support_connection_redirection_during_recording> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::globals::rdp_keepalive_connection_interval> { using type = std::chrono::milliseconds; };
 template<> struct acl_and_spec_type<cfg::globals::enable_ipv6> { using type = bool; };

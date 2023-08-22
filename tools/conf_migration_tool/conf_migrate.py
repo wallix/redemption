@@ -423,6 +423,9 @@ migration_defs: List[MigrationType] = [
             'allow_channels': UpdateItem(key='allowed_channels'),
             'deny_channels': UpdateItem(key='denied_channels'),
         },
+        'globals': {
+            'experimental_support_resize_session_during_recording': RemoveItem(),
+        },
     }),
 ]
 

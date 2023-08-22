@@ -469,14 +469,6 @@ namespace cfg
     };
     /// type: bool <br/>
     /// default: true <br/>
-    struct globals::experimental_support_resize_session_during_recording {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
-    /// type: bool <br/>
-    /// default: true <br/>
     struct globals::support_connection_redirection_during_recording {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = bool;
@@ -5043,7 +5035,6 @@ struct globals
 , cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
 , cfg::globals::experimental_enable_serializer_data_block_size_limit
-, cfg::globals::experimental_support_resize_session_during_recording
 , cfg::globals::support_connection_redirection_during_recording
 , cfg::globals::enable_ipv6
 , cfg::globals::minimal_memory_available_before_connection_silently_closed

@@ -137,10 +137,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
-#experimental_support_resize_session_during_recording = 1
-
-# (type: boolean (0/no/false or 1/yes/true))
-#_advanced
 #support_connection_redirection_during_recording = 1
 
 # Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.

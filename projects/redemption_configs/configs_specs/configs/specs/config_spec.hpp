@@ -461,12 +461,6 @@ _.section("globals", [&]
     });
 
     _.member(MemberInfo{
-        .name = "experimental_support_resize_session_during_recording",
-        .value = value<bool>(true),
-        .spec = global_spec(no_acl, spec::advanced),
-    });
-
-    _.member(MemberInfo{
         .name = "support_connection_redirection_during_recording",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
