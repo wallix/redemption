@@ -117,24 +117,26 @@ enable_ipv6 = boolean(default=True)
 #_advanced
 ignore_logon_password = boolean(default=False)
 
-# Disable wallpaper (0x1).
-# Disable full-window drag (0x2).
-# Disable menu animations (0x4).
-# Disable theme (0x8).
-# Disable mouse cursor shadows (0x20).
-# Disable cursor blinking (0x40).
-# Enable font smoothing (0x80).
-# Enable Desktop Composition (0x100).
+# It specifies a list of server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).<br/>
+# &nbsp; &nbsp;     0x1: Disable wallpaper
+# &nbsp; &nbsp;     0x4: Disable menu animations
+# &nbsp; &nbsp;     0x8: Disable theme
+# &nbsp; &nbsp;    0x20: Disable mouse cursor shadows
+# &nbsp; &nbsp;    0x40: Disable cursor blinking
+# &nbsp; &nbsp;    0x80: Enable font smoothing
+# &nbsp; &nbsp;   0x100: Enable Desktop Composition
 #_advanced
 #_hex
 performance_flags_force_present = integer(min=0, default=40)
 
-# See the comment of "Performance flags force present" above for available values.
+# Value that will be deleted by the proxy.
+# See "Performance flags force present" above for available values.
 #_advanced
 #_hex
 performance_flags_force_not_present = integer(min=0, default=0)
 
 # If enabled, avoid automatically font smoothing in recorded session.
+# This allows OCR (when session probe is disabled) to better detect window titles.
 #_advanced
 auto_adjust_performance_flags = boolean(default=True)
 

@@ -531,39 +531,46 @@ _.section("client", [&]
     });
 
     _.member(MemberInfo{
-        .name = "performance_flags_default",
-        .value = value<types::u32>(0x80),
-        .spec = ini_only(no_acl),
-        .desc = "Enable font smoothing (0x80).",
-    });
-
-    _.member(MemberInfo{
         .name = "performance_flags_force_present",
         .value = value<types::u32>(0x28),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc =
-            "Disable wallpaper (0x1).\n"
-            "Disable full-window drag (0x2).\n"
-            "Disable menu animations (0x4).\n"
-            "Disable theme (0x8).\n"
-            "Disable mouse cursor shadows (0x20).\n"
-            "Disable cursor blinking (0x40).\n"
-            "Enable font smoothing (0x80).\n"
-            "Enable Desktop Composition (0x100)."
+            "It specifies a list of server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n"
+            "\n"
+            "    0x1: Disable wallpaper\n"
+            "    0x4: Disable menu animations\n"
+            "    0x8: Disable theme\n"
+            "   0x20: Disable mouse cursor shadows\n"
+            "   0x40: Disable cursor blinking\n"
+            "   0x80: Enable font smoothing\n"
+            "  0x100: Enable Desktop Composition\n"
     });
 
     _.member(MemberInfo{
         .name = "performance_flags_force_not_present",
         .value = value<types::u32>(0),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
-        .desc = "See the comment of \"Performance flags force present\" above for available values.",
+        .desc =
+            "Value that will be deleted by the proxy.\n"
+            "See \"Performance flags force present\" above for available values."
+    });
+
+    _.member(MemberInfo{
+        .name = "performance_flags_default",
+        .value = value<types::u32>(0x80),
+        .spec = ini_only(no_acl),
+        .desc =
+            "Default value when the RDP client does not specify any option.\n"
+            "See \"Performance flags force present\" above for available values."
     });
 
     _.member(MemberInfo{
         .name = "auto_adjust_performance_flags",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "If enabled, avoid automatically font smoothing in recorded session.",
+        .desc =
+            "If enabled, avoid automatically font smoothing in recorded session.\n"
+            "This allows OCR (when session probe is disabled) to better detect window titles.",
     });
 
 

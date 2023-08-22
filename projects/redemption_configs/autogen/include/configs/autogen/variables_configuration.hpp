@@ -529,23 +529,15 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Enable font smoothing (0x80). <br/>
-    /// type: uint32_t <br/>
-    /// default: 128 <br/>
-    struct client::performance_flags_default {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = uint32_t;
-        using mapped_type = uint32_t;
-        type value { 128 };
-    };
-    /// Disable wallpaper (0x1). <br/>
-    /// Disable full-window drag (0x2). <br/>
-    /// Disable menu animations (0x4). <br/>
-    /// Disable theme (0x8). <br/>
-    /// Disable mouse cursor shadows (0x20). <br/>
-    /// Disable cursor blinking (0x40). <br/>
-    /// Enable font smoothing (0x80). <br/>
-    /// Enable Desktop Composition (0x100). <br/>
+    /// It specifies a list of server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage). <br/>
+    ///  <br/>
+    ///     0x1: Disable wallpaper <br/>
+    ///     0x4: Disable menu animations <br/>
+    ///     0x8: Disable theme <br/>
+    ///    0x20: Disable mouse cursor shadows <br/>
+    ///    0x40: Disable cursor blinking <br/>
+    ///    0x80: Enable font smoothing <br/>
+    ///   0x100: Enable Desktop Composition <br/>
     /// type: uint32_t <br/>
     /// default: 40 <br/>
     struct client::performance_flags_force_present {
@@ -554,7 +546,8 @@ namespace cfg
         using mapped_type = uint32_t;
         type value { 40 };
     };
-    /// See the comment of "Performance flags force present" above for available values. <br/>
+    /// Value that will be deleted by the proxy. <br/>
+    /// See "Performance flags force present" above for available values. <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct client::performance_flags_force_not_present {
@@ -563,7 +556,18 @@ namespace cfg
         using mapped_type = uint32_t;
         type value { 0 };
     };
+    /// Default value when the RDP client does not specify any option. <br/>
+    /// See "Performance flags force present" above for available values. <br/>
+    /// type: uint32_t <br/>
+    /// default: 128 <br/>
+    struct client::performance_flags_default {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = uint32_t;
+        using mapped_type = uint32_t;
+        type value { 128 };
+    };
     /// If enabled, avoid automatically font smoothing in recorded session. <br/>
+    /// This allows OCR (when session probe is disabled) to better detect window titles. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::auto_adjust_performance_flags {
@@ -5044,9 +5048,9 @@ struct client
 : cfg::client::ssl_cipher_list
 , cfg::client::keyboard_layout
 , cfg::client::ignore_logon_password
-, cfg::client::performance_flags_default
 , cfg::client::performance_flags_force_present
 , cfg::client::performance_flags_force_not_present
+, cfg::client::performance_flags_default
 , cfg::client::auto_adjust_performance_flags
 , cfg::client::tls_fallback_legacy
 , cfg::client::tls_support
