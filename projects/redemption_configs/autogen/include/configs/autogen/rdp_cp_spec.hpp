@@ -8,7 +8,7 @@ R"xxxyyyzzz([general]
 # ${LOGIN} will be replaced by login
 # ${DOMAIN} (optional) will be replaced by domain if it exists.
 # Empty value means no transformation rule.
-transformation_rule = string(default='')
+transformation_rule = string(default="")
 
 # Account Mapping password retriever
 # Transformation to apply to find the correct account.
@@ -20,7 +20,7 @@ transformation_rule = string(default='')
 # A regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \1, \2, ...
 # For example to replace leading "A" by "B" in the username: ${USER:/^A/B}
 # Empty value means no transformation rule.
-vault_transformation_rule = string(default='')
+vault_transformation_rule = string(default="")
 
 
 [session]

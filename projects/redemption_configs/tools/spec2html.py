@@ -12,7 +12,11 @@ def htmlize_comment(comments: list[str]) -> str:
     return desc
 
 
-declare_option_re = re.compile(r"^([^ ]+) = ([^(]+)\(.*default='?(.*)'?\)")
+def to_display_section(s: str) -> str:
+    return s.replace('_', ' ')
+
+
+declare_option_re = re.compile(r'^([^ ]+) = ([^(]+)\(.*default="?(.*?)"?\)')
 desc_list_re = re.compile(r"^# &nbsp; &nbsp; +([^:]+)(?:: )?(.*)")
 
 if len(sys.argv) < 2:
@@ -32,9 +36,9 @@ with f:
     sections = []
     options = []
     section_name = ''
+    section_name_displayed = ''
 
     comments = []
-    hidden = False
     advanced = False
     display_name = ''
     in_list_elem = False
@@ -54,8 +58,6 @@ with f:
                 comments.append(f'<dt>{item_name}</dt><dd>{desc}</dd>\n')
             elif line == '#_advanced':
                 advanced = True
-            elif line == '#_hidden':
-                hidden = True
             elif line.startswith('# (in '):
                 if line.startswith('# (in rgb'):
                     special_type = 'RGB color'
@@ -75,28 +77,32 @@ with f:
             if section_name:
                 html.append('</section>')
             section_name = line[1:-1]
+            section_name_displayed = to_display_section(section_name)
             options = []
             sections.append((section_name, options))
-            html.append(f'<section>\n<h2 id={section_name}><a href=#{section_name}>Section: {section_name}</a></h2>')
+            html.append(f'<section>\n<h2 id={section_name}><a href=#{section_name}>Section: {section_name_displayed}</a></h2>')
 
         # declare option
         elif line:
-            if not hidden:
-                # TODO display_name
-                option_name, option_type, default_value = declare_option_re.match(line).groups()
-                options.append(option_name)
+            # TODO display_name
+            option_name, option_type, default_value = declare_option_re.match(line).groups()
 
-                if in_list_elem:
-                    comments.append('</dl>\n')
-                desc = htmlize_comment(comments) if comments else ''
+            if in_list_elem:
+                comments.append('</dl>\n')
+            desc = htmlize_comment(comments) if comments else ''
 
-                extra = '| advanced' if advanced else ''
+            extra = '| advanced' if advanced else ''
 
-                html.append(f'<div class=option><h3 id={section_name}-{option_name}>'
-                            f'<a href=#{section_name}-{option_name}>'
-                            f'[{section_name}] {option_name}</a></h3>\n'
-                            f'<p>(type: {special_type or option_type}{extra} | default: {default_value})</p>\n'
-                            f'{desc}</div>')
+            if not display_name:
+                display_name = option_name.replace('_', ' ').title()
+            options.append(display_name)
+
+            html.append(f'<div class=option><h3 id={section_name}-{option_name}>'
+                        f'<a href=#{section_name}-{option_name}>'
+                        f'[{section_name_displayed}] {display_name}</a></h3>\n'
+                        f'<p>(type: {special_type or option_type}{extra} '
+                        f'| default: <code>{default_value}</code>)</p>\n'
+                        f'{desc}</div>')
 
             comments = []
             hidden = False
@@ -110,7 +116,7 @@ option_name_max_len = 0
 nav = ['<nav>']
 sections.sort(key=lambda t: t[0])
 for section_name, options in sections:
-    nav.append(f'<p class=menu-group><a class="menu-item menu-item-section" href=#{section_name}>[{section_name}]</a>')
+    nav.append(f'<p class=menu-group><a class="menu-item menu-item-section" href=#{section_name}>[{to_display_section(section_name)}]</a>')
     options.sort()
     for option_name in options:
         nav.append(f'<a class=menu-item href=#{section_name}-{option_name}>{option_name}</a>')
@@ -128,6 +134,10 @@ body {{
 }}
 section {{
     border-top: 1px dashed black;
+}}
+
+code {{
+    background: #eee;
 }}
 
 h1, nav {{
