@@ -1883,8 +1883,6 @@ class mod_rdp : public mod_api, public rdp_api, public sespro_api
 
     ModRdpVariables vars;
 
-    bool const accept_monitor_layout_change_if_capture_is_not_started;
-
     bool const allow_session_reconnection_by_shortcut;
 
 #ifndef __EMSCRIPTEN__
@@ -2015,7 +2013,6 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
-        , accept_monitor_layout_change_if_capture_is_not_started(mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started)
         , allow_session_reconnection_by_shortcut(mod_rdp_params.allow_session_reconnection_by_shortcut)
         #ifndef __EMSCRIPTEN__
         , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_params.start_launch_timeout_timer_only_after_logon)
@@ -3108,10 +3105,9 @@ public:
                                     monitor_layout_pdu.log(
                                         "Rdp::receiving the server-to-client Monitor Layout PDU");
 
-                                    if ((monitor_layout_pdu.get_monitorCount() !=
-                                         (this->monitor_count ? this->monitor_count : 1)) &&
-                                        (!this->accept_monitor_layout_change_if_capture_is_not_started || this->front.is_capture_in_progress())) {
-
+                                    if (monitor_layout_pdu.get_monitorCount() != (this->monitor_count ? this->monitor_count : 1)
+                                     && this->front.is_capture_in_progress()
+                                    ) {
                                         LOG(LOG_ERR, "Server do not support the display monitor layout of the client");
                                         throw Error(ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT);
                                     }

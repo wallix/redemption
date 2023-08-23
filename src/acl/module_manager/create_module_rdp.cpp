@@ -698,8 +698,6 @@ ModPack create_mod_rdp(
 
     mod_rdp_params.enable_remotefx = ini.get<cfg::mod_rdp::enable_remotefx>();
     mod_rdp_params.use_license_store = ini.get<cfg::mod_rdp::use_license_store>();
-    mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started
-        = ini.get<cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started>();
 
     mod_rdp_params.allow_session_reconnection_by_shortcut
         = ini.get<cfg::mod_rdp::allow_session_reconnection_by_shortcut>();

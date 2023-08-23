@@ -31,19 +31,10 @@ base_inactivity_timeout = integer(min=0, default=900)
 #_advanced
 authentication_timeout = integer(min=0, default=120)
 
-# Specify alternate bind address
-#_advanced
-listen_address = ip_addr(default="0.0.0.0")
-
 # ⚠ IP tables rules are reloaded and active sessions will be disconnected.<br/>
 # Allow Transparent mode.
 #_iptables
 enable_transparent_mode = boolean(default=False)
-
-# Proxy certificate password.
-#_advanced
-#_password
-certificate_password = string(max=254, default="inquisition")
 
 # Support of Bitmap Update.
 #_advanced
@@ -90,10 +81,6 @@ new_pointer_update_support = boolean(default=True)
 # Allows the client to use unicode characters.
 # This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.
 unicode_keyboard_event_support = boolean(default=True)
-
-# (in milliseconds)
-#_advanced
-mod_recv_timeout = integer(min=100, max=10000, default=1000)
 
 #_advanced
 experimental_enable_serializer_data_block_size_limit = boolean(default=False)
@@ -211,10 +198,6 @@ bogus_ios_glyph_support_level = boolean(default=True)
 #_advanced
 transform_glyph_to_bitmap = boolean(default=False)
 
-# (in milliseconds)
-#_advanced
-recv_timeout = integer(min=100, max=10000, default=1000)
-
 # Enables display of message informing user that his/her session is being audited.
 enable_osd_4_eyes = boolean(default=True)
 
@@ -330,9 +313,6 @@ split_domain = boolean(default=False)
 # Enables Session Shadowing Support.
 #_advanced
 session_shadowing_support = boolean(default=True)
-
-#_advanced
-accept_monitor_layout_change_if_capture_is_not_started = boolean(default=False)
 
 [session_probe]
 

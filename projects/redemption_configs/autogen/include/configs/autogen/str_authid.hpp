@@ -26,7 +26,6 @@ namespace configs
         "trace_type"_zv,
         "is_rec"_zv,
         "enable_osd_display_remote_target"_zv,
-        "mod_recv_timeout"_zv,
         "keyboard_layout"_zv,
         "disable_tsk_switch_shortcuts"_zv,
         "all_target_mod:tcp_user_timeout"_zv,

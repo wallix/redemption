@@ -422,11 +422,13 @@ migration_defs: List[MigrationType] = [
         'mod_rdp': {
             'allow_channels': UpdateItem(key='allowed_channels'),
             'deny_channels': UpdateItem(key='denied_channels'),
+            'accept_monitor_layout_change_if_capture_is_not_started': RemoveItem(),
         },
         'globals': {
             'experimental_support_resize_session_during_recording': RemoveItem(),
             'support_connection_redirection_during_recording': RemoveItem(),
         },
+
     }),
 ]
 

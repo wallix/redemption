@@ -52,8 +52,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ trace_type)
 #trace_type = 1
 
-# Specify alternate bind address
-#_advanced
+# Specify bind address
 #listen_address = 0.0.0.0
 
 # Allow Transparent mode.
@@ -62,7 +61,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Proxy certificate password.
 # (maxlen = 254)
-#_advanced
 #certificate_password = inquisition
 
 # Support of Bitmap Update.
@@ -127,8 +125,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #unicode_keyboard_event_support = 1
 
 # (in milliseconds | min = 100, max = 10000)
-#_advanced
-# (acl config: proxy ⇐ mod_recv_timeout)
 #mod_recv_timeout = 1000
 
 # (type: boolean (0/no/false or 1/yes/true))
@@ -284,7 +280,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #transform_glyph_to_bitmap = 0
 
 # (in milliseconds | min = 100, max = 10000)
-#_advanced
 #recv_timeout = 1000
 
 # Enables display of message informing user that his/her session is being audited.
@@ -584,10 +579,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 # (acl config: proxy ⇐ mod_rdp:enable_remotefx)
 #enable_remotefx = 0
-
-# (type: boolean (0/no/false or 1/yes/true))
-#_advanced
-#accept_monitor_layout_change_if_capture_is_not_started = 0
 
 # Connect to the server in Restricted Admin mode.
 # This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.

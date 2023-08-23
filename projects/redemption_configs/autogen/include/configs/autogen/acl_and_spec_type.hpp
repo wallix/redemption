@@ -130,7 +130,6 @@ template<> struct acl_and_spec_type<cfg::mod_rdp::split_domain> { using type = b
 template<> struct acl_and_spec_type<cfg::mod_rdp::wabam_uses_translated_remoteapp> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::session_shadowing_support> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::enable_remotefx> { using type = bool; };
-template<> struct acl_and_spec_type<cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::enable_restricted_admin_mode> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::force_smartcard_authentication> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::enable_ipv6> { using type = bool; };

@@ -16,32 +16,32 @@ namespace configs
     namespace cfg_indexes
     {
         inline constexpr int section0 = 0; /* globals */
-        inline constexpr int section1 = 17; /* client */
-        inline constexpr int section2 = 19; /* all_target_mod */
-        // inline constexpr int section3 = 20; /* remote_program */
-        inline constexpr int section4 = 20; /* mod_rdp */
-        inline constexpr int section5 = 58; /* protocol */
-        inline constexpr int section6 = 59; /* session_probe */
-        inline constexpr int section7 = 103; /* server_cert */
-        inline constexpr int section8 = 112; /* mod_vnc */
-        inline constexpr int section9 = 120; /* session_log */
-        // inline constexpr int section10 = 121; /* ocr */
-        inline constexpr int section11 = 121; /* capture */
-        inline constexpr int section12 = 125; /* video */
-        inline constexpr int section13 = 128; /* audit */
-        inline constexpr int section14 = 137; /* file_verification */
-        inline constexpr int section15 = 145; /* file_storage */
-        // inline constexpr int section16 = 146; /* icap_server_down */
-        // inline constexpr int section17 = 146; /* icap_server_up */
-        inline constexpr int section18 = 146; /* crypto */
-        // inline constexpr int section19 = 148; /* websocket */
-        // inline constexpr int section20 = 148; /* vnc_over_ssh */
-        inline constexpr int section21 = 148; /* context */
-        // inline constexpr int section22 = 238; /* internal_mod */
-        inline constexpr int section23 = 238; /* mod_replay */
-        inline constexpr int section24 = 240; /* translation */
-        // inline constexpr int section25 = 242; /* theme */
-        // inline constexpr int section26 = 242; /* debug */
+        inline constexpr int section1 = 16; /* client */
+        inline constexpr int section2 = 18; /* all_target_mod */
+        // inline constexpr int section3 = 19; /* remote_program */
+        inline constexpr int section4 = 19; /* mod_rdp */
+        inline constexpr int section5 = 57; /* protocol */
+        inline constexpr int section6 = 58; /* session_probe */
+        inline constexpr int section7 = 102; /* server_cert */
+        inline constexpr int section8 = 111; /* mod_vnc */
+        inline constexpr int section9 = 119; /* session_log */
+        // inline constexpr int section10 = 120; /* ocr */
+        inline constexpr int section11 = 120; /* capture */
+        inline constexpr int section12 = 124; /* video */
+        inline constexpr int section13 = 127; /* audit */
+        inline constexpr int section14 = 136; /* file_verification */
+        inline constexpr int section15 = 144; /* file_storage */
+        // inline constexpr int section16 = 145; /* icap_server_down */
+        // inline constexpr int section17 = 145; /* icap_server_up */
+        inline constexpr int section18 = 145; /* crypto */
+        // inline constexpr int section19 = 147; /* websocket */
+        // inline constexpr int section20 = 147; /* vnc_over_ssh */
+        inline constexpr int section21 = 147; /* context */
+        // inline constexpr int section22 = 237; /* internal_mod */
+        inline constexpr int section23 = 237; /* mod_replay */
+        inline constexpr int section24 = 239; /* translation */
+        // inline constexpr int section25 = 241; /* theme */
+        // inline constexpr int section26 = 241; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -291,7 +291,7 @@ namespace cfg
         using mapped_type = TraceType;
         type value { TraceType::localfile_hashed };
     };
-    /// Specify alternate bind address <br/>
+    /// Specify bind address <br/>
     /// type: std::string <br/>
     /// default: "0.0.0.0" <br/>
     struct globals::listen_address {
@@ -448,13 +448,9 @@ namespace cfg
         type value { true };
     };
     /// type: std::chrono::milliseconds <br/>
-    /// acl ⇒ proxy <br/>
     /// default: 1000 <br/>
     struct globals::mod_recv_timeout {
-        static constexpr unsigned acl_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section0 + 16};
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = std::chrono::milliseconds;
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>;
         type value { 1000 };
@@ -1384,14 +1380,6 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section4 + 23};
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
-    };
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct mod_rdp::accept_monitor_layout_change_if_capture_is_not_started {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = bool;
         using mapped_type = bool;
         type value { false };
@@ -5122,7 +5110,6 @@ struct mod_rdp
 , cfg::mod_rdp::wabam_uses_translated_remoteapp
 , cfg::mod_rdp::session_shadowing_support
 , cfg::mod_rdp::enable_remotefx
-, cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started
 , cfg::mod_rdp::enable_restricted_admin_mode
 , cfg::mod_rdp::force_smartcard_authentication
 , cfg::mod_rdp::enable_ipv6
@@ -5516,7 +5503,6 @@ using VariablesAclPack = Pack<
 , cfg::globals::trace_type
 , cfg::globals::is_rec
 , cfg::globals::enable_osd_display_remote_target
-, cfg::globals::mod_recv_timeout
 , cfg::client::keyboard_layout
 , cfg::client::disable_tsk_switch_shortcuts
 , cfg::all_target_mod::tcp_user_timeout
@@ -5746,15 +5732,15 @@ using VariablesAclPack = Pack<
 
 
 constexpr U64BitFlags<4> loggable_field{ {
-  0b1111111110111111111111111111111111111111111111011111011111101100
-, 0b1111011111111111101111111111111111111111111111111111111111111111
-, 0b1111110100010111100111000011111101100011000000111111111111110111
-, 0b0000000000000001111100000001110000011000110011111110001010011111
+  0b1111111111011111111111111111111111111111111111101111011111101100
+, 0b1111101111111111110111111111111111111111111111111111111111111111
+, 0b1111111010001011110011100001111110110001100000011111111111111011
+, 0b0000000000000000111110000000111000001100011001111111000101001111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000010000000000000000000000000000000000000000
+, 0b0000000000000000000000001000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

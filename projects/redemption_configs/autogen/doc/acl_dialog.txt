@@ -30,8 +30,6 @@ cfg::globals::trace_type ⇐ trace_type   [TraceType]
 cfg::globals::is_rec ⇐ is_rec   [bool]
 cfg::globals::enable_osd_display_remote_target ⇐ enable_osd_display_remote_target   [bool]
     Show target address with F12.
-cfg::globals::mod_recv_timeout ⇐ mod_recv_timeout   [std::chrono::milliseconds]
-    in milliseconds
 
 cfg::client::keyboard_layout ⇒ keyboard_layout   [unsigned]
 cfg::client::disable_tsk_switch_shortcuts ⇐ disable_tsk_switch_shortcuts   [bool]

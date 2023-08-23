@@ -319,8 +319,8 @@ _.section("globals", [&]
     _.member(MemberInfo{
         .name = "listen_address",
         .value = value<types::ip_string>("0.0.0.0"),
-        .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Specify alternate bind address",
+        .spec = ini_only(no_acl),
+        .desc = "Specify bind address",
     });
 
     _.member(MemberInfo{
@@ -333,7 +333,7 @@ _.section("globals", [&]
     _.member(MemberInfo{
         .name = "certificate_password",
         .value = value<types::fixed_string<254>>("inquisition"),
-        .spec = global_spec(no_acl, spec::advanced | spec::password),
+        .spec = ini_only(no_acl),
         .desc = "Proxy certificate password.",
     });
 
@@ -451,7 +451,7 @@ _.section("globals", [&]
     _.member(MemberInfo{
         .name = "mod_recv_timeout",
         .value = value<types::range<std::chrono::milliseconds, 100, 10000>>(1000),
-        .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
+        .spec = ini_only(no_acl),
     });
 
     _.member(MemberInfo{
@@ -706,7 +706,7 @@ _.section("client", [&]
     _.member(MemberInfo{
         .name = "recv_timeout",
         .value = value<types::range<std::chrono::milliseconds, 100, 10000>>(1000),
-        .spec = global_spec(no_acl, spec::advanced),
+        .spec = ini_only(no_acl),
     });
 
     _.member(MemberInfo{
@@ -1109,12 +1109,6 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "Enables support of the remoteFX codec.",
-    });
-
-    _.member(MemberInfo{
-        .name = "accept_monitor_layout_change_if_capture_is_not_started",
-        .value = value<bool>(false),
-        .spec = global_spec(no_acl, spec::advanced),
     });
 
     _.member(MemberInfo{
