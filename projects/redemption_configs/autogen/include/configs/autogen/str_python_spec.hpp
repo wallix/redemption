@@ -323,9 +323,6 @@ remoteapp_bypass_legal_notice_timeout = integer(min=0, default=20000)
 #_advanced
 log_only_relevant_clipboard_activities = boolean(default=True)
 
-#_advanced
-experimental_fix_too_long_cookie = boolean(default=True)
-
 # Force to split target domain and username with '@' separator.
 #_advanced
 split_domain = boolean(default=False)

@@ -126,7 +126,6 @@ template<> struct acl_and_spec_type<cfg::mod_rdp::enable_rdpdr_data_analysis> { 
 template<> struct acl_and_spec_type<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay> { using type = std::chrono::milliseconds; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout> { using type = std::chrono::milliseconds; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::log_only_relevant_clipboard_activities> { using type = bool; };
-template<> struct acl_and_spec_type<cfg::mod_rdp::experimental_fix_too_long_cookie> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::split_domain> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::wabam_uses_translated_remoteapp> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::session_shadowing_support> { using type = bool; };

@@ -1082,12 +1082,6 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
     });
 
     _.member(MemberInfo{
-        .name = "experimental_fix_too_long_cookie",
-        .value = value<bool>(true),
-        .spec = global_spec(no_acl, spec::advanced),
-    });
-
-    _.member(MemberInfo{
         .name = "split_domain",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),

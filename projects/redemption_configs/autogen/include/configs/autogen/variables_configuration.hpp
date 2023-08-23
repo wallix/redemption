@@ -1342,14 +1342,6 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct mod_rdp::experimental_fix_too_long_cookie {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
     /// Force to split target domain and username with '@' separator. <br/>
     /// type: bool <br/>
     /// default: false <br/>
@@ -5126,7 +5118,6 @@ struct mod_rdp
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
 , cfg::mod_rdp::enable_rdpdr_data_analysis
 , cfg::mod_rdp::log_only_relevant_clipboard_activities
-, cfg::mod_rdp::experimental_fix_too_long_cookie
 , cfg::mod_rdp::split_domain
 , cfg::mod_rdp::wabam_uses_translated_remoteapp
 , cfg::mod_rdp::session_shadowing_support

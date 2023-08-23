@@ -565,10 +565,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #log_only_relevant_clipboard_activities = 1
 
-# (type: boolean (0/no/false or 1/yes/true))
-#_advanced
-#experimental_fix_too_long_cookie = 1
-
 # Force to split target domain and username with '@' separator.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced

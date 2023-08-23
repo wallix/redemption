@@ -1354,9 +1354,7 @@ public:
                 return std::string{};
             }
 
-            if (session_probe_params.fix_too_long_cookie
-             && this->session_probe.target_informations.length() > 20
-            ){
+            if (this->session_probe.target_informations.length() > 20) {
                 SslSha1 sha1;
                 sha1.update(this->session_probe.target_informations);
 
