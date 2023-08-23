@@ -166,9 +166,9 @@ RED_AUTO_TEST_CASE(TestColorParser)
     RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "#123"_zv));
     TEST_RGB(rgb.to_rgb888() == 0x112233);
     RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "red"_zv));
-    TEST_RGB(rgb.to_rgb888() == BGRColor(BGRasRGBColor(RED)).as_u32());
-    RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "inv_medium_green"_zv));
-    TEST_RGB(rgb.to_rgb888() == BGRColor(BGRasRGBColor(INV_MEDIUM_GREEN)).as_u32());
+    TEST_RGB(rgb.to_rgb888() == 0xff0000);
+    RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "LightGoldenrodYellow"_zv));
+    TEST_RGB(rgb.to_rgb888() == 0xfafad2);
 
     RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, "bla_bla"_zv));
     RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, "0x1234567"_zv));

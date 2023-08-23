@@ -30,6 +30,7 @@
 #include "utils/hexadecimal_string_to_buffer.hpp"
 #include "utils/colors.hpp"
 #include "utils/file_permissions.hpp"
+#include "utils/ascii.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -509,87 +510,155 @@ inline parse_error parse_from_cfg(
     }
 }
 
-template<class... Str>
-constexpr auto str_flat_lower_strings(int /*dummy*/, Str const&... strings)
-{
-    constexpr auto n = (... + std::extent_v<Str>)
-                     - sizeof...(strings) /* zero-terminal with char[N] */;
-    std::array<char, n> str {};
-    char* p = str.begin();
-    for (char const* s : {strings...}) {
-        while (*s) {
-            char c = *s++;
-            if ('A' <= c && c <= 'Z') {
-                c = char(c - 'A' + 'a');
-            }
-            *p++ = c;
-        }
-    }
-    return str;
-}
-
-template<class FlatStr, class... Str>
-constexpr auto str_array_from_flat_strings(FlatStr const& str, Str const&... strings)
-{
-    constexpr std::size_t ns[] {(std::extent_v<Str> - 1)...};
-    std::array<std::string_view, sizeof...(strings)> views {};
-    char const* p = str.begin();
-    std::string_view* psv = views.begin();
-    for (std::size_t n : ns) {
-        *psv++ = {p, n};
-        p += n;
-    }
-    return views;
-}
-
-#define XCOLORS(f) \
-    f(BLACK) \
-    f(GREY) \
-    f(MEDIUM_GREY) \
-    f(DARK_GREY) \
-    f(ANTHRACITE) \
-    f(WHITE) \
-    f(BLUE) \
-    f(DARK_BLUE) \
-    f(CYAN) \
-    f(DARK_BLUE_WIN) \
-    f(DARK_BLUE_BIS) \
-    f(MEDIUM_BLUE) \
-    f(PALE_BLUE) \
-    f(LIGHT_BLUE) \
-    f(WINBLUE) \
-    f(RED) \
-    f(DARK_RED) \
-    f(MEDIUM_RED) \
-    f(PINK) \
-    f(GREEN) \
-    f(WABGREEN) \
-    f(WABGREEN_BIS) \
-    f(DARK_WABGREEN) \
-    f(INV_DARK_WABGREEN) \
-    f(DARK_GREEN) \
-    f(INV_DARK_GREEN) \
-    f(LIGHT_GREEN) \
-    f(INV_LIGHT_GREEN) \
-    f(PALE_GREEN) \
-    f(INV_PALE_GREEN) \
-    f(MEDIUM_GREEN) \
-    f(INV_MEDIUM_GREEN) \
-    f(YELLOW) \
-    f(LIGHT_YELLOW) \
-    f(ORANGE) \
-    f(LIGHT_ORANGE) \
-    f(PALE_ORANGE) \
-    f(BROWN)
-
-#define TO_STR(c) , #c
-#define TO_RGB_COLOR(c) BGRColor(BGRasRGBColor(c)).as_u32(),
-inline constexpr auto flat_lower_colors = str_flat_lower_strings(0 XCOLORS(TO_STR));
-inline constexpr auto lower_colors = str_array_from_flat_strings(flat_lower_colors XCOLORS(TO_STR));
-inline constexpr uint32_t rgb_colors[] {XCOLORS(TO_RGB_COLOR)};
-#undef TO_RGB_COLOR
-#undef TO_STR
-#undef XCOLORS
+#define X_COLOR_RGB(f)                  \
+    f("aliceblue", 0xf0f8ff)            \
+    f("antiquewhite", 0xfaebd7)         \
+    f("aqua", 0x00ffff)                 \
+    f("aquamarine", 0x7fffd4)           \
+    f("azure", 0xf0ffff)                \
+    f("beige", 0xf5f5dc)                \
+    f("bisque", 0xffe4c4)               \
+    f("black", 0x000000)                \
+    f("blanchedalmond", 0xffebcd)       \
+    f("blue", 0x0000ff)                 \
+    f("blueviolet", 0x8a2be2)           \
+    f("brown", 0xa52a2a)                \
+    f("burlywood", 0xdeb887)            \
+    f("cadetblue", 0x5f9ea0)            \
+    f("chartreuse", 0x7fff00)           \
+    f("chocolate", 0xd2691e)            \
+    f("coral", 0xff7f50)                \
+    f("cornflowerblue", 0x6495ed)       \
+    f("cornsilk", 0xfff8dc)             \
+    f("crimson", 0xdc143c)              \
+    f("cyan", 0x00ffff)                 \
+    f("darkblue", 0x00008b)             \
+    f("darkcyan", 0x008b8b)             \
+    f("darkgoldenrod", 0xb8860b)        \
+    f("darkgray", 0xa9a9a9)             \
+    f("darkgreen", 0x006400)            \
+    f("darkgrey", 0xa9a9a9)             \
+    f("darkkhaki", 0xbdb76b)            \
+    f("darkmagenta", 0x8b008b)          \
+    f("darkolivegreen", 0x556b2f)       \
+    f("darkorange", 0xff8c00)           \
+    f("darkorchid", 0x9932cc)           \
+    f("darkred", 0x8b0000)              \
+    f("darksalmon", 0xe9967a)           \
+    f("darkseagreen", 0x8fbc8f)         \
+    f("darkslateblue", 0x483d8b)        \
+    f("darkslategray", 0x2f4f4f)        \
+    f("darkslategrey", 0x2f4f4f)        \
+    f("darkturquoise", 0x00ced1)        \
+    f("darkviolet", 0x9400d3)           \
+    f("deeppink", 0xff1493)             \
+    f("deepskyblue", 0x00bfff)          \
+    f("dimgray", 0x696969)              \
+    f("dimgrey", 0x696969)              \
+    f("dodgerblue", 0x1e90ff)           \
+    f("firebrick", 0xb22222)            \
+    f("floralwhite", 0xfffaf0)          \
+    f("forestgreen", 0x228b22)          \
+    f("fuchsia", 0xff00ff)              \
+    f("gainsboro", 0xdcdcdc)            \
+    f("ghostwhite", 0xf8f8ff)           \
+    f("gold", 0xffd700)                 \
+    f("goldenrod", 0xdaa520)            \
+    f("gray", 0x808080)                 \
+    f("green", 0x008000)                \
+    f("greenyellow", 0xadff2f)          \
+    f("grey", 0x808080)                 \
+    f("honeydew", 0xf0fff0)             \
+    f("hotpink", 0xff69b4)              \
+    f("indianred", 0xcd5c5c)            \
+    f("indigo", 0x4b0082)               \
+    f("ivory", 0xfffff0)                \
+    f("khaki", 0xf0e68c)                \
+    f("lavender", 0xe6e6fa)             \
+    f("lavenderblush", 0xfff0f5)        \
+    f("lawngreen", 0x7cfc00)            \
+    f("lemonchiffon", 0xfffacd)         \
+    f("lightblue", 0xadd8e6)            \
+    f("lightcoral", 0xf08080)           \
+    f("lightcyan", 0xe0ffff)            \
+    f("lightgoldenrodyellow", 0xfafad2) \
+    f("lightgray", 0xd3d3d3)            \
+    f("lightgreen", 0x90ee90)           \
+    f("lightgrey", 0xd3d3d3)            \
+    f("lightpink", 0xffb6c1)            \
+    f("lightsalmon", 0xffa07a)          \
+    f("lightseagreen", 0x20b2aa)        \
+    f("lightskyblue", 0x87cefa)         \
+    f("lightslategray", 0x778899)       \
+    f("lightslategrey", 0x778899)       \
+    f("lightsteelblue", 0xb0c4de)       \
+    f("lightyellow", 0xffffe0)          \
+    f("lime", 0x00ff00)                 \
+    f("limegreen", 0x32cd32)            \
+    f("linen", 0xfaf0e6)                \
+    f("magenta", 0xff00ff)              \
+    f("maroon", 0x800000)               \
+    f("mediumaquamarine", 0x66cdaa)     \
+    f("mediumblue", 0x0000cd)           \
+    f("mediumorchid", 0xba55d3)         \
+    f("mediumpurple", 0x9370db)         \
+    f("mediumseagreen", 0x3cb371)       \
+    f("mediumslateblue", 0x7b68ee)      \
+    f("mediumspringgreen", 0x00fa9a)    \
+    f("mediumturquoise", 0x48d1cc)      \
+    f("mediumvioletred", 0xc71585)      \
+    f("midnightblue", 0x191970)         \
+    f("mintcream", 0xf5fffa)            \
+    f("mistyrose", 0xffe4e1)            \
+    f("moccasin", 0xffe4b5)             \
+    f("navajowhite", 0xffdead)          \
+    f("navy", 0x000080)                 \
+    f("oldlace", 0xfdf5e6)              \
+    f("olive", 0x808000)                \
+    f("olivedrab", 0x6b8e23)            \
+    f("orange", 0xffa500)               \
+    f("orangered", 0xff4500)            \
+    f("orchid", 0xda70d6)               \
+    f("palegoldenrod", 0xeee8aa)        \
+    f("palegreen", 0x98fb98)            \
+    f("paleturquoise", 0xafeeee)        \
+    f("palevioletred", 0xdb7093)        \
+    f("papayawhip", 0xffefd5)           \
+    f("peachpuff", 0xffdab9)            \
+    f("peru", 0xcd853f)                 \
+    f("pink", 0xffc0cb)                 \
+    f("plum", 0xdda0dd)                 \
+    f("powderblue", 0xb0e0e6)           \
+    f("purple", 0x800080)               \
+    f("rebeccapurple", 0x663399)        \
+    f("red", 0xff0000)                  \
+    f("rosybrown", 0xbc8f8f)            \
+    f("royalblue", 0x4169e1)            \
+    f("saddlebrown", 0x8b4513)          \
+    f("salmon", 0xfa8072)               \
+    f("sandybrown", 0xf4a460)           \
+    f("seagreen", 0x2e8b57)             \
+    f("seashell", 0xfff5ee)             \
+    f("sienna", 0xa0522d)               \
+    f("silver", 0xc0c0c0)               \
+    f("skyblue", 0x87ceeb)              \
+    f("slateblue", 0x6a5acd)            \
+    f("slategray", 0x708090)            \
+    f("slategrey", 0x708090)            \
+    f("snow", 0xfffafa)                 \
+    f("springgreen", 0x00ff7f)          \
+    f("steelblue", 0x4682b4)            \
+    f("tan", 0xd2b48c)                  \
+    f("teal", 0x008080)                 \
+    f("thistle", 0xd8bfd8)              \
+    f("tomato", 0xff6347)               \
+    f("turquoise", 0x40e0d0)            \
+    f("violet", 0xee82ee)               \
+    f("wheat", 0xf5deb3)                \
+    f("white", 0xffffff)                \
+    f("whitesmoke", 0xf5f5f5)           \
+    f("yellow", 0xffff00)               \
+    f("yellowgreen", 0x9acd32)
 
 inline parse_error parse_from_cfg(
     ::configs::spec_types::rgb& x, ::configs::spec_type<::configs::spec_types::rgb> /*type*/,
@@ -597,62 +666,45 @@ inline parse_error parse_from_cfg(
 {
     using Rgb = ::configs::spec_types::rgb;
 
-    const parse_error parsing_error{"invalid color, expected #rgb, #rrggbb or hexadecimal value"};
+    const parse_error parsing_error{"invalid color, expected #rgb, #rrggbb, hexadecimal value or web colors"};
 
     auto sv = std::string_view{value.as_chars().data(), value.size()};
 
-    // #rrggbb
-    if (sv.size() == 7) {
-        if (sv[0] == '#') {
-            uint32_t color;
-            auto [p, ec] = std::from_chars(sv.begin() + 1, sv.end(), color, 16);
-            if (ec == std::errc() && p == sv.end()) {
-                x = Rgb(color);
-                return no_parse_error;
-            }
-            return parsing_error;
-        }
-    }
-
-    // #rgb
-    if (sv.size() == 4) {
-        if (sv[0] == '#') {
-            uint32_t color;
-            auto [p, ec] = std::from_chars(sv.begin() + 1, sv.end(), color, 16);
-            if (ec == std::errc() && p == sv.end()) {
+    // #rgb or #rrggbb
+    if (((sv.size() == 7 || sv.size() == 4) && sv[0] == '#')
+    // hexadecimal
+     || (sv.size() > 2 && sv[0] == '0' && sv[1] == 'x')
+    ) {
+        uint32_t color;
+        auto d = sv[0] == '#' ? 1u : 2u;
+        auto [p, ec] = std::from_chars(sv.begin() + d, sv.end(), color, 16);
+        if (ec == std::errc() && p == sv.end() && color <= 0xffffffu) {
+            // rgb -> rrggbb
+            if (sv.size() == 4 && sv[0] == '#') {
                 uint32_t r = (color >> 8) & 0xf;
                 uint32_t g = (color >> 4) & 0xf;
                 uint32_t b = (color >> 0) & 0xf;
-                x = Rgb((((r << 4) | r) << 16) | (((g << 4) | g) << 8) | ((b << 4) | b));
-                return no_parse_error;
+                color = (((r << 4) | r) << 16) | (((g << 4) | g) << 8) | ((b << 4) | b);
             }
-            return parsing_error;
+            x = Rgb(color);
+            return no_parse_error;
         }
-    }
-
-    // 0xXXXX
-    if (sv.size() > 2) {
-        if (sv[0] == '0' && sv[1] == 'x') {
-            uint32_t color;
-            auto r = std::from_chars(sv.begin() + 2, sv.end(), color, 16);
-            auto [p, ec] = r;
-            if (ec == std::errc() && p == sv.end() && color <= 0xffffffu) {
-                x = Rgb(color);
-                return no_parse_error;
-            }
-            return parsing_error;
-        }
+        return parsing_error;
     }
 
     // named color
-    for (std::string_view const& s : lower_colors) {
-        if (s == sv) {
-            x = Rgb(rgb_colors[&s - lower_colors.data()]);
-            return no_parse_error;
+    auto lower = ascii_to_limited_lower<20>(sv);
+    #define NAMED_COLOR_COND(name, rgb)             \
+        if (std::string_view(name) == lower.sv()) { \
+            x = Rgb(rgb);                           \
+            return no_parse_error;                  \
         }
-    }
+    X_COLOR_RGB(NAMED_COLOR_COND)
+    #undef NAMED_COLOR_COND
 
     return parsing_error;
 }
+
+#undef X_COLOR_RGB
 
 } // anonymous namespace
