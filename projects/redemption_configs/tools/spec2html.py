@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import re
 import sys
-from typing import List
+from typing import List, Union
 
 
 sanitize_html_re = re.compile(r"^(<br/>)+|<p>(<br/>|\n)*</p>\n?|(<br/>+|\n)(?=</p>)")
@@ -9,9 +9,12 @@ MIN_DESC_CHARS = 80
 
 
 def is_documented(section_name: str, option_name: str,
-                  comment: List[str]) -> bool:
-    return ((sum(map(len, comment)) > MIN_DESC_CHARS)
-            or section_name == "theme")
+                  comment: List[str]) -> Union[bool, None]:
+    ignore_parameter = section_name in ("theme", "debug")
+    if ignore_parameter:
+        return None
+    is_enough_documented = sum(map(len, comment)) > MIN_DESC_CHARS
+    return is_enough_documented
 
 
 def htmlize_comment(comments: List[str]) -> str:
@@ -28,6 +31,7 @@ def to_display_section(s: str) -> str:
 declare_option_re = re.compile(r'^([^ ]+) = ([^(]+)\(.*default="?(.*?)"?\)')
 desc_list_re = re.compile(r"^# &nbsp; &nbsp; +([^:]+)(?:: )?(.*)")
 nb_desc = 0
+nb_params = 0
 
 if len(sys.argv) < 2:
     print(f'{sys.argv[0]} {{file.spec|-}}', file=sys.stderr)
@@ -100,7 +104,11 @@ with f:
             if in_list_elem:
                 comments.append('</dl>\n')
             desc = htmlize_comment(comments) if comments else ''
-            nb_desc += is_documented(section_name, option_name, comments)
+            documented_param = is_documented(section_name, option_name,
+                                             comments)
+            if documented_param is not None:
+                nb_desc += documented_param
+                nb_params += 1
 
             extra = '| advanced' if advanced else ''
 
@@ -132,7 +140,6 @@ for section_name, options in sections:
         option_name_max_len = max(option_name_max_len, len(option_name))
     nav.append('</p>')
 nav.append('</nav>')
-nb_options = sum(len(options) for section_name, options in sections)
 
 css_column_width = int(option_name_max_len / 1.8)
 
@@ -196,6 +203,6 @@ nav {{
 </style></head><body>\n<h1>{filename}</h1>
 ''')
 print('\n'.join(nav))
-print(f"<p>Number of documented parameters = {nb_desc} / {nb_options}</p>")
+print(f"<p>Number of documented parameters = {nb_desc} / {nb_params}</p>")
 print('\n'.join(html))
 print('</section></body></html>')
