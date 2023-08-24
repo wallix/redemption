@@ -411,8 +411,11 @@ template<> struct is_valid_enum_value<SessionProbeOnLaunchFailure>
 
 enum class VncBogusClipboardInfiniteLoop : uint8_t
 {
+    // Clipboard processing is deferred and, if necessary, the token is left with the client.
     delayed = 0,
+    // When 2 identical requests are received, the second is ignored. This can block clipboard data reception until a clipboard event is triggered on the server when the client clipboard is blocked, and vice versa.
     duplicated = 1,
+    // No special processing is done, the proxy always responds immediately.
     continued = 2,
 };
 

@@ -430,9 +430,11 @@ cfg::mod_vnc::clipboard_down ⇐ clipboard_down   [bool]
 cfg::mod_vnc::server_clipboard_encoding_type ⇐ vnc_server_clipboard_encoding_type   [ClipboardEncodingType ⇐ std::string]
     VNC server clipboard data encoding type.
 cfg::mod_vnc::bogus_clipboard_infinite_loop ⇐ vnc_bogus_clipboard_infinite_loop   [VncBogusClipboardInfiniteLoop]
-      0: delayed
-      1: duplicated
-      2: continued
+    The RDP clipboard is based on a token that indicates who owns data between server and client. However, some RDP clients, such as Freerpd, always appropriate this token. This conflicts with VNC, which also appropriates this token, causing clipboard data to be sent in loops.
+    This option indicates the strategy to adopt in such situations.
+      0: Clipboard processing is deferred and, if necessary, the token is left with the client.
+      1: When 2 identical requests are received, the second is ignored. This can block clipboard data reception until a clipboard event is triggered on the server when the client clipboard is blocked, and vice versa.
+      2: No special processing is done, the proxy always responds immediately.
 cfg::mod_vnc::server_is_macos ⇐ mod_vnc:server_is_macos   [bool]
 cfg::mod_vnc::server_unix_alt ⇐ mod_vnc:server_unix_alt   [bool]
     When disabled, Ctrl + Alt becomes AltGr (Windows behavior)
@@ -644,6 +646,7 @@ cfg::mod_replay::replay_on_loop ⇐ replay_on_loop   [bool]
 
 cfg::translation::language ⇐ language   [Language ⇐ std::string]
 cfg::translation::login_language ⇒ login_language   [LoginLanguage ⇒ std::string]
+    Language used on the login page. When the user logs in, their user preference language is used.
       Auto: The language will be deduced according to the keyboard layout announced by the client
       EN: 
       FR: 

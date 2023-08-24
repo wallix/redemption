@@ -335,12 +335,10 @@ clipboard_up = boolean(default=False)
 # Enable or disable the clipboard from server (server to client).
 clipboard_down = boolean(default=False)
 
-# Sets the encoding types in which pixel data can be sent by the VNC server:
-# &nbsp; &nbsp;   0: Raw
-# &nbsp; &nbsp;   1: CopyRect
+# Sets additional graphics encoding types that will be negotiated with the VNC server:
 # &nbsp; &nbsp;   2: RRE
-# &nbsp; &nbsp;   16: ZRLE
-# &nbsp; &nbsp;   -239 (0xFFFFFF11): Cursor pseudo-encoding<br/>
+# &nbsp; &nbsp;   5: HEXTILE
+# &nbsp; &nbsp;   16: ZRLE<br/><br/>
 # (values are comma-separated)
 #_advanced
 encodings = string(default="")
@@ -349,9 +347,11 @@ encodings = string(default="")
 #_advanced
 server_clipboard_encoding_type = option('utf-8', 'latin1', default="latin1")
 
-# &nbsp; &nbsp;   0: delayed
-# &nbsp; &nbsp;   1: duplicated
-# &nbsp; &nbsp;   2: continued
+# The RDP clipboard is based on a token that indicates who owns data between server and client. However, some RDP clients, such as Freerpd, always appropriate this token. This conflicts with VNC, which also appropriates this token, causing clipboard data to be sent in loops.
+# This option indicates the strategy to adopt in such situations.
+# &nbsp; &nbsp;   0: Clipboard processing is deferred and, if necessary, the token is left with the client.
+# &nbsp; &nbsp;   1: When 2 identical requests are received, the second is ignored. This can block clipboard data reception until a clipboard event is triggered on the server when the client clipboard is blocked, and vice versa.
+# &nbsp; &nbsp;   2: No special processing is done, the proxy always responds immediately.
 #_advanced
 bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)
 
@@ -543,6 +543,7 @@ keyboard_layout_proposals = string(default="en-US, fr-FR, de-DE, ru-RU")
 
 [translation]
 
+# Language used on the login page. When the user logs in, their user preference language is used.
 # &nbsp; &nbsp;   Auto: The language will be deduced according to the keyboard layout announced by the client
 # &nbsp; &nbsp;   EN: 
 # &nbsp; &nbsp;   FR: 

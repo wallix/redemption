@@ -143,9 +143,9 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("VncBogusClipboardInfiniteLoop")
-      .value("delayed")
-      .value("duplicated")
-      .value("continued")
+      .value("delayed", "Clipboard processing is deferred and, if necessary, the token is left with the client.")
+      .value("duplicated", "When 2 identical requests are received, the second is ignored. This can block clipboard data reception until a clipboard event is triggered on the server when the client clipboard is blocked, and vice versa.")
+      .value("continued", "No special processing is done, the proxy always responds immediately.")
     ;
 
     e.enumeration_list("ColorDepthSelectionStrategy", "The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:")

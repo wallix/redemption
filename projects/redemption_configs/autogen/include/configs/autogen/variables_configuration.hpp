@@ -2525,12 +2525,10 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Sets the encoding types in which pixel data can be sent by the VNC server: <br/>
-    ///   0: Raw <br/>
-    ///   1: CopyRect <br/>
+    /// Sets additional graphics encoding types that will be negotiated with the VNC server: <br/>
     ///   2: RRE <br/>
+    ///   5: HEXTILE <br/>
     ///   16: ZRLE <br/>
-    ///   -239 (0xFFFFFF11): Cursor pseudo-encoding <br/>
     /// type: std::string <br/>
     /// default: "" <br/>
     struct mod_vnc::encodings {
@@ -2553,6 +2551,8 @@ namespace cfg
         using mapped_type = std::string;
         type value { ClipboardEncodingType::latin1 };
     };
+    /// The RDP clipboard is based on a token that indicates who owns data between server and client. However, some RDP clients, such as Freerpd, always appropriate this token. This conflicts with VNC, which also appropriates this token, causing clipboard data to be sent in loops. <br/>
+    /// This option indicates the strategy to adopt in such situations. <br/>
     /// type: VncBogusClipboardInfiniteLoop <br/>
     /// acl ⇒ proxy <br/>
     /// acl::name: vnc_bogus_clipboard_infinite_loop <br/>
@@ -4495,6 +4495,7 @@ namespace cfg
         using mapped_type = std::string;
         type value { Language::en };
     };
+    /// Language used on the login page. When the user logs in, their user preference language is used. <br/>
     /// type: LoginLanguage <br/>
     /// acl ⇐ proxy <br/>
     /// default: LoginLanguage::Auto <br/>

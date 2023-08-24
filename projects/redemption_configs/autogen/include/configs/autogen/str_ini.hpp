@@ -1138,12 +1138,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ clipboard_down)
 #clipboard_down = 0
 
-# Sets the encoding types in which pixel data can be sent by the VNC server:
-#   0: Raw
-#   1: CopyRect
+# Sets additional graphics encoding types that will be negotiated with the VNC server:
 #   2: RRE
+#   5: HEXTILE
 #   16: ZRLE
-#   -239 (0xFFFFFF11): Cursor pseudo-encoding
+# 
 # (values are comma-separated)
 #_advanced
 #encodings = 
@@ -1154,9 +1153,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ vnc_server_clipboard_encoding_type)
 #server_clipboard_encoding_type = latin1
 
-#   0: delayed
-#   1: duplicated
-#   2: continued
+# The RDP clipboard is based on a token that indicates who owns data between server and client. However, some RDP clients, such as Freerpd, always appropriate this token. This conflicts with VNC, which also appropriates this token, causing clipboard data to be sent in loops.
+# This option indicates the strategy to adopt in such situations.
+#   0: Clipboard processing is deferred and, if necessary, the token is left with the client.
+#   1: When 2 identical requests are received, the second is ignored. This can block clipboard data reception until a clipboard event is triggered on the server when the client clipboard is blocked, and vice versa.
+#   2: No special processing is done, the proxy always responds immediately.
 #_advanced
 # (acl config: proxy ⇐ vnc_bogus_clipboard_infinite_loop)
 #bogus_clipboard_infinite_loop = 0
@@ -1498,6 +1499,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ language)
 #language = en
 
+# Language used on the login page. When the user logs in, their user preference language is used.
 #   Auto: The language will be deduced according to the keyboard layout announced by the client
 #   EN: 
 #   FR: 

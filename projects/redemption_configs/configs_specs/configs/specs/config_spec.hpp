@@ -1845,17 +1845,19 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
         .desc = "Enable or disable the clipboard from server (server to client).",
     });
 
+    // TODO should be connpolicy and named disabled_encodings (disabled_orders ?)
     _.member(MemberInfo{
         .name = "encodings",
         .value = value<types::list<types::int_>>(),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
-            "Sets the encoding types in which pixel data can be sent by the VNC server:\n"
-            "  0: Raw\n"
-            "  1: CopyRect\n"
+            "Sets additional graphics encoding types that will be negotiated with the VNC server:\n"
+            // "  0: Raw\n"
+            // "  1: CopyRect\n"
             "  2: RRE\n"
+            "  5: HEXTILE\n"
             "  16: ZRLE\n"
-            "  -239 (0xFFFFFF11): Cursor pseudo-encoding"
+            // "  -239 (0xFFFFFF11): Cursor pseudo-encoding"
     });
 
     _.member(MemberInfo{
@@ -1875,6 +1877,9 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
         },
         .value = from_enum(VncBogusClipboardInfiniteLoop::delayed),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
+        .desc =
+            "The RDP clipboard is based on a token that indicates who owns data between server and client. However, some RDP clients, such as Freerpd, always appropriate this token. This conflicts with VNC, which also appropriates this token, causing clipboard data to be sent in loops.\n"
+            "This option indicates the strategy to adopt in such situations."
     });
 
     _.member(MemberInfo{
@@ -1890,6 +1895,7 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
         .desc = "When disabled, Ctrl + Alt becomes AltGr (Windows behavior)",
     });
 
+    // TODO should be with encoding
     _.member(MemberInfo{
         .name = "support_cursor_pseudo_encoding",
         .value = value<bool>(true),
@@ -2616,6 +2622,7 @@ _.section("translation", [&]
         .name = "login_language",
         .value = enum_as_string(LoginLanguage::Auto),
         .spec = global_spec(proxy_to_acl(no_reset_back_to_selector), spec::advanced),
+        .desc = "Language used on the login page. When the user logs in, their user preference language is used.",
     });
 });
 
