@@ -48,6 +48,7 @@ else:
 with f:
     html = []
     sections = []
+    undocumented = []
     options = []
     section_name = ''
     section_name_displayed = ''
@@ -109,6 +110,8 @@ with f:
             if documented_param is not None:
                 nb_desc += documented_param
                 nb_params += 1
+                if not documented_param:
+                    undocumented.append(f'[{section_name}] {option_name}')
 
             extra = '| advanced' if advanced else ''
 
@@ -204,5 +207,7 @@ nav {{
 ''')
 print('\n'.join(nav))
 print(f"<p>Number of documented parameters = {nb_desc} / {nb_params}</p>")
+if undocumented:
+    print(f'<p>Undocumented ({len(undocumented)}):</p><ul><li>{"</li><li>".join(undocumented)}</li></ul>')
 print('\n'.join(html))
 print('</section></body></html>')
