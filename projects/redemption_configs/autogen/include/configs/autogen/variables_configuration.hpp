@@ -565,6 +565,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// Enable TLS between client and proxy. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::tls_support {
@@ -667,7 +668,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Support of Bitmap Compression. <br/>
+    /// Enable Bitmap Compression when supported by the RDP client. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::bitmap_compression {
@@ -715,6 +716,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// Same effect as "Transform glyph to bitmap", but only for RDP client on iOS platform. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::bogus_ios_glyph_support_level {
@@ -723,6 +725,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// Some RDP clients advertise glyph support, but this does not work properly with the RDP proxy. This option replaces glyph orders with bitmap orders. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::transform_glyph_to_bitmap {
@@ -835,6 +838,8 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// The maximum time that the proxy will wait while attempting to logon to an RDP session. <br/>
+    /// Value 0 is equivalent to 15 seconds. <br/>
     /// type: std::chrono::seconds <br/>
     /// default: 0 <br/>
     struct mod_rdp::open_session_timeout {
@@ -1281,6 +1286,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// Disable shared disk for RDP client on iOS platform. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::bogus_ios_rdpdr_virtual_channel {
@@ -2756,7 +2762,7 @@ namespace cfg
         using mapped_type = CaptureFlags;
         type value { CaptureFlags{11} };
     };
-    /// Frame interval. <br/>
+    /// Frame interval for 4eyes. A value lower than 6 will have no visible effect. <br/>
     /// type: std::chrono::duration&lt;unsigned, std::ratio&lt;1, 10>> <br/>
     /// default: 10 <br/>
     struct video::png_interval {

@@ -292,7 +292,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "tls_fallback_legacy=yes\n"
         "tls_support=no\n"
         "rdp_compression=1\n"
-        "disable_tsk_switch_shortcuts=yes\n"
         "max_color_depth=0\n" /* unknown value */
         "persistent_disk_bitmap_cache=yes\n"
         "cache_waiting_list=no\n"
@@ -425,7 +424,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp4,             ini.get<cfg::client::rdp_compression>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::disable_tsk_switch_shortcuts>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());

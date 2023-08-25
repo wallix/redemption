@@ -573,6 +573,7 @@ _.section("client", [&]
         .name = "tls_support",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
+        .desc = "Enable TLS between client and proxy.",
     });
 
     _.member(MemberInfo{
@@ -608,7 +609,7 @@ _.section("client", [&]
     _.member(MemberInfo{
         .name = "disable_tsk_switch_shortcuts",
         .value = value<bool>(false),
-        .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
+        .spec = acl_to_proxy(no_reset_back_to_selector, L),
         .desc = "If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences.",
     });
 
@@ -649,9 +650,10 @@ _.section("client", [&]
         .name = "bitmap_compression",
         .value = value<bool>(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Support of Bitmap Compression.",
+        .desc = "Enable Bitmap Compression when supported by the RDP client.",
     });
 
+    // TODO remove ?
     _.member(MemberInfo{
         .name = "fast_path",
         .value = value<bool>(true),
@@ -689,12 +691,15 @@ _.section("client", [&]
         .name = "bogus_ios_glyph_support_level",
         .value = value<bool>(true),
         .spec = global_spec(no_acl),
+        .desc = "Same effect as \"Transform glyph to bitmap\", but only for RDP client on iOS platform.",
     });
 
+    // TODO should be merged with disabled_orders
     _.member(MemberInfo{
         .name = "transform_glyph_to_bitmap",
         .value = value<bool>(false),
         .spec = global_spec(no_acl, spec::advanced),
+        .desc = "Some RDP clients advertise glyph support, but this does not work properly with the RDP proxy. This option replaces glyph orders with bitmap orders."
     });
 
     _.member(MemberInfo{
@@ -773,6 +778,8 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "open_session_timeout",
         .value = value<std::chrono::seconds>(),
         .spec = global_spec(no_acl, spec::advanced),
+        .desc = "The maximum time that the proxy will wait while attempting to logon to an RDP session.\n"
+            "Value 0 is equivalent to 15 seconds."
     });
 
     _.member(MemberInfo{
@@ -886,6 +893,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "An explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'."
     });
 
+    // TODO remove ?
     _.member(MemberInfo{
         .name = "fast_path",
         .value = value<bool>(true),
@@ -1042,7 +1050,8 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
     _.member(MemberInfo{
         .name = "bogus_ios_rdpdr_virtual_channel",
         .value = value<bool>(true),
-        .spec = global_spec(no_acl),
+        .spec = global_spec(no_acl, spec::advanced),
+        .desc = "Disable shared disk for RDP client on iOS platform.",
     });
 
     _.member(MemberInfo{
@@ -2201,11 +2210,12 @@ _.section("video", [&]
         .spec = global_spec(no_acl, spec::advanced),
     });
 
+    // TODO renamed
     _.member(MemberInfo{
         .name = "png_interval",
         .value = value<std::chrono::duration<unsigned, std::deci>>(10),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Frame interval.",
+        .desc = "Frame interval for 4eyes. A value lower than 6 will have no visible effect.",
     });
 
     _.member(MemberInfo{

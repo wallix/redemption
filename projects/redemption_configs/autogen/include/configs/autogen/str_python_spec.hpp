@@ -125,6 +125,7 @@ auto_adjust_performance_flags = boolean(default=True)
 # Fallback to RDP Legacy Encryption if client does not support TLS.
 tls_fallback_legacy = boolean(default=False)
 
+# Enable TLS between client and proxy.
 tls_support = boolean(default=True)
 
 # Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
@@ -140,10 +141,6 @@ show_common_cipher_list = boolean(default=False)
 # Needed for primary NTLM or Kerberos connections over NLA.
 #_advanced
 enable_nla = boolean(default=False)
-
-# If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences.
-#_advanced
-disable_tsk_switch_shortcuts = boolean(default=False)
 
 # Specifies the highest compression package support available on the front side
 # &nbsp; &nbsp;   0: The RDP bulk compression is disabled
@@ -175,7 +172,7 @@ cache_waiting_list = boolean(default=False)
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
 
-# Support of Bitmap Compression.
+# Enable Bitmap Compression when supported by the RDP client.
 #_advanced
 bitmap_compression = boolean(default=True)
 
@@ -191,8 +188,10 @@ ssl_cipher_list = string(default="HIGH:!ADH:!3DES:!SHA")
 # Show in session the target username when F12 is pressed
 show_target_user_in_f12_message = boolean(default=False)
 
+# Same effect as "Transform glyph to bitmap", but only for RDP client on iOS platform.
 bogus_ios_glyph_support_level = boolean(default=True)
 
+# Some RDP clients advertise glyph support, but this does not work properly with the RDP proxy. This option replaces glyph orders with bitmap orders.
 #_advanced
 transform_glyph_to_bitmap = boolean(default=False)
 
@@ -250,6 +249,8 @@ rdp_compression = option(0, 1, 2, 3, 4, default=4)
 #_advanced
 disconnect_on_logon_user_change = boolean(default=False)
 
+# The maximum time that the proxy will wait while attempting to logon to an RDP session.
+# Value 0 is equivalent to 15 seconds.<br/>
 # (in seconds)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
@@ -287,6 +288,8 @@ hide_client_name = boolean(default=True)
 #_advanced
 use_license_store = boolean(default=True)
 
+# Disable shared disk for RDP client on iOS platform.
+#_advanced
 bogus_ios_rdpdr_virtual_channel = boolean(default=True)
 
 # Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
@@ -399,7 +402,7 @@ max_unrecog_char_rate = integer(min=0, max=100, default=40)
 #_hex
 capture_flags = integer(min=0, max=15, default=11)
 
-# Frame interval.<br/>
+# Frame interval for 4eyes. A value lower than 6 will have no visible effect.<br/>
 # (in 1/10 seconds)
 #_advanced
 png_interval = integer(min=0, default=10)

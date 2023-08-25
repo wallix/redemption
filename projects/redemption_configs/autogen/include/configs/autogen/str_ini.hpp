@@ -186,6 +186,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #tls_fallback_legacy = 0
 
+# Enable TLS between client and proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #tls_support = 1
 
@@ -206,12 +207,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #enable_nla = 0
-
-# If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences.
-# (type: boolean (0/no/false or 1/yes/true))
-#_advanced
-# (acl config: proxy ⇐ disable_tsk_switch_shortcuts)
-#disable_tsk_switch_shortcuts = 0
 
 # Specifies the highest compression package support available on the front side
 #   0: The RDP bulk compression is disabled
@@ -246,7 +241,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #persist_bitmap_cache_on_disk = 0
 
-# Support of Bitmap Compression.
+# Enable Bitmap Compression when supported by the RDP client.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #bitmap_compression = 1
@@ -269,9 +264,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #show_target_user_in_f12_message = 0
 
+# Same effect as "Transform glyph to bitmap", but only for RDP client on iOS platform.
 # (type: boolean (0/no/false or 1/yes/true))
 #bogus_ios_glyph_support_level = 1
 
+# Some RDP clients advertise glyph support, but this does not work properly with the RDP proxy. This option replaces glyph orders with bitmap orders.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #transform_glyph_to_bitmap = 0
@@ -344,6 +341,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #disconnect_on_logon_user_change = 0
 
+# The maximum time that the proxy will wait while attempting to logon to an RDP session.
+# Value 0 is equivalent to 15 seconds.
 # (in seconds)
 #_advanced
 #open_session_timeout = 0
@@ -533,7 +532,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #use_license_store = 1
 
+# Disable shared disk for RDP client on iOS platform.
 # (type: boolean (0/no/false or 1/yes/true))
+#_advanced
 #bogus_ios_rdpdr_virtual_channel = 1
 
 # (type: boolean (0/no/false or 1/yes/true))
@@ -1248,7 +1249,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #capture_flags = 11
 
-# Frame interval.
+# Frame interval for 4eyes. A value lower than 6 will have no visible effect.
 # (in 1/10 seconds)
 #_advanced
 #png_interval = 10
