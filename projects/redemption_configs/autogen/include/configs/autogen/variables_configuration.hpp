@@ -2652,6 +2652,8 @@ namespace cfg
         type value { KeyboardInputMaskingLevel::password_and_unidentified };
     };
 
+    /// Selects the OCR (Optical Character Recognition) version used to detect title bars when Session Probe is not running. <br/>
+    /// Version 1 is a bit faster, but has a higher failure rate in character recognition. <br/>
     /// type: OcrVersion <br/>
     /// default: OcrVersion::v2 <br/>
     struct ocr::version {

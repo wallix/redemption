@@ -363,6 +363,8 @@ enable_arcsight_log = boolean(default=False)
 
 [ocr]
 
+# Selects the OCR (Optical Character Recognition) version used to detect title bars when Session Probe is not running.
+# Version 1 is a bit faster, but has a higher failure rate in character recognition.
 # &nbsp; &nbsp;   1: v1
 # &nbsp; &nbsp;   2: v2
 version = option(1, 2, default=2)

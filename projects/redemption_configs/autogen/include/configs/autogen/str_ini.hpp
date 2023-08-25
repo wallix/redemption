@@ -1198,6 +1198,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [ocr]
 
+# Selects the OCR (Optical Character Recognition) version used to detect title bars when Session Probe is not running.
+# Version 1 is a bit faster, but has a higher failure rate in character recognition.
 #   1: v1
 #   2: v2
 #version = 2

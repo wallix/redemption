@@ -2161,6 +2161,9 @@ _.section("ocr", [&]
         .name = "version",
         .value = from_enum(OcrVersion::v2),
         .spec = global_spec(no_acl),
+        .desc =
+            "Selects the OCR (Optical Character Recognition) version used to detect title bars when Session Probe is not running.\n"
+            "Version 1 is a bit faster, but has a higher failure rate in character recognition."
     });
 
     _.member(MemberInfo{
