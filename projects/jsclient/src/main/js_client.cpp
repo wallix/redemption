@@ -383,7 +383,6 @@ public:
         rdp_params.ignore_auth_channel = true;
 
         set_if(config, "enableFastPath", rdp_params.enable_fastpath);
-        set_if(config, "enableNewPointer", rdp_params.enable_new_pointer);
 
         rdp_params.enable_remotefx = enable_remotefx;
         set_if(config, "restrictedAdminMode", rdp_params.enable_restricted_admin_mode);

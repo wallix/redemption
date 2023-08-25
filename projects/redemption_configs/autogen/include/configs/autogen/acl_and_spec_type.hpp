@@ -43,7 +43,6 @@ template<> struct acl_and_spec_type<cfg::globals::allow_using_multiple_monitors>
 template<> struct acl_and_spec_type<cfg::globals::allow_scale_factor> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::globals::bogus_refresh_rect> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::globals::large_pointer_support> { using type = bool; };
-template<> struct acl_and_spec_type<cfg::globals::new_pointer_update_support> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::globals::unicode_keyboard_event_support> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::globals::mod_recv_timeout> { using type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>; };
 template<> struct acl_and_spec_type<cfg::globals::experimental_enable_serializer_data_block_size_limit> { using type = bool; };

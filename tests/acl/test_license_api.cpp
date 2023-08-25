@@ -163,7 +163,6 @@ namespace
                                                            | TS_NEG_FAST_GLYPH_INDEX
                                                            | TS_NEG_ELLIPSE_SC_INDEX
                                                            | TS_NEG_ELLIPSE_CB_INDEX;
-            mod_rdp_params.enable_new_pointer              = false;
             //mod_rdp_params.rdp_compression                 = 0;
             //mod_rdp_params.error_message                   = nullptr;
             //mod_rdp_params.disconnect_on_logon_user_change = false;

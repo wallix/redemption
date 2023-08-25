@@ -429,14 +429,6 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct globals::new_pointer_update_support {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
     /// Allows the client to use unicode characters. <br/>
     /// This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis. <br/>
     /// type: bool <br/>
@@ -5013,7 +5005,6 @@ struct globals
 , cfg::globals::allow_scale_factor
 , cfg::globals::bogus_refresh_rect
 , cfg::globals::large_pointer_support
-, cfg::globals::new_pointer_update_support
 , cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
 , cfg::globals::experimental_enable_serializer_data_block_size_limit

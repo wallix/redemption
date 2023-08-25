@@ -432,12 +432,6 @@ _.section("globals", [&]
             "⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.",
     });
 
-    _.member(MemberInfo{
-        .name = "new_pointer_update_support",
-        .value = value<bool>(true),
-        .spec = global_spec(no_acl),
-    });
-
     // TODO move to [client]
     _.member(MemberInfo{
         .name = "unicode_keyboard_event_support",

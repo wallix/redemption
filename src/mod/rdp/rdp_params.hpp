@@ -67,7 +67,6 @@ struct ModRDPParams
     bool enable_nla = true;
     bool enable_krb = false;
     bool enable_fastpath = true;           // If true, fast-path must be supported.
-    bool enable_new_pointer = true;
     bool enable_remotefx = false;
 
     bool enable_restricted_admin_mode = false;
@@ -193,8 +192,6 @@ struct ModRDPParams
 
     bool use_license_store = true;
 
-    bool accept_monitor_layout_change_if_capture_is_not_started = true;
-
     struct DynamicChannelsParams
     {
         zstring_view allowed_channels = "*"_zv;
@@ -278,7 +275,6 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_nla);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_krb);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_fastpath);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_remotefx);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_restricted_admin_mode);
 
@@ -449,8 +445,6 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.log_only_relevant_activities);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_license_store);
-
-        RDP_PARAMS_LOG("%s",     yes_or_no,             accept_monitor_layout_change_if_capture_is_not_started);
 
         RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.allowed_channels);
         RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.denied_channels);

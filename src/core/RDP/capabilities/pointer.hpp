@@ -78,7 +78,6 @@ struct PointerCaps : public Capability {
     uint16_t pointerCacheSize{25};
     PointerCaps()
     : Capability(CAPSTYPE_POINTER, CAPLEN_POINTER)
-
     {
     }
 

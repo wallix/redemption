@@ -427,6 +427,7 @@ migration_defs: List[MigrationType] = [
         'globals': {
             'experimental_support_resize_session_during_recording': RemoveItem(),
             'support_connection_redirection_during_recording': RemoveItem(),
+            'new_pointer_update_support': RemoveItem(),
         },
 
     }),

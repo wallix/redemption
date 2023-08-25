@@ -1805,7 +1805,6 @@ class mod_rdp : public mod_api, public rdp_api, public sespro_api
 
     const bool enable_fastpath;                    // choice of programmer
     const bool enable_fastpath_server_update;      // choice of programmer
-    const bool enable_new_pointer;
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
@@ -1974,7 +1973,6 @@ public:
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
-        , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
@@ -2756,12 +2754,9 @@ public:
                 break;
 
             case FastPath::UpdateType::POINTER:
-            {
                 LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO,
                     "Process pointer new (Fast)");
-                BitsPerPixel data_bpp = checked_int(stream.in_uint16_le()); /* data bpp */
-                this->process_new_pointer_pdu(data_bpp, stream);
-            }
+                this->process_new_pointer_pdu(checked_int(stream.in_uint16_le()), stream);
             break;
 
             default:
@@ -3746,16 +3741,10 @@ public:
                     }
                 }
 
-                PointerCaps pointer_caps;
-                pointer_caps.len                       = 10;
                 // 5 cursor reserved by client_execute
                 // TODO min(CachePointer::MAX_POINTER_COUNT - 5, front.PointerCacheSize)
                 // TODO min(CachePointer::MAX_POINTER_COUNT - 5, front.colorPointerCacheSize)
-                if (!this->enable_new_pointer) {
-                    pointer_caps.pointerCacheSize      = 0;
-                    pointer_caps.colorPointerCacheSize = 20;
-                    pointer_caps.len                   = 8;
-                }
+                PointerCaps pointer_caps;
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     pointer_caps.log("Sending to server");
                 }
@@ -4054,19 +4043,12 @@ public:
         case RDP_POINTER_COLOR:
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer color");
             this->process_new_pointer_pdu(BitsPerPixel{24}, stream);
-            LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
-                LOG_INFO, "Process pointer color done");
+            LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer color done");
             break;
         // New Pointer Update (section 2.2.9.1.1.4.5)
         case RDP_POINTER_NEW:
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer new");
-            if (this->enable_new_pointer) {
-                BitsPerPixel data_bpp = checked_int{stream.in_uint16_le()}; /* data bpp */
-                this->process_new_pointer_pdu(data_bpp, stream);
-            }
-            else {
-                LOG(LOG_ERR, "mod_rdp::process_pointer_pdu: New Pointer Updated is disabled!");
-            }
+            this->process_new_pointer_pdu(checked_int{stream.in_uint16_le()}, stream);
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer new done");
             break;
         // 2.2.9.1.1.4.3 System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)

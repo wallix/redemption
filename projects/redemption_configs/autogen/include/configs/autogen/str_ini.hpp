@@ -116,9 +116,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #large_pointer_support = 1
 
-# (type: boolean (0/no/false or 1/yes/true))
-#new_pointer_update_support = 1
-
 # Allows the client to use unicode characters.
 # This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.
 # (type: boolean (0/no/false or 1/yes/true))

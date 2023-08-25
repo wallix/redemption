@@ -41,7 +41,6 @@ namespace cfg
         struct allow_scale_factor;
         struct bogus_refresh_rect;
         struct large_pointer_support;
-        struct new_pointer_update_support;
         struct unicode_keyboard_event_support;
         struct mod_recv_timeout;
         struct experimental_enable_serializer_data_block_size_limit;

@@ -132,7 +132,6 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     //mod_rdp_params.enable_krb                      = false;
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = true;
-    mod_rdp_params.enable_new_pointer              = true;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
@@ -264,7 +263,6 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     //mod_rdp_params.enable_krb                      = false;
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = true;
-    mod_rdp_params.enable_new_pointer              = true;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;

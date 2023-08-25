@@ -76,8 +76,6 @@ bogus_refresh_rect = boolean(default=True)
 #_advanced
 large_pointer_support = boolean(default=True)
 
-new_pointer_update_support = boolean(default=True)
-
 # Allows the client to use unicode characters.
 # This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.
 unicode_keyboard_event_support = boolean(default=True)
