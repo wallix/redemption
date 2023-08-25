@@ -20,7 +20,7 @@ def is_documented(section_name: str, option_name: str,
 def htmlize_comment(comments: List[str]) -> str:
     desc = ''.join(comments).replace('<br/><br/>', '</p>\n<p>')
     desc = f'<p>{desc}</p>\n'
-    desc = sanitize_html_re.sub('</p>', desc)
+    desc = sanitize_html_re.sub('', desc)
     return desc
 
 
@@ -107,19 +107,22 @@ with f:
             desc = htmlize_comment(comments) if comments else ''
             documented_param = is_documented(section_name, option_name,
                                              comments)
+            ref = f'{section_name}-{option_name}'
+
             if documented_param is not None:
                 nb_desc += documented_param
                 nb_params += 1
                 if not documented_param:
-                    undocumented.append(f'[{section_name}] {option_name}')
+                    undocumented.append((f'[{section_name}] {option_name}',
+                                         ref, desc))
 
             extra = '| advanced' if advanced else ''
 
             if not display_name:
                 display_name = option_name.replace('_', ' ').title()
-            options.append(display_name)
+            options.append((display_name, ref))
 
-            html.append(f'<div class=option><h3 id={section_name}-{option_name}>'
+            html.append(f'<div class=option><h3 id={ref}>'
                         f'[{section_name_displayed}] {display_name}</h3>\n'
                         f'<p>(type: {special_type or option_type}{extra} '
                         f'| default: <code>{default_value}</code>)</p>\n'
@@ -137,10 +140,9 @@ nav = ['<nav>']
 sections.sort(key=lambda t: t[0])
 for section_name, options in sections:
     nav.append(f'<p class=menu-group><a class="menu-item menu-item-section" href=#{section_name}>[{to_display_section(section_name)}]</a>')
-    options.sort()
-    for option_name in options:
-        nav.append(f'<a class=menu-item href=#{section_name}-{option_name}>{option_name}</a>')
-        option_name_max_len = max(option_name_max_len, len(option_name))
+    for display_name, ref in sorted(options, key=lambda t: t[1]):
+        nav.append(f'<a class=menu-item href=#{ref}>{display_name}</a>')
+        option_name_max_len = max(option_name_max_len, len(display_name))
     nav.append('</p>')
 nav.append('</nav>')
 
@@ -208,6 +210,10 @@ nav {{
 print('\n'.join(nav))
 print(f"<p>Number of documented parameters = {nb_desc} / {nb_params}</p>")
 if undocumented:
-    print(f'<p>Undocumented ({len(undocumented)}):</p><ul><li>{"</li><li>".join(undocumented)}</li></ul>')
+    remove_tag = re.compile('<[^>]+>')
+    print(f'<p>Undocumented ({len(undocumented)}):</p><dl id="shortdesc">')
+    print(''.join(f'<li><a href="#{ref}">{name}</a>: {remove_tag.sub(" ", desc)}</li>'
+                  for name, ref, desc in undocumented))
+    print('</dl>')
 print('\n'.join(html))
 print('</section></body></html>')
