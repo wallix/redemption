@@ -1,6 +1,7 @@
 clang-13
 clang-tidy-13
 gawk
+gcovr
 lua50
 luarocks
 parallel
