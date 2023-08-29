@@ -429,7 +429,9 @@ migration_defs: List[MigrationType] = [
             'support_connection_redirection_during_recording': RemoveItem(),
             'new_pointer_update_support': RemoveItem(),
         },
-
+        'client': {
+            'disable_tsk_switch_shortcuts': RemoveItem(),
+        },
     }),
 ]
 
