@@ -1021,7 +1021,8 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
             .cpp_type = "::configs::spec_types::rgb"s,
             .spec_str_buffer_size = 7,
             .values = color_value_to_strings(value),
-            .spec_note = "in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)"s,
+            .spec_note = "in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href=\"https://en.wikipedia.org/wiki/Web_colors#Extended_colors\">named color</a> case insensitive (red, skyBlue, etc)"s,
+            .ini_note = "in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a named color case insensitive (\"https://en.wikipedia.org/wiki/Web_colors#Extended_colors\")"s,
         };
     }
     else if constexpr (std::is_same_v<T, FilePermissions>) {
@@ -1620,12 +1621,14 @@ static std::string htmlize(std::string str)
         zstr.pop_front();
     }
 
-    // replace '&' and '<' with "&amp;" and "&lt;"
+    // replace '&' with "&amp;" and
+    // replace '<' with "&lt;" when not followed by / or a tag
     for (char const& c : zstr) {
         if (c == '&') {
             html += "&amp;";
         }
-        else if (c == '<') {
+        // TODO should be replaced with a system that describes richtext
+        else if (c == '<' && zstr.end() - 1 != &c && *(&c + 1) != '/' && *(&c + 1) != 'a') {
             html += "&lt;";
         }
         else {

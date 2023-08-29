@@ -563,87 +563,87 @@ enable_theme = boolean(default=False)
 logo = string(default=")gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(")
 
 # Background color for window, label and button<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 bgcolor = string(default="#081F60")
 
 # Foreground color for window, label and button<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 fgcolor = string(default="#FFFFFF")
 
 # Separator line color used with some widgets<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 separator_color = string(default="#CFD5EB")
 
 # Background color used by buttons when they have focus<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 focus_color = string(default="#004D9C")
 
 # Text color for error messages. For example, an authentication error in the login<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 error_color = string(default="#FFFF00")
 
 # Background color for editing field<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 edit_bgcolor = string(default="#FFFFFF")
 
 # Foreground color for editing field<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 edit_fgcolor = string(default="#000000")
 
 # Outline color for editing field that has focus<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 edit_focus_color = string(default="#004D9C")
 
 # Background color for tooltip<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 tooltip_bgcolor = string(default="#000000")
 
 # Foreground color for tooltip<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 tooltip_fgcolor = string(default="#FFFF9F")
 
 # Border color for tooltip<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 tooltip_border_color = string(default="#000000")
 
 # Background color for even rows in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 selector_line1_bgcolor = string(default="#E9ECF6")
 
 # Foreground color for even rows in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 selector_line1_fgcolor = string(default="#000000")
 
 # Background color for odd rows in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 selector_line2_bgcolor = string(default="#CFD5EB")
 
 # Foreground color for odd rows in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 selector_line2_fgcolor = string(default="#000000")
 
 # Background color for the row that has focus in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 selector_focus_bgcolor = string(default="#004D9C")
 
 # Foreground color for the row that has focus in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 selector_focus_fgcolor = string(default="#FFFFFF")
 
 # Background color for the row that is selected in the selector widget but does not have focus<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 selector_selected_bgcolor = string(default="#4472C4")
 
 # Foreground color for the row that is selected in the selector widget but does not have focus<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 selector_selected_fgcolor = string(default="#FFFFFF")
 
 # Background color for name of filter fields in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 selector_label_bgcolor = string(default="#4472C4")
 
 # Foreground color for name of filter fields in the selector widget<br/>
-# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa))
+# (in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href="https://en.wikipedia.org/wiki/Web_colors#Extended_colors">named color</a> case insensitive (red, skyBlue, etc))
 selector_label_fgcolor = string(default="#FFFFFF")
 
 [debug]
