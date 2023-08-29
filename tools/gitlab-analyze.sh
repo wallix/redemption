@@ -150,15 +150,7 @@ if (( $fast == 0 )); then
 
     # debug with coverage
     build $toolset_gcc -j4 debug -s FAST_CHECK=1 cxxflags=--coverage linkflags=-lgcov
-    while read -a a ; do
-        echo "gcov: lines: ${a[1]}  exec: ${a[2]}  cover: ${a[3]}"
-        declare -i cover=${a[3]:0:-1} i=0
-        # 1% = 1 line for graph extractor
-        for ((i=0; i<$cover; ++i)); do
-            echo 'coverage: '$i
-        done
-        break
-    done < <(gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/ | tail -n2)
+    gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/
     rm -r bin/gcc*
 
     show_duration $toolset_gcc debug
