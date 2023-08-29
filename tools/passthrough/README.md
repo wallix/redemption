@@ -13,7 +13,7 @@ Feel free to modify it to fit your needs. For example, to enable recording, unco
 
 # Parameters that can be exchanged
 
-The values that can be exchanged between the proxy and `passthrough.py` are visible in `projects/redemption_configs/autogen/doc/sesman_dialog.txt`:
+The values that can be exchanged between the proxy and `passthrough.py` are visible in `projects/redemption_configs/autogen/doc/acl_dialog.txt`:
 
 ```ini
 ...
@@ -29,8 +29,8 @@ The important parts are `W.section()` which defines a section and `W.member()` w
 
 The parameters to remember are:
 
-- `no_sesman` / `sesman_rw` / `sesman_to_proxy` / `proxy_to_sesman`: indicates whether parameter is sent and/or received by `passthrough.py`. The name sesman refers here to passthrough.
-- `names{...}`: The name of the parameter. If this is of the form `names{..., .sesman="login"}`, then the name exchanged between passthrough and the proxy is `login`. Otherwise it is of the form `${section}:${param_name}`.
+- `no_acl` / `acl_rw` / `acl_to_proxy` / `proxy_to_acl` / `connpolicy` corresponding to `acl_to_proxy`: indicates whether parameter is sent and/or received by `passthrough.py`. The name acl refers here to passthrough.
+- `names{...}`: The name of the parameter. If this is of the form `names{..., .acl="login"}`, then the name exchanged between passthrough and the proxy is `login`. Otherwise it is of the form `${section}:${param_name}`.
 
 
 # Modules
@@ -41,6 +41,7 @@ To know what modules and `passthrough.py` can communicate, you can look at the b
 
 ```cpp
 // src/mod/internal/flat_login_mod.hpp
+
 // vcfg::var<field_name_in_the_proxy>
 // vcfg::accessmode: what does the module do with the field
 // - ::set = module can write the value
@@ -52,7 +53,7 @@ using FlatLoginModVariables = vcfg::variables<
 >;
 ```
 
-The correspondence between the names in the proxy and `passthrough.py` are in `projects/redemption_configs/autogen/doc/sesman_dialog.txt`
+The correspondence between the names in the proxy and `passthrough.py` are in `projects/redemption_configs/autogen/doc/acl_dialog.txt`
 
 ```ini
 ...

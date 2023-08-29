@@ -20,11 +20,13 @@
 
 Edit `configs_specs/configs/specs/config_spec.hpp`
 
+Edit `configs_specs/configs/specs/config_type.hpp` to add a new enumeration type.
+
 
 ## MemberInfo.value
 
 - `enum_as_string(value, conn_policy_value...)`: Initialize with an enum and use string parser for `.spec`
-- `from_enum(value, conn_policy_value...)`: Initialize with an enum and use integer parser for `.spec`
+- `from_enum(value, conn_policy_value...)`: Initialize with an enum and use integer parser for `.spec` file
 - `value<T>(value, conn_policy_value...)`: Initialize with a type `T`
 - `value<T>()`: equivalent to `value<T>(T{})`
 
@@ -57,6 +59,8 @@ Edit `configs_specs/configs/specs/config_spec.hpp`
 
 ### Conn Policy Value
 
+Configures `sesman` to send a different default depending on the connection policy selected. Used in conjunction with `MemberInfo.spec u003d connpolicy(...)`.
+
 - `rdp_policy_value(value)`: Default value for rdp.spec
 - `vnc_policy_value(value)`: Default value for vnc.spec
 - `jh_policy_value(value)`: Default value for jh.spec
@@ -68,14 +72,16 @@ Edit `configs_specs/configs/specs/config_spec.hpp`
 
 ### SesmanInfo
 
+ACL (Access Control List) refers to `sesman` or `passthrough.py` which have the ability to send or receive configuration options.
+
 - `no_acl`
 - `proxy_to_acl(ResetBackToSelector)`
 - `acl_to_proxy(ResetBackToSelector, Loggable)`
-- `acl_rw(ResetBackToSelector, Loggable)`
+- `acl_rw(ResetBackToSelector, Loggable)`: proxy_to_acl + acl_to_proxy
 
 #### ResetBackToSelector
 
-Indicates whether acls should send value before the connection to target.
+Indicates whether ACLs should send value when you return to the internal pages before the connection to target.
 
 ```cpp
 auto reset_back_to_selector = ResetBackToSelector::Yes;
@@ -98,8 +104,10 @@ auto VNL = Loggable::OnlyWhenContainsPasswordString;
 
 ### Global Spec
 
-- `spec::global_spec(SesmanInfo, attributes = {})`
-- `spec::external(attributes = {})`
+Correspondent au fichier `.spec` utilisé par wallix bastion pour afficher une GUI.
+
+- `spec::global_spec(SesmanInfo, attributes = {})`: global spec file generated with `rdpproxy --print-spec`
+- `spec::external(attributes = {})`: Les valeurs ne sont pas utilisé par le proxy, mais par d'autre programme qui vont lire le même fichier ini.
 
 #### Attributes
 
@@ -114,7 +122,9 @@ auto VNL = Loggable::OnlyWhenContainsPasswordString;
 
 ### Conn Policy
 
-- `spec::connpolicy(vnc | rdp_and_jh | rdp_without_jh, SesmanInfo, attributes = {})`
+Correspondent au fichier `.spec` utilisé par wallix bastion pour afficher une GUI. En dehors d'un bastion, cela correspond à `acl_to_proxy(ResetBackToSelector::No, ...)`.
+
+- `spec::connpolicy(vnc | rdp_and_jh | rdp_without_jh, Loggable, attributes = {})`
 
 #### Attributes
 
