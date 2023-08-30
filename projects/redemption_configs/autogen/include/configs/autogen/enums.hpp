@@ -78,14 +78,15 @@ inline CaptureFlags & operator &= (CaptureFlags & x, CaptureFlags y) { return x 
 
 enum class RdpSecurityEncryptionLevel : uint8_t
 {
-    low = 0,
-    medium = 1,
-    high = 2,
+    none = 0,
+    low = 1,
+    medium = 2,
+    high = 3,
 };
 
 template<> struct is_valid_enum_value<RdpSecurityEncryptionLevel>
 {
-    constexpr static bool is_valid(uint64_t n) { return n <= 2; }
+    constexpr static bool is_valid(uint64_t n) { return n <= 3; }
 };
 
 enum class Language : uint8_t

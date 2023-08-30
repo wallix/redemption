@@ -947,7 +947,7 @@ public:
          )
     : verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , keymap(default_layout())
-    , encryptionLevel(underlying_cast(ini.get<cfg::client::encryption_level>()) + 1)
+    , encryptionLevel(underlying_cast(ini.get<cfg::client::encryption_level>()))
     , trans(trans)
     , ini(ini)
     , cctx(cctx)

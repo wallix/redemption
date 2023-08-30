@@ -451,9 +451,10 @@ REDEMPTION_DIAGNOSTIC_POP()
                                          prevent_early_log);
                         break;
                     case SocketType::Wss:
-                        // disable rdp tls
+                        // disable rdp tls and encryption
                         ini.set<cfg::client::tls_support>(false);
                         ini.set<cfg::client::tls_fallback_legacy>(true);
+                        ini.set<cfg::client::encryption_level>(RdpSecurityEncryptionLevel::none);
                         session_start_wss(unique_fd{sck},
                                           start_time,
                                           ini,

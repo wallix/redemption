@@ -179,7 +179,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #auto_adjust_performance_flags = 1
 
 # Legacy encryption when External Security Protocol (TLS, CredSSP, etc) is disable
-# values: low, medium, high
+# values: none, low, medium, high
 #encryption_level = high
 
 # Fallback to RDP Legacy Encryption if client does not support TLS.
