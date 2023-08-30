@@ -19,7 +19,6 @@ namespace cfg
         struct target_application_account;
         struct target_application_password;
         struct port;
-        struct encryptionLevel;
         struct authfile;
         struct handshake_timeout;
         struct base_inactivity_timeout;
@@ -56,6 +55,7 @@ namespace cfg
         struct performance_flags_force_not_present;
         struct performance_flags_default;
         struct auto_adjust_performance_flags;
+        struct encryption_level;
         struct tls_fallback_legacy;
         struct tls_support;
         struct tls_min_level;

@@ -256,12 +256,6 @@ _.section("globals", [&]
     });
 
     _.member(MemberInfo{
-        .name = "encryptionLevel",
-        .value = enum_as_string(Level::low),
-        .spec = global_spec(no_acl, spec::advanced),
-    });
-
-    _.member(MemberInfo{
         .name = "authfile",
         .value = value<std::string>(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)),
         .spec = ini_only(no_acl),
@@ -561,6 +555,13 @@ _.section("client", [&]
             "This allows OCR (when session probe is disabled) to better detect window titles.",
     });
 
+
+    _.member(MemberInfo{
+        .name = "encryption_level",
+        .value = enum_as_string(RdpSecurityEncryptionLevel::high),
+        .spec = ini_only(no_acl),
+        .desc = "Legacy encryption when External Security Protocol (TLS, CredSSP, etc) is disable"
+    });
 
     _.member(MemberInfo{
         .name = "tls_fallback_legacy",

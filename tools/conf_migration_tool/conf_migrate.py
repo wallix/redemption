@@ -428,6 +428,7 @@ migration_defs: List[MigrationType] = [
             'experimental_support_resize_session_during_recording': RemoveItem(),
             'support_connection_redirection_during_recording': RemoveItem(),
             'new_pointer_update_support': RemoveItem(),
+            'encryptionLevel': UpdateItem(section='client', key='encryption_level'),
         },
         'client': {
             'disable_tsk_switch_shortcuts': RemoveItem(),

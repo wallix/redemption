@@ -13,9 +13,6 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 #_logged
 port = integer(min=0, default=3389)
 
-#_advanced
-encryptionLevel = option('low', 'medium', 'high', default="low")
-
 # Time out during RDP handshake stage.<br/>
 # (in seconds)
 handshake_timeout = integer(min=0, default=10)

@@ -189,7 +189,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::enable_transparent_mode>(true);
     ini.set<cfg::globals::enable_osd>(true);
     ini.set<cfg::globals::enable_osd_display_remote_target>(true);
-    ini.set<cfg::globals::encryptionLevel>(Level::high);
+    ini.set<cfg::client::encryption_level>(RdpSecurityEncryptionLevel::high);
     ini.set_acl<cfg::globals::host>(cs);
     ini.set_acl<cfg::globals::host>(s);
     ini.set<cfg::globals::keepalive_grace_delay>(std::chrono::minutes{1});

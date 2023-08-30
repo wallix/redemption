@@ -11,10 +11,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #port = 3389
 
-# values: low, medium, high
-#_advanced
-#encryptionLevel = low
-
 # Socket path or socket address of passthrough / acl
 #authfile = )gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(
 
@@ -181,6 +177,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #auto_adjust_performance_flags = 1
+
+# Legacy encryption when External Security Protocol (TLS, CredSSP, etc) is disable
+# values: low, medium, high
+#encryption_level = high
 
 # Fallback to RDP Legacy Encryption if client does not support TLS.
 # (type: boolean (0/no/false or 1/yes/true))

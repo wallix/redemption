@@ -56,7 +56,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("ocr")
     ;
 
-    e.enumeration_list("Level")
+    e.enumeration_list("RdpSecurityEncryptionLevel")
       .value("low")
       .value("medium")
       .value("high")

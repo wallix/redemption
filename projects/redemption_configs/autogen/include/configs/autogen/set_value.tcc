@@ -98,14 +98,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "encryptionLevel"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::globals::encryptionLevel&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                value
-            );
-        }
         else if (key == "authfile"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -359,6 +351,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::client::auto_adjust_performance_flags&>(this->variables).value,
                 ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "encryption_level"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::client::encryption_level&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
                 value
             );
         }

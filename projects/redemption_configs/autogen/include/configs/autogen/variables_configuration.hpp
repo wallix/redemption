@@ -207,14 +207,6 @@ namespace cfg
         using mapped_type = unsigned;
         type value { 3389 };
     };
-    /// type: Level <br/>
-    /// default: Level::low <br/>
-    struct globals::encryptionLevel {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = Level;
-        using mapped_type = std::string;
-        type value { Level::low };
-    };
     /// Socket path or socket address of passthrough / acl <br/>
     /// type: std::string <br/>
     /// default: REDEMPTION_CONFIG_AUTHFILE <br/>
@@ -555,6 +547,15 @@ namespace cfg
         using type = bool;
         using mapped_type = bool;
         type value { true };
+    };
+    /// Legacy encryption when External Security Protocol (TLS, CredSSP, etc) is disable <br/>
+    /// type: RdpSecurityEncryptionLevel <br/>
+    /// default: RdpSecurityEncryptionLevel::high <br/>
+    struct client::encryption_level {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = RdpSecurityEncryptionLevel;
+        using mapped_type = std::string;
+        type value { RdpSecurityEncryptionLevel::high };
     };
     /// Fallback to RDP Legacy Encryption if client does not support TLS. <br/>
     /// type: bool <br/>
@@ -4996,7 +4997,6 @@ struct globals
 , cfg::globals::close_timeout
 , cfg::globals::rdp_keepalive_connection_interval
 , cfg::globals::port
-, cfg::globals::encryptionLevel
 , cfg::globals::trace_type
 , cfg::globals::listen_address
 , cfg::globals::enable_transparent_mode
@@ -5026,6 +5026,7 @@ struct client
 , cfg::client::performance_flags_force_not_present
 , cfg::client::performance_flags_default
 , cfg::client::auto_adjust_performance_flags
+, cfg::client::encryption_level
 , cfg::client::tls_fallback_legacy
 , cfg::client::tls_support
 , cfg::client::tls_min_level

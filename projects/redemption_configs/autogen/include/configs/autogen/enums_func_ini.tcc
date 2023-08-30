@@ -141,13 +141,13 @@ parse_error parse_from_cfg(CaptureFlags & x, ::configs::spec_type<CaptureFlags> 
     return no_parse_error;
 }
 
-inline constexpr zstring_view enum_zstr_Level[] {
+inline constexpr zstring_view enum_zstr_RdpSecurityEncryptionLevel[] {
     "low"_zv,
     "medium"_zv,
     "high"_zv,
 };
 
-inline constexpr zstring_view enum_zint_Level[] {
+inline constexpr zstring_view enum_zint_RdpSecurityEncryptionLevel[] {
     "0"_zv,
     "1"_zv,
     "2"_zv,
@@ -155,25 +155,25 @@ inline constexpr zstring_view enum_zint_Level[] {
 
 zstring_view assign_zbuf_from_cfg(
     writable_chars_view zbuf,
-    cfg_s_type<Level> /*type*/,
-    Level x
+    cfg_s_type<RdpSecurityEncryptionLevel> /*type*/,
+    RdpSecurityEncryptionLevel x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<Level>::is_valid(static_cast<uint8_t>(x)));
-    return enum_zint_Level[static_cast<uint8_t>(x)];
+    assert(is_valid_enum_value<RdpSecurityEncryptionLevel>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zint_RdpSecurityEncryptionLevel[static_cast<uint8_t>(x)];
 }
 
 zstring_view assign_zbuf_from_cfg(
     writable_chars_view zbuf,
     cfg_s_type<std::string> /*type*/,
-    Level x
+    RdpSecurityEncryptionLevel x
 ){
     (void)zbuf;
-    assert(is_valid_enum_value<Level>::is_valid(static_cast<uint8_t>(x)));
-    return enum_zstr_Level[static_cast<uint8_t>(x)];
+    assert(is_valid_enum_value<RdpSecurityEncryptionLevel>::is_valid(static_cast<uint8_t>(x)));
+    return enum_zstr_RdpSecurityEncryptionLevel[static_cast<uint8_t>(x)];
 }
 
-parse_error parse_from_cfg(Level & x, ::configs::spec_type<Level> /*type*/, bytes_view value)
+parse_error parse_from_cfg(RdpSecurityEncryptionLevel & x, ::configs::spec_type<RdpSecurityEncryptionLevel> /*type*/, bytes_view value)
 {
     using ul = uint8_t;
 
@@ -186,20 +186,20 @@ parse_error parse_from_cfg(Level & x, ::configs::spec_type<Level> /*type*/, byte
         return err;
     }
 
-    x = static_cast<Level>(xi);
+    x = static_cast<RdpSecurityEncryptionLevel>(xi);
     return no_parse_error;
 }
 
 
-inline constexpr std::pair<chars_view, Level> enum_str_value_Level[] {
-    {"LOW"_av, Level::low},
-    {"MEDIUM"_av, Level::medium},
-    {"HIGH"_av, Level::high},
+inline constexpr std::pair<chars_view, RdpSecurityEncryptionLevel> enum_str_value_RdpSecurityEncryptionLevel[] {
+    {"LOW"_av, RdpSecurityEncryptionLevel::low},
+    {"MEDIUM"_av, RdpSecurityEncryptionLevel::medium},
+    {"HIGH"_av, RdpSecurityEncryptionLevel::high},
 };
 
-parse_error parse_from_cfg(Level & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
+parse_error parse_from_cfg(RdpSecurityEncryptionLevel & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
 {
-    return parse_str_value_pairs<enum_str_value_Level>(
+    return parse_str_value_pairs<enum_str_value_RdpSecurityEncryptionLevel>(
         x, value, "bad value, expected: low, medium, high");
 }
 

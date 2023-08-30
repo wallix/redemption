@@ -76,14 +76,14 @@ inline CaptureFlags operator ~ (CaptureFlags x)
 inline CaptureFlags & operator |= (CaptureFlags & x, CaptureFlags y) { return x = x | y; }
 inline CaptureFlags & operator &= (CaptureFlags & x, CaptureFlags y) { return x = x & y; }
 
-enum class Level : uint8_t
+enum class RdpSecurityEncryptionLevel : uint8_t
 {
     low = 0,
     medium = 1,
     high = 2,
 };
 
-template<> struct is_valid_enum_value<Level>
+template<> struct is_valid_enum_value<RdpSecurityEncryptionLevel>
 {
     constexpr static bool is_valid(uint64_t n) { return n <= 2; }
 };

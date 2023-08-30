@@ -89,7 +89,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
+    RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
@@ -271,7 +271,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     std::ofstream(wf.c_str()) <<
         "[globals]\n"
         "port=3390\n"
-        "encryptionLevel=low\n"
         "trace_type=2\n"
         "listen_address=192.168.1.1\n"
         "enable_transparent_mode=yes\n"
@@ -285,6 +284,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "handshake_timeout=5\n"
         "\n"
         "[client]\n"
+        "encryption_level=low\n"
         "ignore_logon_password=yes\n"
         "performance_flags_default=0x00000007\n"
         "performance_flags_force_present=0x1\n"
@@ -353,7 +353,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
     RED_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
-    RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
+    RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::low,                       ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
@@ -475,7 +475,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     // alternative ways to say yes in file, other values
     std::ofstream(wf.c_str()) <<
         "[globals]\n"
-        "encryptionLevel=medium\n"
         "trace_type=0\n"
         "listen_address=0.0.0.0\n"
         "enable_transparent_mode=no\n"
@@ -483,6 +482,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "shell_working_directory=aaa\n" /* bad section */
         "enable_bitmap_update=no\n"
         "[client]\n"
+        "encryption_level=medium\n"
         "performance_flags_default=7\n"
         "performance_flags_force_present=1\n"
         "performance_flags_force_not_present=0\n"
@@ -539,7 +539,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    RED_CHECK_EQUAL(Level::medium,                    ini.get<cfg::globals::encryptionLevel>());
+    RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::medium,                    ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
@@ -655,13 +655,13 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     std::ofstream(wf.c_str()) <<
         "[globals]\n"
         "bitmap_cache=no\n"
-        "encryptionLevel=high\n"
         "trace_type=2\n"
         "listen_address=127.0.0.1\n"
         "certificate_password=rdpproxy\n"
         "enable_transparent_mode=true\n"
         "shell_working_directory=\n"
         "[client]\n"
+        "encryption_level=low\n"
         "tls_support=yes\n"
         "performance_flags_default=07\n"
         "performance_flags_force_present=1\n"
@@ -698,7 +698,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    RED_CHECK_EQUAL(Level::high,                      ini.get<cfg::globals::encryptionLevel>());
+    RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::low,                       ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
@@ -810,7 +810,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     std::ofstream(wf.c_str()) <<
         " [ globals ] \n"
         " bitmap_cache\t= no \n"
-        "encryptionLevel=high\n"
         "trace_type=2\n"
         "listen_address=127.0.0.1\n"
         "certificate_password=rdpproxy RDP\n"
@@ -818,6 +817,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
         "close_timeout=300\n"
         "handshake_timeout=7\n"
         "[client]\t\n"
+        "encryption_level=low\n"
         "tls_support=yes\n"
         "performance_flags_default=07\n"
         "performance_flags_force_present=1\n"
@@ -860,7 +860,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    RED_CHECK_EQUAL(Level::high,                      ini.get<cfg::globals::encryptionLevel>());
+    RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::low,                       ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
@@ -971,12 +971,12 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     std::ofstream(wf.c_str()) <<
         "[globals]\n"
         "port=3390\n"
-        "encryptionLevel=low\n"
         "trace_type=0\n"
         "listen_address=0.0.0.0\n"
         "certificate_password=redemption\n"
         "enable_transparent_mode=False\n"
         "[client]\n"
+        "encryption_level=high\n"
         "bitmap_compression=TRuE\n"
         "\n"
         "[mod_rdp]\n"
@@ -999,7 +999,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
     RED_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
-    RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
+    RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
@@ -1138,7 +1138,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
     RED_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
-    RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
+    RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
@@ -1263,7 +1263,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
+    RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
@@ -1391,7 +1391,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
+    RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());

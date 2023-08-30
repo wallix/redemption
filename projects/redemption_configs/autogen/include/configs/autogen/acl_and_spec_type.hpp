@@ -21,7 +21,6 @@ template<> struct acl_and_spec_type<cfg::globals::target_application> { using ty
 template<> struct acl_and_spec_type<cfg::globals::target_application_account> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::globals::target_application_password> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::globals::port> { using type = unsigned; };
-template<> struct acl_and_spec_type<cfg::globals::encryptionLevel> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::globals::authfile> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::globals::handshake_timeout> { using type = std::chrono::seconds; };
 template<> struct acl_and_spec_type<cfg::globals::base_inactivity_timeout> { using type = std::chrono::seconds; };
@@ -55,6 +54,7 @@ template<> struct acl_and_spec_type<cfg::client::performance_flags_force_present
 template<> struct acl_and_spec_type<cfg::client::performance_flags_force_not_present> { using type = uint32_t; };
 template<> struct acl_and_spec_type<cfg::client::performance_flags_default> { using type = uint32_t; };
 template<> struct acl_and_spec_type<cfg::client::auto_adjust_performance_flags> { using type = bool; };
+template<> struct acl_and_spec_type<cfg::client::encryption_level> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::client::tls_fallback_legacy> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::client::tls_support> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::client::tls_min_level> { using type = uint32_t; };

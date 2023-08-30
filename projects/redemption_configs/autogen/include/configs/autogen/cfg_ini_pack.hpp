@@ -9,7 +9,6 @@
 namespace configs::cfg_ini_infos {
 using IniPack = Pack<
 cfg::globals::port,
-cfg::globals::encryptionLevel,
 cfg::globals::authfile,
 cfg::globals::handshake_timeout,
 cfg::globals::base_inactivity_timeout,
@@ -41,6 +40,7 @@ cfg::client::performance_flags_force_present,
 cfg::client::performance_flags_force_not_present,
 cfg::client::performance_flags_default,
 cfg::client::auto_adjust_performance_flags,
+cfg::client::encryption_level,
 cfg::client::tls_fallback_legacy,
 cfg::client::tls_support,
 cfg::client::tls_min_level,
@@ -296,7 +296,6 @@ cfg::debug::probe_client_addresses
 struct SectionAndName { zstring_view section; zstring_view name; };
 constexpr SectionAndName const ini_names[] = {
 {"globals"_zv, "port"_zv},
-{"globals"_zv, "encryptionLevel"_zv},
 {"globals"_zv, "authfile"_zv},
 {"globals"_zv, "handshake_timeout"_zv},
 {"globals"_zv, "base_inactivity_timeout"_zv},
@@ -328,6 +327,7 @@ constexpr SectionAndName const ini_names[] = {
 {"client"_zv, "performance_flags_force_not_present"_zv},
 {"client"_zv, "performance_flags_default"_zv},
 {"client"_zv, "auto_adjust_performance_flags"_zv},
+{"client"_zv, "encryption_level"_zv},
 {"client"_zv, "tls_fallback_legacy"_zv},
 {"client"_zv, "tls_support"_zv},
 {"client"_zv, "tls_min_level"_zv},

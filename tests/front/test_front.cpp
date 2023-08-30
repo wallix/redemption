@@ -141,6 +141,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
+    ini.set<cfg::client::encryption_level>(RdpSecurityEncryptionLevel::low);
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
     ini.set<cfg::client::fast_path>(false);
     ini.set<cfg::globals::is_rec>(true);
@@ -438,6 +439,7 @@ void init_ini(Inifile& ini)
     ini.set<cfg::client::cache_waiting_list>(true);
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
+    ini.set<cfg::client::encryption_level>(RdpSecurityEncryptionLevel::low);
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
     ini.set<cfg::client::fast_path>(false);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
