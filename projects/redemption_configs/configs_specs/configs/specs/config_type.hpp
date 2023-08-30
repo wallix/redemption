@@ -281,6 +281,12 @@ inline void config_type_definition(type_enumerations & e)
         .value("Supported", "Windows")
         .value("UnsupportedOrUnknown", "Bastion, xrdp or others")
     ;
+
+    e.enumeration_flags("SessionLogFormat")
+        .value("disabled")
+        .value("SIEM")
+        .value("ArcSight")
+    ;
 }
 
 }

@@ -239,8 +239,7 @@ namespace cfg
     };
 
     struct session_log {
-        struct enable_session_log;
-        struct enable_arcsight_log;
+        struct syslog_format;
         struct keyboard_input_masking_level;
     };
 

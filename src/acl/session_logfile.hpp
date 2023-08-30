@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "configs/autogen/enums.hpp"
 #include "transport/crypto_transport.hpp"
 #include "utils/uninit_buffer.hpp"
 #include "acl/auth_api.hpp"
@@ -37,13 +38,11 @@ class Inifile;
 class SessionLogFile
 {
 public:
-    enum class Siem : bool { Disable, Enable, };
-    enum class Syslog : bool { Disable, Enable, };
-    enum class Arcsight : bool { Disable, Enable, };
+    enum class Debug : bool { Disable, Enable, };
 
     SessionLogFile(
         CryptoContext & cctx, Random & rnd,
-        Siem siem, Syslog syslog, Arcsight arcsight,
+        SessionLogFormat syslog_format, Debug enable_debug,
         std::function<void(const Error & error)> notify_error);
 
     ~SessionLogFile();
@@ -67,7 +66,7 @@ private:
     UninitDynamicBuffer control_owner_extra_log;
     std::size_t control_owner_extra_log_len = 0;
     const bool enable_siem;
-    const bool enable_syslog;
     const bool enable_arcsight;
+    const bool enable_debug;
     OutCryptoTransport ct;
 };

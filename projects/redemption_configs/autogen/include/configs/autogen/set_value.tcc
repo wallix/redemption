@@ -1650,19 +1650,11 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     }
     else if (this->section_id == 10) {
         if (0) {}
-        else if (key == "enable_session_log"_zv) {
+        else if (key == "syslog_format"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::session_log::enable_session_log&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "enable_arcsight_log"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::session_log::enable_arcsight_log&>(this->variables).value,
-                ::configs::spec_type<bool>{},
+                static_cast<cfg::session_log::syslog_format&>(this->variables).value,
+                ::configs::spec_type<SessionLogFormat>{},
                 value
             );
         }

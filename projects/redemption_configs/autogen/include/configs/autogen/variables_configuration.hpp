@@ -2620,22 +2620,15 @@ namespace cfg
         type value { true };
     };
 
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct session_log::enable_session_log {
+    /// Format used for session logs <br/>
+    /// type: SessionLogFormat <br/>
+    /// displayName: Session Log Format <br/>
+    /// default: SessionLogFormat::SIEM <br/>
+    struct session_log::syslog_format {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
-    /// Adds ArcSight format to session logs sent to syslog <br/>
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct session_log::enable_arcsight_log {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
+        using type = SessionLogFormat;
+        using mapped_type = SessionLogFormat;
+        type value { SessionLogFormat::SIEM };
     };
     /// Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified. <br/>
     /// type: KeyboardInputMaskingLevel <br/>
@@ -5210,8 +5203,7 @@ struct mod_vnc
 { static constexpr bool is_section = true; };
 
 struct session_log
-: cfg::session_log::enable_session_log
-, cfg::session_log::enable_arcsight_log
+: cfg::session_log::syslog_format
 , cfg::session_log::keyboard_input_masking_level
 { static constexpr bool is_section = true; };
 

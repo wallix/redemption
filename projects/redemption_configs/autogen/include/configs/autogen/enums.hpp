@@ -774,3 +774,39 @@ template<> struct is_valid_enum_value<RdpSaveSessionInfoPDU>
     constexpr static bool is_valid(uint64_t n) { return n <= 1; }
 };
 
+enum class SessionLogFormat : uint8_t
+{
+    disabled = 0,
+    SIEM = 1,
+    ArcSight = 2,
+};
+
+template<> struct is_valid_enum_value<SessionLogFormat>
+{
+    constexpr static bool is_valid(uint64_t n) { return n <= 3; }
+};
+
+inline SessionLogFormat operator | (SessionLogFormat x, SessionLogFormat y)
+{
+    return static_cast<SessionLogFormat>(
+        static_cast<uint8_t>(x) | static_cast<uint8_t>(y)
+    );
+}
+
+inline SessionLogFormat operator & (SessionLogFormat x, SessionLogFormat y)
+{
+    return static_cast<SessionLogFormat>(
+        static_cast<uint8_t>(x) & static_cast<uint8_t>(y)
+    );
+}
+
+inline SessionLogFormat operator ~ (SessionLogFormat x)
+{
+    return static_cast<SessionLogFormat>(
+        ~static_cast<uint8_t>(x) & 3
+    );
+}
+
+inline SessionLogFormat & operator |= (SessionLogFormat & x, SessionLogFormat y) { return x = x | y; }
+inline SessionLogFormat & operator &= (SessionLogFormat & x, SessionLogFormat y) { return x = x & y; }
+

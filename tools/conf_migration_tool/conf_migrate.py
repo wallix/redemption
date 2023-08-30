@@ -131,15 +131,16 @@ def parse_configuration_from_file(filename: str) -> Tuple[str, ConfigurationFrag
 class UpdateItem(NamedTuple):
     section: Optional[str] = None
     key: Optional[str] = None
-    value_transformation: Optional[Callable[[str], str]] = None
+    value_transformation: Optional[Callable[[str, Iterable[ConfigurationFragment]], str]] = None
 
-    def __call__(self, section: str, key: str, value: str) -> Tuple[str, str, str]:
+    def update(self, section: str, key: str, value: str,
+               fragments: Iterable[ConfigurationFragment]) -> Tuple[str, str, str]:
         if self.section is not None:
             section = self.section
         if self.key is not None:
             key = self.key
         if self.value_transformation is not None:
-            value = self.value_transformation(value)
+            value = self.value_transformation(value, fragments)
         return section, key, value
 
 
@@ -202,7 +203,7 @@ def migration_def_to_actions(fragments: Iterable[ConfigurationFragment],
                 elif isinstance(order, RemoveItem):
                     removed_keys.append((section, fragment.value1))
                 elif isinstance(order, UpdateItem):
-                    t = order(section, fragment.value1, fragment.value2)
+                    t = order.update(section, fragment.value1, fragment.value2, fragments)
                     if t[0] == section:
                         renamed_keys.append((original_section, fragment.value1, t[1], t[2]))
                     else:
@@ -361,6 +362,30 @@ def migrate(fragments: List[ConfigurationFragment],
     return (True, result_fragments)
 
 
+def _to_bool(value: str) -> bool:
+    return value.strip().lower() in ('1', 'yes', 'true', 'on')
+
+
+def _merge_session_log_format_10_5_31(value: str, fragments: Iterable[ConfigurationFragment]) -> str:
+    is_session_log_section = False
+    enable_session_log = True
+    enable_arcsight_log = False
+    for fragment in fragments:
+        if fragment.kind == ConfigKind.KeyValue:
+            if is_session_log_section:
+                if fragment.value1 == 'enable_session_log':
+                    enable_session_log = _to_bool(fragment.value2)
+                elif fragment.value1 == 'enable_arcsight_log':
+                    enable_arcsight_log = _to_bool(fragment.value2)
+        elif fragment.kind == ConfigKind.Section:
+            is_session_log_section = 'session_log' == fragment.value1
+
+    return str(
+        (1 if enable_session_log else 0) |
+        (2 if enable_arcsight_log else 0)
+    )
+
+
 migration_defs: List[MigrationType] = [
     (RedemptionVersion('9.1.39'), {
         'globals': {
@@ -430,10 +455,16 @@ migration_defs: List[MigrationType] = [
             'support_connection_redirection_during_recording': RemoveItem(),
             'new_pointer_update_support': RemoveItem(),
             'encryptionLevel': UpdateItem(section='client', key='encryption_level',
-                                          value_transformation=lambda _: 'high'),
+                                          value_transformation=lambda *_: 'high'),
         },
         'client': {
             'disable_tsk_switch_shortcuts': RemoveItem(),
+        },
+        'session_log': {
+            'enable_session_log': UpdateItem(key='syslog_format',
+                                             value_transformation=_merge_session_log_format_10_5_31),
+            'enable_arcsight_log': UpdateItem(key='syslog_format',
+                                              value_transformation=_merge_session_log_format_10_5_31),
         },
     }),
 ]

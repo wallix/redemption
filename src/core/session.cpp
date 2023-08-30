@@ -96,16 +96,15 @@ class Session
             Random& rnd,
             gdi::CaptureProbeApi& probe_api,
             TimeBase const& time_base,
-            bool log6_in_syslog)
+            bool use_debug_format)
         : ini(ini)
         , probe_api(probe_api)
         , time_base(time_base)
         , cctx(cctx)
         , log_file(
             cctx, rnd,
-            SessionLogFile::Siem(ini.get<cfg::session_log::enable_session_log>()),
-            SessionLogFile::Syslog(log6_in_syslog),
-            SessionLogFile::Arcsight(ini.get<cfg::session_log::enable_arcsight_log>()),
+            ini.get<cfg::session_log::syslog_format>(),
+            SessionLogFile::Debug(use_debug_format),
             [&ini](Error const& error){
                 if (error.errnum == ENOSPC) {
                     // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;

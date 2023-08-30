@@ -214,8 +214,7 @@ template<> struct acl_and_spec_type<cfg::mod_vnc::server_is_macos> { using type 
 template<> struct acl_and_spec_type<cfg::mod_vnc::server_unix_alt> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_vnc::support_cursor_pseudo_encoding> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_vnc::enable_ipv6> { using type = bool; };
-template<> struct acl_and_spec_type<cfg::session_log::enable_session_log> { using type = bool; };
-template<> struct acl_and_spec_type<cfg::session_log::enable_arcsight_log> { using type = bool; };
+template<> struct acl_and_spec_type<cfg::session_log::syslog_format> { using type = SessionLogFormat; };
 template<> struct acl_and_spec_type<cfg::session_log::keyboard_input_masking_level> { using type = KeyboardInputMaskingLevel; };
 template<> struct acl_and_spec_type<cfg::ocr::version> { using type = OcrVersion; };
 template<> struct acl_and_spec_type<cfg::ocr::locale> { using type = std::string; };

@@ -14,7 +14,8 @@ from conf_migrate import (parse_configuration,
                           MoveSection,
                           ConfigKind,
                           ConfigurationFragment,
-                          migration_defs)
+                          migration_defs,
+                          _merge_session_log_format_10_5_31)
 
 
 class TestMigration(unittest.TestCase):
@@ -132,7 +133,7 @@ class TestMigration(unittest.TestCase):
         )
 
         def remap(d):
-            return lambda value: d.get(value, value)
+            return lambda value,_: d.get(value, value)
 
         migrate_def = {
             'sec1': {
@@ -343,3 +344,44 @@ class TestMigration(unittest.TestCase):
 
         os.remove(ini_filename)
         os.remove(f'{ini_filename}.{version}')
+
+    def test_merge_session_log_format_10_5_31(self):
+        migrate_def = {
+            'session_log': {
+                'enable_session_log': UpdateItem(
+                    key='syslog_format', value_transformation=_merge_session_log_format_10_5_31),
+                'enable_arcsight_log': UpdateItem(
+                    key='syslog_format', value_transformation=_merge_session_log_format_10_5_31),
+            },
+        }
+
+        def process(ini: str):
+            r = migrate(parse_configuration(ini), migrate_def)
+            return (r[0], ''.join(fragment.text for fragment in r[1]))
+
+
+        ini = '[sec1]\nvalue1=xy\n'
+        self.assertEqual(process(ini), (False, ini))
+
+
+        ini = '[session_log]\nvalue1=xy\n'
+        self.assertEqual(process(ini), (False, ini))
+
+
+        def to_commentary(s):
+            return '#' + s.replace('\ne', '\n\n#e')
+
+        for d, r in (
+            ('enable_session_log=True\n', 1),
+            ('enable_session_log=False\n', 0),
+            ('enable_arcsight_log=True\n', 3),
+            ('enable_arcsight_log=False\n', 1),
+            ('enable_session_log=True\nenable_arcsight_log=True\n', 3),
+            ('enable_session_log=True\nenable_arcsight_log=False\n', 1),
+            ('enable_session_log=False\nenable_arcsight_log=True\n', 2),
+            ('enable_session_log=False\nenable_arcsight_log=False\n', 0),
+        ):
+            self.assertEqual(process(f'[session_log]\n{d}'), (True,
+                '[session_log]\n'
+                f'{to_commentary(d)}syslog_format={r}\n'
+            ))

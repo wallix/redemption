@@ -1242,7 +1242,7 @@ public:
         const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
         const bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
         const bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-          || ini.get<cfg::session_log::enable_session_log>()
+          || bool(ini.get<cfg::session_log::syslog_format>())
           || this->has_kbd_pattern_check();
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);

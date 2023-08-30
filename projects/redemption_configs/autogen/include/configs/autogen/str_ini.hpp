@@ -1179,12 +1179,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [session_log]
 
-# (type: boolean (0/no/false or 1/yes/true))
-#enable_session_log = 1
-
-# Adds ArcSight format to session logs sent to syslog
-# (type: boolean (0/no/false or 1/yes/true))
-#enable_arcsight_log = 0
+# Format used for session logs
+#   0x0: disabled
+#   0x1: SIEM
+#   0x2: ArcSight
+# 
+# Note: values can be added (enable all: 0x1 + 0x2 = 0x3)
+#_display_name=Session Log Format
+#syslog_format = 1
 
 # Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.
 #   0: keyboard input are not masked

@@ -86,11 +86,11 @@ namespace
 
 SessionLogFile::SessionLogFile(
     CryptoContext& cctx, Random& rnd,
-    Siem siem, Syslog syslog, Arcsight arcsight,
+    SessionLogFormat syslog_format, Debug enable_debug,
     std::function<void(const Error &)> notify_error)
-: enable_siem(safe_int(siem))
-, enable_syslog(safe_int(syslog))
-, enable_arcsight(safe_int(arcsight))
+: enable_siem(bool(syslog_format & SessionLogFormat::SIEM))
+, enable_arcsight(bool(syslog_format & SessionLogFormat::ArcSight))
+, enable_debug(safe_int(enable_debug))
 , ct(cctx, rnd, std::move(notify_error))
 {
     buffer.grow_without_copy(512);
@@ -205,7 +205,7 @@ void SessionLogFile::log(
         LOG_REDEMPTION_INTERNAL_IMPL(LOG_INFO, "%.*s", int(p - data), data);
     }
 
-    if (REDEMPTION_UNLIKELY(enable_syslog)) {
+    if (REDEMPTION_UNLIKELY(enable_debug)) {
         LOG(LOG_INFO, "<%.*s> %.*s",
             int(session_type.size()), session_type.data(),
             int(p - start_meta_format), start_meta_format);
@@ -218,7 +218,7 @@ void SessionLogFile::log(
     *dateformats::YYYY_mm_dd_HH_MM_SS::to_chars(meta, tm) = ' ';
     this->ct.send({meta, p});
 
-    if (enable_arcsight) {
+    if (REDEMPTION_UNLIKELY(enable_arcsight)) {
         GmTimeBuffer str_time{time_now};
         chars_view contexts[] {
             str_time.sv(),

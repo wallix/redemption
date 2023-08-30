@@ -47,7 +47,7 @@ KbdLogParams kbd_log_params_capture_from_ini(const Inifile & ini)
     return KbdLogParams{
           !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlagsCP::wrm)
         , !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlagsCP::syslog)
-        , !keyboard_input_fully_masked && ini.get<cfg::session_log::enable_session_log>()
+        , !keyboard_input_fully_masked && bool(ini.get<cfg::session_log::syslog_format>())
         , !keyboard_input_fully_masked
     };
 }

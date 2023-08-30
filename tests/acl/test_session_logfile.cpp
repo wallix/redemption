@@ -73,9 +73,8 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
 
     SessionLogFile log_file(
         cctx, rnd,
-        SessionLogFile::Siem(true),
-        SessionLogFile::Syslog(false),
-        SessionLogFile::Arcsight(true),
+        SessionLogFormat::SIEM | SessionLogFormat::ArcSight,
+        SessionLogFile::Debug(false),
         notify_error);
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime

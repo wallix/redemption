@@ -263,7 +263,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_vnc::encodings>(slist);
     ini.set<cfg::mod_vnc::server_clipboard_encoding_type>(ClipboardEncodingType::latin1);
 
-    ini.set<cfg::session_log::enable_session_log>(true);
     ini.set<cfg::session_log::keyboard_input_masking_level>(KeyboardInputMaskingLevel::unmasked);
 
     ini.set<cfg::translation::language>(Language::en);

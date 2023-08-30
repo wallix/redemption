@@ -478,16 +478,13 @@ _.section("globals", [&]
 _.section("session_log", [&]
 {
     _.member(MemberInfo{
-        .name = "enable_session_log",
-        .value = value<bool>(true),
+        .name = names{
+            .all = "syslog_format",
+            .display = "Session Log Format",
+        },
+        .value = from_enum(SessionLogFormat::SIEM),
         .spec = global_spec(no_acl),
-    });
-
-    _.member(MemberInfo{
-        .name = "enable_arcsight_log",
-        .value = value<bool>(false),
-        .spec = global_spec(no_acl),
-        .desc = "Adds ArcSight format to session logs sent to syslog",
+        .desc = "Format used for session logs",
     });
 
     _.member(MemberInfo{
