@@ -2628,6 +2628,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// Adds ArcSight format to session logs sent to syslog <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct session_log::enable_arcsight_log {

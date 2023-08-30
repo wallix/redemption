@@ -33,10 +33,6 @@ authentication_timeout = integer(min=0, default=120)
 #_iptables
 enable_transparent_mode = boolean(default=False)
 
-# Support of Bitmap Update.
-#_advanced
-enable_bitmap_update = boolean(default=True)
-
 # Show close screen.
 # This displays errors related to the secondary connection then closes automatically after a timeout specified by "close_timeout" or on user request.
 enable_close_box = boolean(default=True)
@@ -357,6 +353,7 @@ bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)
 
 enable_session_log = boolean(default=True)
 
+# Adds ArcSight format to session logs sent to syslog
 enable_arcsight_log = boolean(default=False)
 
 [ocr]
@@ -409,10 +406,6 @@ png_interval = integer(min=0, default=10)
 # (in seconds)
 #_advanced
 break_interval = integer(min=0, default=600)
-
-# Number of png captures to keep.
-#_advanced
-png_limit = integer(min=0, default=5)
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log".)

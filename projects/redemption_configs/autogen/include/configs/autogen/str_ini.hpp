@@ -61,7 +61,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Support of Bitmap Update.
 # (type: boolean (0/no/false or 1/yes/true))
-#_advanced
 #enable_bitmap_update = 1
 
 # Show close screen.
@@ -1183,6 +1182,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #enable_session_log = 1
 
+# Adds ArcSight format to session logs sent to syslog
 # (type: boolean (0/no/false or 1/yes/true))
 #enable_arcsight_log = 0
 
@@ -1262,7 +1262,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Number of png captures to keep.
 # (min = 0)
-#_advanced
 #png_limit = 5
 
 # (maxlen = 4096)

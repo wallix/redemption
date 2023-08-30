@@ -340,7 +340,7 @@ _.section("globals", [&]
     _.member(MemberInfo{
         .name = "enable_bitmap_update",
         .value = value<bool>(true),
-        .spec = global_spec(no_acl, spec::advanced),
+        .spec = ini_only(no_acl),
         .desc = "Support of Bitmap Update.",
     });
 
@@ -487,6 +487,7 @@ _.section("session_log", [&]
         .name = "enable_arcsight_log",
         .value = value<bool>(false),
         .spec = global_spec(no_acl),
+        .desc = "Adds ArcSight format to session logs sent to syslog",
     });
 
     _.member(MemberInfo{
@@ -2228,10 +2229,11 @@ _.section("video", [&]
             "⚠ A value that is too small increases the disk space required for recordings."
     });
 
+    // TODO remove ?
     _.member(MemberInfo{
         .name = "png_limit",
         .value = value<types::unsigned_>(5),
-        .spec = global_spec(no_acl, spec::advanced),
+        .spec = ini_only(no_acl),
         .desc = "Number of png captures to keep.",
     });
 
