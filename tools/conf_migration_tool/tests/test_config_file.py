@@ -13,11 +13,18 @@ from conf_migrate import (parse_configuration,
                           RemoveItem,
                           MoveSection,
                           ConfigKind,
-                          ConfigurationFragment)
+                          ConfigurationFragment,
+                          migration_defs)
 
 
 class TestMigration(unittest.TestCase):
     maxDiff = None
+
+    def test_unknown_section(self):
+        for _, d in migration_defs:
+            for k in d:
+                self.assertNotEqual(k, 'rdp', 'should be mod_rdp')
+                self.assertNotEqual(k, 'vnc', 'should be mod_vnc')
 
     def test_parse_configuration(self):
         self.assertEqual(parse_configuration('[section]\n# bla bla\nkey = value'), [
