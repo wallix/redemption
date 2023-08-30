@@ -9,7 +9,8 @@
 
 from shutil import copyfile
 from enum import IntEnum
-from typing import List, Tuple, Dict, Optional, Union, Iterable, NamedTuple, Generator
+from typing import (List, Tuple, Dict, Optional, Union, Iterable,
+                    NamedTuple, Generator, Callable)
 
 import os
 import re
@@ -130,15 +131,15 @@ def parse_configuration_from_file(filename: str) -> Tuple[str, ConfigurationFrag
 class UpdateItem(NamedTuple):
     section: Optional[str] = None
     key: Optional[str] = None
-    values: Optional[Dict[str, str]] = None
+    value_transformation: Optional[Callable[[str], str]] = None
 
     def __call__(self, section: str, key: str, value: str) -> Tuple[str, str, str]:
         if self.section is not None:
             section = self.section
         if self.key is not None:
             key = self.key
-        if self.values is not None:
-            value = self.values.get(value, value)
+        if self.value_transformation is not None:
+            value = self.value_transformation(value)
         return section, key, value
 
 
@@ -428,7 +429,8 @@ migration_defs: List[MigrationType] = [
             'experimental_support_resize_session_during_recording': RemoveItem(),
             'support_connection_redirection_during_recording': RemoveItem(),
             'new_pointer_update_support': RemoveItem(),
-            'encryptionLevel': UpdateItem(section='client', key='encryption_level'),
+            'encryptionLevel': UpdateItem(section='client', key='encryption_level',
+                                          value_transformation=lambda _: 'high'),
         },
         'client': {
             'disable_tsk_switch_shortcuts': RemoveItem(),

@@ -105,16 +105,19 @@ class TestMigration(unittest.TestCase):
             'x=y\n'
         )
 
+        def remap(d):
+            return lambda value: d.get(value, value)
+
         migrate_def = {
             'sec1': {
                 'moved_key': UpdateItem(key='moved_key_to_a'),
-                'updated_value': UpdateItem(values={'old_b_value': 'new_b'}),
+                'updated_value': UpdateItem(value_transformation=remap({'old_b_value': 'new_b'})),
                 'removed_key': RemoveItem(),
             },
             'moved_section': (MoveSection('new_moved_section'), {
                 'moved_key_to_removed_section': UpdateItem(section='removed_section'),
                 'aa': UpdateItem(section='removed_section', key='new_aa',
-                                  values={'old_b_value': 'new_value'}),
+                                 value_transformation=remap({'old_b_value': 'new_value'})),
                 'moved_key_to_new_section': UpdateItem(section='sec4'),
                 'moved_key_to_new_section_and_renamed_key_to_cc': UpdateItem(section='sec1', key='cc'),
                 'moved_key_to_new_section5': UpdateItem(section='sec5'),
