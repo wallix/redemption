@@ -246,7 +246,7 @@ def fragments_to_spans_of_sections(fragments: Iterable[ConfigurationFragment]) -
             section = fragment.value1
             start = i
     if start < i-1:
-        section_spans.setdefault(section, []).append((start, i-1))
+        section_spans.setdefault(section, []).append((start, i))
 
     return section_spans
 
