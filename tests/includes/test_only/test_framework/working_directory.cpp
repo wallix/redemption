@@ -201,7 +201,7 @@ std::string const& WorkingDirectory::add_file_(std::string file)
 
 void WorkingDirectory::remove_file_(std::string file)
 {
-    // transparent compare to C++20
+    // use is_transparent and std::string_view with C++23
     Path path(std::move(file), 0);
     if (!this->paths_.erase(path)) {
         this->has_error_ = true;
@@ -217,7 +217,7 @@ WorkingFileBase WorkingDirectory::add_file(std::string file)
 WorkingDirectory& WorkingDirectory::add_files(std::initializer_list<std::string_view> files)
 {
     for (auto const& sv : files) {
-        this->add_file_(str_concat(sv));
+        this->add_file_(std::string(sv));
     }
     return *this;
 }
@@ -241,7 +241,7 @@ void WorkingDirectory::remove_file(WorkingFileBase const& file)
 WorkingDirectory& WorkingDirectory::remove_files(std::initializer_list<std::string_view> files)
 {
     for (auto const& sv : files) {
-        this->remove_file_(str_concat(sv));
+        this->remove_file_(std::string(sv));
     }
     this->is_checked_ = false;
     return *this;
