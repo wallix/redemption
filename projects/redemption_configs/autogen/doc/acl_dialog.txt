@@ -442,6 +442,8 @@ cfg::mod_vnc::support_cursor_pseudo_encoding ⇐ mod_vnc:support_cursor_pseudo_e
 cfg::mod_vnc::enable_ipv6 ⇐ mod_vnc:enable_ipv6   [bool]
     Enable target connection on ipv6
 
+cfg::session_log::enable_session_log_file ⇐ enable_session_log_file   [bool]
+    Saves session logs to a .log file
 cfg::session_log::keyboard_input_masking_level ⇐ session_log:keyboard_input_masking_level   [KeyboardInputMaskingLevel]
     Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.
       0: keyboard input are not masked

@@ -1179,6 +1179,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [session_log]
 
+# Saves session logs to a .log file
+# (type: boolean (0/no/false or 1/yes/true))
+# (acl config: proxy ⇐ enable_session_log_file)
+#enable_session_log_file = 1
+
 # Format used for session logs
 #   0x0: disabled
 #   0x1: SIEM

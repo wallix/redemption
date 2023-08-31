@@ -74,6 +74,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     SessionLogFile log_file(
         cctx, rnd,
         SessionLogFormat::SIEM | SessionLogFormat::ArcSight,
+        SessionLogFile::SaveToFile(true),
         SessionLogFile::Debug(false),
         notify_error);
 
@@ -167,4 +168,52 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
         "1970-01-01 01:50:33 type=\"BUTTON_CLICKED\" label=\"bbb\" control_owner=\"guest-1\"\n"
         "1970-01-01 01:50:33 type=\"BUTTON_CLICKED\" label=\"bbb\"\n"
         ""_av);
+}
+
+RED_AUTO_TEST_CASE_WD(TestSessionLogFileWithDebugOnly, wd)
+{
+    Inifile ini;
+    ini.clear_acl_fields_changed();
+
+    LCGRandom rnd;
+    CryptoContext cctx;
+
+    ini.set_acl<cfg::globals::auth_user>("admin");
+    ini.set_acl<cfg::globals::target_user>("user1");
+    ini.set_acl<cfg::globals::host>("10.10.13.12");
+
+    auto logfile = wd.add_file("log5_6.log");
+    auto hashlog = wd.add_file("hash_log5_6.log");
+
+    auto session_type = "RDP"_av;
+
+    auto notify_error = [](const Error & /*error*/) { RED_REQUIRE(false); };
+
+    SessionLogFile log_file(
+        cctx, rnd,
+        SessionLogFormat::disabled,
+        SessionLogFile::SaveToFile(false),
+        SessionLogFile::Debug(true),
+        notify_error);
+
+    log_file.open_session_log(
+        logfile.c_str(), hashlog.c_str(),
+        FilePermissions(0664), "log5_6.log"_av);
+
+    {
+        ut::log_buffered logbuf;
+        const time_t now = 0;
+
+        log_file.log(now, ini, session_type, LogId::INPUT_LANGUAGE, {
+            KVLog("identifier"_av,   "ident"_av),
+            KVLog("display_name"_av, "name"_av),
+        });
+
+        RED_CHECK(logbuf.buf() == "INFO -- <RDP> type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\n"_av);
+    }
+
+    log_file.close_session_log();
+
+    wd.remove_file(logfile);
+    wd.remove_file(hashlog);
 }

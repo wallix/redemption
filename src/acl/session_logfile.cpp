@@ -86,9 +86,10 @@ namespace
 
 SessionLogFile::SessionLogFile(
     CryptoContext& cctx, Random& rnd,
-    SessionLogFormat syslog_format, Debug enable_debug,
+    SessionLogFormat syslog_format, SaveToFile save_to_file, Debug enable_debug,
     std::function<void(const Error &)> notify_error)
-: enable_siem(bool(syslog_format & SessionLogFormat::SIEM))
+: enable_file(safe_int(save_to_file))
+, enable_siem(bool(syslog_format & SessionLogFormat::SIEM))
 , enable_arcsight(bool(syslog_format & SessionLogFormat::ArcSight))
 , enable_debug(safe_int(enable_debug))
 , ct(cctx, rnd, std::move(notify_error))
@@ -141,7 +142,7 @@ void SessionLogFile::log(
     std::time_t time_now, Inifile& ini,
     chars_view session_type, LogId id, KVLogList kv_list)
 {
-    assert(this->ct.is_open());
+    assert(this->ct.is_open() || !enable_file);
 
     std::size_t len = safe_size_for_log_format_append_info(id, kv_list)
                     + control_owner_extra_log_len;
@@ -211,12 +212,14 @@ void SessionLogFile::log(
             int(p - start_meta_format), start_meta_format);
     }
 
-    *p++ = '\n';
-    char* meta = start_meta_format - meta_prefix_len;
-    struct tm tm;
-    localtime_r(&time_now, &tm);
-    *dateformats::YYYY_mm_dd_HH_MM_SS::to_chars(meta, tm) = ' ';
-    this->ct.send({meta, p});
+    if (this->enable_file) {
+        *p++ = '\n';
+        char* meta = start_meta_format - meta_prefix_len;
+        struct tm tm;
+        localtime_r(&time_now, &tm);
+        *dateformats::YYYY_mm_dd_HH_MM_SS::to_chars(meta, tm) = ' ';
+        this->ct.send({meta, p});
+    }
 
     if (REDEMPTION_UNLIKELY(enable_arcsight)) {
         GmTimeBuffer str_time{time_now};
@@ -256,11 +259,13 @@ void SessionLogFile::open_session_log(
     const char * const record_path, const char * const hash_path,
     FilePermissions file_permissions, bytes_view derivator)
 {
-    assert(!this->ct.is_open());
+    assert(!this->ct.is_open() || !enable_file);
 
-    this->ct.open(record_path, hash_path, file_permissions, derivator);
-    // force to create the file
-    this->ct.send("", 0);
+    if (this->enable_file) {
+        this->ct.open(record_path, hash_path, file_permissions, derivator);
+        // force to create the file
+        this->ct.send("", 0);
+    }
 }
 
 void SessionLogFile::close_session_log()

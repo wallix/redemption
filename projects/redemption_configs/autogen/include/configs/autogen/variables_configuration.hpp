@@ -25,23 +25,23 @@ namespace configs
         inline constexpr int section7 = 102; /* server_cert */
         inline constexpr int section8 = 111; /* mod_vnc */
         inline constexpr int section9 = 119; /* session_log */
-        // inline constexpr int section10 = 120; /* ocr */
-        inline constexpr int section11 = 120; /* capture */
-        inline constexpr int section12 = 124; /* video */
-        inline constexpr int section13 = 127; /* audit */
-        inline constexpr int section14 = 136; /* file_verification */
-        inline constexpr int section15 = 144; /* file_storage */
-        // inline constexpr int section16 = 145; /* icap_server_down */
-        // inline constexpr int section17 = 145; /* icap_server_up */
-        inline constexpr int section18 = 145; /* crypto */
-        // inline constexpr int section19 = 147; /* websocket */
-        // inline constexpr int section20 = 147; /* vnc_over_ssh */
-        inline constexpr int section21 = 147; /* context */
-        // inline constexpr int section22 = 237; /* internal_mod */
-        inline constexpr int section23 = 237; /* mod_replay */
-        inline constexpr int section24 = 239; /* translation */
-        // inline constexpr int section25 = 241; /* theme */
-        // inline constexpr int section26 = 241; /* debug */
+        // inline constexpr int section10 = 121; /* ocr */
+        inline constexpr int section11 = 121; /* capture */
+        inline constexpr int section12 = 125; /* video */
+        inline constexpr int section13 = 128; /* audit */
+        inline constexpr int section14 = 137; /* file_verification */
+        inline constexpr int section15 = 145; /* file_storage */
+        // inline constexpr int section16 = 146; /* icap_server_down */
+        // inline constexpr int section17 = 146; /* icap_server_up */
+        inline constexpr int section18 = 146; /* crypto */
+        // inline constexpr int section19 = 148; /* websocket */
+        // inline constexpr int section20 = 148; /* vnc_over_ssh */
+        inline constexpr int section21 = 148; /* context */
+        // inline constexpr int section22 = 238; /* internal_mod */
+        inline constexpr int section23 = 238; /* mod_replay */
+        inline constexpr int section24 = 240; /* translation */
+        // inline constexpr int section25 = 242; /* theme */
+        // inline constexpr int section26 = 242; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -2620,6 +2620,19 @@ namespace cfg
         type value { true };
     };
 
+    /// Saves session logs to a .log file <br/>
+    /// type: bool <br/>
+    /// acl ⇒ proxy <br/>
+    /// default: true <br/>
+    struct session_log::enable_session_log_file {
+        static constexpr unsigned acl_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 0};
+        using type = bool;
+        using mapped_type = bool;
+        type value { true };
+    };
     /// Format used for session logs <br/>
     /// type: SessionLogFormat <br/>
     /// displayName: Session Log Format <br/>
@@ -2639,7 +2652,7 @@ namespace cfg
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 0};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 1};
         using type = KeyboardInputMaskingLevel;
         using mapped_type = KeyboardInputMaskingLevel;
         type value { KeyboardInputMaskingLevel::password_and_unidentified };
@@ -5203,7 +5216,8 @@ struct mod_vnc
 { static constexpr bool is_section = true; };
 
 struct session_log
-: cfg::session_log::syslog_format
+: cfg::session_log::enable_session_log_file
+, cfg::session_log::syslog_format
 , cfg::session_log::keyboard_input_masking_level
 { static constexpr bool is_section = true; };
 
@@ -5600,6 +5614,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_vnc::server_unix_alt
 , cfg::mod_vnc::support_cursor_pseudo_encoding
 , cfg::mod_vnc::enable_ipv6
+, cfg::session_log::enable_session_log_file
 , cfg::session_log::keyboard_input_masking_level
 , cfg::capture::record_filebase
 , cfg::capture::record_subdirectory
@@ -5727,14 +5742,14 @@ using VariablesAclPack = Pack<
 
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111111011111111111111111111111111111111111101111011111101100
-, 0b1111101111111111110111111111111111111111111111111111111111111111
-, 0b1111111010001011110011100001111110110001100000011111111111111011
-, 0b0000000000000000111110000000111000001100011001111111000101001111
+, 0b1111011111111111110111111111111111111111111111111111111111111111
+, 0b1111110100010111100111000011111101100011000000111111111111110111
+, 0b0000000000000001111100000001110000011000110011111110001010011111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000001000000000000000000000000000000000000000
+, 0b0000000000000000000000010000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

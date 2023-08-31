@@ -126,7 +126,9 @@ struct [[nodiscard]] WorkingDirectory
     /// @{
     [[nodiscard]] WorkingFileBase add_file(std::string file);
     WorkingDirectory& add_files(std::initializer_list<std::string_view> files);
+
     void remove_file(std::string file);
+    void remove_file(WorkingFileBase const& file);
     WorkingDirectory& remove_files(std::initializer_list<std::string_view> files);
     /// @}
 

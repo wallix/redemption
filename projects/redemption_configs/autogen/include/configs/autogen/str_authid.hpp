@@ -129,6 +129,7 @@ namespace configs
         "mod_vnc:server_unix_alt"_zv,
         "mod_vnc:support_cursor_pseudo_encoding"_zv,
         "mod_vnc:enable_ipv6"_zv,
+        "enable_session_log_file"_zv,
         "session_log:keyboard_input_masking_level"_zv,
         "record_filebase"_zv,
         "record_subdirectory"_zv,

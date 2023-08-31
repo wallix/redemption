@@ -38,11 +38,14 @@ class Inifile;
 class SessionLogFile
 {
 public:
+    enum class SaveToFile : bool { Disable, Enable, };
     enum class Debug : bool { Disable, Enable, };
 
     SessionLogFile(
         CryptoContext & cctx, Random & rnd,
-        SessionLogFormat syslog_format, Debug enable_debug,
+        SessionLogFormat syslog_format,
+        SaveToFile save_to_file,
+        Debug enable_debug,
         std::function<void(const Error & error)> notify_error);
 
     ~SessionLogFile();
@@ -65,6 +68,7 @@ private:
     UninitDynamicBuffer buffer;
     UninitDynamicBuffer control_owner_extra_log;
     std::size_t control_owner_extra_log_len = 0;
+    const bool enable_file;
     const bool enable_siem;
     const bool enable_arcsight;
     const bool enable_debug;

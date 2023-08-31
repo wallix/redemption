@@ -478,6 +478,15 @@ _.section("globals", [&]
 _.section("session_log", [&]
 {
     _.member(MemberInfo{
+        .name = "enable_session_log_file",
+        .value = value<bool>(true),
+        .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+        .desc =
+            "Saves session logs to a .log file.\n"
+            "The format is of the form key=\"value\" where all values are separated by a space on the same line.",
+    });
+
+    _.member(MemberInfo{
         .name = names{
             .all = "syslog_format",
             .display = "Session Log Format",

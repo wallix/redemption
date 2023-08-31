@@ -228,6 +228,16 @@ void WorkingDirectory::remove_file(std::string file)
     this->is_checked_ = false;
 }
 
+void WorkingDirectory::remove_file(WorkingFileBase const& file)
+{
+    std::string_view path = file.string();
+    if (utils::starts_with(path, this->dirname_.string())) {
+        path.remove_prefix(this->dirname_.size());
+    }
+    this->remove_file_(std::string(path));
+    this->is_checked_ = false;
+}
+
 WorkingDirectory& WorkingDirectory::remove_files(std::initializer_list<std::string_view> files)
 {
     for (auto const& sv : files) {
