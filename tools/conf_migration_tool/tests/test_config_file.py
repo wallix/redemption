@@ -69,11 +69,37 @@ class TestMigration(unittest.TestCase):
         d=d
         '''
 
-        self.assertEqual(fragments_to_spans_of_sections(parse_configuration(ini)), {
+        fragments = parse_configuration(ini)
+
+        self.assertEqual(list(fragment.text for fragment in fragments), [
+            '\n',
+            '        [sec1] ',
+            'a=a',
+            '\n',
+            '        [sec2] ',
+            'a=a',
+            '\n',
+            '        [sec3] ',
+            'a=a',
+            '\n',
+            '        [sec2]',
+            '\n',
+            '        b=b',
+            '\n',
+            '        c=c',
+            '\n',
+            '        [sec4]',
+            '\n',
+            '        d=d',
+            '\n',
+            '        ',
+        ])
+
+        self.assertEqual(fragments_to_spans_of_sections(fragments), {
             'sec1': [(1, 3)],
             'sec2': [(4, 6), (10, 15)],
             'sec3': [(7, 9)],
-            'sec4': [(16, 19)],
+            'sec4': [(16, 20)],
         })
 
     def test_migrate(self):
