@@ -103,9 +103,13 @@ use_client_provided_remoteapp = boolean(default=False)
 # As far as possible, use native RemoteApp capability
 use_native_remoteapp_capability = boolean(default=True)
 
+# Adds RDPDR channel metadata to session logs. Disabling this option makes shared disks more responsive, but metadata will no longer be collected.if at least one authorization of RDPDR is missing (Printer, ComPort, SmartCard, Drive), then this option is considered enabled.
 #_advanced
 enable_rdpdr_data_analysis = boolean(default=True)
 
+# Actives conversion of RemoteApp target session to desktop session.
+# Otherwise, Alternate Shell will be used.
+# Some Windows Shell features may be unavailable in one or both cases, and applications using them may behave differently.
 #_display_name=Enable translated RemoteAPP with AM
 wabam_uses_translated_remoteapp = boolean(default=False)
 

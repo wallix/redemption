@@ -1296,6 +1296,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// Adds RDPDR channel metadata to session logs. Disabling this option makes shared disks more responsive, but metadata will no longer be collected.if at least one authorization of RDPDR is missing (Printer, ComPort, SmartCard, Drive), then this option is considered enabled. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: mod_rdp:enable_rdpdr_data_analysis <br/>
@@ -1346,6 +1347,9 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
+    /// Actives conversion of RemoteApp target session to desktop session. <br/>
+    /// Otherwise, Alternate Shell will be used. <br/>
+    /// Some Windows Shell features may be unavailable in one or both cases, and applications using them may behave differently. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: mod_rdp:wabam_uses_translated_remoteapp <br/>
@@ -2620,7 +2624,8 @@ namespace cfg
         type value { true };
     };
 
-    /// Saves session logs to a .log file <br/>
+    /// Saves session logs to a .log file. <br/>
+    /// The format is a date followed by onr or more key="value" separated by a space on the same line. <br/>
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>
     /// default: true <br/>

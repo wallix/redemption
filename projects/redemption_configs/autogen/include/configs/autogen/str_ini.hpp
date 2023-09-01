@@ -536,6 +536,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #bogus_ios_rdpdr_virtual_channel = 1
 
+# Adds RDPDR channel metadata to session logs. Disabling this option makes shared disks more responsive, but metadata will no longer be collected.if at least one authorization of RDPDR is missing (Printer, ComPort, SmartCard, Drive), then this option is considered enabled.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 # (acl config: proxy ⇐ mod_rdp:enable_rdpdr_data_analysis)
@@ -562,6 +563,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #split_domain = 0
 
+# Actives conversion of RemoteApp target session to desktop session.
+# Otherwise, Alternate Shell will be used.
+# Some Windows Shell features may be unavailable in one or both cases, and applications using them may behave differently.
 # (type: boolean (0/no/false or 1/yes/true))
 #_display_name=Enable translated RemoteAPP with AM
 # (acl config: proxy ⇐ mod_rdp:wabam_uses_translated_remoteapp)
@@ -1179,7 +1183,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [session_log]
 
-# Saves session logs to a .log file
+# Saves session logs to a .log file.
+# The format is a date followed by onr or more key="value" separated by a space on the same line.
 # (type: boolean (0/no/false or 1/yes/true))
 # (acl config: proxy ⇐ enable_session_log_file)
 #enable_session_log_file = 1

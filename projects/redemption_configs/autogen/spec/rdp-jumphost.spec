@@ -79,6 +79,7 @@ allowed_dynamic_channels = string(default="*")
 #_advanced
 denied_dynamic_channels = string(default="")
 
+# Adds RDPDR channel metadata to session logs. Disabling this option makes shared disks more responsive, but metadata will no longer be collected.if at least one authorization of RDPDR is missing (Printer, ComPort, SmartCard, Drive), then this option is considered enabled.
 #_advanced
 enable_rdpdr_data_analysis = boolean(default=True)
 

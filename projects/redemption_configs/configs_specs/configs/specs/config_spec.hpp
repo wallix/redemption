@@ -483,7 +483,7 @@ _.section("session_log", [&]
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
         .desc =
             "Saves session logs to a .log file.\n"
-            "The format is of the form key=\"value\" where all values are separated by a space on the same line.",
+            "The format is a date followed by onr or more key=\"value\" separated by a space on the same line.",
     });
 
     _.member(MemberInfo{
@@ -1066,6 +1066,9 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "enable_rdpdr_data_analysis",
         .value = value<bool>(true),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
+        .desc =
+            "Adds RDPDR channel metadata to session logs. Disabling this option makes shared disks more responsive, but metadata will no longer be collected."
+            "if at least one authorization of RDPDR is missing (Printer, ComPort, SmartCard, Drive), then this option is considered enabled."
     });
 
     _.member(MemberInfo{
@@ -1106,6 +1109,10 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         },
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
+        .desc =
+            "Actives conversion of RemoteApp target session to desktop session.\n"
+            "Otherwise, Alternate Shell will be used.\n"
+            "Some Windows Shell features may be unavailable in one or both cases, and applications using them may behave differently."
     });
 
     _.member(MemberInfo{

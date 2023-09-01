@@ -106,7 +106,11 @@ cfg::mod_rdp::use_client_provided_remoteapp ⇐ mod_rdp:use_client_provided_remo
 cfg::mod_rdp::use_native_remoteapp_capability ⇐ mod_rdp:use_native_remoteapp_capability   [bool]
     As far as possible, use native RemoteApp capability
 cfg::mod_rdp::enable_rdpdr_data_analysis ⇐ mod_rdp:enable_rdpdr_data_analysis   [bool]
+    Adds RDPDR channel metadata to session logs. Disabling this option makes shared disks more responsive, but metadata will no longer be collected.if at least one authorization of RDPDR is missing (Printer, ComPort, SmartCard, Drive), then this option is considered enabled.
 cfg::mod_rdp::wabam_uses_translated_remoteapp ⇐ mod_rdp:wabam_uses_translated_remoteapp   [bool]
+    Actives conversion of RemoteApp target session to desktop session.
+    Otherwise, Alternate Shell will be used.
+    Some Windows Shell features may be unavailable in one or both cases, and applications using them may behave differently.
 cfg::mod_rdp::enable_remotefx ⇐ mod_rdp:enable_remotefx   [bool]
     Enables support of the remoteFX codec.
 cfg::mod_rdp::enable_restricted_admin_mode ⇐ mod_rdp:enable_restricted_admin_mode   [bool]
@@ -443,7 +447,8 @@ cfg::mod_vnc::enable_ipv6 ⇐ mod_vnc:enable_ipv6   [bool]
     Enable target connection on ipv6
 
 cfg::session_log::enable_session_log_file ⇐ enable_session_log_file   [bool]
-    Saves session logs to a .log file
+    Saves session logs to a .log file.
+    The format is a date followed by onr or more key="value" separated by a space on the same line.
 cfg::session_log::keyboard_input_masking_level ⇐ session_log:keyboard_input_masking_level   [KeyboardInputMaskingLevel]
     Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.
       0: keyboard input are not masked
