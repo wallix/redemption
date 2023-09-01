@@ -319,7 +319,7 @@ _.section("globals", [&]
 
     _.member(MemberInfo{
         .name = "enable_transparent_mode",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::iptables),
         .desc = "Allow Transparent mode.",
     });
@@ -333,13 +333,13 @@ _.section("globals", [&]
 
     _.member(MemberInfo{
         .name = "is_rec",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
     _.member(MemberInfo{
         .name = "enable_bitmap_update",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = ini_only(no_acl),
         .desc = "Support of Bitmap Update.",
     });
@@ -348,7 +348,7 @@ _.section("globals", [&]
     // TODO move to [internal_mod]
     _.member(MemberInfo{
         .name = "enable_close_box",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl),
         .desc =
             "Show close screen.\n"
@@ -368,7 +368,7 @@ _.section("globals", [&]
     // TODO rename to enable_end_time_warning_osd ?
     _.member(MemberInfo{
         .name = "enable_osd",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
             "Displays a reminder box at the top of the session when a session duration is configured.\n"
@@ -377,7 +377,7 @@ _.section("globals", [&]
 
     _.member(MemberInfo{
         .name = "enable_osd_display_remote_target",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
         .desc = "Show target address with F12.",
     });
@@ -393,7 +393,7 @@ _.section("globals", [&]
     // TODO move to [client]
     _.member(MemberInfo{
         .name = "allow_using_multiple_monitors",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl),
         .desc = "Sends the client screen count to the server. Not supported in VNC.",
     });
@@ -401,7 +401,7 @@ _.section("globals", [&]
     // TODO move to [client] / [mod_rdp]
     _.member(MemberInfo{
         .name = "allow_scale_factor",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl),
         .desc =
             "Sends Scale & Layout configuration to the server.\n"
@@ -412,14 +412,14 @@ _.section("globals", [&]
 
     _.member(MemberInfo{
         .name = "bogus_refresh_rect",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Needed to refresh screen of Windows Server 2012.",
     });
 
     _.member(MemberInfo{
         .name = "large_pointer_support",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
             "Enable support for pointers of size 96x96.\n"
@@ -429,7 +429,7 @@ _.section("globals", [&]
     // TODO move to [client]
     _.member(MemberInfo{
         .name = "unicode_keyboard_event_support",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl),
         .desc =
             "Allows the client to use unicode characters.\n"
@@ -444,7 +444,7 @@ _.section("globals", [&]
 
     _.member(MemberInfo{
         .name = "experimental_enable_serializer_data_block_size_limit",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
@@ -460,7 +460,7 @@ _.section("globals", [&]
 
     _.member(MemberInfo{
         .name = "enable_ipv6",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl),
         .desc =
             "⚠ Service need to be manually restarted to take changes into account\n\n"
@@ -479,7 +479,7 @@ _.section("session_log", [&]
 {
     _.member(MemberInfo{
         .name = "enable_session_log_file",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
         .desc =
             "Saves session logs to a .log file.\n"
@@ -514,7 +514,7 @@ _.section("client", [&]
 
     _.member(MemberInfo{
         .name = "ignore_logon_password",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "If true, ignore password provided by RDP client, user need do login manually.",
     });
@@ -555,7 +555,7 @@ _.section("client", [&]
 
     _.member(MemberInfo{
         .name = "auto_adjust_performance_flags",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
             "If enabled, avoid automatically font smoothing in recorded session.\n"
@@ -572,14 +572,14 @@ _.section("client", [&]
 
     _.member(MemberInfo{
         .name = "tls_fallback_legacy",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl),
         .desc = "Fallback to RDP Legacy Encryption if client does not support TLS.",
     });
 
     _.member(MemberInfo{
         .name = "tls_support",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl),
         .desc = "Enable TLS between client and proxy.",
     });
@@ -600,7 +600,7 @@ _.section("client", [&]
 
     _.member(MemberInfo{
         .name = "show_common_cipher_list",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .tags = TagList::Debug,
         .desc = "Show in the logs the common cipher list supported by client and server",
@@ -609,14 +609,14 @@ _.section("client", [&]
 
     _.member(MemberInfo{
         .name = "enable_nla",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Needed for primary NTLM or Kerberos connections over NLA.",
     });
 
     _.member(MemberInfo{
         .name = "disable_tsk_switch_shortcuts",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
         .desc = "If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences.",
     });
@@ -635,28 +635,28 @@ _.section("client", [&]
 
     _.member(MemberInfo{
         .name = "persistent_disk_bitmap_cache",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Persistent Disk Bitmap Cache on the front side.",
     });
 
     _.member(MemberInfo{
         .name = "cache_waiting_list",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
     });
 
     _.member(MemberInfo{
         .name = "persist_bitmap_cache_on_disk",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "If enabled, the contents of Persistent Bitmap Caches are stored on disk.",
     });
 
     _.member(MemberInfo{
         .name = "bitmap_compression",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Enable Bitmap Compression when supported by the RDP client.",
     });
@@ -664,14 +664,14 @@ _.section("client", [&]
     // TODO remove ?
     _.member(MemberInfo{
         .name = "fast_path",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = ini_only(no_acl),
         .desc = "Enables support of Client Fast-Path Input Event PDUs.",
     });
 
     _.member(MemberInfo{
         .name = "enable_suppress_output",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl),
         .desc =
             "Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.\n"
@@ -690,14 +690,14 @@ _.section("client", [&]
 
     _.member(MemberInfo{
         .name = "show_target_user_in_f12_message",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl),
         .desc = "Show in session the target username when F12 is pressed",
     });
 
     _.member(MemberInfo{
         .name = "bogus_ios_glyph_support_level",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl),
         .desc = "Same effect as \"Transform glyph to bitmap\", but only for RDP client on iOS platform.",
     });
@@ -705,7 +705,7 @@ _.section("client", [&]
     // TODO should be merged with disabled_orders
     _.member(MemberInfo{
         .name = "transform_glyph_to_bitmap",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Some RDP clients advertise glyph support, but this does not work properly with the RDP proxy. This option replaces glyph orders with bitmap orders."
     });
@@ -718,14 +718,14 @@ _.section("client", [&]
 
     _.member(MemberInfo{
         .name = "enable_osd_4_eyes",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl),
         .desc = "Enables display of message informing user that his/her session is being audited.",
     });
 
     _.member(MemberInfo{
         .name = "enable_remotefx",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Enable front remoteFx",
     });
@@ -760,7 +760,7 @@ _.section("remote_program", [&]
 {
     _.member(MemberInfo{
         .name = "allow_resize_hosted_desktop",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl),
         .desc =
             "Allows resizing of a desktop session opened in a RemoteApp window.\n"
@@ -778,7 +778,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "disconnect_on_logon_user_change",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
@@ -808,7 +808,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "enable_kerberos",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc =
             "If enabled, NLA authentication will try Kerberos before NTLM.\n"
@@ -838,7 +838,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "show_common_cipher_list",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .tags = TagList::Debug,
         .desc = "Show in the logs the common cipher list supported by client and server",
@@ -846,21 +846,21 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "persistent_disk_bitmap_cache",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Persistent Disk Bitmap Cache on the mod side.",
     });
 
     _.member(MemberInfo{
         .name = "cache_waiting_list",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
     });
 
     _.member(MemberInfo{
         .name = "persist_bitmap_cache_on_disk",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "If enabled, the contents of Persistent Bitmap Caches are stored on disk.",
     });
@@ -904,7 +904,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
     // TODO remove ?
     _.member(MemberInfo{
         .name = "fast_path",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = ini_only(no_acl),
         .desc = "Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!",
     });
@@ -916,7 +916,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             .connpolicy = "server_redirection",
             .display = "Enable Server Redirection Support",
         },
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "The secondary target connection can be redirected to a specific session on another RDP server.",
     });
@@ -946,7 +946,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "ignore_auth_channel",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
 
@@ -984,21 +984,21 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "use_client_provided_alternate_shell",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "As far as possible, use client-provided initial program (Alternate Shell)",
     });
 
     _.member(MemberInfo{
         .name = "use_client_provided_remoteapp",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "As far as possible, use client-provided remote program (RemoteApp)",
     });
 
     _.member(MemberInfo{
         .name = "use_native_remoteapp_capability",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "As far as possible, use native RemoteApp capability",
     });
@@ -1041,7 +1041,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "hide_client_name",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl),
         .desc =
             "Do not transmit client machine name to RDP server.\n"
@@ -1050,21 +1050,21 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "use_license_store",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Stores CALs issued by the terminal servers.",
     });
 
     _.member(MemberInfo{
         .name = "bogus_ios_rdpdr_virtual_channel",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Disable shared disk for RDP client on iOS platform.",
     });
 
     _.member(MemberInfo{
         .name = "enable_rdpdr_data_analysis",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .desc =
             "Adds RDPDR channel metadata to session logs. Disabling this option makes shared disks more responsive, but metadata will no longer be collected."
@@ -1091,13 +1091,13 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "log_only_relevant_clipboard_activities",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
     });
 
     _.member(MemberInfo{
         .name = "split_domain",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Force to split target domain and username with '@' separator.",
     });
@@ -1107,7 +1107,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             .all = "wabam_uses_translated_remoteapp",
             .display = "Enable translated RemoteApp with AM",
         },
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc =
             "Actives conversion of RemoteApp target session to desktop session.\n"
@@ -1117,21 +1117,21 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "session_shadowing_support",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Enables Session Shadowing Support.",
     });
 
     _.member(MemberInfo{
         .name = "enable_remotefx",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "Enables support of the remoteFX codec.",
     });
 
     _.member(MemberInfo{
         .name = "enable_restricted_admin_mode",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc =
             "Connect to the server in Restricted Admin mode.\n"
@@ -1141,7 +1141,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "force_smartcard_authentication",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_and_jh, L),
         .desc =
             "NLA will be disabled.\n"
@@ -1152,7 +1152,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "enable_ipv6",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_and_jh, L),
         .desc = "Enable target connection on ipv6",
     });
@@ -1169,7 +1169,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "auto_reconnection_on_losing_target_link",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .desc =
             "Allows the proxy to automatically reconnect to secondary target when a network error occurs.\n"
@@ -1178,7 +1178,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "allow_session_reconnection_by_shortcut",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .tags = TagList::Workaround,
         .desc =
@@ -1196,7 +1196,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "forward_client_build_number",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .desc =
             "Forward the build number advertised by the client to the server. "
@@ -1205,7 +1205,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "bogus_monitor_layout_treatment",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "To resolve the session freeze issue with Windows 7/Windows Server 2008 target.",
     });
@@ -1265,7 +1265,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "use_session_probe_to_launch_remote_program",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_without_jh, L),
         .desc =
             "This option only has an effect in RemoteApp sessions (RDS meaning).\n"
@@ -1276,7 +1276,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "replace_null_pointer_by_default_pointer",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .tags = TagList::Workaround,
         .desc = "Replace an empty mouse pointer with normal pointer.",
@@ -1316,7 +1316,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "use_smart_launcher",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_without_jh, L),
         .desc =
             "This parameter only has an effect in Desktop sessions.\n"
@@ -1326,7 +1326,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "enable_launch_mask",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc =
             "This parameter enables or disables the Session Probe’s launch mask.\n"
@@ -1361,7 +1361,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "start_launch_timeout_timer_only_after_logon",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "If enabled, the Launch timeout countdown timer will be started only after user logged in Windows. Otherwise, the countdown timer will be started immediately after RDP protocol connexion.",
     });
@@ -1386,7 +1386,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "end_disconnected_session",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc =
             "The behavior of this parameter is different between the Desktop session and the RemoteApp session (RDS meaning). But in each case, the purpose of enabling this parameter is to not leave disconnected sessions in a state unusable by the RDP proxy.\n"
@@ -1398,14 +1398,14 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "enable_autodeployed_appdriver_affinity",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_without_jh, L),
         .desc = "If enabled, disconnected auto-deployed Application Driver session will automatically terminate by Session Probe."
     });
 
     _.member(MemberInfo{
         .name = "enable_log",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc =
             "This parameter allows you to enable the Windows-side logging of Session Probe.\n"
@@ -1414,7 +1414,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "enable_log_rotation",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc =
             "This parameter enables or disables the Log files rotation for Windows-side logging of Session Probe.\n"
@@ -1505,7 +1505,7 @@ _.section("session_probe", [&]
             .all = "smart_launcher_enable_wabam_affinity",
             .display = "Enable Smart launcher with AM affinity",
         },
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc =
             "Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the 'Smart launcher clipboard initialization delay' parameter.\n"
@@ -1524,7 +1524,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "enable_crash_dump",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .tags = TagList::Debug,
         .desc =
@@ -1588,7 +1588,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "ignore_ui_less_processes_during_end_of_session_check",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc =
             "For application session only.\n"
@@ -1607,7 +1607,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "childless_window_as_unidentified_input_field",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc =
             "This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log).\n"
@@ -1630,7 +1630,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "update_disabled_features",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc =
             "This parameter is used when resuming a session hosting a existing Session Probe.\n"
@@ -1655,7 +1655,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "enable_bestsafe_interaction",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc =
             "This parameter has no effect on the device without BestSafe.\n"
@@ -1688,7 +1688,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "public_session",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
         .desc =
             "If enabled, the session, once disconnected, can be resumed by another Bastion user.\n"
@@ -1722,7 +1722,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "customize_executable_name",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
             "If enabled, a string of random characters will be added to the name of the executable of Session Probe.\n"
@@ -1735,7 +1735,7 @@ _.section("session_probe", [&]
             .all = "allow_multiple_handshake",
             .display = "Allow multiple handshakes",
         },
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
             "If enabled, the RDP Proxy accepts to perform the handshake several times during the same RDP session. "
@@ -1744,7 +1744,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "at_end_of_session_freeze_connection_and_wait",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = ini_only(no_acl),
         .desc =
             "If disabled, the RDP proxy disconnects from the session when the Session Probe reports that the session is about to close (old behavior).\n"
@@ -1753,13 +1753,13 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "enable_cleaner",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = ini_only(no_acl),
     });
 
     _.member(MemberInfo{
         .name = "clipboard_based_launcher_reset_keyboard_status",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = ini_only(no_acl),
     });
 
@@ -1781,7 +1781,7 @@ _.section("session_probe", [&]
 
     _.member(MemberInfo{
         .name = "pause_if_session_is_disconnected",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
         .desc =
             "If enabled, Session Probe activity will be minimized when the user is disconnected from the session. No metadata will be collected during this time.\n"
@@ -1829,7 +1829,7 @@ _.section(names{"server_cert"}, [&]
 
     _.member(MemberInfo{
         .name = "enable_external_validation",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
@@ -1851,14 +1851,14 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
 {
     _.member(MemberInfo{
         .name = "clipboard_up",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L)),
         .desc = "Enable or disable the clipboard from client (client to server).",
     });
 
     _.member(MemberInfo{
         .name = "clipboard_down",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L)),
         .desc = "Enable or disable the clipboard from server (server to client).",
     });
@@ -1902,13 +1902,13 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
 
     _.member(MemberInfo{
         .name = "server_is_macos",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(vnc, L),
     });
 
     _.member(MemberInfo{
         .name = "server_unix_alt",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(vnc, L),
         .desc = "When disabled, Ctrl + Alt becomes AltGr (Windows behavior)",
     });
@@ -1916,13 +1916,13 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
     // TODO should be with encoding
     _.member(MemberInfo{
         .name = "support_cursor_pseudo_encoding",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(vnc, L),
     });
 
     _.member(MemberInfo{
         .name = "enable_ipv6",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(vnc, L),
         .desc = "Enable target connection on ipv6" ,
     });
@@ -1932,7 +1932,7 @@ _.section(names{"vnc_over_ssh"}, [&]
 {
     _.member(MemberInfo{
         .name = "enable",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(vnc, L, spec::acl_only),
     });
 
@@ -1998,21 +1998,21 @@ _.section("file_verification", [&]
 
     _.member(MemberInfo{
         .name = "enable_up",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_and_jh, L),
         .desc = "Enable use of ICAP service for file verification on upload.",
     });
 
     _.member(MemberInfo{
         .name = "enable_down",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_and_jh, L),
         .desc = "Enable use of ICAP service for file verification on download.",
     });
 
     _.member(MemberInfo{
         .name = "clipboard_text_up",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_and_jh, L),
         .desc =
             "Verify text data via clipboard from client to server.\n"
@@ -2021,7 +2021,7 @@ _.section("file_verification", [&]
 
     _.member(MemberInfo{
         .name = "clipboard_text_down",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_and_jh, L),
         .desc =
             "Verify text data via clipboard from server to client\n"
@@ -2030,7 +2030,7 @@ _.section("file_verification", [&]
 
     _.member(MemberInfo{
         .name = "block_invalid_file_up",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_and_jh, L),
         .desc =
             "Block file transfer from client to server on invalid file verification.\n"
@@ -2039,7 +2039,7 @@ _.section("file_verification", [&]
 
     _.member(MemberInfo{
         .name = "block_invalid_file_down",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = connpolicy(rdp_and_jh, L),
         .desc =
             "Block file transfer from server to client on invalid file verification.\n"
@@ -2048,7 +2048,7 @@ _.section("file_verification", [&]
 
     _.member(MemberInfo{
         .name = "block_invalid_clipboard_text_up",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = ini_only(no_acl),
         .desc =
             "Block text transfer from client to server on invalid text verification.\n"
@@ -2057,7 +2057,7 @@ _.section("file_verification", [&]
 
     _.member(MemberInfo{
         .name = "block_invalid_clipboard_text_down",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = ini_only(no_acl),
         .desc =
             "Block text transfer from server to client on invalid text verification.\n"
@@ -2066,7 +2066,7 @@ _.section("file_verification", [&]
 
     _.member(MemberInfo{
         .name = "log_if_accepted",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .desc = "Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged.",
     });
@@ -2129,21 +2129,21 @@ for (char const* section_name : {"icap_server_down", "icap_server_up"}) {
 
         _.member(MemberInfo{
             .name = "tls",
-            .value = value<bool>(false),
+            .value = value(false),
             .spec = spec::external(),
             .desc = "ICAP server uses tls",
         });
 
         _.member(MemberInfo{
             .name = "enable_x_context",
-            .value = value<bool>(true),
+            .value = value(true),
             .spec = spec::external(spec::advanced),
             .desc = "Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server",
         });
 
         _.member(MemberInfo{
             .name = "filename_percent_encoding",
-            .value = value<bool>(false),
+            .value = value(false),
             .spec = spec::external(spec::advanced),
             .desc = "Filename sent to ICAP as percent encoding",
         });
@@ -2160,14 +2160,14 @@ _.section("mod_replay", [&]
 
     _.member(MemberInfo{
         .name = "on_end_of_data",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = ini_only(no_acl),
         .desc = "0 - Wait for Escape, 1 - End session",
     });
 
     _.member(MemberInfo{
         .name = "replay_on_loop",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
         .desc = "0 - replay once, 1 - loop replay",
     });
@@ -2201,7 +2201,7 @@ _.section("ocr", [&]
 
     _.member(MemberInfo{
         .name = "on_title_bar_only",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Checks shape and color to determine if the text is on a title bar",
     });
@@ -2332,7 +2332,7 @@ _.section("video", [&]
 
     _.member(MemberInfo{
         .name = "notimestamp",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Remove the top left banner that adds the date of the video",
     });
@@ -2346,14 +2346,14 @@ _.section("video", [&]
     // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
     _.member(MemberInfo{
         .name = "play_video_with_corrupted_bitmap",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Needed to play a video with corrupted Bitmap Update.",
     });
 
     _.member(MemberInfo{
         .name = "allow_rt_without_recording",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl),
         .desc = "Allow real-time view (4 eyes) without session recording enabled in the authorization",
     });
@@ -2403,13 +2403,13 @@ _.section("audit", [&]
 {
     _.member(MemberInfo{
         .name = "rt_display",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
     _.member(MemberInfo{
         .name = "use_redis",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = ini_only(no_acl),
     });
 
@@ -2445,7 +2445,7 @@ _.section("audit", [&]
 
     _.member(MemberInfo{
         .name = "redis_use_tls",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
@@ -2487,14 +2487,14 @@ _.section("websocket", [&]
 {
     _.member(MemberInfo{
         .name = "enable_websocket",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = ini_only(no_acl),
         .desc = "Enable websocket protocol (ws or wss with use_tls=1)",
     });
 
     _.member(MemberInfo{
         .name = "use_tls",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = ini_only(no_acl),
         .desc = "Use TLS with websocket (wss)",
     });
@@ -2614,7 +2614,7 @@ _.section("debug", [&]
 
     _.member(MemberInfo{
         .name = "config",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Log unknown members or sections",
     });
@@ -2653,7 +2653,7 @@ _.section("internal_mod", [&]
 {
     _.member(MemberInfo{
         .name = "enable_target_field",
-        .value = value<bool>(true),
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Enable target edit field in login page.",
     });
@@ -2724,7 +2724,7 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "selector",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
@@ -2853,13 +2853,13 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "accept_message",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
     _.member(MemberInfo{
         .name = "display_message",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
@@ -2871,7 +2871,7 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "keepalive",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
@@ -2898,7 +2898,7 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "authentication_challenge",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
@@ -2934,7 +2934,7 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "showform",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
@@ -2952,13 +2952,13 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "try_alternate_target",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
     _.member(MemberInfo{
         .name = "has_more_target",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
@@ -3000,7 +3000,7 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "disconnect_reason_ack",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
@@ -3012,19 +3012,19 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "recording_started",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
     _.member(MemberInfo{
         .name = "rt_ready",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_rw(reset_back_to_selector, L),
     });
 
     _.member(MemberInfo{
         .name = "sharing_ready",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
@@ -3114,7 +3114,7 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "is_wabam",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
@@ -3140,7 +3140,7 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "rd_shadow_available",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = proxy_to_acl(reset_back_to_selector),
     });
 
@@ -3194,7 +3194,7 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "session_sharing_enable_control",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
 
@@ -3242,7 +3242,7 @@ _.section("context", [&]
 
     _.member(MemberInfo{
         .name = "rail_module_host_mod_is_active",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = no_acl,
     });
 
@@ -3275,7 +3275,7 @@ _.section("theme", [&]
 {
     _.member(MemberInfo{
         .name = "enable_theme",
-        .value = value<bool>(false),
+        .value = value(false),
         .spec = global_spec(no_acl),
         .desc = "Enable custom theme color configuration",
     });

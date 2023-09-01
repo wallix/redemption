@@ -1529,23 +1529,26 @@ struct ValueFromEnum
     }
 };
 
-template<class T, class U = T, class... TConnPolicy>
+template<class T = void, class U = T, class... TConnPolicy>
 ValueAsStrings value(U const& value = T(), TConnPolicy const&... conn_policy_value)
 {
     static_assert(!std::is_enum_v<T>, "uses EnumAsString or ValueFromEnum");
     TYPE_REQUIEREMENT(T);
 
+    using ty = std::conditional_t<std::is_void_v<T> && std::is_same_v<U, bool>, bool, T>;
+    static_assert(!std::is_void_v<ty>, "T not specified");
+
     check_policy({conn_policy_value.policy_type...});
 
-    auto ret = compute_value_as_strings(type_<T>(), value);
+    auto ret = compute_value_as_strings(type_<ty>(), value);
 
     (..., (ret.values.connection_policies.push_back({
         conn_policy_value.policy_type,
-        compute_value_as_strings(type_<T>(), conn_policy_value.value).values.py,
+        compute_value_as_strings(type_<ty>(), conn_policy_value.value).values.py,
         conn_policy_value.forced
     })));
 
-    ret.align_of = alignof(T);
+    ret.align_of = alignof(ty);
     return ret;
 }
 
