@@ -970,168 +970,79 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                     adjusted_index++;
                 }
 
-                // Inject a new channel for file system virtual channel (rdpdr)
-                if (!has_rdpdr_channel && this->has_managed_drive) {
-                    LOG(LOG_INFO, "Inject rdpdr");
-
-                    ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
-                            sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                            "%s", channel_names::rdpdr.c_str());
-                    cs_net.channelDefArray[cs_net.channelCount].options =
-                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
-                        | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
+                auto push_channel = [this, &cs_net](CHANNELS::ChannelNameId name, uint32_t options) {
+                    memcpy(cs_net.channelDefArray[cs_net.channelCount].name, name.c_str(), 8);
+                    cs_net.channelDefArray[cs_net.channelCount].options = options;
                     CHANNELS::ChannelDef def;
-                    def.name = channel_names::rdpdr;
+                    def.name = name;
                     def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                    if (bool(this->verbose & RDPVerbose::channels)){
+                    if (bool(this->verbose & RDPVerbose::channels)) {
                         def.log(cs_net.channelCount);
                     }
                     this->mod_channel_list.push_back(def);
                     cs_net.channelCount++;
+                };
+
+                // Inject a new channel for file system virtual channel (rdpdr)
+                if (!has_rdpdr_channel && this->has_managed_drive) {
+                    LOG(LOG_INFO, "Inject rdpdr");
+                    push_channel(channel_names::rdpdr,
+                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                        | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP);
                 }
 
                 // Inject a new channel for clipboard channel (cliprdr)
                 if (!has_cliprdr_channel && this->enable_session_probe && this->session_probe_use_clipboard_based_launcher) {
                     LOG(LOG_INFO, "Inject cliprdr");
-                    ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
-                            sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                            "%s", channel_names::cliprdr.c_str());
-                    cs_net.channelDefArray[cs_net.channelCount].options =
+                    push_channel(channel_names::cliprdr,
                           GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                         | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
-                        | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL;
-                    CHANNELS::ChannelDef def;
-                    def.name = channel_names::cliprdr;
-                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                    if (bool(this->verbose & RDPVerbose::channels)){
-                        def.log(cs_net.channelCount);
-                    }
-                    this->mod_channel_list.push_back(def);
-                    cs_net.channelCount++;
+                        | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL);
                 }
 
                 // The RDPDR channel advertised by the client is ONLY accepted by the RDP
                 //  server 2012 if the RDPSND channel is also advertised.
                 if (!has_rdpsnd_channel && this->has_managed_drive) {
                     LOG(LOG_INFO, "Inject rdpsnd");
-                    ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
-                            sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                            "%s", channel_names::rdpsnd.c_str());
-                    cs_net.channelDefArray[cs_net.channelCount].options =
+                    push_channel(channel_names::rdpsnd,
                           GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
-                        | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
-                    CHANNELS::ChannelDef def;
-                    def.name = channel_names::rdpsnd;
-                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                    if (bool(this->verbose & RDPVerbose::channels)){
-                        def.log(cs_net.channelCount);
-                    }
-                    this->mod_channel_list.push_back(def);
-                    cs_net.channelCount++;
+                        | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP);
                 }
 
                 // Inject a new channel for auth_channel virtual channel (wablauncher)
                 if (this->enable_auth_channel) {
                     LOG(LOG_INFO, "Inject auth_channel");
                     assert(this->auth_channel.c_str()[0]);
-                    memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel.c_str(), 8);
-                    cs_net.channelDefArray[cs_net.channelCount].options =
-                        GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
-                    CHANNELS::ChannelDef def;
-                    def.name = this->auth_channel;
-                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                    if (bool(this->verbose & RDPVerbose::channels)){
-                        def.log(cs_net.channelCount);
-                    }
-                    this->mod_channel_list.push_back(def);
-                    cs_net.channelCount++;
+                    push_channel(this->auth_channel,
+                        GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED);
                 }
 
                 // Inject a new channel for checkout_channel virtual channel
                 if (this->checkout_channel.c_str()[0]) {
                     LOG(LOG_INFO, "Inject checkout channel");
-                    memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->checkout_channel.c_str(), 8);
-                    cs_net.channelDefArray[cs_net.channelCount].options =
-                        GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
-                    CHANNELS::ChannelDef def;
-                    def.name = this->checkout_channel;
-                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                    if (bool(this->verbose & RDPVerbose::channels)){
-                        def.log(cs_net.channelCount);
-                    }
-                    this->mod_channel_list.push_back(def);
-                    cs_net.channelCount++;
+                    push_channel(this->checkout_channel,
+                        GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED);
                 }
 
                 if (this->enable_session_probe) {
                     LOG(LOG_INFO, "Enable session probe");
-                    memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::sespro.c_str(), 8);
-                    cs_net.channelDefArray[cs_net.channelCount].options =
-                        GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
-                    CHANNELS::ChannelDef def;
-                    def.name = channel_names::sespro;
-                    def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                    if (bool(this->verbose & RDPVerbose::channels)){
-                        def.log(cs_net.channelCount);
-                    }
-                    this->mod_channel_list.push_back(def);
-                    cs_net.channelCount++;
+                    push_channel(channel_names::sespro,
+                        GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED);
                 }
 
                 if (this->convert_remoteapp_to_desktop) {
                     LOG(LOG_INFO, "Convert remote app to desktop");
-                    {
-                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::rail.c_str(), 8);
-                        cs_net.channelDefArray[cs_net.channelCount].options =
+                    for (auto name : {
+                        channel_names::rail,
+                        channel_names::rail_wi,
+                        channel_names::rail_ri,
+                    }) {
+                        push_channel(name,
                               GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                             | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
                             | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
                             | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                            | GCC::UserData::CSNet::REMOTE_CONTROL_PERSISTENT;
-                        CHANNELS::ChannelDef def;
-                        def.name = channel_names::rail;
-                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                        if (bool(this->verbose & RDPVerbose::channels)){
-                            def.log(cs_net.channelCount);
-                        }
-                        this->mod_channel_list.push_back(def);
-                        cs_net.channelCount++;
-                    }
-
-                    {
-                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::rail_wi.c_str(), 8);
-                        cs_net.channelDefArray[cs_net.channelCount].options =
-                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
-                            | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
-                            | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
-                            | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                            | GCC::UserData::CSNet::REMOTE_CONTROL_PERSISTENT;
-                        CHANNELS::ChannelDef def;
-                        def.name = channel_names::rail_wi;
-                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                        if (bool(this->verbose & RDPVerbose::channels)){
-                            def.log(cs_net.channelCount);
-                        }
-                        this->mod_channel_list.push_back(def);
-                        cs_net.channelCount++;
-                    }
-
-                    {
-                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::rail_ri.c_str(), 8);
-                        cs_net.channelDefArray[cs_net.channelCount].options =
-                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
-                            | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
-                            | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
-                            | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                            | GCC::UserData::CSNet::REMOTE_CONTROL_PERSISTENT;
-                        CHANNELS::ChannelDef def;
-                        def.name = channel_names::rail_ri;
-                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                        if (bool(this->verbose & RDPVerbose::channels)){
-                            def.log(cs_net.channelCount);
-                        }
-                        this->mod_channel_list.push_back(def);
-                        cs_net.channelCount++;
+                            | GCC::UserData::CSNet::REMOTE_CONTROL_PERSISTENT);
                     }
                 }
 
