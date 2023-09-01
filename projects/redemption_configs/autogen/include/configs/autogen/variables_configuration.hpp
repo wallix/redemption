@@ -796,7 +796,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::range<std::chrono::milliseconds, 1000, 10000>;
         type value { 3000 };
     };
-    /// This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default. <br/>
+    /// This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: all_target_mod:tcp_user_timeout <br/>
@@ -1353,7 +1353,7 @@ namespace cfg
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: mod_rdp:wabam_uses_translated_remoteapp <br/>
-    /// displayName: Enable translated RemoteAPP with AM <br/>
+    /// displayName: Enable translated RemoteApp with AM <br/>
     /// default: false <br/>
     struct mod_rdp::wabam_uses_translated_remoteapp {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
@@ -1480,7 +1480,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// The delay in milliseconds between a session disconnection and the automatic reconnection that follows. <br/>
+    /// The delay between a session disconnection and the automatic reconnection that follows. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: mod_rdp:session_reconnection_delay <br/>
@@ -1548,7 +1548,7 @@ namespace cfg
         using mapped_type = std::string;
         type value {  };
     };
-    /// Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed. <br/>
+    /// Delay before showing disconnect message after the last RemoteApp window is closed. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: mod_rdp:remote_programs_disconnect_message_delay <br/>

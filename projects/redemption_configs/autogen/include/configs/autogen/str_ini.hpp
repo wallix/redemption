@@ -312,7 +312,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #connection_establishment_timeout = 3000
 
-# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+# This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
 # (in milliseconds | min = 0, max = 3600000)
 #_advanced
 # (acl config: proxy ⇐ all_target_mod:tcp_user_timeout)
@@ -567,7 +567,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Otherwise, Alternate Shell will be used.
 # Some Windows Shell features may be unavailable in one or both cases, and applications using them may behave differently.
 # (type: boolean (0/no/false or 1/yes/true))
-#_display_name=Enable translated RemoteAPP with AM
+#_display_name=Enable translated RemoteApp with AM
 # (acl config: proxy ⇐ mod_rdp:wabam_uses_translated_remoteapp)
 #wabam_uses_translated_remoteapp = 0
 
@@ -626,7 +626,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ mod_rdp:allow_session_reconnection_by_shortcut)
 #allow_session_reconnection_by_shortcut = 0
 
-# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
+# The delay between a session disconnection and the automatic reconnection that follows.
 # (in milliseconds | min = 0, max = 15000)
 #_advanced
 # (acl config: proxy ⇐ mod_rdp:session_reconnection_delay)
@@ -643,7 +643,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ mod_rdp:bogus_monitor_layout_treatment)
 #bogus_monitor_layout_treatment = 0
 
-# Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed.
+# Delay before showing disconnect message after the last RemoteApp window is closed.
 # (in milliseconds | min = 3000, max = 120000)
 #_advanced
 # (acl config: proxy ⇐ mod_rdp:remote_programs_disconnect_message_delay)

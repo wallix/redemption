@@ -752,7 +752,7 @@ _.section("all_target_mod", [&]
         .name = "tcp_user_timeout",
         .value = value<types::range<std::chrono::milliseconds, 0, 3'600'000>>(),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
-        .desc = "This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.",
+        .desc = "This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.",
     });
 });
 
@@ -1105,7 +1105,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
     _.member(MemberInfo{
         .name = names{
             .all = "wabam_uses_translated_remoteapp",
-            .display = "Enable translated RemoteAPP with AM",
+            .display = "Enable translated RemoteApp with AM",
         },
         .value = value<bool>(false),
         .spec = connpolicy(rdp_without_jh, L),
@@ -1191,7 +1191,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "session_reconnection_delay",
         .value = value<types::range<std::chrono::milliseconds, 0, 15000>>(0),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
-        .desc = "The delay in milliseconds between a session disconnection and the automatic reconnection that follows.",
+        .desc = "The delay between a session disconnection and the automatic reconnection that follows.",
     });
 
     _.member(MemberInfo{
@@ -1260,7 +1260,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "remote_programs_disconnect_message_delay",
         .value = value<types::range<std::chrono::milliseconds, 3000, 120000>>(3000),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
-        .desc = "Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed.",
+        .desc = "Delay before showing disconnect message after the last RemoteApp window is closed.",
     });
 
     _.member(MemberInfo{

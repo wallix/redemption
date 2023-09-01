@@ -36,7 +36,7 @@ cfg::client::disable_tsk_switch_shortcuts ⇐ disable_tsk_switch_shortcuts   [bo
     If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences.
 
 cfg::all_target_mod::tcp_user_timeout ⇐ all_target_mod:tcp_user_timeout   [std::chrono::milliseconds]
-    This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
+    This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.
     in milliseconds
 
 
@@ -137,7 +137,7 @@ cfg::mod_rdp::allow_session_reconnection_by_shortcut ⇐ mod_rdp:allow_session_r
     This feature should not be used together with the End disconnected session option (section session_probe).
     The keyboard shortcut is fixed and cannot be changed.
 cfg::mod_rdp::session_reconnection_delay ⇐ mod_rdp:session_reconnection_delay   [std::chrono::milliseconds]
-    The delay in milliseconds between a session disconnection and the automatic reconnection that follows.
+    The delay between a session disconnection and the automatic reconnection that follows.
     in milliseconds
 cfg::mod_rdp::forward_client_build_number ⇐ mod_rdp:forward_client_build_number   [bool]
     Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
@@ -156,7 +156,7 @@ cfg::mod_rdp::effective_krb_armoring_user ⇐ effective_krb_armoring_user   [std
 cfg::mod_rdp::effective_krb_armoring_password ⇐ effective_krb_armoring_password   [std::string]
     Effective password to be used for armoring Kerberos tickets.
 cfg::mod_rdp::remote_programs_disconnect_message_delay ⇐ mod_rdp:remote_programs_disconnect_message_delay   [std::chrono::milliseconds]
-    Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed.
+    Delay before showing disconnect message after the last RemoteApp window is closed.
     in milliseconds
 cfg::mod_rdp::use_session_probe_to_launch_remote_program ⇐ mod_rdp:use_session_probe_to_launch_remote_program   [bool]
     This option only has an effect in RemoteApp sessions (RDS meaning).

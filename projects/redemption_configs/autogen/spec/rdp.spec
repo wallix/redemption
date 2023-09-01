@@ -29,7 +29,7 @@ inactivity_timeout = integer(min=0, default=0)
 
 [all_target_mod]
 
-# This parameter allows you to specify max timeout in milliseconds before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.<br/>
+# This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.<br/>
 # (in milliseconds)
 #_advanced
 tcp_user_timeout = integer(min=0, max=3600000, default=0)
@@ -110,7 +110,7 @@ enable_rdpdr_data_analysis = boolean(default=True)
 # Actives conversion of RemoteApp target session to desktop session.
 # Otherwise, Alternate Shell will be used.
 # Some Windows Shell features may be unavailable in one or both cases, and applications using them may behave differently.
-#_display_name=Enable translated RemoteAPP with AM
+#_display_name=Enable translated RemoteApp with AM
 wabam_uses_translated_remoteapp = boolean(default=False)
 
 # Enables support of the remoteFX codec.
@@ -149,7 +149,7 @@ auto_reconnection_on_losing_target_link = boolean(default=False)
 #_advanced
 allow_session_reconnection_by_shortcut = boolean(default=False)
 
-# The delay in milliseconds between a session disconnection and the automatic reconnection that follows.<br/>
+# The delay between a session disconnection and the automatic reconnection that follows.<br/>
 # (in milliseconds)
 #_advanced
 session_reconnection_delay = integer(min=0, max=15000, default=0)
@@ -177,7 +177,7 @@ krb_armoring_fallback_user = string(default="")
 #_advanced
 krb_armoring_fallback_password = string(default="")
 
-# Delay in milliseconds before showing disconnect message after the last RemoteApp window is closed.<br/>
+# Delay before showing disconnect message after the last RemoteApp window is closed.<br/>
 # (in milliseconds)
 #_advanced
 remote_programs_disconnect_message_delay = integer(min=3000, max=120000, default=3000)
