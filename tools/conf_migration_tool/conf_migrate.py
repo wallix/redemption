@@ -10,7 +10,7 @@
 from shutil import copyfile
 from enum import IntEnum
 from typing import (List, Tuple, Dict, Optional, Union, Iterable,
-                    NamedTuple, Generator, Callable)
+                    Sequence, NamedTuple, Generator, Callable)
 
 import os
 import re
@@ -234,20 +234,20 @@ def migration_def_to_actions(fragments: Iterable[ConfigurationFragment],
     return renamed_sections, renamed_keys, moved_keys, removed_sections, removed_keys
 
 
-def fragments_to_spans_of_sections(fragments: Iterable[ConfigurationFragment]) -> Dict[str, List[Tuple[int, int]]]:
+def fragments_to_spans_of_sections(fragments: Iterable[ConfigurationFragment]) -> Dict[str, List[Sequence[int]]]:
     start = 0
     section = ''
-    section_spans: Dict[str, List[Tuple[int, int]]] = dict()
+    section_spans: Dict[str, List[Sequence[int]]] = dict()
 
     i = 0
     for i, fragment in enumerate(fragments):
         if fragment.kind == ConfigKind.Section:
             if start < i-1:
-                section_spans.setdefault(section, []).append((start, i-1))
+                section_spans.setdefault(section, []).append(range(start, i-1))
             section = fragment.value1
             start = i
     if start < i-1:
-        section_spans.setdefault(section, []).append((start, i))
+        section_spans.setdefault(section, []).append(range(start, i))
 
     return section_spans
 
@@ -264,7 +264,7 @@ def migrate(fragments: List[ConfigurationFragment],
     section_spans = fragments_to_spans_of_sections(fragments)
 
     def iter_from_spans(spans) -> Iterable[int]:
-        return (i for span in spans for i in range(span[0], span[1]))
+        return (i for span in spans for i in span)
 
     def iter_key_fragment(section_name: str,
                           kind: ConfigKind,
@@ -300,14 +300,13 @@ def migrate(fragments: List[ConfigurationFragment],
                 ConfigurationFragment(f'#{fragment.text}', ConfigKind.Comment),)
 
     for old_section, new_section in renamed_sections:
-        spans = section_spans.get(old_section, ())
-        if spans:
-            for istart, _ in spans:
-                reinject_fragments[istart] = (
-                    ConfigurationFragment(f'#{fragments[istart].text}', ConfigKind.Comment),
-                    newline_fragment,
-                    ConfigurationFragment(f'[{new_section}]', ConfigKind.Section, new_section),
-                )
+        for rng in section_spans.get(old_section, ()):
+            istart = rng[0]
+            reinject_fragments[istart] = (
+                ConfigurationFragment(f'#{fragments[istart].text}', ConfigKind.Comment),
+                newline_fragment,
+                ConfigurationFragment(f'[{new_section}]', ConfigKind.Section, new_section),
+            )
 
     added_keys: Dict[str, List[ConfigurationFragment]] = dict()
 

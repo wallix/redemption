@@ -103,10 +103,10 @@ class TestMigration(unittest.TestCase):
         ])
 
         self.assertEqual(fragments_to_spans_of_sections(fragments), {
-            'sec1': [(1, 3)],
-            'sec2': [(4, 6), (10, 15)],
-            'sec3': [(7, 9)],
-            'sec4': [(16, 20)],
+            'sec1': [range(1, 3)],
+            'sec2': [range(4, 6), range(10, 15)],
+            'sec3': [range(7, 9)],
+            'sec4': [range(16, 20)],
         })
 
     def test_migrate(self):
