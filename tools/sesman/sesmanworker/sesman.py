@@ -922,7 +922,7 @@ class Sesman():
             self.shared.get(u'target_device'),
             self.target_service_name,
             self.target_group)
-        if not _status:
+        if not _status or not wab_login:
             return None, TR(u"Invalid user, try again")
 
         self.rdplog.update_context(self.shared.get(u'psid'), wab_login)
