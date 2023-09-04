@@ -242,7 +242,7 @@ namespace FastPath {
                                 : stream.remaining_bytes()
                             );
             // Consumes everything remaining in stream after decrypting was done
-            stream.in_skip_bytes(stream.in_remain());
+            stream.in_skip_remaining();
             if (this->numEvents == 0) {
                 this->numEvents = istream.in_uint8();
             }

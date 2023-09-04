@@ -163,7 +163,7 @@ struct FormatDataResponseReceiveFileList
 
         if (chunk.in_remain()) {
             file_descriptor_stream.rewind();
-            file_descriptor_stream.out_copy_bytes(chunk.in_skip_bytes(chunk.in_remain()));
+            file_descriptor_stream.out_copy_bytes(chunk.in_skip_remaining());
         }
     }
 };

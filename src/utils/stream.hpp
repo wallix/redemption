@@ -229,10 +229,18 @@ public:
         return u8_array_view{this->get_current(), n};
     }
 
-    bytes_view in_skip_bytes(unsigned int n) noexcept {
+    bytes_view in_skip_bytes(unsigned int n) noexcept
+    {
         assert(this->in_check_rem(n));
         bytes_view ret(this->get_current(), n);
         this->p.in_skip_bytes(n);
+        return ret;
+    }
+
+    bytes_view in_skip_remaining() noexcept
+    {
+        bytes_view ret(this->p.p, this->end);
+        this->p.p = this->end;
         return ret;
     }
 

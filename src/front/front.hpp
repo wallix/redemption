@@ -2446,7 +2446,7 @@ public:
             LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
                 "Front::incoming: LIC::LICENSE_INFO");
             LOG(LOG_WARNING, "Front::incoming: got DATA PDU instead of expected license PDU");
-            sec.payload.in_skip_bytes(sec.payload.in_remain());
+            sec.payload.in_skip_remaining();
         break;
         }
         // we don't return a license, instead we return a message saying that no license is OK
@@ -2669,7 +2669,7 @@ public:
             "Front::incoming: channel_data channelId=%u", channel_id);
         LOG(LOG_INFO, "Front is not yet up and running, dropping channel data");
         // TODO: failing should be better than dropping (controled by some flag)
-        stream.in_skip_bytes(stream.in_remain());
+        stream.in_skip_remaining();
     }
 
     void process_data_tpdu_activate(bytes_view tpdu, Callback & cb)
@@ -4065,7 +4065,7 @@ private:
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_UPDATE");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_CONTROL: // 20(0x14) Control PDU (section 2.2.1.15.1)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
@@ -4092,7 +4092,7 @@ private:
             LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                 "Front::process_data: PDUTYPE2_POINTER");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
             {
@@ -4251,7 +4251,7 @@ private:
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_PLAY_SOUND");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_SUPPRESS_OUTPUT:  // Suppress Output PDU (section 2.2.11.3.1)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
@@ -4306,13 +4306,13 @@ private:
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_SHUTDOWN_DENIED");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_SAVE_SESSION_INFO: // Save Session Info PDU (section 2.2.10.1.1)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_SAVE_SESSION_INFO");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_FONTLIST: // 39(0x27) Font List PDU (section 2.2.1.18.1)
         {
@@ -4391,13 +4391,13 @@ private:
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_FONTMAP");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_SET_KEYBOARD_INDICATORS: // Set Keyboard Indicators PDU (section 2.2.8.2.1.1)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_SET_KEYBOARD_INDICATORS");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: // Persistent Key List PDU (section 2.2.1.17.1)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
@@ -4433,49 +4433,49 @@ private:
             }
 
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_BITMAPCACHE_ERROR_PDU");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_SET_KEYBOARD_IME_STATUS: // Set Keyboard IME Status PDU (section 2.2.8.2.2.1)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_SET_KEYBOARD_IME_STATUS");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_OFFSCRCACHE_ERROR_PDU: // Offscreen Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.2)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_OFFSCRCACHE_ERROR_PDU");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_SET_ERROR_INFO_PDU: // Set Error Info PDU (section 2.2.5.1.1)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_SET_ERROR_INFO_PDU");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_DRAWNINEGRID_ERROR_PDU: // DrawNineGrid Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.3)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_DRAWNINEGRID_ERROR_PDU");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_DRAWGDIPLUS_ERROR_PDU: // GDI+ Error PDU (see [MS-RDPEGDI] section 2.2.2.3.4)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_DRAWGDIPLUS_ERROR_PDU");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
         case PDUTYPE2_ARC_STATUS_PDU: // Auto-Reconnect Status PDU (section 2.2.4.1.1)
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_ARC_STATUS_PDU");
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
+            sdata_in.payload.in_skip_remaining();
         break;
 
         default:

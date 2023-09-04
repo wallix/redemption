@@ -766,7 +766,7 @@ namespace LIC
             stream.in_copy_bytes(this->server_random, SEC_RANDOM_SIZE);
 
             // TODO Add missing productInfo field
-            stream.in_skip_bytes(stream.in_remain());
+            stream.in_skip_remaining();
 
             // TODO Never true
             if (stream.in_remain()){

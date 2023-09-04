@@ -511,7 +511,7 @@ void FileToGraphic::interpret_order()
             }
 
             if (!this->stream.check_end()) {
-                auto input = this->stream.in_skip_bytes(this->stream.in_remain());
+                auto input = this->stream.in_skip_remaining();
                 for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
                     InStream in_stream(input);
                     while (in_stream.in_remain()) {
@@ -545,7 +545,7 @@ void FileToGraphic::interpret_order()
             *this->trans_source, this->info.compression_algorithm
         );
 
-        this->stream.in_skip_bytes(this->stream.in_remain());
+        this->stream.in_skip_remaining();
 
         if (!this->meta_ok) {
             this->bmp_cache = std::make_unique<BmpCache>(
@@ -896,7 +896,7 @@ void FileToGraphic::interpret_order()
             this->min_image_frame_dim.h = this->stream.in_uint16_le();
         }
 
-        this->stream.in_skip_bytes(this->stream.in_remain());
+        this->stream.in_skip_remaining();
     break;
 
     case WrmChunkType::KBD_INPUT_MASK:

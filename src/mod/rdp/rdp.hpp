@@ -3027,7 +3027,7 @@ public:
             }
 #endif
 
-            sec.payload.in_skip_bytes(sec.payload.in_remain());
+            sec.payload.in_skip_remaining();
 
         }
         else {
@@ -3139,7 +3139,7 @@ public:
 */
 
                                     this->connection_finalization_state = WAITING_CTL_COOPERATE;
-                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                    sdata.payload.in_skip_remaining();
                                 }
                             }
                             break;
@@ -3150,7 +3150,7 @@ public:
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                 // sdata.log();
-                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                sdata.payload.in_skip_remaining();
                             }
                             break;
                         case WAITING_GRANT_CONTROL_COOPERATE:
@@ -3160,7 +3160,7 @@ public:
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                 // sdata.log();
-                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                sdata.payload.in_skip_remaining();
                             }
                             break;
                         case WAITING_FONT_MAP:
@@ -3182,7 +3182,7 @@ public:
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                 // sdata.log();
-                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                sdata.payload.in_skip_remaining();
                             }
 
                             this->deactivation_reactivation_in_progress = false;
@@ -3281,26 +3281,26 @@ public:
                                     LOG_IF(bool(this->verbose & RDPVerbose::connection),
                                         LOG_INFO, "PDUTYPE2_CONTROL");
                                     // TODO CGR: Data should actually be consumed
-                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                    sdata.payload.in_skip_remaining();
                                     break;
                                 case PDUTYPE2_SYNCHRONIZE:
                                     LOG_IF(bool(this->verbose & RDPVerbose::connection),
                                         LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
                                     // TODO CGR: Data should actually be consumed
-                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                    sdata.payload.in_skip_remaining();
                                     break;
                                 case PDUTYPE2_POINTER:
                                     LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
                                         LOG_INFO, "PDUTYPE2_POINTER");
                                     this->process_pointer_pdu(sdata.payload, drawable);
                                     // TODO CGR: Data should actually be consumed
-                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                    sdata.payload.in_skip_remaining();
                                     break;
                                 case PDUTYPE2_PLAY_SOUND:
                                     LOG_IF(bool(this->verbose & RDPVerbose::connection),
                                         LOG_INFO, "PDUTYPE2_PLAY_SOUND");
                                     // TODO CGR: Data should actually be consumed
-                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                    sdata.payload.in_skip_remaining();
                                     break;
                                 case PDUTYPE2_SAVE_SESSION_INFO:
                                     LOG_IF(bool(this->verbose & RDPVerbose::connection),
@@ -3351,7 +3351,7 @@ public:
                                     LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
                                     // TODO CGR: Data should actually be consumed
                                     hexdump(sdata.payload.remaining_bytes());
-                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                    sdata.payload.in_skip_remaining();
                                     break;
                                 }
                             }
@@ -5224,7 +5224,7 @@ public:
         break;
         }
 
-        stream.in_skip_bytes(stream.in_remain());
+        stream.in_skip_remaining();
     }
 
     [[noreturn]]
