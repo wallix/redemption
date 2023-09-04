@@ -510,21 +510,23 @@ void FileToGraphic::interpret_order()
                     i_seconds, i_milliseconds, this->mouse_x, this->mouse_y);
             }
 
-            auto input = this->stream.in_skip_bytes(this->stream.in_remain());
-            for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
-                InStream in_stream(input);
-                while (in_stream.in_remain()) {
-                    kbd->kbd_input(this->record_now, in_stream.in_uint32_le());
+            if (!this->stream.check_end()) {
+                auto input = this->stream.in_skip_bytes(this->stream.in_remain());
+                for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
+                    InStream in_stream(input);
+                    while (in_stream.in_remain()) {
+                        kbd->kbd_input(this->record_now, in_stream.in_uint32_le());
+                    }
                 }
-            }
 
-            if (bool(this->verbose & Verbose::timestamp)) {
-                for (auto data = input.data(), end = data + input.size()/4*4; data != end; data += 4) {
-                    uint8_t      key8[6];
-                    const size_t len = UTF32toUTF8(data, 4/4, key8, sizeof(key8)-1);
-                    key8[len] = 0;
+                if (REDEMPTION_UNLIKELY(bool(this->verbose & Verbose::timestamp))) {
+                    for (auto data = input.data(), end = data + input.size()/4*4; data != end; data += 4) {
+                        uint8_t key8[6];
+                        const size_t len = UTF32toUTF8(data, 4/4, key8, sizeof(key8)-1);
+                        key8[len] = 0;
 
-                    LOG(LOG_INFO, "TIMESTAMP keyboard '%s'", key8);
+                        LOG(LOG_INFO, "TIMESTAMP keyboard '%s'", key8);
+                    }
                 }
             }
         }
