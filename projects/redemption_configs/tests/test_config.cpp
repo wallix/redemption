@@ -101,8 +101,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_keyboard_log>());
     RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
     RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
@@ -328,7 +326,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "hash_path=/mnt/wab/hash\n"
         "record_path=/mnt/wab/recorded/rdp\n"
         "record_tmp_path=/mnt/tmp/wab/recorded/rdp\n"
-        "disable_keyboard_log=1\n"
         "disable_clipboard_log=0\n"
         "\n"
         "[crypto]\n"
@@ -369,8 +366,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>());
     RED_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>());
 
-    RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_keyboard_log>());
     RED_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
     RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
@@ -515,7 +510,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "hash_path=/mnt/wab/hash/\n"
         "record_path=/mnt/wab/recorded/rdp/\n"
         "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
-        "disable_keyboard_log=1\n"
         "disable_clipboard_log=1\n"
         "disable_file_system_log=2\n"
         "\n"
@@ -555,7 +549,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>());
     RED_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>());
 
-    RED_CHECK_EQUAL(KeyboardLogFlags::syslog,         ini.get<cfg::video::disable_keyboard_log>());
     RED_CHECK_EQUAL(ClipboardLogFlags::syslog,        ini.get<cfg::video::disable_clipboard_log>());
     RED_CHECK_EQUAL(FileSystemLogFlags::wrm,          ini.get<cfg::video::disable_file_system_log>());
 
@@ -681,7 +674,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
         "[mod_replay]\n"
         "on_end_of_data=0\n"
         "[video]\n"
-        "disable_keyboard_log=1\n"
         "wrm_color_depth_selection_strategy=1\n"
         "wrm_compression_algorithm=1\n"
         "\n"
@@ -710,8 +702,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_keyboard_log>());
     RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
     RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
@@ -839,7 +829,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
         "[mod_vnc]\n"
         "bogus_clipboard_infinite_loop=2\n"
         "[video]\n"
-        "disable_keyboard_log=1\n"
         "wrm_color_depth_selection_strategy=1\n"
         "wrm_compression_algorithm=1\n"
         "disable_clipboard_log=0\n"
@@ -872,8 +861,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_keyboard_log>());
     RED_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
     RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
@@ -1011,8 +998,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_keyboard_log>());
     RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
     RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
@@ -1150,8 +1135,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_keyboard_log>());
     RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
     RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
@@ -1275,8 +1258,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_keyboard_log>());
     RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
     RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
@@ -1403,8 +1384,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_keyboard_log>());
     RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
     RED_CHECK_EQUAL(FileSystemLogFlags::syslog,

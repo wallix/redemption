@@ -2752,18 +2752,18 @@ namespace cfg
     };
     /// Disable keyboard log: <br/>
     /// (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".) <br/>
-    /// type: KeyboardLogFlagsCP <br/>
+    /// type: KeyboardLogFlags <br/>
     /// connpolicy -> proxy    [name: video::disable_keyboard_log] <br/>
     /// aclName: capture:disable_keyboard_log <br/>
-    /// default: KeyboardLogFlagsCP::none <br/>
+    /// default: KeyboardLogFlags::none <br/>
     struct capture::disable_keyboard_log {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section11 + 3};
-        using type = KeyboardLogFlagsCP;
-        using mapped_type = KeyboardLogFlagsCP;
-        type value { KeyboardLogFlagsCP::none };
+        using type = KeyboardLogFlags;
+        using mapped_type = KeyboardLogFlags;
+        type value { KeyboardLogFlags::none };
     };
 
     /// Specifies the type of data to be captured: <br/>
@@ -2839,15 +2839,15 @@ namespace cfg
         using mapped_type = ::configs::spec_types::directory_path;
         type value { app_path(AppPath::Record) };
     };
-    /// Disable keyboard log: <br/>
+    /// Show keyboard input event in meta file <br/>
     /// (Please see also "Keyboard input masking level" in "session_log".) <br/>
-    /// type: KeyboardLogFlags <br/>
-    /// default: KeyboardLogFlags::syslog <br/>
-    struct video::disable_keyboard_log {
+    /// type: bool <br/>
+    /// default: true <br/>
+    struct video::enable_keyboard_log {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = KeyboardLogFlags;
-        using mapped_type = KeyboardLogFlags;
-        type value { KeyboardLogFlags::syslog };
+        using type = bool;
+        using mapped_type = bool;
+        type value { true };
     };
     /// Disable clipboard log: <br/>
     /// type: ClipboardLogFlags <br/>
@@ -5252,7 +5252,7 @@ struct video
 , cfg::video::hash_path
 , cfg::video::record_tmp_path
 , cfg::video::record_path
-, cfg::video::disable_keyboard_log
+, cfg::video::enable_keyboard_log
 , cfg::video::disable_clipboard_log
 , cfg::video::disable_file_system_log
 , cfg::video::wrm_color_depth_selection_strategy

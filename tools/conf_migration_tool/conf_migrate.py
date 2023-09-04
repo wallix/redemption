@@ -45,6 +45,9 @@ class RedemptionVersion:
     def __le__(self, other: 'RedemptionVersion') -> bool:
         return self.__part() <= other.__part()
 
+    def __eq__(self, other: 'RedemptionVersion') -> bool:
+        return self.__part() == other.__part()
+
     @staticmethod
     def from_file(filename: str) -> 'RedemptionVersion':
         with open(filename) as f:
@@ -465,6 +468,12 @@ migration_defs: List[MigrationType] = [
             'enable_arcsight_log': UpdateItem(key='syslog_format',
                                               value_transformation=_merge_session_log_format_10_5_31),
         },
+        'video': {
+            'disable_keyboard_log': UpdateItem(
+                key='enable_keyboard_log',
+                # has meta (4) -> False
+                value_transformation=lambda value, _: f'{(int(value) & 4) == 0}')
+        }
     }),
 ]
 

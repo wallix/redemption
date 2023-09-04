@@ -462,13 +462,14 @@ cfg::capture::record_filebase ⇐ record_filebase   [std::string]
 cfg::capture::record_subdirectory ⇐ record_subdirectory   [std::string]
     subdirectory of record_path (video section)
 cfg::capture::fdx_path ⇒ fdx_path   [std::string]
-cfg::capture::disable_keyboard_log ⇐ capture:disable_keyboard_log   [KeyboardLogFlagsCP]
+cfg::capture::disable_keyboard_log ⇐ capture:disable_keyboard_log   [KeyboardLogFlags]
     Disable keyboard log:
     (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
       0x0: none
-      0x1: disable keyboard log in recorded sessions
+      0x1: disable keyboard log in session log
+      0x2: disable keyboard log in recorded sessions
     
-    Note: values can be added (disable all: 0x1 = 0x1)
+    Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 
 cfg::video::hash_path ⇐ hash_path   [::configs::spec_types::directory_path]
 cfg::video::record_tmp_path ⇐ record_tmp_path   [::configs::spec_types::directory_path]

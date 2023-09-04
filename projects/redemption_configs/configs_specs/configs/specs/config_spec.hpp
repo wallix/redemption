@@ -2269,11 +2269,11 @@ _.section("video", [&]
     });
 
     _.member(MemberInfo{
-        .name = "disable_keyboard_log",
-        .value = from_enum(KeyboardLogFlags::syslog),
+        .name = "enable_keyboard_log",
+        .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
-            "Disable keyboard log:\n"
+            "Show keyboard input event in meta file\n"
             "(Please see also \"Keyboard input masking level\" in \"session_log\".)"
     });
 
@@ -2391,7 +2391,7 @@ _.section("capture", [&]
     _.member(MemberInfo{
         .name = "disable_keyboard_log",
         .connpolicy_section = "video",
-        .value = from_enum(KeyboardLogFlagsCP::none),
+        .value = from_enum(KeyboardLogFlags::none),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .desc =
             "Disable keyboard log:\n"

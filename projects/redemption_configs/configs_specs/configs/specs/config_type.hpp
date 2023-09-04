@@ -73,18 +73,10 @@ inline void config_type_definition(type_enumerations & e)
       .value("latin1")
     ;
 
-    // KeyboardLogFlags - "meta"
-    e.enumeration_flags("KeyboardLogFlagsCP")
-      .value("none")
-      .value("wrm", "keyboard log in recorded sessions")
-    ;
-
-    // KeyboardLogFlagsCP + "meta"
     e.enumeration_flags("KeyboardLogFlags")
       .value("none")
-      .value("syslog", "keyboard log in syslog")
+      .value("session_log", "keyboard log in session log")
       .value("wrm", "keyboard log in recorded sessions")
-      .value("meta", "keyboard log in recorded meta")
     ;
 
     e.enumeration_flags("ClipboardLogFlags")

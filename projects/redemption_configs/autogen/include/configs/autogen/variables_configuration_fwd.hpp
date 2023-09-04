@@ -267,7 +267,7 @@ namespace cfg
         struct hash_path;
         struct record_tmp_path;
         struct record_path;
-        struct disable_keyboard_log;
+        struct enable_keyboard_log;
         struct disable_clipboard_log;
         struct disable_file_system_log;
         struct wrm_color_depth_selection_strategy;

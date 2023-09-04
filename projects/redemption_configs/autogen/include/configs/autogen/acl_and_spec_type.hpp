@@ -225,7 +225,7 @@ template<> struct acl_and_spec_type<cfg::ocr::max_unrecog_char_rate> { using typ
 template<> struct acl_and_spec_type<cfg::capture::record_filebase> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::capture::record_subdirectory> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::capture::fdx_path> { using type = std::string; };
-template<> struct acl_and_spec_type<cfg::capture::disable_keyboard_log> { using type = KeyboardLogFlagsCP; };
+template<> struct acl_and_spec_type<cfg::capture::disable_keyboard_log> { using type = KeyboardLogFlags; };
 template<> struct acl_and_spec_type<cfg::video::capture_flags> { using type = CaptureFlags; };
 template<> struct acl_and_spec_type<cfg::video::png_interval> { using type = std::chrono::duration<unsigned, std::ratio<1, 10>>; };
 template<> struct acl_and_spec_type<cfg::video::break_interval> { using type = std::chrono::seconds; };
@@ -233,7 +233,7 @@ template<> struct acl_and_spec_type<cfg::video::png_limit> { using type = unsign
 template<> struct acl_and_spec_type<cfg::video::hash_path> { using type = ::configs::spec_types::directory_path; };
 template<> struct acl_and_spec_type<cfg::video::record_tmp_path> { using type = ::configs::spec_types::directory_path; };
 template<> struct acl_and_spec_type<cfg::video::record_path> { using type = ::configs::spec_types::directory_path; };
-template<> struct acl_and_spec_type<cfg::video::disable_keyboard_log> { using type = KeyboardLogFlags; };
+template<> struct acl_and_spec_type<cfg::video::enable_keyboard_log> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::video::disable_clipboard_log> { using type = ClipboardLogFlags; };
 template<> struct acl_and_spec_type<cfg::video::disable_file_system_log> { using type = FileSystemLogFlags; };
 template<> struct acl_and_spec_type<cfg::video::wrm_color_depth_selection_strategy> { using type = ColorDepthSelectionStrategy; };

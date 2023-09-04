@@ -326,33 +326,6 @@ parse_error parse_from_cfg(ClipboardEncodingType & x, ::configs::spec_type<std::
 
 zstring_view assign_zbuf_from_cfg(
     writable_chars_view zbuf,
-    cfg_s_type<KeyboardLogFlagsCP> /*type*/,
-    KeyboardLogFlagsCP x
-){
-    auto r = std::to_chars(zbuf.begin(), zbuf.end(), static_cast<uint8_t>(x));
-    *r.ptr = '\0';
-    return zstring_view::from_null_terminated({zbuf.data(), r.ptr});
-}
-
-parse_error parse_from_cfg(KeyboardLogFlagsCP & x, ::configs::spec_type<KeyboardLogFlagsCP> /*type*/, bytes_view value)
-{
-    using ul = uint8_t;
-
-    ul xi = 0;
-    if (parse_error err = parse_integral(
-        xi, value,
-        zero_integral<ul>(),
-        std::integral_constant<ul, 1>()
-    )) {
-        return err;
-    }
-
-    x = static_cast<KeyboardLogFlagsCP>(xi);
-    return no_parse_error;
-}
-
-zstring_view assign_zbuf_from_cfg(
-    writable_chars_view zbuf,
     cfg_s_type<KeyboardLogFlags> /*type*/,
     KeyboardLogFlags x
 ){
@@ -369,7 +342,7 @@ parse_error parse_from_cfg(KeyboardLogFlags & x, ::configs::spec_type<KeyboardLo
     if (parse_error err = parse_integral(
         xi, value,
         zero_integral<ul>(),
-        std::integral_constant<ul, 7>()
+        std::integral_constant<ul, 3>()
     )) {
         return err;
     }

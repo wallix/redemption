@@ -1241,9 +1241,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
 #   0x0: none
-#   0x1: disable keyboard log in recorded sessions
+#   0x1: disable keyboard log in session log
+#   0x2: disable keyboard log in recorded sessions
 # 
-# Note: values can be added (disable all: 0x1 = 0x1)
+# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 #_advanced
 # (acl config: proxy ⇐ capture:disable_keyboard_log)
 #disable_keyboard_log = 0
@@ -1287,16 +1288,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ record_path)
 #record_path = )gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(
 
-# Disable keyboard log:
+# Show keyboard input event in meta file
 # (Please see also "Keyboard input masking level" in "session_log".)
-#   0x0: none
-#   0x1: disable keyboard log in syslog
-#   0x2: disable keyboard log in recorded sessions
-#   0x4: disable keyboard log in recorded meta
-# 
-# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+# (type: boolean (0/no/false or 1/yes/true))
 #_advanced
-#disable_keyboard_log = 1
+#enable_keyboard_log = 1
 
 # Disable clipboard log:
 #   0x0: none

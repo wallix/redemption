@@ -2,6 +2,7 @@
 import unittest
 import os
 
+from typing import Tuple
 from conf_migrate import (parse_configuration,
                           migration_filter,
                           migration_def_to_actions,
@@ -14,8 +15,14 @@ from conf_migrate import (parse_configuration,
                           MoveSection,
                           ConfigKind,
                           ConfigurationFragment,
+                          MigrationDescType,
                           migration_defs,
                           _merge_session_log_format_10_5_31)
+
+
+def process_migrate(migrate_def: MigrationDescType, ini: str) -> Tuple[bool, str]:
+    r = migrate(parse_configuration(ini), migrate_def)
+    return (r[0], ''.join(fragment.text for fragment in r[1]))
 
 
 class TestMigration(unittest.TestCase):
@@ -355,17 +362,13 @@ class TestMigration(unittest.TestCase):
             },
         }
 
-        def process(ini: str):
-            r = migrate(parse_configuration(ini), migrate_def)
-            return (r[0], ''.join(fragment.text for fragment in r[1]))
-
 
         ini = '[sec1]\nvalue1=xy\n'
-        self.assertEqual(process(ini), (False, ini))
+        self.assertEqual(process_migrate(migrate_def, ini), (False, ini))
 
 
         ini = '[session_log]\nvalue1=xy\n'
-        self.assertEqual(process(ini), (False, ini))
+        self.assertEqual(process_migrate(migrate_def, ini), (False, ini))
 
 
         def to_commentary(s):
@@ -381,7 +384,21 @@ class TestMigration(unittest.TestCase):
             ('enable_session_log=False\nenable_arcsight_log=True\n', 2),
             ('enable_session_log=False\nenable_arcsight_log=False\n', 0),
         ):
-            self.assertEqual(process(f'[session_log]\n{d}'), (True,
-                '[session_log]\n'
-                f'{to_commentary(d)}syslog_format={r}\n'
-            ))
+            self.assertEqual(process_migrate(migrate_def, f'[session_log]\n{d}'),
+                             (True, f'[session_log]\n{to_commentary(d)}syslog_format={r}\n'))
+
+    def test_migrate_10_5_31(self):
+        migrate_def = next(migrate_def for version, migrate_def in migration_defs
+                           if RedemptionVersion("10.5.31") == version)
+
+        self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_keyboard_log=3\n'),
+                         (True, '[video]\n#disable_keyboard_log=3\nenable_keyboard_log=True\n'))
+
+        self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_keyboard_log=0\n'),
+                         (True, '[video]\n#disable_keyboard_log=0\nenable_keyboard_log=True\n'))
+
+        self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_keyboard_log=4\n'),
+                         (True, '[video]\n#disable_keyboard_log=4\nenable_keyboard_log=False\n'))
+
+        self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_keyboard_log=5\n'),
+                         (True, '[video]\n#disable_keyboard_log=5\nenable_keyboard_log=False\n'))

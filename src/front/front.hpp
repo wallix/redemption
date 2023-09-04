@@ -1159,7 +1159,6 @@ public:
     {
         return (this->ini.get<cfg::video::allow_rt_without_recording>()
             || this->ini.get<cfg::globals::is_rec>()
-            || !bool(this->ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
             || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>())
             || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>()));
     }
@@ -1241,9 +1240,6 @@ public:
 
         const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
         const bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        const bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-          || bool(ini.get<cfg::session_log::syslog_format>())
-          || this->has_kbd_pattern_check();
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
 
@@ -1263,7 +1259,21 @@ public:
         bool const capture_png = bool(capture_flags & CaptureFlags::png)
                               && (png_params.png_limit > 0);
 
-        KbdLogParams const kbd_log_params = kbd_log_params_capture_from_ini(ini);
+        auto const disable_keyboard_log = ini.get<cfg::capture::disable_keyboard_log>();
+        auto const kbd_fully_masked =
+            ini.get<cfg::session_log::keyboard_input_masking_level>()
+            == KeyboardInputMaskingLevel::fully_masked;
+
+        KbdLogParams const kbd_log_params {
+            .wrm_keyboard_log =
+                !kbd_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
+            .session_log_enabled =
+                !kbd_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlags::session_log)
+                && bool(ini.get<cfg::session_log::syslog_format>()),
+            .meta_keyboard_log = false
+        };
+
+        const bool capture_kbd = kbd_log_params.session_log_enabled || this->has_kbd_pattern_check();
 
         PatternParams const pattern_params = pattern_params_from_ini(ini);
 

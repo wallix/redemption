@@ -558,11 +558,12 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
 # &nbsp; &nbsp;   0x0: none
-# &nbsp; &nbsp;   0x1: disable keyboard log in recorded sessions<br/>
-# Note: values can be added (disable all: 0x1 = 0x1)
+# &nbsp; &nbsp;   0x1: disable keyboard log in session log
+# &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions<br/>
+# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 #_advanced
 #_hex
-disable_keyboard_log = integer(min=0, max=1, default=0)
+disable_keyboard_log = integer(min=0, max=3, default=0)
 
 [file_verification]
 

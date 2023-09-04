@@ -111,56 +111,18 @@ template<> struct is_valid_enum_value<ClipboardEncodingType>
     constexpr static bool is_valid(uint64_t n) { return n <= 1; }
 };
 
-enum class KeyboardLogFlagsCP : uint8_t
-{
-    none = 0,
-    // keyboard log in recorded sessions
-    wrm = 1,
-};
-
-template<> struct is_valid_enum_value<KeyboardLogFlagsCP>
-{
-    constexpr static bool is_valid(uint64_t n) { return n <= 1; }
-};
-
-inline KeyboardLogFlagsCP operator | (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y)
-{
-    return static_cast<KeyboardLogFlagsCP>(
-        static_cast<uint8_t>(x) | static_cast<uint8_t>(y)
-    );
-}
-
-inline KeyboardLogFlagsCP operator & (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y)
-{
-    return static_cast<KeyboardLogFlagsCP>(
-        static_cast<uint8_t>(x) & static_cast<uint8_t>(y)
-    );
-}
-
-inline KeyboardLogFlagsCP operator ~ (KeyboardLogFlagsCP x)
-{
-    return static_cast<KeyboardLogFlagsCP>(
-        ~static_cast<uint8_t>(x) & 1
-    );
-}
-
-inline KeyboardLogFlagsCP & operator |= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x | y; }
-inline KeyboardLogFlagsCP & operator &= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x & y; }
-
 enum class KeyboardLogFlags : uint8_t
 {
     none = 0,
-    // keyboard log in syslog
-    syslog = 1,
+    // keyboard log in session log
+    session_log = 1,
     // keyboard log in recorded sessions
     wrm = 2,
-    // keyboard log in recorded meta
-    meta = 4,
 };
 
 template<> struct is_valid_enum_value<KeyboardLogFlags>
 {
-    constexpr static bool is_valid(uint64_t n) { return n <= 7; }
+    constexpr static bool is_valid(uint64_t n) { return n <= 3; }
 };
 
 inline KeyboardLogFlags operator | (KeyboardLogFlags x, KeyboardLogFlags y)
@@ -180,7 +142,7 @@ inline KeyboardLogFlags operator & (KeyboardLogFlags x, KeyboardLogFlags y)
 inline KeyboardLogFlags operator ~ (KeyboardLogFlags x)
 {
     return static_cast<KeyboardLogFlags>(
-        ~static_cast<uint8_t>(x) & 7
+        ~static_cast<uint8_t>(x) & 3
     );
 }
 

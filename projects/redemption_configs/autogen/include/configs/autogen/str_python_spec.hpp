@@ -411,16 +411,10 @@ png_interval = integer(min=0, default=10)
 #_advanced
 break_interval = integer(min=0, default=600)
 
-# Disable keyboard log:
+# Show keyboard input event in meta file
 # (Please see also "Keyboard input masking level" in "session_log".)
-# &nbsp; &nbsp;   0x0: none
-# &nbsp; &nbsp;   0x1: disable keyboard log in syslog
-# &nbsp; &nbsp;   0x2: disable keyboard log in recorded sessions
-# &nbsp; &nbsp;   0x4: disable keyboard log in recorded meta<br/>
-# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
-#_hex
-disable_keyboard_log = integer(min=0, max=7, default=1)
+enable_keyboard_log = boolean(default=True)
 
 # Disable clipboard log:
 # &nbsp; &nbsp;   0x0: none

@@ -1734,7 +1734,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::capture::disable_keyboard_log&>(this->variables).value,
-                ::configs::spec_type<KeyboardLogFlagsCP>{},
+                ::configs::spec_type<KeyboardLogFlags>{},
                 value
             );
         }
@@ -1802,11 +1802,11 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "disable_keyboard_log"_zv) {
+        else if (key == "enable_keyboard_log"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::video::disable_keyboard_log&>(this->variables).value,
-                ::configs::spec_type<KeyboardLogFlags>{},
+                static_cast<cfg::video::enable_keyboard_log&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 value
             );
         }

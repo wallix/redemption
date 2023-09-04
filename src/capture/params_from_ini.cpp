@@ -37,23 +37,6 @@ OcrParams ocr_params_from_ini(const Inifile & ini)
     };
 }
 
-KbdLogParams kbd_log_params_capture_from_ini(const Inifile & ini)
-{
-    auto const disable_keyboard_log = ini.get<cfg::capture::disable_keyboard_log>();
-    auto const keyboard_input_fully_masked = (
-            ini.get<cfg::session_log::keyboard_input_masking_level>() ==
-            ::KeyboardInputMaskingLevel::fully_masked
-        );
-    return KbdLogParams{
-        .wrm_keyboard_log =
-            !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlagsCP::wrm),
-        .session_log_enabled =
-            !keyboard_input_fully_masked && bool(ini.get<cfg::session_log::syslog_format>()),
-        .meta_keyboard_log =
-            !keyboard_input_fully_masked
-    };
-}
-
 PatternParams pattern_params_from_ini(const Inifile & ini)
 {
     return PatternParams{

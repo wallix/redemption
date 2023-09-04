@@ -1586,15 +1586,14 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     // KbdLogParams
     //@{
-    auto const disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
+    auto const disable_keyboard_log = ini.get<cfg::capture::disable_keyboard_log>();
     auto const keyboard_input_fully_masked
       = ini.get<cfg::session_log::keyboard_input_masking_level>()
         == ::KeyboardInputMaskingLevel::fully_masked;
 
     recorder.wrm_keyboard_log = !keyboard_input_fully_masked
                              && !bool(disable_keyboard_log & KeyboardLogFlags::wrm);
-    recorder.meta_keyboard_log = !keyboard_input_fully_masked
-                              && !bool(disable_keyboard_log & KeyboardLogFlags::meta);
+    recorder.meta_keyboard_log = ini.get<cfg::video::enable_keyboard_log>();
     //@}
 
 
