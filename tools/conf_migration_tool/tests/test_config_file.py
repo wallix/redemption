@@ -232,17 +232,7 @@ class TestMigration(unittest.TestCase):
         self.assertEqual(migrate(fragments, {}), (False, fragments))
 
         self.assertEqual(migrate(fragments, migrate_def), (True, [
-            ConfigurationFragment('#[moved_section]', kind=ConfigKind.Comment),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('[new_moved_section]', kind=ConfigKind.Section, value1='new_moved_section'),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('#moved_key_to_removed_section=va', kind=ConfigKind.Comment),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('#moved_key_to_new_section=vb', kind=ConfigKind.Comment),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('#moved_key_to_new_section_and_renamed_key_to_cc=vc', kind=ConfigKind.Comment),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('#moved_key_to_new_section5=vd', kind=ConfigKind.Comment),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('[sec1]', kind=ConfigKind.Section, value1='sec1'),
@@ -250,28 +240,16 @@ class TestMigration(unittest.TestCase):
             ConfigurationFragment('cc=vc', kind=ConfigKind.KeyValue, value1='cc', value2='vc'),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('#moved_key=vva', kind=ConfigKind.Comment),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('moved_key_to_a=vva', kind=ConfigKind.KeyValue,
                                   value1='moved_key_to_a', value2='vva'),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('#updated_value=old_b_value', kind=ConfigKind.Comment),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('updated_value=new_b', kind=ConfigKind.KeyValue,
                                   value1='updated_value', value2='new_b'),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('#removed_key=vvc', kind=ConfigKind.Comment),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('d=vvd', kind=ConfigKind.KeyValue, value1='d', value2='vvd'),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('e=vve', kind=ConfigKind.KeyValue, value1='e', value2='vve'),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('#[removed_section]', kind=ConfigKind.Comment),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('#a=vvva', kind=ConfigKind.Comment),
-            ConfigurationFragment('\n', kind=ConfigKind.NewLine),
-            ConfigurationFragment('#b=vvvb', kind=ConfigKind.Comment),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
             ConfigurationFragment('[sec4]', kind=ConfigKind.Section, value1='sec4'),
@@ -333,8 +311,6 @@ class TestMigration(unittest.TestCase):
         self.assertEqual(migrate(fragments, migrate_def), (True, [
             ConfigurationFragment(text='[sec1]', kind=ConfigKind.Section, value1='sec1', value2=''),
             ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
-            ConfigurationFragment(text='#key = val', kind=ConfigKind.Comment, value1='', value2=''),
-            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
             ConfigurationFragment(text='[sec2]', kind=ConfigKind.Section, value1='sec2', value2=''),
             ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
             ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
@@ -373,18 +349,14 @@ class TestMigration(unittest.TestCase):
         with open(ini_filename, encoding='utf-8') as f:
             self.assertEqual(f.read(),
                 '[globals]\n'
-                '#session_timeout = 1000\n'
                 'base_inactivity_timeout=1000\n'
                 '\n'
                 '[mod_rdp]\n'
-                '#session_probe_exe_or_file=notepad\n'
                 'depth=15\n'
                 '\n'
                 '[video]\n'
-                '#replay_path=/tmp/\n'
                 '\n'
                 '[all_target_mod]\n'
-                '#connection_retry_count=3\n'
                 '\n'
                 '[mod_replay]\n'
                 'replay_path=/tmp/\n'
@@ -414,34 +386,36 @@ class TestMigration(unittest.TestCase):
         self.assertEqual(process_migrate(migrate_def, ini), (False, ini))
 
 
-        def to_commentary(s):
-            return '#' + s.replace('\ne', '\n\n#e')
+        for d, r in (
+            ('enable_session_log=True', 1),
+            ('enable_session_log=False', 0),
+            ('enable_arcsight_log=True', 3),
+            ('enable_arcsight_log=False', 1),
+        ):
+            self.assertEqual(process_migrate(migrate_def, f'[session_log]\n{d}\n'),
+                             (True, f'[session_log]\nsyslog_format={r}\n'))
 
         for d, r in (
-            ('enable_session_log=True\n', 1),
-            ('enable_session_log=False\n', 0),
-            ('enable_arcsight_log=True\n', 3),
-            ('enable_arcsight_log=False\n', 1),
-            ('enable_session_log=True\nenable_arcsight_log=True\n', 3),
-            ('enable_session_log=True\nenable_arcsight_log=False\n', 1),
-            ('enable_session_log=False\nenable_arcsight_log=True\n', 2),
-            ('enable_session_log=False\nenable_arcsight_log=False\n', 0),
+            ('enable_session_log=True\nenable_arcsight_log=True', 3),
+            ('enable_session_log=True\nenable_arcsight_log=False', 1),
+            ('enable_session_log=False\nenable_arcsight_log=True', 2),
+            ('enable_session_log=False\nenable_arcsight_log=False', 0),
         ):
-            self.assertEqual(process_migrate(migrate_def, f'[session_log]\n{d}'),
-                             (True, f'[session_log]\n{to_commentary(d)}syslog_format={r}\n'))
+            self.assertEqual(process_migrate(migrate_def, f'[session_log]\n{d}\n'),
+                             (True, f'[session_log]\n\nsyslog_format={r}\n'))
 
     def test_migrate_10_5_31(self):
         migrate_def = next(migrate_def for version, migrate_def in migration_defs
                            if RedemptionVersion("10.5.31") == version)
 
         self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_keyboard_log=3\n'),
-                         (True, '[video]\n#disable_keyboard_log=3\nenable_keyboard_log=True\n'))
+                         (True, '[video]\nenable_keyboard_log=True\n'))
 
         self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_keyboard_log=0\n'),
-                         (True, '[video]\n#disable_keyboard_log=0\nenable_keyboard_log=True\n'))
+                         (True, '[video]\nenable_keyboard_log=True\n'))
 
         self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_keyboard_log=4\n'),
-                         (True, '[video]\n#disable_keyboard_log=4\nenable_keyboard_log=False\n'))
+                         (True, '[video]\nenable_keyboard_log=False\n'))
 
         self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_keyboard_log=5\n'),
-                         (True, '[video]\n#disable_keyboard_log=5\nenable_keyboard_log=False\n'))
+                         (True, '[video]\nenable_keyboard_log=False\n'))

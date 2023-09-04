@@ -255,6 +255,10 @@ def fragments_to_spans_of_sections(fragments: Iterable[ConfigurationFragment]) -
     return section_spans
 
 
+def _is_empty_line(i: int, fragments: List[ConfigurationFragment]) -> bool:
+    return len(fragments) > i and fragments[i].kind == ConfigKind.NewLine
+
+
 def migrate(fragments: List[ConfigurationFragment],
             migration_def: MigrationDescType) -> Tuple[bool, List[ConfigurationFragment]]:
     renamed_sections, renamed_keys, moved_keys, removed_sections, removed_keys \
@@ -282,8 +286,6 @@ def migrate(fragments: List[ConfigurationFragment],
     for section, old_key, new_key, new_value in renamed_keys:
         for i, fragment in iter_key_fragment(section, ConfigKind.KeyValue, old_key):
             reinject_fragments[i] = (
-                ConfigurationFragment(f'#{fragment.text}', ConfigKind.Comment),
-                newline_fragment,
                 ConfigurationFragment(f'{new_key}={new_value}', ConfigKind.KeyValue,
                                       new_key, new_value),
             )
@@ -294,20 +296,20 @@ def migrate(fragments: List[ConfigurationFragment],
             if fragment.kind in (ConfigKind.KeyValue, ConfigKind.Section):
                 # if fragment.kind == ConfigKind.Section:
                 #     del section_spans[section]
-                reinject_fragments[i] = (
-                    ConfigurationFragment(f'#{fragment.text}', ConfigKind.Comment),)
+                reinject_fragments[i] = ()
+                if _is_empty_line(i+1, fragments):
+                    reinject_fragments[i+1] = ()
 
     for t in itertools.chain(removed_keys, moved_keys):
         for i, fragment in iter_key_fragment(t[0], ConfigKind.KeyValue, t[1]):
-            reinject_fragments[i] = (
-                ConfigurationFragment(f'#{fragment.text}', ConfigKind.Comment),)
+            reinject_fragments[i] = ()
+            if _is_empty_line(i+1, fragments):
+                reinject_fragments[i+1] = ()
 
     for old_section, new_section in renamed_sections:
         for rng in section_spans.get(old_section, ()):
             istart = rng[0]
             reinject_fragments[istart] = (
-                ConfigurationFragment(f'#{fragments[istart].text}', ConfigKind.Comment),
-                newline_fragment,
                 ConfigurationFragment(f'[{new_section}]', ConfigKind.Section, new_section),
             )
 
