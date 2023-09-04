@@ -29,10 +29,53 @@ class TestMigration(unittest.TestCase):
     maxDiff = None
 
     def test_unknown_section(self):
+        sections = {
+            "globals",
+
+            "client",
+
+            "all_target_mod",
+            "remote_program",
+            "mod_rdp",
+            "protocol",
+            "session_probe",
+            "server_cert",
+            "mod_vnc",
+
+            "session_log",
+            "ocr",
+            "capture",
+            "video",
+            "audit",
+
+            "file_verification",
+            "file_storage",
+            "icap_server_down",
+            "icap_server_up",
+
+            "crypto",
+            "websocket",
+
+            "vnc_over_ssh",
+
+            "context",
+
+            "internal_mod",
+            "mod_replay",
+            "translation",
+            "theme",
+
+            "debug",
+
+            # old sections
+
+            "metrics",
+        }
         for _, d in migration_defs:
             for k in d:
                 self.assertNotEqual(k, 'rdp', 'should be mod_rdp')
                 self.assertNotEqual(k, 'vnc', 'should be mod_vnc')
+                self.assertIn(k, sections)
 
     def test_parse_configuration(self):
         self.assertEqual(parse_configuration('[section]\n# bla bla\nkey = value'), [
