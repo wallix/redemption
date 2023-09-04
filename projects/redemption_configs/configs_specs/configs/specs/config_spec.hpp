@@ -483,17 +483,14 @@ _.section("session_log", [&]
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
         .desc =
             "Saves session logs to a .log file.\n"
-            "The format is a date followed by onr or more key=\"value\" separated by a space on the same line.",
+            "The format is a date followed by one or more key=\"value\" separated by a space on the same line.",
     });
 
     _.member(MemberInfo{
-        .name = names{
-            .all = "syslog_format",
-            .display = "Session Log Format",
-        },
+        .name = "enable_syslog_format",
         .value = from_enum(SessionLogFormat::SIEM),
         .spec = global_spec(no_acl),
-        .desc = "Format used for session logs",
+        .desc = "Writes session logs to syslog.\nThe SIEM format can be redirected to a SIEM solution.",
     });
 
     _.member(MemberInfo{

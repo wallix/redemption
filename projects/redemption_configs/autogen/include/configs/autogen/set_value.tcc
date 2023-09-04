@@ -1658,10 +1658,10 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "syslog_format"_zv) {
+        else if (key == "enable_syslog_format"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::session_log::syslog_format&>(this->variables).value,
+                static_cast<cfg::session_log::enable_syslog_format&>(this->variables).value,
                 ::configs::spec_type<SessionLogFormat>{},
                 value
             );

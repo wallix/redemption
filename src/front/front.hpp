@@ -1269,7 +1269,7 @@ public:
                 !kbd_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
             .session_log_enabled =
                 !kbd_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlags::session_log)
-                && bool(ini.get<cfg::session_log::syslog_format>()),
+                && bool(ini.get<cfg::session_log::enable_syslog_format>()),
             .meta_keyboard_log = false
         };
 

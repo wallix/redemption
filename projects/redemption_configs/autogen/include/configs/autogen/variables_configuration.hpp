@@ -2625,7 +2625,7 @@ namespace cfg
     };
 
     /// Saves session logs to a .log file. <br/>
-    /// The format is a date followed by onr or more key="value" separated by a space on the same line. <br/>
+    /// The format is a date followed by one or more key="value" separated by a space on the same line. <br/>
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>
     /// default: true <br/>
@@ -2638,11 +2638,11 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Format used for session logs <br/>
+    /// Writes session logs to syslog. <br/>
+    /// The SIEM format can be redirected to a SIEM solution. <br/>
     /// type: SessionLogFormat <br/>
-    /// displayName: Session Log Format <br/>
     /// default: SessionLogFormat::SIEM <br/>
-    struct session_log::syslog_format {
+    struct session_log::enable_syslog_format {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = SessionLogFormat;
         using mapped_type = SessionLogFormat;
@@ -5222,7 +5222,7 @@ struct mod_vnc
 
 struct session_log
 : cfg::session_log::enable_session_log_file
-, cfg::session_log::syslog_format
+, cfg::session_log::enable_syslog_format
 , cfg::session_log::keyboard_input_masking_level
 { static constexpr bool is_section = true; };
 

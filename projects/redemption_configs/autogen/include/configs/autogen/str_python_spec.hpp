@@ -351,14 +351,14 @@ bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)
 
 [session_log]
 
-# Format used for session logs
+# Writes session logs to syslog.
+# The SIEM format can be redirected to a SIEM solution.
 # &nbsp; &nbsp;   0x0: disabled
 # &nbsp; &nbsp;   0x1: SIEM
 # &nbsp; &nbsp;   0x2: ArcSight<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 = 0x3)
 #_hex
-#_display_name=Session Log Format
-syslog_format = integer(min=0, max=3, default=1)
+enable_syslog_format = integer(min=0, max=3, default=1)
 
 [ocr]
 

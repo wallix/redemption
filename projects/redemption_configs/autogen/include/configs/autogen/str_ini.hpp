@@ -1184,19 +1184,19 @@ R"gen_config_ini(## Config file for RDP proxy.
 [session_log]
 
 # Saves session logs to a .log file.
-# The format is a date followed by onr or more key="value" separated by a space on the same line.
+# The format is a date followed by one or more key="value" separated by a space on the same line.
 # (type: boolean (0/no/false or 1/yes/true))
 # (acl config: proxy ⇐ enable_session_log_file)
 #enable_session_log_file = 1
 
-# Format used for session logs
+# Writes session logs to syslog.
+# The SIEM format can be redirected to a SIEM solution.
 #   0x0: disabled
 #   0x1: SIEM
 #   0x2: ArcSight
 # 
 # Note: values can be added (enable all: 0x1 + 0x2 = 0x3)
-#_display_name=Session Log Format
-#syslog_format = 1
+#enable_syslog_format = 1
 
 # Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.
 #   0: keyboard input are not masked
