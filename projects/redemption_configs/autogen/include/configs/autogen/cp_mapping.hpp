@@ -105,7 +105,7 @@ cp_spec = {
         ('session_log:keyboard_input_masking_level', 'keyboard_input_masking_level', 2),
     },
     'video': {
-        ('capture:disable_keyboard_log', 'disable_keyboard_log', 1),
+        ('capture:disable_keyboard_log', 'disable_keyboard_log', 0),
     },
     'file_verification': {
         ('file_verification:enable_up', 'enable_up', False),
@@ -153,7 +153,7 @@ cp_spec = {
         ('session_log:keyboard_input_masking_level', 'keyboard_input_masking_level', 2),
     },
     'video': {
-        ('capture:disable_keyboard_log', 'disable_keyboard_log', 1),
+        ('capture:disable_keyboard_log', 'disable_keyboard_log', 0),
     },
     'file_verification': {
         ('file_verification:enable_up', 'enable_up', False),

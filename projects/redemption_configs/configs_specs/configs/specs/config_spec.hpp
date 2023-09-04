@@ -2391,7 +2391,7 @@ _.section("capture", [&]
     _.member(MemberInfo{
         .name = "disable_keyboard_log",
         .connpolicy_section = "video",
-        .value = from_enum(KeyboardLogFlagsCP::syslog),
+        .value = from_enum(KeyboardLogFlagsCP::none),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .desc =
             "Disable keyboard log:\n"

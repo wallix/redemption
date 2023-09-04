@@ -342,7 +342,7 @@ parse_error parse_from_cfg(KeyboardLogFlagsCP & x, ::configs::spec_type<Keyboard
     if (parse_error err = parse_integral(
         xi, value,
         zero_integral<ul>(),
-        std::integral_constant<ul, 3>()
+        std::integral_constant<ul, 1>()
     )) {
         return err;
     }

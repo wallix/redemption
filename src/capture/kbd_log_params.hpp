@@ -23,7 +23,6 @@
 struct KbdLogParams
 {
     bool wrm_keyboard_log;
-    bool syslog_keyboard_log;
     bool session_log_enabled;
     bool meta_keyboard_log;
 };

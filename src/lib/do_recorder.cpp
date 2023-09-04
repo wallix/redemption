@@ -1103,10 +1103,9 @@ static inline int replay(
                         };
 
                         KbdLogParams const kbd_log_params{
-                            rp.wrm_keyboard_log,
-                            false,
-                            false,
-                            rp.meta_keyboard_log,
+                            .wrm_keyboard_log = rp.wrm_keyboard_log,
+                            .session_log_enabled = false,
+                            .meta_keyboard_log = rp.meta_keyboard_log,
                         };
 
                         WrmParams const wrm_params = WrmParams{

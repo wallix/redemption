@@ -114,15 +114,13 @@ template<> struct is_valid_enum_value<ClipboardEncodingType>
 enum class KeyboardLogFlagsCP : uint8_t
 {
     none = 0,
-    // keyboard log in syslog
-    syslog = 1,
     // keyboard log in recorded sessions
-    wrm = 2,
+    wrm = 1,
 };
 
 template<> struct is_valid_enum_value<KeyboardLogFlagsCP>
 {
-    constexpr static bool is_valid(uint64_t n) { return n <= 3; }
+    constexpr static bool is_valid(uint64_t n) { return n <= 1; }
 };
 
 inline KeyboardLogFlagsCP operator | (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y)
@@ -142,7 +140,7 @@ inline KeyboardLogFlagsCP operator & (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y
 inline KeyboardLogFlagsCP operator ~ (KeyboardLogFlagsCP x)
 {
     return static_cast<KeyboardLogFlagsCP>(
-        ~static_cast<uint8_t>(x) & 3
+        ~static_cast<uint8_t>(x) & 1
     );
 }
 

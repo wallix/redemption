@@ -46,6 +46,7 @@
 #include "utils/timestamp_tracer.hpp"
 #include "utils/tm_to_chars.hpp"
 #include "utils/ascii.hpp"
+#include "utils/out_param.hpp"
 
 #include "transport/file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
@@ -120,15 +121,15 @@ struct ZStrUtf8Char
     }
 };
 
-bool update_enable_probe(bool& enable_probe, LogId id, KVLogList kv_list)
+bool update_enable_probe(OutParam<bool> enable_probe, LogId id, KVLogList kv_list)
 {
     if (id == LogId::INPUT_LANGUAGE) {
-        enable_probe = true;
+        enable_probe.out_value = true;
         return false;
     }
 
     if (id == LogId::PROBE_STATUS && not kv_list.empty()) {
-        enable_probe = ranges_equal("Ready"_av, kv_list[0].value);
+        enable_probe.out_value = ranges_equal("Ready"_av, kv_list[0].value);
         return true;
     }
 
@@ -305,200 +306,106 @@ private:
 };
 REDEMPTION_DIAGNOSTIC_POP()
 
+
 namespace
 {
     const auto shadow_kbd_char = "********"_av;
-
-    struct KbdBuffer
-    {
-        KbdBuffer(writable_buffer_view buffer)
-        : kbd_stream(buffer)
-        {}
-
-        template<class Flusher>
-        void enable_kbd_input_mask(bool enable, Flusher&& flusher)
-        {
-            if (this->keyboard_input_mask_enabled != enable) {
-                this->flush(flusher);
-                this->keyboard_input_mask_enabled = enable;
-            }
-        }
-
-        template<class Flusher>
-        bool kbd_input(uint32_t uchar, bool writable, Flusher&& flusher)
-        {
-            if (this->keyboard_input_mask_enabled) {
-                if (writable) {
-                    this->write_shadow_keys(flusher);
-                }
-            }
-            else {
-                this->write_char(uchar, flusher);
-            }
-            return true;
-        }
-
-        template<class Flusher>
-        void flush(Flusher&& flusher)
-        {
-            if (this->kbd_stream.get_offset() || this->hidden_masked_char) {
-                if (this->hidden_masked_char) {
-                    this->kbd_stream.out_copy_bytes(shadow_kbd_char);
-                }
-                this->hidden_masked_char = false;
-                flusher(this->kbd_stream.get_produced_bytes());
-                this->kbd_stream.rewind();
-            }
-        }
-
-        size_t size() const
-        {
-            return this->kbd_stream.get_offset();
-        }
-
-    private:
-        template<class Flusher>
-        void write_shadow_keys(Flusher& flusher)
-        {
-            if (!this->kbd_stream.has_room(shadow_kbd_char.size())) {
-                this->flush(flusher);
-            }
-            this->hidden_masked_char = true;
-        }
-
-        template<class Flusher>
-        void write_char(uint32_t uchar, Flusher& flusher)
-        {
-            auto copy_bytes = [this, &flusher](bytes_view bytes) {
-                if (this->kbd_stream.tailroom() < bytes.size()) {
-                    this->flush(flusher);
-                }
-                this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
-            };
-
-            filtering_kbd_input(
-                uchar,
-                [copy_bytes](uint32_t uchar) {
-                    uint8_t buf_char[5];
-                    if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
-                        copy_bytes({buf_char, char_len});
-                    }
-                },
-                copy_bytes,
-                filter_slash{}
-            );
-        }
-
-        OutStream kbd_stream;
-        bool hidden_masked_char = false;
-        bool keyboard_input_mask_enabled = false;
-    };
 } // anonymous namespace
-
-REDEMPTION_DIAGNOSTIC_PUSH()
-// 'KbdBuffer kbd_buffer' is a type uses the anonymous namespace
-REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wsubobject-linkage")
-class Capture::SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
-{
-    uint8_t buffer[1024];
-    KbdBuffer kbd_buffer;
-    MonotonicTimePoint last_snapshot;
-
-    static auto _flusher()
-    {
-        return [](bytes_view data){
-            LOG(LOG_INFO, R"x(type="KBD input" data="%.*s")x",
-                int(data.size()), data.as_charp());
-        };
-    }
-
-public:
-    explicit SyslogKbd(MonotonicTimePoint now)
-    : kbd_buffer(make_writable_array_view(this->buffer))
-    , last_snapshot(now)
-    {}
-
-    ~SyslogKbd()
-    {
-        this->kbd_buffer.flush(_flusher());
-    }
-
-    void enable_kbd_input_mask(bool enable) override
-    {
-        this->kbd_buffer.enable_kbd_input_mask(enable, _flusher());
-    }
-
-    bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override
-    {
-        this->kbd_buffer.kbd_input(uchar, true, _flusher());
-        return true;
-    }
-
-private:
-    WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/
-    ) override {
-        MonotonicTimePoint::duration const time_to_wait = 2s;
-
-        if (this->last_snapshot + time_to_wait >= now || this->kbd_buffer.size() >= 8 * sizeof(uint32_t)) {
-            this->kbd_buffer.flush(_flusher());
-            this->last_snapshot = now;
-        }
-
-        return WaitingTimeBeforeNextSnapshot(time_to_wait);
-    }
-};
-
 
 class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
 {
-    uint8_t buffer[64];
-    KbdBuffer kbd_buffer;
-    bool is_probe_enabled_session = false;
-    SessionLogApi& session_log;
-
-    auto _flusher()
-    {
-        return [this](bytes_view data){
-            this->session_log.log6(LogId::KBD_INPUT, {
-                KVLog("data"_av, data.as_chars()),
-            });
-        };
-    }
-
 public:
     explicit SessionLogKbd(SessionLogApi& session_log)
-    : kbd_buffer(make_writable_array_view(this->buffer))
-    , session_log(session_log)
+    : session_log(session_log)
     {}
 
     ~SessionLogKbd()
     {
-        this->kbd_buffer.flush(this->_flusher());
+        this->flush();
     }
 
     bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override
     {
-        this->kbd_buffer.kbd_input(uchar, this->is_probe_enabled_session, _flusher());
+        if (this->keyboard_input_mask_enabled) {
+            if (this->is_probe_enabled_session) {
+                this->write_shadow_keys();
+            }
+        }
+        else {
+            this->write_char(uchar);
+        }
         return true;
     }
 
     void enable_kbd_input_mask(bool enable) override
     {
-        this->kbd_buffer.enable_kbd_input_mask(enable, _flusher());
+        if (this->keyboard_input_mask_enabled != enable) {
+            this->flush();
+            this->keyboard_input_mask_enabled = enable;
+        }
     }
 
     void session_update(MonotonicTimePoint /*now*/, LogId id, KVLogList kv_list) override
     {
-        update_enable_probe(this->is_probe_enabled_session, id, kv_list);
+        update_enable_probe(OutParam{this->is_probe_enabled_session}, id, kv_list);
     }
 
     void possible_active_window_change() override
     {
-        this->kbd_buffer.flush(this->_flusher());
+        this->flush();
     }
+
+private:
+    void flush()
+    {
+        if (this->kbd_stream.get_offset() || this->hidden_masked_char) {
+            if (this->hidden_masked_char) {
+                this->kbd_stream.out_copy_bytes(shadow_kbd_char);
+            }
+            this->hidden_masked_char = false;
+            this->session_log.log6(LogId::KBD_INPUT, {
+                KVLog("data"_av, this->kbd_stream.get_produced_bytes().as_chars()),
+            });
+            this->kbd_stream.rewind();
+        }
+    }
+
+    void write_shadow_keys()
+    {
+        if (!this->kbd_stream.has_room(shadow_kbd_char.size())) {
+            this->flush();
+        }
+        this->hidden_masked_char = true;
+    }
+
+    void write_char(uint32_t uchar)
+    {
+        auto copy_bytes = [this](bytes_view bytes) {
+            if (this->kbd_stream.tailroom() < bytes.size()) {
+                this->flush();
+            }
+            this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
+        };
+
+        filtering_kbd_input(
+            uchar,
+            [copy_bytes](uint32_t uchar) {
+                uint8_t buf_char[5];
+                if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                    copy_bytes({buf_char, char_len});
+                }
+            },
+            copy_bytes,
+            filter_slash{}
+        );
+    }
+
+    SessionLogApi& session_log;
+    bool is_probe_enabled_session = false;
+    bool hidden_masked_char = false;
+    bool keyboard_input_mask_enabled = false;
+    StaticOutStream<64> kbd_stream;
 };
-REDEMPTION_DIAGNOSTIC_POP()
 
 
 class Capture::PatternsChecker : ::noncopyable
@@ -988,7 +895,7 @@ public:
     }
 
     void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override {
-        if (!update_enable_probe(this->is_probe_enabled_session, id, kv_list)
+        if (!update_enable_probe(OutParam{this->is_probe_enabled_session}, id, kv_list)
           && is_logable_kvlist(id, kv_list, this->meta_params)
         ) {
             this->send_kvlogs(now, '-', id, kv_list);
@@ -1261,7 +1168,7 @@ public:
     }
 
     void session_update(MonotonicTimePoint /*now*/, LogId id, KVLogList kv_list) override {
-        update_enable_probe(this->enable_probe, id, kv_list);
+        update_enable_probe(OutParam{this->enable_probe}, id, kv_list);
         if (enable_probe) {
             this->title_extractor = this->agent_title_extractor;
             this->agent_title_extractor.session_update(id, kv_list);
@@ -1520,12 +1427,6 @@ Capture::Capture(
     }
 
     if (capture_kbd) {
-        if (kbd_log_params.syslog_keyboard_log) {
-            this->syslog_kbd_capture_obj = std::make_unique<SyslogKbd>(capture_params.now);
-            this->kbds.emplace_back(*this->syslog_kbd_capture_obj);
-            this->caps.emplace_back(*this->syslog_kbd_capture_obj);
-        }
-
         if (kbd_log_params.session_log_enabled) {
             this->session_log_kbd_capture_obj = std::make_unique<SessionLogKbd>(
                 *capture_params.session_log);
@@ -1573,7 +1474,6 @@ Capture::~Capture()
 {
     this->title_capture_obj.reset();
     this->session_log_kbd_capture_obj.reset();
-    this->syslog_kbd_capture_obj.reset();
     this->pattern_kbd_capture_obj.reset();
     this->png_capture_obj.reset();
     this->png_real_time_capture_obj.reset();

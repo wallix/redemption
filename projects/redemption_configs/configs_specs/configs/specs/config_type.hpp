@@ -76,7 +76,6 @@ inline void config_type_definition(type_enumerations & e)
     // KeyboardLogFlags - "meta"
     e.enumeration_flags("KeyboardLogFlagsCP")
       .value("none")
-      .value("syslog", "keyboard log in syslog")
       .value("wrm", "keyboard log in recorded sessions")
     ;
 

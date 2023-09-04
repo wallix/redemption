@@ -1241,13 +1241,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
 #   0x0: none
-#   0x1: disable keyboard log in syslog
-#   0x2: disable keyboard log in recorded sessions
+#   0x1: disable keyboard log in recorded sessions
 # 
-# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
+# Note: values can be added (disable all: 0x1 = 0x1)
 #_advanced
 # (acl config: proxy ⇐ capture:disable_keyboard_log)
-#disable_keyboard_log = 1
+#disable_keyboard_log = 0
 
 [video]
 

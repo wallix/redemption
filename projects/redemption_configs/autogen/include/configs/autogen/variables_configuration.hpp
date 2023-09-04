@@ -2755,7 +2755,7 @@ namespace cfg
     /// type: KeyboardLogFlagsCP <br/>
     /// connpolicy -> proxy    [name: video::disable_keyboard_log] <br/>
     /// aclName: capture:disable_keyboard_log <br/>
-    /// default: KeyboardLogFlagsCP::syslog <br/>
+    /// default: KeyboardLogFlagsCP::none <br/>
     struct capture::disable_keyboard_log {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
@@ -2763,7 +2763,7 @@ namespace cfg
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section11 + 3};
         using type = KeyboardLogFlagsCP;
         using mapped_type = KeyboardLogFlagsCP;
-        type value { KeyboardLogFlagsCP::syslog };
+        type value { KeyboardLogFlagsCP::none };
     };
 
     /// Specifies the type of data to be captured: <br/>

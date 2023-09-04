@@ -189,7 +189,6 @@ public:
     class PngCapture;
     class PngCaptureRT;
     class PngCaptureRTRedis;
-    class SyslogKbd;
     class SessionLogKbd;
     class PatternKbd;
     class MetaCaptureImpl;
@@ -244,7 +243,6 @@ private:
     std::unique_ptr<PngCaptureRT> png_real_time_capture_obj;
     std::unique_ptr<PngCaptureRTRedis> png_real_time_redis_capture_obj;
 
-    std::unique_ptr<SyslogKbd> syslog_kbd_capture_obj;
     std::unique_ptr<SessionLogKbd> session_log_kbd_capture_obj;
     std::unique_ptr<PatternKbd> pattern_kbd_capture_obj;
 

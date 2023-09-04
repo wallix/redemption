@@ -2405,7 +2405,7 @@ RED_AUTO_TEST_CASE(TestKbdEnableWithoutPattern)
 
     test_capture_context("resizing-capture-1", CaptureFlags::ocr,
         800, 600, record_wd, hash_wd,
-        KbdLogParams{true, false, false, false},
+        KbdLogParams{true, false, false},
         [](Capture& capture, Rect /*scr*/) {
             MonotonicTimePoint now{1000s};
             capture.kbd_input(now, 95);
