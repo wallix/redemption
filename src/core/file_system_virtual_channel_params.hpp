@@ -30,8 +30,6 @@ struct FileSystemVirtualChannelParams {
     bool serial_port_authorized       = false;
     bool smart_card_authorized        = false;
 
-    bool dont_log_data_into_syslog    = false;
-
     bool smartcard_passthrough        = false;
 
     explicit FileSystemVirtualChannelParams() = default;

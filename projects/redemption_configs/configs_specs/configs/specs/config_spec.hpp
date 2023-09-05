@@ -2279,14 +2279,14 @@ _.section("video", [&]
 
     _.member(MemberInfo{
         .name = "disable_clipboard_log",
-        .value = from_enum(ClipboardLogFlags::syslog),
+        .value = from_enum(ClipboardLogFlags::none),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Disable clipboard log:",
     });
 
     _.member(MemberInfo{
         .name = "disable_file_system_log",
-        .value = from_enum(FileSystemLogFlags::syslog),
+        .value = from_enum(FileSystemLogFlags::none),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Disable (redirected) file system log:",
     });

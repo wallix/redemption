@@ -104,7 +104,6 @@ struct FormatDataResponseReceiveFileList
     FormatDataResponseReceiveFileList(
       std::vector<CliprdFileInfo>& files,
       InStream & chunk, const RDPECLIP::CliprdrHeader & in_header,
-      bool param_dont_log_data_into_syslog,
       const uint32_t file_list_format_id,
       const uint32_t flags,
       OutStream & file_descriptor_stream,
@@ -130,13 +129,11 @@ struct FormatDataResponseReceiveFileList
             if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_FAIL) && (in_header.dataLen() >= 4 /* cItems(4) */)) {
                 const uint32_t cItems = chunk.in_uint32_le();
 
-                if (!param_dont_log_data_into_syslog) {
-                    LOG(LOG_INFO,
-                        "Sending %sFileGroupDescriptorW(%u) clipboard data to %s. "
-                            "cItems=%u",
-                        ((flags & CHANNELS::CHANNEL_FLAG_LAST) ? "" : "(chunked) "),
-                        file_list_format_id, direction, cItems);
-                }
+                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "Sending %sFileGroupDescriptorW(%u) clipboard data to %s. "
+                        "cItems=%u",
+                    ((flags & CHANNELS::CHANNEL_FLAG_LAST) ? "" : "(chunked) "),
+                    file_list_format_id, direction, cItems);
             }
         }
         else if (file_descriptor_stream.get_offset()) {

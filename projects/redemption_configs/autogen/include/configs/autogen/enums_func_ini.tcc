@@ -369,7 +369,7 @@ parse_error parse_from_cfg(ClipboardLogFlags & x, ::configs::spec_type<Clipboard
     if (parse_error err = parse_integral(
         xi, value,
         zero_integral<ul>(),
-        std::integral_constant<ul, 7>()
+        std::integral_constant<ul, 3>()
     )) {
         return err;
     }
@@ -396,7 +396,7 @@ parse_error parse_from_cfg(FileSystemLogFlags & x, ::configs::spec_type<FileSyst
     if (parse_error err = parse_integral(
         xi, value,
         zero_integral<ul>(),
-        std::integral_constant<ul, 7>()
+        std::integral_constant<ul, 3>()
     )) {
         return err;
     }

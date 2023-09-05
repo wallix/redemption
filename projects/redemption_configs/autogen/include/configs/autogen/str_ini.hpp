@@ -1296,23 +1296,21 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Disable clipboard log:
 #   0x0: none
-#   0x1: disable clipboard log in syslog
-#   0x2: disable clipboard log in recorded sessions
-#   0x4: disable clipboard log in recorded meta
+#   0x1: disable clipboard log in recorded sessions
+#   0x2: disable clipboard log in recorded meta
 # 
-# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 #_advanced
-#disable_clipboard_log = 1
+#disable_clipboard_log = 0
 
 # Disable (redirected) file system log:
 #   0x0: none
-#   0x1: disable (redirected) file system log in syslog
-#   0x2: disable (redirected) file system log in recorded sessions
-#   0x4: disable (redirected) file system log in recorded meta
+#   0x1: disable (redirected) file system log in recorded sessions
+#   0x2: disable (redirected) file system log in recorded meta
 # 
-# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 #_advanced
-#disable_file_system_log = 1
+#disable_file_system_log = 0
 
 # The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
 #   0: 24-bit

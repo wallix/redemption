@@ -101,11 +101,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_file_system_log>());
-
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
@@ -326,7 +321,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "hash_path=/mnt/wab/hash\n"
         "record_path=/mnt/wab/recorded/rdp\n"
         "record_tmp_path=/mnt/tmp/wab/recorded/rdp\n"
-        "disable_clipboard_log=0\n"
+        "disable_clipboard_log=1\n"
         "\n"
         "[crypto]\n"
         "encryption_key=00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF\n"
@@ -366,9 +361,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>());
     RED_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_file_system_log>());
+    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,           ini.get<cfg::video::disable_clipboard_log>());
+    RED_CHECK_EQUAL(FileSystemLogFlags::none,         ini.get<cfg::video::disable_file_system_log>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
@@ -549,8 +543,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>());
     RED_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::syslog,        ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::wrm,          ini.get<cfg::video::disable_file_system_log>());
+    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,           ini.get<cfg::video::disable_clipboard_log>());
+    RED_CHECK_EQUAL(FileSystemLogFlags::meta,         ini.get<cfg::video::disable_file_system_log>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
@@ -702,11 +696,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_file_system_log>());
-
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
@@ -831,7 +820,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
         "[video]\n"
         "wrm_color_depth_selection_strategy=1\n"
         "wrm_compression_algorithm=1\n"
-        "disable_clipboard_log=0\n"
+        "disable_clipboard_log=1\n"
         "\n"
     ;
 
@@ -861,9 +850,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_file_system_log>());
+    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,           ini.get<cfg::video::disable_clipboard_log>());
+    RED_CHECK_EQUAL(FileSystemLogFlags::none,         ini.get<cfg::video::disable_file_system_log>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
@@ -998,11 +986,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_file_system_log>());
-
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
@@ -1135,11 +1118,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_file_system_log>());
-
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
@@ -1257,11 +1235,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
-
-    RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_file_system_log>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
@@ -1383,11 +1356,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
-
-    RED_CHECK_EQUAL(ClipboardLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::syslog,
-                                                        ini.get<cfg::video::disable_file_system_log>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());

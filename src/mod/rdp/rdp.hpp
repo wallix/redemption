@@ -587,7 +587,6 @@ private:
             cvc_params.clipboard_down_authorized = this->channels_authorizations.cliprdr_down_is_authorized();
             cvc_params.clipboard_up_authorized   = this->channels_authorizations.cliprdr_up_is_authorized();
             cvc_params.clipboard_file_authorized = this->channels_authorizations.cliprdr_file_is_authorized();
-            cvc_params.dont_log_data_into_syslog = this->clipboard.disable_log_syslog;
             cvc_params.log_only_relevant_clipboard_activities = this->clipboard.log_only_relevant_activities;
             cvc_params.validator_params = this->validator_params;
 
@@ -762,7 +761,6 @@ private:
         fsvc_params.print_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT);
         fsvc_params.serial_port_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL);
         fsvc_params.smart_card_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD);
-        fsvc_params.dont_log_data_into_syslog = this->file_system.disable_log_syslog;
         fsvc_params.smartcard_passthrough = this->file_system.smartcard_passthrough;
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(

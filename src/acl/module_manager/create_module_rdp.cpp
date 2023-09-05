@@ -592,8 +592,6 @@ ModPack create_mod_rdp(
     mod_rdp_params.enable_krb                          = ini.get<cfg::mod_rdp::enable_kerberos>();
     mod_rdp_params.enable_fastpath                     = ini.get<cfg::mod_rdp::fast_path>();
 
-    mod_rdp_params.clipboard_params.disable_log_syslog = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
-
     mod_rdp_params.session_probe_params = get_session_probe_params(ini);
 
     mod_rdp_params.ignore_auth_channel                 = ini.get<cfg::mod_rdp::ignore_auth_channel>();
@@ -676,8 +674,6 @@ ModPack create_mod_rdp(
     // ======================= File System Params ===================
     {
         auto & fsp = mod_rdp_params.file_system_params;
-        fsp.disable_log_syslog = bool(ini.get<cfg::video::disable_file_system_log>()
-                                      & FileSystemLogFlags::syslog);
         fsp.bogus_ios_rdpdr_virtual_channel     = ini.get<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel>();
         fsp.enable_rdpdr_data_analysis          =  ini.get<cfg::mod_rdp::enable_rdpdr_data_analysis>();
     }

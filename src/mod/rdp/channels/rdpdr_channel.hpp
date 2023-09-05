@@ -110,8 +110,6 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     const bool        param_file_system_write_authorized;
     const uint32_t    param_random_number;                  // For ClientId.
 
-    const bool        param_dont_log_data_into_syslog;
-
     const char* const param_proxy_managed_drive_prefix;
 
     bool user_logged_on = false;
@@ -927,7 +925,6 @@ public:
     , param_file_system_read_authorized(params.file_system_read_authorized)
     , param_file_system_write_authorized(params.file_system_write_authorized)
     , param_random_number(random_number)
-    , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_proxy_managed_drive_prefix(proxy_managed_drive_prefix)
     , device_redirection_manager(
           *this,
@@ -1517,11 +1514,6 @@ public:
                                 KVLog("device_name"_av, device_name),
                                 KVLog("device_type"_av, device_type_name),
                             });
-
-                            LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                "type=DRIVE_REDIRECTION_USE device_name=%.*s device_type=%s",
-                                int(device_name.size()), device_name.data(),
-                                device_type_name);
                         }
                     }
 
@@ -1596,20 +1588,12 @@ public:
                                     KVLog("size"_av, file_size_str),
                                     KVLog("sha256"_av, digest_str),
                                 });
-
-                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                    "type=DRIVE_REDIRECTION_READ_EX file_name=%s"
-                                    "size=%s sha256=%s",
-                                    file_path, file_size_str, digest_str);
                             }
                             else {
                                 this->session_log.log6(
                                     LogId::DRIVE_REDIRECTION_READ, {
                                     KVLog("file_name"_av, file_path),
                                 });
-
-                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                    "type=DRIVE_REDIRECTION_READ file_name=%s", file_path);
                             }
                         }
                         else if (target_iter->for_writing) {
@@ -1628,20 +1612,12 @@ public:
                                     KVLog("size"_av, file_size_str),
                                     KVLog("sha256"_av, digest_str),
                                 });
-
-                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                    "type=DRIVE_REDIRECTION_WRITE_EX file_name=%s"
-                                    "size=%s sha256=%s",
-                                    file_path, file_size_str, digest_str);
                             }
                             else if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 this->session_log.log6(
                                     LogId::DRIVE_REDIRECTION_WRITE, {
                                     KVLog("file_name"_av, file_path),
                                 });
-
-                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                    "type=DRIVE_REDIRECTION_WRITE file_name=%s", file_path);
                             }
                         }
                     }
@@ -1750,9 +1726,6 @@ public:
                                     LogId::DRIVE_REDIRECTION_DELETE, {
                                     KVLog("file_name"_av, file_path),
                                 });
-
-                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                    "type=DRIVE_REDIRECTION_DELETE file_name=%s", file_path);
                             }
                             else {
                                 LOG(LOG_WARNING,
@@ -1771,10 +1744,6 @@ public:
                                     KVLog("old_file_name"_av, target_iter->file_path),
                                     KVLog("new_file_name"_av, file_path),
                                 });
-
-                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
-                                    "type=DRIVE_REDIRECTION_RENAME old_file_name=%s new_file_name=%s",
-                                    target_iter->file_path, file_path);
                             }
                             else {
                                 LOG(LOG_WARNING,

@@ -2852,21 +2852,21 @@ namespace cfg
     };
     /// Disable clipboard log: <br/>
     /// type: ClipboardLogFlags <br/>
-    /// default: ClipboardLogFlags::syslog <br/>
+    /// default: ClipboardLogFlags::none <br/>
     struct video::disable_clipboard_log {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = ClipboardLogFlags;
         using mapped_type = ClipboardLogFlags;
-        type value { ClipboardLogFlags::syslog };
+        type value { ClipboardLogFlags::none };
     };
     /// Disable (redirected) file system log: <br/>
     /// type: FileSystemLogFlags <br/>
-    /// default: FileSystemLogFlags::syslog <br/>
+    /// default: FileSystemLogFlags::none <br/>
     struct video::disable_file_system_log {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = FileSystemLogFlags;
         using mapped_type = FileSystemLogFlags;
-        type value { FileSystemLogFlags::syslog };
+        type value { FileSystemLogFlags::none };
     };
     /// The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture: <br/>
     /// type: ColorDepthSelectionStrategy <br/>

@@ -152,17 +152,15 @@ inline KeyboardLogFlags & operator &= (KeyboardLogFlags & x, KeyboardLogFlags y)
 enum class ClipboardLogFlags : uint8_t
 {
     none = 0,
-    // clipboard log in syslog
-    syslog = 1,
     // clipboard log in recorded sessions
-    wrm = 2,
+    wrm = 1,
     // clipboard log in recorded meta
-    meta = 4,
+    meta = 2,
 };
 
 template<> struct is_valid_enum_value<ClipboardLogFlags>
 {
-    constexpr static bool is_valid(uint64_t n) { return n <= 7; }
+    constexpr static bool is_valid(uint64_t n) { return n <= 3; }
 };
 
 inline ClipboardLogFlags operator | (ClipboardLogFlags x, ClipboardLogFlags y)
@@ -182,7 +180,7 @@ inline ClipboardLogFlags operator & (ClipboardLogFlags x, ClipboardLogFlags y)
 inline ClipboardLogFlags operator ~ (ClipboardLogFlags x)
 {
     return static_cast<ClipboardLogFlags>(
-        ~static_cast<uint8_t>(x) & 7
+        ~static_cast<uint8_t>(x) & 3
     );
 }
 
@@ -192,17 +190,15 @@ inline ClipboardLogFlags & operator &= (ClipboardLogFlags & x, ClipboardLogFlags
 enum class FileSystemLogFlags : uint8_t
 {
     none = 0,
-    // (redirected) file system log in syslog
-    syslog = 1,
     // (redirected) file system log in recorded sessions
-    wrm = 2,
+    wrm = 1,
     // (redirected) file system log in recorded meta
-    meta = 4,
+    meta = 2,
 };
 
 template<> struct is_valid_enum_value<FileSystemLogFlags>
 {
-    constexpr static bool is_valid(uint64_t n) { return n <= 7; }
+    constexpr static bool is_valid(uint64_t n) { return n <= 3; }
 };
 
 inline FileSystemLogFlags operator | (FileSystemLogFlags x, FileSystemLogFlags y)
@@ -222,7 +218,7 @@ inline FileSystemLogFlags operator & (FileSystemLogFlags x, FileSystemLogFlags y
 inline FileSystemLogFlags operator ~ (FileSystemLogFlags x)
 {
     return static_cast<FileSystemLogFlags>(
-        ~static_cast<uint8_t>(x) & 7
+        ~static_cast<uint8_t>(x) & 3
     );
 }
 

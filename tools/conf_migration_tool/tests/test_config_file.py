@@ -419,3 +419,12 @@ class TestMigration(unittest.TestCase):
 
         self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_keyboard_log=5\n'),
                          (True, '[video]\nenable_keyboard_log=False\n'))
+
+        self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_file_system_log=0\n'),
+                         (True, '[video]\ndisable_file_system_log=0\n'))
+
+        self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_file_system_log=1\n'),
+                         (True, '[video]\ndisable_file_system_log=0\n'))
+
+        self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_file_system_log=4\n'),
+                         (True, '[video]\ndisable_file_system_log=2\n'))

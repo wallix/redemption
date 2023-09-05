@@ -1522,7 +1522,6 @@ struct ClipboardVirtualChannel::ClipCtx::D
                 clip.files,
                 in_stream,
                 in_header,
-                self.params.dont_log_data_into_syslog,
                 clip.current_file_list_format_id,
                 flags,
                 clip.file_descriptor_stream,
@@ -2486,13 +2485,6 @@ struct ClipboardVirtualChannel::ClipCtx::D
             KVLog("size"_av, file_size),
             KVLog("sha256"_av, digest_str),
         });
-
-        LOG_IF(!self.params.dont_log_data_into_syslog, LOG_INFO,
-            "type=%s file_name=%s size=%s sha256=%s",
-            from_remote_session
-                ? "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
-                : "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
-            file_contents_range.file_name, file_size, digest_str);
     }
 
     static void log_siem_info(
@@ -2510,27 +2502,25 @@ struct ClipboardVirtualChannel::ClipCtx::D
         }
 
         bytes_view utf8_format;
-        bool log_current_activity;
 
         if (is_file_group_id) {
             utf8_format = Cliprdr::formats::file_group_descriptor_w.ascii_name;
-            log_current_activity = true;
         }
         else {
             auto* format_name = current_format_list.find(requestedFormatId);
 
-            utf8_format = (format_name && not format_name->utf8_name().empty() )
+            utf8_format = (format_name && not format_name->utf8_name().empty())
                 ? format_name->utf8_name()
                 : RDPECLIP::get_FormatId_name_av(requestedFormatId);
 
-            log_current_activity
+            bool log_current_activity
                 = !self.params.log_only_relevant_clipboard_activities
                || !format_name
                || !ranges_equal(utf8_format, Cliprdr::formats::preferred_drop_effect.ascii_name);
-        }
 
-        if (self.params.dont_log_data_into_syslog && not log_current_activity) {
-            return ;
+            if (not log_current_activity) {
+                return ;
+            }
         }
 
         char format_buf[255];
@@ -2549,84 +2539,62 @@ struct ClipboardVirtualChannel::ClipCtx::D
         chars_view utf8_string{};
         int_to_chars_result int_to_chars_buffer;
 
-        if (log_current_activity || not self.params.dont_log_data_into_syslog) {
-            switch (requestedFormatId) {
-                /*
-                case RDPECLIP::CF_TEXT:
-                {
-                    const size_t length_of_data_to_dump = std::min(
-                        chunk.in_remain(), max_length_of_data_to_dump);
-                    data_to_dump.assign(
-                        ::char_ptr_cast(chunk.get_current()),
-                        length_of_data_to_dump);
-                }
-                break;
-                */
-                case RDPECLIP::CF_UNICODETEXT:
-                {
-                    assert(!(data_to_dump.size() & 1));
-
-                    const size_t length_of_data_to_dump = std::min(
-                        data_to_dump.size(), max_length_of_data_to_dump * 2);
-
-                    auto av = ::UTF16toUTF8_buf(
-                        data_to_dump.first(length_of_data_to_dump),
-                        make_writable_array_view(data_to_dump_buf));
-                    utf8_string = av.as_chars();
-                    if (not utf8_string.empty() && not utf8_string.back()) {
-                        utf8_string = utf8_string.drop_back(1);
-                    }
-                }
-                break;
-
-                case RDPECLIP::CF_LOCALE:
-                    if (data_to_dump.size() >= 4) {
-                        InStream in_stream(data_to_dump);
-                        int_to_decimal_chars(int_to_chars_buffer, in_stream.in_uint32_le());
-                        utf8_string = int_to_chars_buffer;
-                    }
-                break;
+        switch (requestedFormatId) {
+            /*
+            case RDPECLIP::CF_TEXT:
+            {
+                const size_t length_of_data_to_dump = std::min(
+                    chunk.in_remain(), max_length_of_data_to_dump);
+                data_to_dump.assign(
+                    ::char_ptr_cast(chunk.get_current()),
+                    length_of_data_to_dump);
             }
+            break;
+            */
+            case RDPECLIP::CF_UNICODETEXT:
+            {
+                assert(!(data_to_dump.size() & 1));
+
+                const size_t length_of_data_to_dump = std::min(
+                    data_to_dump.size(), max_length_of_data_to_dump * 2);
+
+                auto av = ::UTF16toUTF8_buf(
+                    data_to_dump.first(length_of_data_to_dump),
+                    make_writable_array_view(data_to_dump_buf));
+                utf8_string = av.as_chars();
+                if (not utf8_string.empty() && not utf8_string.back()) {
+                    utf8_string = utf8_string.drop_back(1);
+                }
+            }
+            break;
+
+            case RDPECLIP::CF_LOCALE:
+                if (data_to_dump.size() >= 4) {
+                    InStream in_stream(data_to_dump);
+                    int_to_decimal_chars(int_to_chars_buffer, in_stream.in_uint32_le());
+                    utf8_string = int_to_chars_buffer;
+                }
+            break;
         }
 
-        if (log_current_activity) {
-            if (utf8_string.empty()) {
-                self.session_log.log6(is_client_to_server
-                    ? LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION
-                    : LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION,
-                {
-                    KVLog("format"_av, format_av),
-                    KVLog("size"_av, size_av),
-                });
-            }
-            else {
-                self.session_log.log6(is_client_to_server
-                    ? LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX
-                    : LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX,
-                {
-                    KVLog("format"_av, format_av),
-                    KVLog("size"_av, size_av),
-                    KVLog("partial_data"_av, utf8_string),
-                });
-            }
+        if (utf8_string.empty()) {
+            self.session_log.log6(is_client_to_server
+                ? LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION
+                : LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION,
+            {
+                KVLog("format"_av, format_av),
+                KVLog("size"_av, size_av),
+            });
         }
-
-        if (not self.params.dont_log_data_into_syslog) {
-            const auto type = (is_client_to_server)
-                ? (utf8_string.empty()
-                    ? "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"_av
-                    : "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"_av)
-                : (utf8_string.empty()
-                    ? "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION"_av
-                    : "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX"_av);
-
-            LOG(LOG_INFO,
-                "type=%s format=%.*s size=%.*s %s%.*s",
-                type.data(),
-                int(format_av.size()), format_av.data(),
-                int(size_av.size()), size_av.data(),
-                utf8_string.empty() ? "" : " partial_data",
-                int(utf8_string.size()), utf8_string.data());
+        else {
+            self.session_log.log6(is_client_to_server
+                ? LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX
+                : LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX,
+            {
+                KVLog("format"_av, format_av),
+                KVLog("size"_av, size_av),
+                KVLog("partial_data"_av, utf8_string),
+            });
         }
     }
 };

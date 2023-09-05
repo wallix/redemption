@@ -416,23 +416,21 @@ enable_keyboard_log = boolean(default=True)
 
 # Disable clipboard log:
 # &nbsp; &nbsp;   0x0: none
-# &nbsp; &nbsp;   0x1: disable clipboard log in syslog
-# &nbsp; &nbsp;   0x2: disable clipboard log in recorded sessions
-# &nbsp; &nbsp;   0x4: disable clipboard log in recorded meta<br/>
-# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+# &nbsp; &nbsp;   0x1: disable clipboard log in recorded sessions
+# &nbsp; &nbsp;   0x2: disable clipboard log in recorded meta<br/>
+# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 #_advanced
 #_hex
-disable_clipboard_log = integer(min=0, max=7, default=1)
+disable_clipboard_log = integer(min=0, max=3, default=0)
 
 # Disable (redirected) file system log:
 # &nbsp; &nbsp;   0x0: none
-# &nbsp; &nbsp;   0x1: disable (redirected) file system log in syslog
-# &nbsp; &nbsp;   0x2: disable (redirected) file system log in recorded sessions
-# &nbsp; &nbsp;   0x4: disable (redirected) file system log in recorded meta<br/>
-# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+# &nbsp; &nbsp;   0x1: disable (redirected) file system log in recorded sessions
+# &nbsp; &nbsp;   0x2: disable (redirected) file system log in recorded meta<br/>
+# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 #_advanced
 #_hex
-disable_file_system_log = integer(min=0, max=7, default=1)
+disable_file_system_log = integer(min=0, max=3, default=0)
 
 # The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
 # &nbsp; &nbsp;   0: 24-bit

@@ -75,7 +75,6 @@ struct ModRDPParams
 
     struct ClipboardParams
     {
-        bool disable_log_syslog = false;
         bool log_only_relevant_activities = true;
     };
 
@@ -83,7 +82,6 @@ struct ModRDPParams
 
     struct FileSystemParams
     {
-        bool disable_log_syslog = false;
         bool bogus_ios_rdpdr_virtual_channel = true;
         bool enable_rdpdr_data_analysis = true;
         bool smartcard_passthrough = false;
@@ -343,10 +341,6 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     RDP_PARAMS_LOG_GET,    session_probe_params.vc_params.target_ip);
 #endif
-
-        RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_syslog);
-
-        RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.disable_log_syslog);
 
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    persistent_key_list_transport);
 
