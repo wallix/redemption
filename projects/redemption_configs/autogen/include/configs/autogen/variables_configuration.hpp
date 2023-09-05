@@ -292,7 +292,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::ip;
         type value { "0.0.0.0" };
     };
-    /// Allow Transparent mode. <br/>
+    /// The transparent mode allows to intercept network traffic for a target even when the user specifies the target's address directly, instead of using the proxy address. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct globals::enable_transparent_mode {
@@ -624,7 +624,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Specifies the highest compression package support available on the front side <br/>
+    /// Specifies the highest compression support available <br/>
     /// type: RdpCompression <br/>
     /// default: RdpCompression::rdp6_1 <br/>
     struct client::rdp_compression {
@@ -642,7 +642,7 @@ namespace cfg
         using mapped_type = ColorDepth;
         type value { ColorDepth::depth24 };
     };
-    /// Persistent Disk Bitmap Cache on the front side. <br/>
+    /// Persistent Disk Bitmap Cache on the front side. If supported by the RDP client, the size of image caches will be increased <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::persistent_disk_bitmap_cache {
@@ -660,7 +660,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// If enabled, the contents of Persistent Bitmap Caches are stored on disk. <br/>
+    /// If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled). <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::persist_bitmap_cache_on_disk {
@@ -761,7 +761,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause. <br/>
+    /// This option should only be used if the server or client is showing graphical issues. <br/>
     /// In general, disabling RDP orders has a negative impact on performance. <br/>
     ///  <br/>
     /// Disables supported drawing orders: <br/>
@@ -822,7 +822,7 @@ namespace cfg
         type value { true };
     };
 
-    /// Specifies the highest compression package support available on the front side <br/>
+    /// Specifies the highest compression support available <br/>
     /// type: RdpCompression <br/>
     /// default: RdpCompression::rdp6_1 <br/>
     struct mod_rdp::rdp_compression {
@@ -849,7 +849,7 @@ namespace cfg
         using mapped_type = std::chrono::seconds;
         type value {  };
     };
-    /// This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause. <br/>
+    /// This option should only be used if the server or client is showing graphical issues. <br/>
     /// In general, disabling RDP orders has a negative impact on performance. <br/>
     ///  <br/>
     /// Disables supported drawing orders: <br/>
@@ -879,7 +879,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::list<unsigned>;
         type value { "27" };
     };
-    /// NLA authentication in secondary target. <br/>
+    /// Enable NLA authentication in secondary target. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: mod_rdp:enable_nla <br/>
@@ -964,7 +964,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Persistent Disk Bitmap Cache on the mod side. <br/>
+    /// Persistent Disk Bitmap Cache on the mod side. If supported by the RDP server, the size of image caches will be increased <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::persistent_disk_bitmap_cache {
@@ -982,7 +982,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// If enabled, the contents of Persistent Bitmap Caches are stored on disk. <br/>
+    /// If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled). <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct mod_rdp::persist_bitmap_cache_on_disk {
@@ -1330,6 +1330,7 @@ namespace cfg
         using mapped_type = std::chrono::milliseconds;
         type value { 20000 };
     };
+    /// Some events such as 'Preferred DropEffect' have no particular meaning. This option allows you to exclude these types of events from the logs. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::log_only_relevant_clipboard_activities {

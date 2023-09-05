@@ -51,7 +51,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Specify bind address
 #listen_address = 0.0.0.0
 
-# Allow Transparent mode.
+# The transparent mode allows to intercept network traffic for a target even when the user specifies the target's address directly, instead of using the proxy address.
 # (type: boolean (0/no/false or 1/yes/true))
 #enable_transparent_mode = 0
 
@@ -120,7 +120,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #mod_recv_timeout = 1000
 
 # (type: boolean (0/no/false or 1/yes/true))
-#_advanced
 #experimental_enable_serializer_data_block_size_limit = 0
 
 # Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.
@@ -207,7 +206,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #enable_nla = 0
 
-# Specifies the highest compression package support available on the front side
+# Specifies the highest compression support available
 #   0: The RDP bulk compression is disabled
 #   1: RDP 4.0 bulk compression
 #   2: RDP 5.0 bulk compression
@@ -221,11 +220,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   15: 15-bit 555 RGB mask
 #   16: 16-bit 565 RGB mask
 #   24: 24-bit RGB mask
-#   32: 32-bit RGB mask (24-bit RGB + alpha)
+#   32: 32-bit RGB mask + alpha
 #_advanced
 #max_color_depth = 24
 
-# Persistent Disk Bitmap Cache on the front side.
+# Persistent Disk Bitmap Cache on the front side. If supported by the RDP client, the size of image caches will be increased
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #persistent_disk_bitmap_cache = 1
@@ -235,7 +234,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #cache_waiting_list = 0
 
-# If enabled, the contents of Persistent Bitmap Caches are stored on disk.
+# If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #persist_bitmap_cache_on_disk = 0
@@ -284,7 +283,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #enable_remotefx = 1
 
-# This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause.
+# This option should only be used if the server or client is showing graphical issues.
 # In general, disabling RDP orders has a negative impact on performance.
 # 
 # Disables supported drawing orders:
@@ -327,7 +326,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [mod_rdp]
 
-# Specifies the highest compression package support available on the front side
+# Specifies the highest compression support available
 #   0: The RDP bulk compression is disabled
 #   1: RDP 4.0 bulk compression
 #   2: RDP 5.0 bulk compression
@@ -346,7 +345,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #open_session_timeout = 0
 
-# This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause.
+# This option should only be used if the server or client is showing graphical issues.
 # In general, disabling RDP orders has a negative impact on performance.
 # 
 # Disables supported drawing orders:
@@ -368,7 +367,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ mod_rdp:disabled_orders)
 #disabled_orders = 27
 
-# NLA authentication in secondary target.
+# Enable NLA authentication in secondary target.
 # (type: boolean (0/no/false or 1/yes/true))
 # (acl config: proxy ⇐ mod_rdp:enable_nla)
 #enable_nla = 1
@@ -399,7 +398,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ mod_rdp:show_common_cipher_list)
 #show_common_cipher_list = 0
 
-# Persistent Disk Bitmap Cache on the mod side.
+# Persistent Disk Bitmap Cache on the mod side. If supported by the RDP server, the size of image caches will be increased
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #persistent_disk_bitmap_cache = 1
@@ -409,7 +408,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #cache_waiting_list = 1
 
-# If enabled, the contents of Persistent Bitmap Caches are stored on disk.
+# If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #persist_bitmap_cache_on_disk = 0
@@ -554,6 +553,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #remoteapp_bypass_legal_notice_timeout = 20000
 
+# Some events such as 'Preferred DropEffect' have no particular meaning. This option allows you to exclude these types of events from the logs.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #log_only_relevant_clipboard_activities = 1

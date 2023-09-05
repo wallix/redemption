@@ -135,7 +135,7 @@ constexpr auto default_key =
 ;
 
 std::string_view disabled_orders_desc =
-    "This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause.\n"
+    "This option should only be used if the server or client is showing graphical issues.\n"
     "In general, disabling RDP orders has a negative impact on performance.\n"
     "\n"
     "Disables supported drawing orders:\n"
@@ -321,7 +321,7 @@ _.section("globals", [&]
         .name = "enable_transparent_mode",
         .value = value(false),
         .spec = global_spec(no_acl, spec::iptables),
-        .desc = "Allow Transparent mode.",
+        .desc = "The transparent mode allows to intercept network traffic for a target even when the user specifies the target's address directly, instead of using the proxy address.",
     });
 
     _.member(MemberInfo{
@@ -442,10 +442,11 @@ _.section("globals", [&]
         .spec = ini_only(no_acl),
     });
 
+    // TODO unused
     _.member(MemberInfo{
         .name = "experimental_enable_serializer_data_block_size_limit",
         .value = value(false),
-        .spec = global_spec(no_acl, spec::advanced),
+        .spec = ini_only(no_acl),
     });
 
     _.member(MemberInfo{
@@ -634,7 +635,7 @@ _.section("client", [&]
         .name = "persistent_disk_bitmap_cache",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Persistent Disk Bitmap Cache on the front side.",
+        .desc = "Persistent Disk Bitmap Cache on the front side. If supported by the RDP client, the size of image caches will be increased",
     });
 
     _.member(MemberInfo{
@@ -648,7 +649,8 @@ _.section("client", [&]
         .name = "persist_bitmap_cache_on_disk",
         .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "If enabled, the contents of Persistent Bitmap Caches are stored on disk.",
+        .desc =
+            "If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
     });
 
     _.member(MemberInfo{
@@ -800,7 +802,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "enable_nla",
         .value = value<bool>(true, jh_policy_value(false).always()),
         .spec = connpolicy(rdp_without_jh, L),
-        .desc = "NLA authentication in secondary target.",
+        .desc = "Enable NLA authentication in secondary target.",
     });
 
     _.member(MemberInfo{
@@ -845,7 +847,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "persistent_disk_bitmap_cache",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Persistent Disk Bitmap Cache on the mod side.",
+        .desc = "Persistent Disk Bitmap Cache on the mod side. If supported by the RDP server, the size of image caches will be increased",
     });
 
     _.member(MemberInfo{
@@ -859,7 +861,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "persist_bitmap_cache_on_disk",
         .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "If enabled, the contents of Persistent Bitmap Caches are stored on disk.",
+        .desc = "If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
     });
 
     _.member(MemberInfo{
@@ -1090,6 +1092,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "log_only_relevant_clipboard_activities",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
+        .desc = "Some events such as 'Preferred DropEffect' have no particular meaning. This option allows you to exclude these types of events from the logs.",
     });
 
     _.member(MemberInfo{

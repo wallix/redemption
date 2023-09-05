@@ -431,9 +431,9 @@ private:
         , bmp_cache_persister([&ini, verbose, this]() {
             std::unique_ptr<BmpCachePersister> bmp_cache_persister;
 
-            if (ini.get<cfg::client::persistent_disk_bitmap_cache>() &&
-                ini.get<cfg::client::persist_bitmap_cache_on_disk>() &&
-                bmp_cache.has_cache_persistent()
+            if (ini.get<cfg::client::persistent_disk_bitmap_cache>()
+             && ini.get<cfg::client::persist_bitmap_cache_on_disk>()
+             && bmp_cache.has_cache_persistent()
             ) {
                 // Generates the name of file.
                 char cache_filename[2048];
@@ -1172,14 +1172,6 @@ public:
         LOG(LOG_INFO, "target_user   = %s", this->ini.get<cfg::globals::target_user>());
     }
 
-    BitsPerPixel wrm_color_depth()
-    {
-        return (this->ini.get<cfg::video::wrm_color_depth_selection_strategy>()
-                == ColorDepthSelectionStrategy::depth16)
-               ? BitsPerPixel{16}
-               : BitsPerPixel{24};
-    }
-
     bool can_be_start_capture(SessionLogApi & session_log) override
     {
         using namespace std::literals::chrono_literals;
@@ -1209,7 +1201,9 @@ public:
             this->show_session_config();
         }
 
-        this->capture_bpp = this->wrm_color_depth();
+        this->capture_bpp = (this->ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16)
+            ? BitsPerPixel{16}
+            : BitsPerPixel{24};
 
         char const * const record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         char const * const record_filebase = ini.get<cfg::capture::record_filebase>().c_str();
@@ -4413,8 +4407,9 @@ private:
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::process_data: PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
 
-            if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>() &&
-                this->orders.bmp_cache_persister()) {
+            if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()
+             && this->orders.bmp_cache_persister()
+            ) {
                 RDP::PersistentKeyListPDUData pklpdud;
 
                 pklpdud.receive(sdata_in.payload);
@@ -4430,7 +4425,7 @@ private:
                 for (unsigned i = 0; i < BmpCache::MAXIMUM_NUMBER_OF_CACHES; ++i) {
                     if (pklpdud.numEntriesCache[i]) {
                         this->orders.bmp_cache_persister()->process_key_list(
-                            i, entries, pklpdud.numEntriesCache[i] , cache_entry_index[i]
+                            i, entries, pklpdud.numEntriesCache[i], cache_entry_index[i]
                         );
                         entries              += pklpdud.numEntriesCache[i];
                         cache_entry_index[i] += pklpdud.numEntriesCache[i];

@@ -40,7 +40,7 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 
 [rdp]
 
-# This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause.
+# This option should only be used if the server or client is showing graphical issues.
 # In general, disabling RDP orders has a negative impact on performance.<br/>
 # Disables supported drawing orders:
 # &nbsp; &nbsp;    0: DstBlt

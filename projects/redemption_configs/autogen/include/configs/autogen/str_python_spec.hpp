@@ -29,7 +29,7 @@ base_inactivity_timeout = integer(min=0, default=900)
 authentication_timeout = integer(min=0, default=120)
 
 # ⚠ IP tables rules are reloaded and active sessions will be disconnected.<br/>
-# Allow Transparent mode.
+# The transparent mode allows to intercept network traffic for a target even when the user specifies the target's address directly, instead of using the proxy address.
 #_iptables
 enable_transparent_mode = boolean(default=False)
 
@@ -72,9 +72,6 @@ large_pointer_support = boolean(default=True)
 # Allows the client to use unicode characters.
 # This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.
 unicode_keyboard_event_support = boolean(default=True)
-
-#_advanced
-experimental_enable_serializer_data_block_size_limit = boolean(default=False)
 
 # Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
@@ -135,7 +132,7 @@ show_common_cipher_list = boolean(default=False)
 #_advanced
 enable_nla = boolean(default=False)
 
-# Specifies the highest compression package support available on the front side
+# Specifies the highest compression support available
 # &nbsp; &nbsp;   0: The RDP bulk compression is disabled
 # &nbsp; &nbsp;   1: RDP 4.0 bulk compression
 # &nbsp; &nbsp;   2: RDP 5.0 bulk compression
@@ -149,11 +146,11 @@ rdp_compression = option(0, 1, 2, 3, 4, default=4)
 # &nbsp; &nbsp;   15: 15-bit 555 RGB mask
 # &nbsp; &nbsp;   16: 16-bit 565 RGB mask
 # &nbsp; &nbsp;   24: 24-bit RGB mask
-# &nbsp; &nbsp;   32: 32-bit RGB mask (24-bit RGB + alpha)
+# &nbsp; &nbsp;   32: 32-bit RGB mask + alpha
 #_advanced
 max_color_depth = option(8, 15, 16, 24, 32, default=24)
 
-# Persistent Disk Bitmap Cache on the front side.
+# Persistent Disk Bitmap Cache on the front side. If supported by the RDP client, the size of image caches will be increased
 #_advanced
 persistent_disk_bitmap_cache = boolean(default=True)
 
@@ -161,7 +158,7 @@ persistent_disk_bitmap_cache = boolean(default=True)
 #_advanced
 cache_waiting_list = boolean(default=False)
 
-# If enabled, the contents of Persistent Bitmap Caches are stored on disk.
+# If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
 
@@ -195,7 +192,7 @@ enable_osd_4_eyes = boolean(default=True)
 #_advanced
 enable_remotefx = boolean(default=True)
 
-# This option should only be used if the server or client is showing graphical issues, to make it easier to determine which RDP order is the cause.
+# This option should only be used if the server or client is showing graphical issues.
 # In general, disabling RDP orders has a negative impact on performance.<br/>
 # Disables supported drawing orders:
 # &nbsp; &nbsp;    0: DstBlt
@@ -230,7 +227,7 @@ allow_resize_hosted_desktop = boolean(default=True)
 
 [mod_rdp]
 
-# Specifies the highest compression package support available on the front side
+# Specifies the highest compression support available
 # &nbsp; &nbsp;   0: The RDP bulk compression is disabled
 # &nbsp; &nbsp;   1: RDP 4.0 bulk compression
 # &nbsp; &nbsp;   2: RDP 5.0 bulk compression
@@ -248,7 +245,7 @@ disconnect_on_logon_user_change = boolean(default=False)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
 
-# Persistent Disk Bitmap Cache on the mod side.
+# Persistent Disk Bitmap Cache on the mod side. If supported by the RDP server, the size of image caches will be increased
 #_advanced
 persistent_disk_bitmap_cache = boolean(default=True)
 
@@ -256,7 +253,7 @@ persistent_disk_bitmap_cache = boolean(default=True)
 #_advanced
 cache_waiting_list = boolean(default=True)
 
-# If enabled, the contents of Persistent Bitmap Caches are stored on disk.
+# If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
 
@@ -297,6 +294,7 @@ remoteapp_bypass_legal_notice_delay = integer(min=0, default=0)
 #_advanced
 remoteapp_bypass_legal_notice_timeout = integer(min=0, default=20000)
 
+# Some events such as 'Preferred DropEffect' have no particular meaning. This option allows you to exclude these types of events from the logs.
 #_advanced
 log_only_relevant_clipboard_activities = boolean(default=True)
 

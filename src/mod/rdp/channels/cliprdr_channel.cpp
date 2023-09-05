@@ -2467,10 +2467,6 @@ struct ClipboardVirtualChannel::ClipCtx::D
         ClipCtx::FileContentsRange& file_contents_range,
         bool from_remote_session)
     {
-        const char* type = from_remote_session
-            ? "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
-            : "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION";
-
         if (!file_contents_range.sig.has_digest()) {
             file_contents_range.sig.broken();
         }
@@ -2493,7 +2489,10 @@ struct ClipboardVirtualChannel::ClipCtx::D
 
         LOG_IF(!self.params.dont_log_data_into_syslog, LOG_INFO,
             "type=%s file_name=%s size=%s sha256=%s",
-            type, file_contents_range.file_name, file_size, digest_str);
+            from_remote_session
+                ? "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+                : "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
+            file_contents_range.file_name, file_size, digest_str);
     }
 
     static void log_siem_info(

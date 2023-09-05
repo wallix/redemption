@@ -98,7 +98,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("depth15", 15, "15-bit 555 RGB mask")
       .value("depth16", 16, "16-bit 565 RGB mask")
       .value("depth24", 24, "24-bit RGB mask")
-      .value("depth32", 32, "32-bit RGB mask (24-bit RGB + alpha)")
+      .value("depth32", 32, "32-bit RGB mask + alpha")
     ;
 
     e.enumeration_flags("ServerNotification")
@@ -151,7 +151,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("snappy", "Snappy: Faster than GZip, but files are less compressed")
     ;
 
-    e.enumeration_list("RdpCompression", "Specifies the highest compression package support available on the front side")
+    e.enumeration_list("RdpCompression", "Specifies the highest compression support available")
       .value("none", "The RDP bulk compression is disabled")
       .value("rdp4", "RDP 4.0 bulk compression")
       .value("rdp5", "RDP 5.0 bulk compression")

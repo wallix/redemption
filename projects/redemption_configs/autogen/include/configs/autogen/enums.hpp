@@ -240,7 +240,7 @@ enum class ColorDepth : uint8_t
     depth16 = 16,
     // 24-bit RGB mask
     depth24 = 24,
-    // 32-bit RGB mask (24-bit RGB + alpha)
+    // 32-bit RGB mask + alpha
     depth32 = 32,
 };
 
@@ -414,7 +414,7 @@ template<> struct is_valid_enum_value<WrmCompressionAlgorithm>
     constexpr static bool is_valid(uint64_t n) { return n <= 2; }
 };
 
-// Specifies the highest compression package support available on the front side
+// Specifies the highest compression support available
 enum class RdpCompression : uint8_t
 {
     // The RDP bulk compression is disabled
