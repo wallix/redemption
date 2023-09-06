@@ -729,7 +729,7 @@ private:
         if (REDEMPTION_UNLIKELY(code != RedisIOCode::Ok)) {
             int errnum = redis_session.get_last_errno();
             auto msg = redis_session.get_last_error_message();
-            LOG(LOG_ERR, "%s: %s: %s", context, redios_io_code_to_zstring(code), msg);
+            LOG(LOG_ERR, "%s: %s: %s", context, redis_io_code_to_zstring(code), msg);
             throw Error(err, errnum);
         }
     }

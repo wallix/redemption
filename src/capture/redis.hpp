@@ -86,7 +86,7 @@ enum class [[nodiscard]] RedisIOCode : uint8_t
     UnknownResponse,
 };
 
-zstring_view redios_io_code_to_zstring(RedisIOCode code) noexcept;
+zstring_view redis_io_code_to_zstring(RedisIOCode code) noexcept;
 
 struct RedisWriter
 {

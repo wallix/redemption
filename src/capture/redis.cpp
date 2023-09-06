@@ -261,7 +261,7 @@ char const* RedisWriter::enable_tls(
         fd);
 }
 
-zstring_view redios_io_code_to_zstring(RedisIOCode code) noexcept
+zstring_view redis_io_code_to_zstring(RedisIOCode code) noexcept
 {
     switch (code) {
         case RedisIOCode::Ok: return "Ok"_zv;
