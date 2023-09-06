@@ -48,6 +48,7 @@ build-project:
     - git submodule update --init
     - mkdir -p "$TESTDIR"
     - TMPDIR_TEST="$TESTDIR" bjam -j4 linkflags="-static-libstdc++" variant=release -q cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING' && rm -r "$TESTDIR"
+    - tools/compute_doc_percent.sh
   artifacts:
     when: always
     name: "$CI_JOB_NAME"
