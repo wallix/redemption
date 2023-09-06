@@ -309,31 +309,7 @@ class Session
 
             this->ini.set_acl<cfg::context::sharing_ready>(true);
 
-            if (this->Front::can_be_start_capture(session_log)) {
-                // Must be synchronized with Front::can_be_start_capture()
-
-                CaptureFlags const capture_flags
-                    = (this->ini.get<cfg::globals::is_rec>()
-                    || this->ini.get<cfg::video::allow_rt_without_recording>()
-                    )
-                    ? this->ini.get<cfg::video::capture_flags>()
-                    : CaptureFlags::none;
-
-                if (bool(capture_flags & CaptureFlags::wrm)) {
-                    this->ini.set_acl<cfg::context::recording_started>(true);
-                }
-
-                if (bool(capture_flags & CaptureFlags::png)
-                    && this->ini.get<cfg::video::png_limit>() > 0
-                    && !this->ini.get<cfg::context::rt_ready>()
-                ){
-                    this->ini.set_acl<cfg::context::rt_ready>(true);
-                }
-
-                return true;
-            }
-
-            return false;
+            return this->Front::can_be_start_capture(session_log);
         }
     };
 

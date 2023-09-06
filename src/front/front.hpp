@@ -1222,36 +1222,31 @@ public:
 
         bool const capture_pattern_checker = this->has_ocr_pattern_check();
 
-        // Must be synchronized with SessionFront::can_be_start_capture()
+        const bool is_rec = ini.get<cfg::globals::is_rec>();
+        const bool allow_rt_without_recording = ini.get<cfg::video::allow_rt_without_recording>();
+        const bool recording_or_4eyes = is_rec || allow_rt_without_recording;
 
-        CaptureFlags const capture_flags =
-            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>())
-                ? ini.get<cfg::video::capture_flags>()
-                : (capture_pattern_checker
-                    ? CaptureFlags::ocr
-                    : CaptureFlags::none
-                );
+        const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
 
-        const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        const bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
+        const bool capture_wrm = is_rec && bool(capture_flags & CaptureFlags::wrm);
+        const bool capture_ocr = (is_rec && bool(capture_flags & CaptureFlags::ocr))
+                              || capture_pattern_checker;
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
 
         std::string redis_key_name = str_concat("session:image:", ini.get<cfg::context::session_id>());
         PngParams const png_params = {
-            0, 0,
-            ini.get<cfg::video::png_interval>(),
-            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>())
-                ? ini.get<cfg::video::png_limit>()
-                : 0,
-            true,
-            this->client_info.remote_program,
-            ini.get<cfg::audit::use_redis>(),
-            record_filebase,
-            redis_key_name,
+            .png_width = 0,
+            .png_height = 0,
+            .png_interval = ini.get<cfg::video::png_interval>(),
+            .png_limit = recording_or_4eyes ? ini.get<cfg::video::png_limit>() : 0,
+            .real_time_image_capture = true,
+            .remote_program_session = this->client_info.remote_program,
+            .use_redis_with_rt_display = ini.get<cfg::audit::use_redis>(),
+            .real_basename = record_filebase,
+            .redis_key_name = redis_key_name,
         };
-        bool const capture_png = bool(capture_flags & CaptureFlags::png)
-                              && (png_params.png_limit > 0);
+        bool const capture_png = (png_params.png_limit > 0);
 
         auto const disable_keyboard_log = ini.get<cfg::capture::disable_keyboard_log>();
         auto const kbd_fully_masked =
@@ -1337,6 +1332,14 @@ public:
         }
 
         this->capture->set_rt_display(ini.get<cfg::audit::rt_display>(), redis_params_from_ini(ini));
+
+        if (capture_wrm) {
+            this->ini.set_acl<cfg::context::recording_started>(true);
+        }
+
+        if (capture_png) {
+            this->ini.set_acl<cfg::context::rt_ready>(true);
+        }
 
         return true;
     }
