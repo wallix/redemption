@@ -2225,11 +2225,10 @@ _.section("video", [&]
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    // TODO renamed
     _.member(MemberInfo{
         .name = "png_interval",
-        .value = value<std::chrono::duration<unsigned, std::deci>>(10),
-        .spec = global_spec(no_acl, spec::advanced),
+        .value = value<std::chrono::milliseconds>(1000),
+        .spec = ini_only(no_acl),
         .desc = "Frame interval for 4eyes. A value lower than 6 will have no visible effect.",
     });
 

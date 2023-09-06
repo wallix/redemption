@@ -398,11 +398,6 @@ max_unrecog_char_rate = integer(min=0, max=100, default=40)
 #_hex
 capture_flags = integer(min=0, max=15, default=11)
 
-# Frame interval for 4eyes. A value lower than 6 will have no visible effect.<br/>
-# (in 1/10 seconds)
-#_advanced
-png_interval = integer(min=0, default=10)
-
 # Time between 2 wrm recording file.
 # ⚠ A value that is too small increases the disk space required for recordings.<br/>
 # (in seconds)

@@ -479,6 +479,8 @@ migration_defs: List[MigrationType] = [
                 value_transformation=lambda value, _: f'{(int(value) >> 1)}'),
             'disable_file_system_log': UpdateItem(
                 value_transformation=lambda value, _: f'{(int(value) >> 1)}'),
+            'png_interval': UpdateItem(
+                value_transformation=lambda value, _: f'{(int(value) * 100)}'),
         }
     }),
 ]

@@ -227,7 +227,7 @@ template<> struct acl_and_spec_type<cfg::capture::record_subdirectory> { using t
 template<> struct acl_and_spec_type<cfg::capture::fdx_path> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::capture::disable_keyboard_log> { using type = KeyboardLogFlags; };
 template<> struct acl_and_spec_type<cfg::video::capture_flags> { using type = CaptureFlags; };
-template<> struct acl_and_spec_type<cfg::video::png_interval> { using type = std::chrono::duration<unsigned, std::ratio<1, 10>>; };
+template<> struct acl_and_spec_type<cfg::video::png_interval> { using type = std::chrono::milliseconds; };
 template<> struct acl_and_spec_type<cfg::video::break_interval> { using type = std::chrono::seconds; };
 template<> struct acl_and_spec_type<cfg::video::png_limit> { using type = unsigned; };
 template<> struct acl_and_spec_type<cfg::video::hash_path> { using type = ::configs::spec_types::directory_path; };

@@ -2777,13 +2777,13 @@ namespace cfg
         type value { CaptureFlags{11} };
     };
     /// Frame interval for 4eyes. A value lower than 6 will have no visible effect. <br/>
-    /// type: std::chrono::duration&lt;unsigned, std::ratio&lt;1, 10>> <br/>
-    /// default: 10 <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// default: 1000 <br/>
     struct video::png_interval {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = std::chrono::duration<unsigned, std::ratio<1, 10>>;
-        using mapped_type = std::chrono::duration<unsigned, std::ratio<1, 10>>;
-        type value { 10 };
+        using type = std::chrono::milliseconds;
+        using mapped_type = std::chrono::milliseconds;
+        type value { 1000 };
     };
     /// Time between 2 wrm recording file. <br/>
     /// ⚠ A value that is too small increases the disk space required for recordings. <br/>
@@ -5243,10 +5243,10 @@ struct capture
 { static constexpr bool is_section = true; };
 
 struct video
-: cfg::video::break_interval
+: cfg::video::png_interval
+, cfg::video::break_interval
 , cfg::video::codec_id
 , cfg::video::ffmpeg_options
-, cfg::video::png_interval
 , cfg::video::file_permissions
 , cfg::video::capture_flags
 , cfg::video::png_limit

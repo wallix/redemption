@@ -1262,9 +1262,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #capture_flags = 11
 
 # Frame interval for 4eyes. A value lower than 6 will have no visible effect.
-# (in 1/10 seconds)
-#_advanced
-#png_interval = 10
+# (in milliseconds)
+#png_interval = 1000
 
 # Time between 2 wrm recording file.
 # ⚠ A value that is too small increases the disk space required for recordings.
