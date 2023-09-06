@@ -43,6 +43,9 @@ doc-metrics:
   image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
   script:
     - tools/compute_doc_percent.sh
+  artifacts:
+    paths:
+      - projects/redemption_configs/rdp_*.html
   only:
     - merge_requests
     - future
