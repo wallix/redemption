@@ -38,6 +38,15 @@ test-sesman:
     - merge_requests
     - future
 
+doc-metrics:
+  stage: build
+  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
+  script:
+    - tools/compute_doc_percent.sh
+  only:
+    - merge_requests
+    - future
+
 build-project:
   stage: build
   needs: []
@@ -48,7 +57,6 @@ build-project:
     - git submodule update --init
     - mkdir -p "$TESTDIR"
     - TMPDIR_TEST="$TESTDIR" bjam -j4 linkflags="-static-libstdc++" variant=release -q cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING' && rm -r "$TESTDIR"
-    - tools/compute_doc_percent.sh
   artifacts:
     when: always
     name: "$CI_JOB_NAME"
