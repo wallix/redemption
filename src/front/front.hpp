@@ -1155,14 +1155,6 @@ public:
             || ::contains_kbd_pattern(this->ini.get<cfg::context::pattern_notify>());
     }
 
-    bool is_capture_necessary()
-    {
-        return (this->ini.get<cfg::video::allow_rt_without_recording>()
-            || this->ini.get<cfg::globals::is_rec>()
-            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>())
-            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>()));
-    }
-
     void show_session_config()
     {
         LOG(LOG_INFO, "record_filebase    = %s", this->ini.get<cfg::capture::record_filebase>());
@@ -1186,10 +1178,19 @@ public:
             return false;
         }
 
-        // force capture allow to capture video from test modules
-        // even if sanity check is_capture_necessary() disagree with it
-        if (!this->is_capture_necessary())
-        {
+        const bool is_rec = ini.get<cfg::globals::is_rec>();
+        const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
+
+        const bool enable_4eyes = is_rec
+            ? bool(capture_flags & CaptureFlags::png)
+            : ini.get<cfg::video::allow_rt_without_recording>();
+
+        // capture not necessary
+        if (!( enable_4eyes
+            || (bool(is_rec & (CaptureFlags::wrm | CaptureFlags::png | CaptureFlags::ocr)))
+            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>())
+            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>())
+        )) {
             LOG(LOG_INFO, "Front::can_be_start_capture: Capture is not necessary");
             return false;
         }
@@ -1220,13 +1221,7 @@ public:
             }
         }
 
-        bool const capture_pattern_checker = this->has_ocr_pattern_check();
-
-        const bool is_rec = ini.get<cfg::globals::is_rec>();
-        const bool allow_rt_without_recording = ini.get<cfg::video::allow_rt_without_recording>();
-        const bool recording_or_4eyes = is_rec || allow_rt_without_recording;
-
-        const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
+        const bool capture_pattern_checker = this->has_ocr_pattern_check();
 
         const bool capture_wrm = is_rec && bool(capture_flags & CaptureFlags::wrm);
         const bool capture_ocr = (is_rec && bool(capture_flags & CaptureFlags::ocr))
@@ -1239,7 +1234,7 @@ public:
             .png_width = 0,
             .png_height = 0,
             .png_interval = ini.get<cfg::video::png_interval>(),
-            .png_limit = recording_or_4eyes ? ini.get<cfg::video::png_limit>() : 0,
+            .png_limit = enable_4eyes ? ini.get<cfg::video::png_limit>() : 0,
             .real_time_image_capture = true,
             .remote_program_session = this->client_info.remote_program,
             .use_redis_with_rt_display = ini.get<cfg::audit::use_redis>(),
