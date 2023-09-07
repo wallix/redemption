@@ -1047,10 +1047,11 @@ public:
     bool is_capture_necessary()
     {
         return (this->ini.get<cfg::video::allow_rt_without_recording>()
+                    && bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png))
             || this->ini.get<cfg::globals::is_rec>()
             || !bool(this->ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
             || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>())
-            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>()));
+            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>());
     }
 
     void show_session_config()
@@ -1125,7 +1126,7 @@ public:
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
 
         const bool recording_or_4eyes = (is_rec || ini.get<cfg::video::allow_rt_without_recording>())
-                                      && bool(capture_flags & CaptureFlags::png);
+                                     && bool(capture_flags & CaptureFlags::png);
 
         const bool capture_wrm = is_rec && bool(capture_flags & CaptureFlags::wrm);
         const bool capture_ocr = (is_rec && bool(capture_flags & CaptureFlags::ocr))
