@@ -1120,16 +1120,16 @@ public:
 
         bool const capture_pattern_checker = this->has_ocr_pattern_check();
 
-        CaptureFlags const capture_flags =
-            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>())
-                ? ini.get<cfg::video::capture_flags>()
-                : (capture_pattern_checker
-                    ? CaptureFlags::ocr
-                    : CaptureFlags::none
-                );
+        const bool is_rec = ini.get<cfg::globals::is_rec>();
 
-        const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        const bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
+        const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
+
+        const bool recording_or_4eyes = (is_rec || ini.get<cfg::video::allow_rt_without_recording>())
+                                      && bool(capture_flags & CaptureFlags::png);
+
+        const bool capture_wrm = is_rec && bool(capture_flags & CaptureFlags::wrm);
+        const bool capture_ocr = (is_rec && bool(capture_flags & CaptureFlags::ocr))
+                              || capture_pattern_checker;
         const bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
           || this->has_kbd_pattern_check();
@@ -1139,9 +1139,7 @@ public:
         PngParams const png_params = {
             0, 0,
             ini.get<cfg::video::png_interval>(),
-            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>())
-                ? ini.get<cfg::video::png_limit>()
-                : 0,
+            recording_or_4eyes ? ini.get<cfg::video::png_limit>() : 0,
             true,
             this->client_info.remote_program,
             ini.get<cfg::video::rt_display>(),
@@ -1149,8 +1147,7 @@ public:
                 ? ini.get<cfg::context::session_id>().c_str()
                 : record_filebase
         };
-        bool const capture_png = bool(capture_flags & CaptureFlags::png)
-                              && (png_params.png_limit > 0);
+        bool const capture_png = (png_params.png_limit > 0);
 
         KbdLogParams const kbd_log_params = kbd_log_params_capture_from_ini(ini);
 
