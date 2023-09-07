@@ -50,8 +50,8 @@ struct OcrTitlesExtractor
         }
         else {
             this->extractor.set_box_height(
-                ::ocr::fonts::min_height_font[this->locale_id],
-                ::ocr::fonts::max_height_font[this->locale_id]
+                ::ocr::fonts::min_height_font[static_cast<unsigned>(this->locale_id)],
+                ::ocr::fonts::max_height_font[static_cast<unsigned>(this->locale_id)]
             );
             this->reset_letters();
         }
@@ -173,7 +173,7 @@ private:
     }
 
     [[nodiscard]] ocr::fonts::Font const & font() const {
-        return ::ocr::fonts::fonts[this->locale_id][this->font_id];
+        return ::ocr::fonts::fonts[static_cast<unsigned>(this->locale_id)][this->font_id];
     }
 
     ocr::ExtractTextClassification classification;

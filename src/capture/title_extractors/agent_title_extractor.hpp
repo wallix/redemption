@@ -20,21 +20,21 @@
 
 #pragma once
 
-#include <string>
-#include <algorithm>
+#include <vector>
 
 #include "title_extractor_api.hpp"
 
 
 class AgentTitleExtractor : public TitleExtractorApi
 {
-    std::string title;
+    std::vector<char> title;
     bool has_title = false;
 
 public:
     AgentTitleExtractor() = default;
 
-    chars_view extract_title() override {
+    chars_view extract_title() override
+    {
         if (this->has_title) {
             this->has_title = false;
             return this->title;

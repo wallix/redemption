@@ -20,12 +20,11 @@
 
 #pragma once
 
-#include "capture/rdp_ppocr/get_ocr_constants.hpp"
+#include "capture/rdp_ppocr/get_ocr_constants_from_locale_id.hpp"
 #include "title_extractor_api.hpp"
 #include "ocr_titles_extractor.hpp"
 #include "ppocr_titles_extractor.hpp"
 #include "ocr_title_filter.hpp"
-#include "core/app_path.hpp"
 #include "configs/autogen/enums.hpp"
 
 
@@ -106,8 +105,8 @@ public:
         if (is_ocr2) {
             new (&this->variant.v2) PpOcrDrawableTitleExtractor(
                 drawable, enable_title_log,
-                rdp_ppocr::get_ocr_constants(app_path(AppPath::Cfg).to_string(), locale_id)
-                , title_bar_only, max_unrecog_char_rate, locale_id
+                rdp_ppocr::get_ocr_constants_from_locale_id(locale_id),
+                title_bar_only, max_unrecog_char_rate, locale_id
             );
         }
         else {

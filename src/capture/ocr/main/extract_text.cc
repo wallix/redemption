@@ -44,7 +44,7 @@ struct Classification
         }
 
         if (font_id == -1u) {
-            const unsigned nfonts = ocr::fonts::nfonts[this->locale_id];
+            const unsigned nfonts = ocr::fonts::nfonts[static_cast<unsigned>(this->locale_id)];
             this->results.resize(nfonts);
             unsigned normally_selected_id = -1u;
             bool is_selected = false;
@@ -65,7 +65,7 @@ struct Classification
             std::cout << "-------- font: " << (
                 normally_selected_id == - 1u
                 ? "(none)"
-                : ocr::fonts::fonts[this->locale_id][normally_selected_id].name
+                : ocr::fonts::fonts[static_cast<unsigned>(this->locale_id)][normally_selected_id].name
             ) << "  " << box << " --------\n";
             if (normally_selected_id == -1u) {
                 normally_selected_id = unsigned(this->results.size() - 1);
@@ -79,7 +79,7 @@ struct Classification
         }
         else {
             std::cout << "-------- font: "
-              << ocr::fonts::fonts[this->locale_id][font_id].name
+              << ocr::fonts::fonts[static_cast<unsigned>(this->locale_id)][font_id].name
               << "  " << box << " --------\n"
             ;
             this->classifier.classify(this->attrs, this->ima, this->locale_id, this->font_id);
@@ -92,15 +92,16 @@ private:
         ImageView const & input, unsigned tid, unsigned font_id,
         mln::box2d const & box, unsigned button_col, const ocr::classifier_type & res)
     {
+        auto id = static_cast<unsigned>(this->locale_id);
         const bool is_title_bar = ocr::is_title_bar(
             input, tid, box.min_row(), box.max_row(), button_col
-          , ocr::fonts::fonts[this->locale_id][res.font_id].max_height_char
+          , ocr::fonts::fonts[id][res.font_id].max_height_char
         );
         std::cout
             << (&"other\0title"[is_title_bar*6])
             << ": " << res.out
-            << "\n - locale: " << &"latin\0cyrillic"[this->locale_id * 6]
-            << "\n - font: " << ocr::fonts::fonts[this->locale_id][font_id].name
+            << "\n - locale: " << &"latin\0cyrillic"[id * 6]
+            << "\n - font: " << ocr::fonts::fonts[id][font_id].name
             << "\n - length: " << res.character_count
             << "  unrecognized: " << res.unrecognized_count
             << "  unrecognized rate: " << res.unrecognized_rate()
@@ -128,7 +129,8 @@ struct ReferenceClassification
 inline void usage(char** argv)
 {
     std::cerr << "Usage: " << argv[0] << " input.ppm/pnm [latin|cyrillic] [font_id|font_name] [d]\n";
-    for (unsigned locale_id = 0; locale_id < ocr::fonts::LocaleId::max; ++locale_id) {
+    const auto max = static_cast<unsigned>(ocr::fonts::LocaleId::max);
+    for (unsigned locale_id = 0; locale_id < max; ++locale_id) {
         std::cout << "\nlocale (" << locale_id << "): " << &"latin\0cyrillic"[locale_id * 6] << "\n";
         for (unsigned i = 0; i < ocr::fonts::nfonts[locale_id]; ++i) {
             std::cerr << "  " << i << " - " << ocr::fonts::fonts[locale_id][i].name << "\n";
@@ -172,7 +174,7 @@ int main(int argc, char** argv)
                     font_id = n.has_value
                         ? unsigned(n.value)
                         : ocr::fonts::font_id_by_name(locale_id, arg);
-                    if (font_id == -1u || font_id >= ocr::fonts::nfonts[locale_id]) {
+                    if (font_id == -1u || font_id >= ocr::fonts::nfonts[static_cast<unsigned>(locale_id)]) {
                         std::cerr << "error: invalid font_id\n";
                         usage(argv);
                         return 2;
@@ -200,10 +202,8 @@ int main(int argc, char** argv)
 
     ocr::ExtractTitles extract_titles;
     if (font_id != -1u) {
-        extract_titles.set_box_height(
-            ::ocr::fonts::fonts[locale_id][font_id].min_height_char,
-            ::ocr::fonts::fonts[locale_id][font_id].max_height_char
-        );
+        auto& font_info = ::ocr::fonts::fonts[static_cast<unsigned>(locale_id)][font_id];
+        extract_titles.set_box_height(font_info.min_height_char, font_info.max_height_char);
     }
 
     using resolution_clock = std::chrono::high_resolution_clock;

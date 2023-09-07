@@ -82,7 +82,7 @@ public:
             return ;
         }
 
-        const fonts::Font & font = fonts::fonts[local_id][font_id];
+        const fonts::Font & font = fonts::fonts[static_cast<unsigned>(local_id)][font_id];
 
         for (; first < last; ++first) {
             const ::mln::box2d & bbox = first->bbox;
@@ -153,7 +153,7 @@ struct Classification
             this->classifier.clear();
             classifier_type classify_info;
             unsigned unrecognized_rate = 100;
-            const unsigned nfonts = fonts::nfonts[local_id];
+            const unsigned nfonts = fonts::nfonts[static_cast<unsigned>(local_id)];
             for (unsigned id = 0; id < nfonts; ++id) {
                 classify_info.classify(this->attrs, input, local_id, id);
                 const unsigned unrecognized_rate2 = classify_info.unrecognized_rate();

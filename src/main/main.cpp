@@ -24,7 +24,7 @@
 
 #include "capture/cryptofile.hpp"
 #include "capture/ocr/locale/locale_id.hpp"
-#include "capture/rdp_ppocr/get_ocr_constants.hpp"
+#include "capture/rdp_ppocr/get_ocr_constants_from_locale_id.hpp"
 
 #include "configs/config.hpp"
 
@@ -445,11 +445,9 @@ int main(int argc, char** argv)
     if (bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr)
      && ini.get<cfg::ocr::version>() == OcrVersion::v2
     ) {
-        // load global constant...
-        rdp_ppocr::get_ocr_constants(
-            app_path(AppPath::Cfg).to_string(),
-            static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())
-        );
+        // pre-load global constants...
+        auto locale_id = ocr::locale::LocaleId(ini.get<cfg::ocr::locale>());
+        rdp_ppocr::get_ocr_constants_from_locale_id(locale_id);
     }
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");

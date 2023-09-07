@@ -1574,8 +1574,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     //@{
     recorder.ocr_params = OcrParams{
         ini.get<cfg::ocr::version>(),
-        ocr::locale::LocaleId(
-            static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+        ocr::locale::LocaleId(ini.get<cfg::ocr::locale>()),
         ini.get<cfg::ocr::on_title_bar_only>(),
         ini.get<cfg::ocr::max_unrecog_char_rate>(),
         chunk ? 1s : ini.get<cfg::ocr::interval>(),

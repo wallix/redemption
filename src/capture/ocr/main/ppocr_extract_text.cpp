@@ -22,13 +22,13 @@ using resolution_clock = std::chrono::high_resolution_clock;
 
 struct Classification
 {
-    rdp_ppocr::OcrDatasConstant const & ocr_constant;
+    rdp_ppocr::OcrDatasConstant ocr_constant;
     rdp_ppocr::OcrContext ocr_context;
     ocr::fonts::LocaleId locale_id;
     bool display_char;
 
-    Classification(std::string const & directory, ocr::fonts::LocaleId locale_id, bool display_char)
-    : ocr_constant(rdp_ppocr::get_ocr_constants(directory))
+    Classification(chars_view directory, ocr::fonts::LocaleId locale_id, bool display_char)
+    : ocr_constant(rdp_ppocr::get_ocr_constants(directory, ""_av))
     , ocr_context{this->ocr_constant.glyphs.size()}
     , locale_id(locale_id)
     , display_char(display_char)
@@ -109,7 +109,7 @@ struct Classification
         std::cout
             << (&"other\0title"[is_title_bar*6])
             << ": " << result
-            << "\nlocale: " << &"latin\0cyrillic"[this->locale_id * 6]
+            << "\nlocale: " << &"latin\0cyrillic"[static_cast<unsigned>(this->locale_id) * 6]
             << "\n   length: " << this->ocr_context.ambiguous.size()
             << "  unrecognized: " << unrecognized_count
             << "  unrecognized rate: " << unrecognized_rate
@@ -155,7 +155,7 @@ int main(int argc, char** argv)
     }
 
     ocr::fonts::LocaleId locale_id = ocr::fonts::LocaleId::latin;
-    char const * dir = argv[2];
+    chars_view dir = {argv[2], strlen(argv[2])};
     bool display_char = false;
 
     if (argc >= 4) {

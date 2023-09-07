@@ -129,8 +129,9 @@ namespace fonts {
 
     inline unsigned font_id_by_name(LocaleId locale_id, std::string_view name) noexcept
     {
-        for (unsigned i = 0; i < nfonts[locale_id]; ++i) {
-            if (name == fonts[locale_id][i].name) {
+        unsigned id = static_cast<unsigned>(locale_id);
+        for (unsigned i = 0; i < nfonts[id]; ++i) {
+            if (name == fonts[id][i].name) {
                 return i;
             }
         }

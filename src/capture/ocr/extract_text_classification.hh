@@ -63,7 +63,7 @@ struct ExtractTextClassification
     const classifier_type & extract_text(
         ImageView const & input, unsigned tid,
         mln::box2d const & box,
-        ocr::fonts::LocaleId local_id = ocr::fonts::latin_fonts, /*NOLINT*/
+        ocr::fonts::LocaleId local_id,
         unsigned font_id = -1) /*NOLINT*/
     {
         image_view_to_image2d_bool(input, tid, this->ima, box);

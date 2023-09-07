@@ -28,8 +28,7 @@ OcrParams ocr_params_from_ini(const Inifile & ini)
 {
     return OcrParams{
         ini.get<cfg::ocr::version>(),
-        ocr::locale::LocaleId(
-            static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+        ocr::locale::LocaleId(ini.get<cfg::ocr::locale>()),
         ini.get<cfg::ocr::on_title_bar_only>(),
         ini.get<cfg::ocr::max_unrecog_char_rate>(),
         ini.get<cfg::ocr::interval>(),

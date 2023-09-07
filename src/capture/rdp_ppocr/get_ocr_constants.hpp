@@ -1,37 +1,45 @@
 /*
-*   This program is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   This program is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with this program; if not, write to the Free Software
-*   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2015
-*   Author(s): Jonathan Poelen
+SPDX-FileCopyrightText: 2023 Wallix Proxies Team
+
+SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #pragma once
 
-#include <string>
+#include "utils/sugar/array_view.hpp"
+#include "capture/ocr/locale/locale_id.hpp"
 
-namespace ocr { namespace locale {
-    class LocaleId;
-} }
+#include "ocr_datas_constant.hpp"
 
-namespace rdp_ppocr {
+#include "ppocr/utils/read_file.hpp"
 
-class OcrDatasConstant;
+#include "utils/log.hpp"
+#include "utils/strutils.hpp"
 
-OcrDatasConstant const & get_ocr_constants(std::string const & directory);
+#include <cassert>
 
-OcrDatasConstant const & get_ocr_constants(std::string directory, ocr::locale::LocaleId const & locale);
+
+namespace rdp_ppocr
+{
+
+inline OcrDatasConstant get_ocr_constants(chars_view directory, chars_view subdirectory)
+{
+    try {
+        auto path = [&](chars_view filename){
+            return str_concat(directory, subdirectory, filename);
+        };
+        return OcrDatasConstant(
+            ppocr::utils::load_from_file<ppocr::PpOcrDatas>(path("/datas.txt"_av).c_str()),
+            ppocr::utils::load_from_file<ppocr::ocr2::Glyphs>(path("/glyphs.txt"_av).c_str()),
+            ppocr::utils::load_from_file<ppocr::spell::Dictionary>(path("/dict.trie.txt"_av).c_str()),
+            ppocr::utils::load_from_file<ppocr::ocr2::WWordsLines>(path("/words_lines.txt"_av).c_str()),
+            ppocr::utils::load_from_file<ppocr::ocr2::Replacements>(path("/replacements.txt"_av).c_str())
+        );
+    }
+    catch (std::exception const & e) {
+        LOG(LOG_ERR, "ppocr initialization: %s", e.what());
+        throw;
+    }
+}
 
 } // namespace rdp_ppocr
