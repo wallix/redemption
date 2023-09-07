@@ -1337,7 +1337,7 @@ public:
             this->ini.set_acl<cfg::context::recording_started>(true);
         }
 
-        if (capture_png) {
+        if (capture_png && !this->ini.get<cfg::context::rt_ready>()) {
             this->ini.set_acl<cfg::context::rt_ready>(true);
         }
 
