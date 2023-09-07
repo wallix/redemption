@@ -1187,7 +1187,7 @@ public:
 
         // capture not necessary
         if (!( enable_4eyes
-            || (bool(is_rec & (CaptureFlags::wrm | CaptureFlags::png | CaptureFlags::ocr)))
+            || (is_rec && bool(capture_flags & (CaptureFlags::wrm | CaptureFlags::ocr)))
             || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>())
             || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>())
         )) {
