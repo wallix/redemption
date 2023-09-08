@@ -18,10 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-
 #pragma once
-
-#include <cstring>
 
 #include "core/error.hpp"
 #include "utils/utf.hpp"
@@ -29,6 +26,11 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/nla/ntlm_message.hpp"
+
+#include <algorithm>
+
+#include <cstring>
+
 
 // BER Encoding Cheat Sheet
 // ========================

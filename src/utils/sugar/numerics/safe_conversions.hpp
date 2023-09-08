@@ -21,7 +21,6 @@
 #pragma once
 
 #include <type_traits>
-#include <algorithm>
 #include <limits>
 #include <cassert>
 

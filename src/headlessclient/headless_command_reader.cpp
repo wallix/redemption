@@ -4,10 +4,13 @@ SPDX-FileCopyrightText: 2023 Wallix Proxies Team
 SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-#include <cstring>
-#include <unistd.h>
-
 #include "headlessclient/headless_command_reader.hpp"
+
+#include <algorithm>
+
+#include <cstring>
+
+#include <unistd.h>
 
 
 HeadlessCommandReader::CommandBuffer::Result HeadlessCommandReader::CommandBuffer::read_line(int fd) noexcept
