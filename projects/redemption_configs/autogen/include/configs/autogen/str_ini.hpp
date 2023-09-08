@@ -5,6 +5,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [globals]
 
+# Port of RDP Proxy service.
+# 
+# Service will be automatically restarted and active sessions will be disconnected.
 # The port set in this field must not be already used, otherwise the service will not run.
 # Changing the port number will prevent WALLIX Access Manager from working properly.
 # (min = 0)
@@ -14,7 +17,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Socket path or socket address of passthrough / acl
 #authfile = )gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(
 
-# Time out during RDP handshake stage.
+# Time out during RDP connection initialization.
 # (in seconds)
 #handshake_timeout = 10
 
@@ -64,7 +67,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_bitmap_update = 1
 
 # Show close screen.
-# This displays errors related to the secondary connection then closes automatically after a timeout specified by "close_timeout" or on user request.
+# This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request.
 # (type: boolean (0/no/false or 1/yes/true))
 #enable_close_box = 1
 
@@ -74,13 +77,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #close_timeout = 600
 
-# Displays a reminder box at the top of the session when a session duration is configured.
+# Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval).
 # The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #enable_osd = 1
 
-# Show target address with F12.
+# Show target device name with F12 during the session.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 # (acl config: proxy ⇐ enable_osd_display_remote_target)
@@ -89,7 +92,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #enable_wab_integration = )gen_config_ini" << (REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) << R"gen_config_ini(
 
-# Sends the client screen count to the server. Not supported in VNC.
+# Sends the client screen count to the server. Not supported for VNC targets.
 # (type: boolean (0/no/false or 1/yes/true))
 #allow_using_multiple_monitors = 1
 
@@ -108,7 +111,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Enable support for pointers of size 96x96.
 # ⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.
 # (type: boolean (0/no/false or 1/yes/true))
-#_advanced
 #large_pointer_support = 1
 
 # Allows the client to use unicode characters.
@@ -132,6 +134,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # 
 # Enable primary connection on ipv6.
 # (type: boolean (0/no/false or 1/yes/true))
+#_advanced
 #enable_ipv6 = 1
 
 # 0 for disabled.
@@ -203,7 +206,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Needed for primary NTLM or Kerberos connections over NLA.
 # (type: boolean (0/no/false or 1/yes/true))
-#_advanced
 #enable_nla = 0
 
 # Specifies the highest compression support available
@@ -258,7 +260,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 # HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
 #ssl_cipher_list = HIGH:!ADH:!3DES:!SHA
 
-# Show in session the target username when F12 is pressed
+# Show in session the target username when F12 is pressed.
+# This option needs "Enable Osd Display Remote Target".
 # (type: boolean (0/no/false or 1/yes/true))
 #show_target_user_in_f12_message = 0
 

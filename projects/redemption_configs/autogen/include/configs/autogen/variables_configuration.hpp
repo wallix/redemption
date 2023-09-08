@@ -197,6 +197,9 @@ namespace cfg
         using mapped_type = std::string;
         type value {  };
     };
+    /// Port of RDP Proxy service. <br/>
+    ///  <br/>
+    /// Service will be automatically restarted and active sessions will be disconnected. <br/>
     /// The port set in this field must not be already used, otherwise the service will not run. <br/>
     /// Changing the port number will prevent WALLIX Access Manager from working properly. <br/>
     /// type: unsigned <br/>
@@ -216,7 +219,7 @@ namespace cfg
         using mapped_type = std::string;
         type value { REDEMPTION_CONFIG_AUTHFILE };
     };
-    /// Time out during RDP handshake stage. <br/>
+    /// Time out during RDP connection initialization. <br/>
     /// type: std::chrono::seconds <br/>
     /// default: 10 <br/>
     struct globals::handshake_timeout {
@@ -332,7 +335,7 @@ namespace cfg
         type value { true };
     };
     /// Show close screen. <br/>
-    /// This displays errors related to the secondary connection then closes automatically after a timeout specified by "close_timeout" or on user request. <br/>
+    /// This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::enable_close_box {
@@ -351,7 +354,7 @@ namespace cfg
         using mapped_type = std::chrono::seconds;
         type value { 600 };
     };
-    /// Displays a reminder box at the top of the session when a session duration is configured. <br/>
+    /// Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval). <br/>
     /// The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed. <br/>
     /// type: bool <br/>
     /// default: true <br/>
@@ -361,7 +364,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Show target address with F12. <br/>
+    /// Show target device name with F12 during the session. <br/>
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>
     /// default: true <br/>
@@ -382,7 +385,7 @@ namespace cfg
         using mapped_type = bool;
         type value { REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION };
     };
-    /// Sends the client screen count to the server. Not supported in VNC. <br/>
+    /// Sends the client screen count to the server. Not supported for VNC targets. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::allow_using_multiple_monitors {
@@ -708,7 +711,8 @@ namespace cfg
         using mapped_type = std::string;
         type value { "HIGH:!ADH:!3DES:!SHA" };
     };
-    /// Show in session the target username when F12 is pressed <br/>
+    /// Show in session the target username when F12 is pressed. <br/>
+    /// This option needs "Enable Osd Display Remote Target". <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::show_target_user_in_f12_message {

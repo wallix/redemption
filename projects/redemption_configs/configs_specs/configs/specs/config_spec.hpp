@@ -251,6 +251,8 @@ _.section("globals", [&]
         .value = value<types::unsigned_>(3389),
         .spec = global_spec(no_acl, spec::advanced | spec::iptables | spec::logged),
         .desc =
+            "Port of RDP Proxy service.\n\n"
+            "Service will be automatically restarted and active sessions will be disconnected.\n"
             "The port set in this field must not be already used, otherwise the service will not run.\n"
             "Changing the port number will prevent WALLIX Access Manager from working properly."
     });
@@ -266,7 +268,7 @@ _.section("globals", [&]
         .name = "handshake_timeout",
         .value = value<std::chrono::seconds>(10),
         .spec = global_spec(no_acl),
-        .desc = "Time out during RDP handshake stage.",
+        .desc = "Time out during RDP connection initialization.",
     });
 
     _.member(MemberInfo{
@@ -352,7 +354,7 @@ _.section("globals", [&]
         .spec = global_spec(no_acl),
         .desc =
             "Show close screen.\n"
-            "This displays errors related to the secondary connection then closes automatically after a timeout specified by \"close_timeout\" or on user request.",
+            "This displays errors related to the secondary connection then closes automatically after a timeout specified by \"Close Timeout\" or on user request.",
     });
 
     // TODO move to [internal_mod] and rename to close_box_timeout
@@ -371,7 +373,7 @@ _.section("globals", [&]
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
-            "Displays a reminder box at the top of the session when a session duration is configured.\n"
+            "Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval).\n"
             "The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed."
     });
 
@@ -379,7 +381,7 @@ _.section("globals", [&]
         .name = "enable_osd_display_remote_target",
         .value = value(true),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
-        .desc = "Show target address with F12.",
+        .desc = "Show target device name with F12 during the session.",
     });
 
 
@@ -395,10 +397,11 @@ _.section("globals", [&]
         .name = "allow_using_multiple_monitors",
         .value = value(true),
         .spec = global_spec(no_acl),
-        .desc = "Sends the client screen count to the server. Not supported in VNC.",
+        .desc = "Sends the client screen count to the server. Not supported for VNC targets.",
     });
 
     // TODO move to [client] / [mod_rdp]
+    // TODO should be enabled by default ?
     _.member(MemberInfo{
         .name = "allow_scale_factor",
         .value = value(false),
@@ -410,6 +413,7 @@ _.section("globals", [&]
     });
 
 
+    // TODO to move to connection policy
     _.member(MemberInfo{
         .name = "bogus_refresh_rect",
         .value = value(true),
@@ -420,7 +424,7 @@ _.section("globals", [&]
     _.member(MemberInfo{
         .name = "large_pointer_support",
         .value = value(true),
-        .spec = global_spec(no_acl, spec::advanced),
+        .spec = ini_only(no_acl),
         .desc =
             "Enable support for pointers of size 96x96.\n"
             "⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.",
@@ -430,7 +434,7 @@ _.section("globals", [&]
     _.member(MemberInfo{
         .name = "unicode_keyboard_event_support",
         .value = value(true),
-        .spec = global_spec(no_acl),
+        .spec = ini_only(no_acl),
         .desc =
             "Allows the client to use unicode characters.\n"
             "This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis."
@@ -462,7 +466,7 @@ _.section("globals", [&]
     _.member(MemberInfo{
         .name = "enable_ipv6",
         .value = value(true),
-        .spec = global_spec(no_acl),
+        .spec = global_spec(no_acl, spec::advanced),
         .desc =
             "⚠ Service need to be manually restarted to take changes into account\n\n"
             "Enable primary connection on ipv6."
@@ -608,7 +612,7 @@ _.section("client", [&]
     _.member(MemberInfo{
         .name = "enable_nla",
         .value = value(false),
-        .spec = global_spec(no_acl, spec::advanced),
+        .spec = ini_only(no_acl),
         .desc = "Needed for primary NTLM or Kerberos connections over NLA.",
     });
 
@@ -687,11 +691,14 @@ _.section("client", [&]
             "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)"
     });
 
+    // TODO: to move alongside Enable Osd Display Remote Target
     _.member(MemberInfo{
         .name = "show_target_user_in_f12_message",
         .value = value(false),
         .spec = global_spec(no_acl),
-        .desc = "Show in session the target username when F12 is pressed",
+        .desc =
+            "Show in session the target username when F12 is pressed.\n"
+            "This option needs \"Enable Osd Display Remote Target\"."
     });
 
     _.member(MemberInfo{

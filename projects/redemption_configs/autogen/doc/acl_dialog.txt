@@ -29,7 +29,7 @@ cfg::globals::trace_type ⇐ trace_type   [TraceType]
     When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.
 cfg::globals::is_rec ⇐ is_rec   [bool]
 cfg::globals::enable_osd_display_remote_target ⇐ enable_osd_display_remote_target   [bool]
-    Show target address with F12.
+    Show target device name with F12 during the session.
 
 cfg::client::keyboard_layout ⇒ keyboard_layout   [unsigned]
 cfg::client::disable_tsk_switch_shortcuts ⇐ disable_tsk_switch_shortcuts   [bool]

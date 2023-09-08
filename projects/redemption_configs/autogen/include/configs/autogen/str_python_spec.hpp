@@ -5,7 +5,8 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 
 [globals]
 
-# ⚠ IP tables rules are reloaded and active sessions will be disconnected.<br/>
+# Port of RDP Proxy service.<br/>
+# Service will be automatically restarted and active sessions will be disconnected.
 # The port set in this field must not be already used, otherwise the service will not run.
 # Changing the port number will prevent WALLIX Access Manager from working properly.
 #_iptables
@@ -13,7 +14,7 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 #_logged
 port = integer(min=0, default=3389)
 
-# Time out during RDP handshake stage.<br/>
+# Time out during RDP connection initialization.<br/>
 # (in seconds)
 handshake_timeout = integer(min=0, default=10)
 
@@ -28,13 +29,12 @@ base_inactivity_timeout = integer(min=0, default=900)
 #_advanced
 authentication_timeout = integer(min=0, default=120)
 
-# ⚠ IP tables rules are reloaded and active sessions will be disconnected.<br/>
 # The transparent mode allows to intercept network traffic for a target even when the user specifies the target's address directly, instead of using the proxy address.
 #_iptables
 enable_transparent_mode = boolean(default=False)
 
 # Show close screen.
-# This displays errors related to the secondary connection then closes automatically after a timeout specified by "close_timeout" or on user request.
+# This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request.
 enable_close_box = boolean(default=True)
 
 # Specifies the time to spend on the close box of proxy RDP before closing client window.
@@ -43,16 +43,16 @@ enable_close_box = boolean(default=True)
 #_advanced
 close_timeout = integer(min=0, default=600)
 
-# Displays a reminder box at the top of the session when a session duration is configured.
+# Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval).
 # The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed.
 #_advanced
 enable_osd = boolean(default=True)
 
-# Show target address with F12.
+# Show target device name with F12 during the session.
 #_advanced
 enable_osd_display_remote_target = boolean(default=True)
 
-# Sends the client screen count to the server. Not supported in VNC.
+# Sends the client screen count to the server. Not supported for VNC targets.
 allow_using_multiple_monitors = boolean(default=True)
 
 # Sends Scale &amp; Layout configuration to the server.
@@ -64,15 +64,6 @@ allow_scale_factor = boolean(default=False)
 #_advanced
 bogus_refresh_rect = boolean(default=True)
 
-# Enable support for pointers of size 96x96.
-# ⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.
-#_advanced
-large_pointer_support = boolean(default=True)
-
-# Allows the client to use unicode characters.
-# This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.
-unicode_keyboard_event_support = boolean(default=True)
-
 # Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
 # Set to 0 to disable this feature.<br/>
@@ -81,6 +72,7 @@ rdp_keepalive_connection_interval = integer(min=0, default=0)
 
 # ⚠ Service need to be manually restarted to take changes into account<br/>
 # Enable primary connection on ipv6.
+#_advanced
 enable_ipv6 = boolean(default=True)
 
 [client]
@@ -128,10 +120,6 @@ tls_max_level = integer(min=0, default=0)
 #_advanced
 show_common_cipher_list = boolean(default=False)
 
-# Needed for primary NTLM or Kerberos connections over NLA.
-#_advanced
-enable_nla = boolean(default=False)
-
 # Specifies the highest compression support available
 # &nbsp; &nbsp;   0: The RDP bulk compression is disabled
 # &nbsp; &nbsp;   1: RDP 4.0 bulk compression
@@ -175,7 +163,8 @@ enable_suppress_output = boolean(default=True)
 # HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
 ssl_cipher_list = string(default="HIGH:!ADH:!3DES:!SHA")
 
-# Show in session the target username when F12 is pressed
+# Show in session the target username when F12 is pressed.
+# This option needs "Enable Osd Display Remote Target".
 show_target_user_in_f12_message = boolean(default=False)
 
 # Same effect as "Transform glyph to bitmap", but only for RDP client on iOS platform.
