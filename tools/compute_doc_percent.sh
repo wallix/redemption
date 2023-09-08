@@ -16,7 +16,7 @@ function get_progress()
 
 generate_html autogen/spec/rdp.spec > rdp_cps.html
 generate_html <(
-    sed -E 's/\)gen_config_ini"( << )?|( << )?R"gen_config_ini\(//g' \
+    sed -E 's/\)gen_config_ini"( << )?|( << )?R"gen_config_ini\(|#include "config_variant.hpp"//g' \
         autogen/include/configs/autogen/str_python_spec.hpp
 ) > rdp_ops.html
 read OPT_NUM sep OPT_TOTAL < <(get_progress rdp_ops.html)
