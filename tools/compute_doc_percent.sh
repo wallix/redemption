@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -o errexit -o pipefail -o nounset
+
 outbase=''
 if (($# >= 1)) && [[ -n $1 ]]; then
     outbase="$(realpath "$1")"/
@@ -45,15 +46,14 @@ total_percent=$REPLY
 echo "Documented parameters $accu_num / $accu_total"
 echo "Percentage done $total_percent %"
 
-echo "
-<!DOCTYPE html>
+echo "<!DOCTYPE html>
 <html>
 <head>
 <title>Proxy configuration options</title>
 <body>
 <p>Proxy configuration options</p>
 <ul>${html_link[@]}</ul>
-<p>Total: $total_percent %</p>
+<p>Total: $accu_num / $accu_total = $total_percent %</p>
 </body>
 </head>
 </html>
