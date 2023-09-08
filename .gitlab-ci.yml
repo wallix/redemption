@@ -42,9 +42,8 @@ pages:
   stage: build
   image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
   script:
-    - tools/compute_doc_percent.sh
     - mkdir public
-    - cp projects/redemption_configs/rdp_*.html public/
+    - tools/compute_doc_percent.sh public/
   artifacts:
     paths:
       - public

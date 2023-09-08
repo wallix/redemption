@@ -41,6 +41,11 @@ if sys.argv[1] != '-':
     filename = sys.argv[1]
     f = open(filename)
     filename = filename.rsplit('/', 1)[-1]
+    try:
+        int(filename)  # check if filename is a fd
+        filename = 'rdpproxy.spec'
+    except Exception:
+        pass
 else:
     filename = 'rdpproxy.spec'
     f = sys.stdin
