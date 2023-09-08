@@ -1555,19 +1555,6 @@ ValueAsStrings value(U const& value = T(), TConnPolicy const&... conn_policy_val
 
 inline constexpr std::string_view workaround_message = "⚠ The use of this feature is not recommended!\n\n";
 
-inline std::string_view get_warning_attr(SpecAttributes attr)
-{
-    if (bool(attr & SpecAttributes::restart_service)) {
-        return "⚠ Service will be automatically restarted and active sessions will be disconnected.\n\n";
-    }
-
-    if (bool(attr & SpecAttributes::iptables)) {
-        return "⚠ IP tables rules are reloaded and active sessions will be disconnected.\n\n";
-    }
-
-    return {};
-}
-
 inline void add_attr_spec(std::string& out, std::string_view image_path, SpecAttributes attr)
 {
     if (bool(attr & SpecAttributes::iptables)) out += "#_iptables\n"sv;
@@ -1575,7 +1562,7 @@ inline void add_attr_spec(std::string& out, std::string_view image_path, SpecAtt
     if (bool(attr & SpecAttributes::hex))      out += "#_hex\n"sv;
     if (bool(attr & SpecAttributes::password)) out += "#_password\n"sv;
     if (bool(attr & SpecAttributes::image))    str_append(out, "#_image="sv, image_path, '\n');
-    if (bool(attr & SpecAttributes::restart_service)) out += "#_adminkit\n"sv;
+    if (bool(attr & SpecAttributes::adminkit)) out += "#_adminkit\n"sv;
     if (bool(attr & SpecAttributes::logged))   out += "#_logged\n"sv;
 }
 
@@ -2095,10 +2082,6 @@ vault_transformation_rule = string(default="")
         //
         auto push_ini_or_spec_desc = [&](Appender appender, bool is_spec){
             auto marker = Marker{appender.str};
-
-            if (is_spec) {
-                appender(get_warning_attr(mem_info.spec.attributes));
-            }
 
             if (bool(mem_info.tags & cfg_desc::TagList::Workaround)) {
                 appender(workaround_message);

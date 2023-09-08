@@ -163,7 +163,7 @@ enum class SpecAttributes : uint16_t
     password        = 1 << 4,
     image           = 1 << 5,
     external        = 1 << 6,
-    restart_service = 1 << 7,
+    adminkit        = 1 << 7,
 };
 
 MK_ENUM_OP(SpecAttributes)
@@ -237,7 +237,7 @@ namespace spec
     constexpr inline CheckedSpecAttributes<false, false> iptables {SpecAttributes::iptables};
     constexpr inline CheckedSpecAttributes<false, true> password {SpecAttributes::password};
     constexpr inline CheckedSpecAttributes<false, true> acl_only {SpecAttributes::external};
-    constexpr inline CheckedSpecAttributes<false, false> restart_service {SpecAttributes::restart_service};
+    constexpr inline CheckedSpecAttributes<false, false> adminkit {SpecAttributes::adminkit};
     constexpr inline CheckedSpecAttributes<false, false> logged {SpecAttributes::logged};
 
     constexpr CheckedSpecAttributes<true, false> image(std::string_view image_path)
