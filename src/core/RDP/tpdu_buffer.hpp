@@ -92,15 +92,17 @@ namespace Extractors
                 case FastPath::FASTPATH_OUTPUT_ACTION_FASTPATH:
                 {
                     len = av[1];
-                    if (len & 0x80){
-                        len = (len & 0x7F) << 8 | av[2];
-                        // len -= 1;
-                        // buf.advance(1);
+                    if (len & 0x80u) {
+                        len = static_cast<uint16_t>((len & 0x7Fu) << 8) | av[2];
                     }
-                    // len -= 1;
-                    // buf.advance(2);
+                    // assume then data len at least 2 octets.
+                    if (len < 4) {
+                        LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", len);
+                        throw Error(ERR_X224);
+                    }
                     this->has_fast_path = true;
                     this->type = Extractors::FASTPATH;
+                    return HeaderResult::ok(len);
                 }
                 break;
 
@@ -111,9 +113,8 @@ namespace Extractors
                         LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", len);
                         throw Error(ERR_X224);
                     }
-                    // len -= 4;
-                    // buf.advance(4);
                     this->has_fast_path = false;
+                    return HeaderResult::ok(len);
                 }
                 break;
 
@@ -122,8 +123,6 @@ namespace Extractors
                     throw Error(ERR_X224);
             }
             REDEMPTION_DIAGNOSTIC_POP()
-
-            return HeaderResult::ok(len);
         }
 
         void prepare_data(Buf64k const & buf)
@@ -289,11 +288,6 @@ private:
     template<class Extractor>
     bool extract(Extractor & extractor)
     {
-        if (this->data_ready){
-            this->data_ready = false;
-            return true;
-        }
-
         switch (this->state)
         {
             case StateRead::Header:
@@ -332,7 +326,6 @@ private:
     } extractors;
     uint16_t pdu_len = 0;
     Buf64k buf;
-    bool data_ready = false;
 public:
     bool trace_pdu = false;
 };
