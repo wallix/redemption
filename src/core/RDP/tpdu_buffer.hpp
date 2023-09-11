@@ -215,7 +215,7 @@ struct TpduBuffer
         return this->buf.remaining();
     }
 
-    u8_array_view remaining_data() noexcept
+    bytes_view remaining_data() noexcept
     {
         return this->buf.av();
     }
@@ -254,7 +254,7 @@ struct TpduBuffer
 
     // Works the same way for CREDSSP or PDU
     // We can use it to trace CREDSSP buffer
-    writable_u8_array_view current_pdu_buffer() noexcept
+    writable_bytes_view current_pdu_buffer() noexcept
     {
         assert(this->pdu_len);
         auto av = this->buf.av(this->pdu_len);
