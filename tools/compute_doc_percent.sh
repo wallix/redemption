@@ -28,18 +28,16 @@ function generate_html_and_extract_percent()
     accu_total+=$total
 
     compute_percent $num $total
-    html_link+="<li><a href='$2'>$2 ($num / $total = $REPLY %)</a></li>"
+    html_link+="<li><a href='$2'>$3</a> ($num / $total = $REPLY %)</li>"
 }
 
 
 generate_html_and_extract_percent <(
     sed -E 's/\)gen_config_ini"( << )?|( << )?R"gen_config_ini\(|#include "config_variant.hpp"//g' \
         autogen/include/configs/autogen/str_python_spec.hpp
-) rdp_ops.html
+) rdp_ops.html "RDP Configuration options"
 
-for cp in rdp ; do
-    generate_html_and_extract_percent autogen/spec/rdp.spec ${cp}_cps.html
-done
+generate_html_and_extract_percent autogen/spec/rdp.spec rdp_cps.html "RDP Connection policy"
 
 compute_percent $accu_num $accu_total
 total_percent=$REPLY
@@ -49,9 +47,9 @@ echo "Percentage done $total_percent %"
 echo "<!DOCTYPE html>
 <html>
 <head>
-<title>Proxy configuration options</title>
+<title>RDP Proxy parameters</title>
 <body>
-<p>Proxy configuration options</p>
+<p>RDP Proxy parameters</p>
 <ul>${html_link[@]}</ul>
 <p>Total: $accu_num / $accu_total = $total_percent %</p>
 </body>
