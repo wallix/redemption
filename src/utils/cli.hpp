@@ -25,6 +25,7 @@ Author(s): Jonathan Poelen
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <algorithm>
 #include "utils/sugar/chars_to_int.hpp"
 
 #ifndef NDEBUG
