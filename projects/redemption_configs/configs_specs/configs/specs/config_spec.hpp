@@ -494,15 +494,16 @@ _.section("session_log", [&]
     _.member(MemberInfo{
         .name = "enable_syslog_format",
         .value = from_enum(SessionLogFormat::SIEM),
-        .spec = global_spec(no_acl),
-        .desc = "Writes session logs to syslog.\nThe SIEM format can be redirected to a SIEM solution.",
+        .spec = ini_only(no_acl),
+        .desc = "Writes session logs to syslog and define its format.",
     });
 
     _.member(MemberInfo{
         .name = "keyboard_input_masking_level",
         .value = from_enum(KeyboardInputMaskingLevel::password_and_unidentified),
         .spec = connpolicy(rdp_and_jh, L),
-        .desc = "Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.",
+        .desc = "Classification of input data is performed using Session Probe.\n"
+        "Without Session Probe, all the texts entered are considered unidentified.",
     });
 });
 
@@ -521,6 +522,11 @@ _.section("client", [&]
         .desc = "If true, ignore password provided by RDP client, user need do login manually.",
     });
 
+    // TODO: merge performance_flags_force_present and performance_flags_force_not_present
+    // into performance_flags as list of feature to force enable or disable
+    // example: +wallpaper,-cursor_blinking,+font_smoothing,-desktop_composition
+    // = remove 0x1, add 0x40, add 0x80, remove 0x100, and leave the other flags as the client request
+    // and fix potential behaviors
     _.member(MemberInfo{
         .name = "performance_flags_force_present",
         .value = value<types::u32>(0x28),
@@ -542,8 +548,9 @@ _.section("client", [&]
         .value = value<types::u32>(0),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc =
-            "Value that will be deleted by the proxy.\n"
-            "See \"Performance flags force present\" above for available values."
+            "Defined flags will be removed.\n"
+            "See \"Performance flags force present\" above for available values.\n"
+            "A flag present in \"Performance flags force present\" and \"Performance flags force not present\" will be removed."
     });
 
     _.member(MemberInfo{
@@ -576,28 +583,31 @@ _.section("client", [&]
         .name = "tls_fallback_legacy",
         .value = value(false),
         .spec = global_spec(no_acl),
-        .desc = "Fallback to RDP Legacy Encryption if client does not support TLS.",
+        .desc = "Fallback to RDP Legacy Encryption if client does not support TLS.\n"
+        "⚠ Enabling this option is a security risk.",
     });
 
     _.member(MemberInfo{
         .name = "tls_support",
         .value = value(true),
-        .spec = global_spec(no_acl),
-        .desc = "Enable TLS between client and proxy.",
+        .spec = ini_only(no_acl),
+        .desc = "Enable TLS between client and proxy.\n",
     });
 
     _.member(MemberInfo{
         .name = "tls_min_level",
         .value = value<types::u32>(2),
         .spec = global_spec(no_acl),
-        .desc = "Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
+        .desc = "Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3\n"
+        "⚠ Lower this value only for compatibility reasons.",
     });
 
     _.member(MemberInfo{
         .name = "tls_max_level",
         .value = value<types::u32>(0),
         .spec = global_spec(no_acl),
-        .desc = "Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
+        .desc = "Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3\n"
+        "⚠ Change this value only for compatibility reasons.",
     });
 
     _.member(MemberInfo{
@@ -605,7 +615,8 @@ _.section("client", [&]
         .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
         .tags = TagList::Debug,
-        .desc = "Show in the logs the common cipher list supported by client and server",
+        .desc = "Show in the logs the common cipher list supported by client and server\n"
+        "⚠ Only for debug purposes",
     });
 
 
@@ -847,7 +858,8 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .value = value(false),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .tags = TagList::Debug,
-        .desc = "Show in the logs the common cipher list supported by client and server",
+        .desc = "Show in the logs the common cipher list supported by client and server\n"
+        "⚠ Only for debug purposes",
     });
 
     _.member(MemberInfo{

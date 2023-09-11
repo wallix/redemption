@@ -72,6 +72,7 @@ cfg::mod_rdp::cipher_string ⇐ mod_rdp:cipher_string   [std::string]
     TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
 cfg::mod_rdp::show_common_cipher_list ⇐ mod_rdp:show_common_cipher_list   [bool]
     Show in the logs the common cipher list supported by client and server
+    ⚠ Only for debug purposes
 cfg::mod_rdp::allowed_channels ⇐ allowed_channels   [std::string]
     List of (comma-separated) enabled (static) virtual channel. If character '*' is used as a name then enables everything.
     An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.
@@ -450,7 +451,8 @@ cfg::session_log::enable_session_log_file ⇐ enable_session_log_file   [bool]
     Saves session logs to a .log file.
     The format is a date followed by one or more key="value" separated by a space on the same line.
 cfg::session_log::keyboard_input_masking_level ⇐ session_log:keyboard_input_masking_level   [KeyboardInputMaskingLevel]
-    Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.
+    Classification of input data is performed using Session Probe.
+    Without Session Probe, all the texts entered are considered unidentified.
       0: keyboard input are not masked
       1: only passwords are masked
       2: passwords and unidentified texts are masked

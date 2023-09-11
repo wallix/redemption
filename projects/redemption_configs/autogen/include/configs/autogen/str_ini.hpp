@@ -162,8 +162,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #performance_flags_force_present = 40
 
-# Value that will be deleted by the proxy.
+# Defined flags will be removed.
 # See "Performance flags force present" above for available values.
+# A flag present in "Performance flags force present" and "Performance flags force not present" will be removed.
 # (min = 0)
 #_advanced
 #performance_flags_force_not_present = 0
@@ -184,22 +185,27 @@ R"gen_config_ini(## Config file for RDP proxy.
 #encryption_level = high
 
 # Fallback to RDP Legacy Encryption if client does not support TLS.
+# ⚠ Enabling this option is a security risk.
 # (type: boolean (0/no/false or 1/yes/true))
 #tls_fallback_legacy = 0
 
 # Enable TLS between client and proxy.
+# 
 # (type: boolean (0/no/false or 1/yes/true))
 #tls_support = 1
 
 # Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+# ⚠ Lower this value only for compatibility reasons.
 # (min = 0)
 #tls_min_level = 2
 
 # Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+# ⚠ Change this value only for compatibility reasons.
 # (min = 0)
 #tls_max_level = 0
 
 # Show in the logs the common cipher list supported by client and server
+# ⚠ Only for debug purposes
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #show_common_cipher_list = 0
@@ -396,6 +402,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #cipher_string = ALL
 
 # Show in the logs the common cipher list supported by client and server
+# ⚠ Only for debug purposes
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 # (acl config: proxy ⇐ mod_rdp:show_common_cipher_list)
@@ -1192,8 +1199,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ enable_session_log_file)
 #enable_session_log_file = 1
 
-# Writes session logs to syslog.
-# The SIEM format can be redirected to a SIEM solution.
+# Writes session logs to syslog and define its format.
 #   0x0: disabled
 #   0x1: SIEM
 #   0x2: ArcSight
@@ -1201,7 +1207,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Note: values can be added (enable all: 0x1 + 0x2 = 0x3)
 #enable_syslog_format = 1
 
-# Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified.
+# Classification of input data is performed using Session Probe.
+# Without Session Probe, all the texts entered are considered unidentified.
 #   0: keyboard input are not masked
 #   1: only passwords are masked
 #   2: passwords and unidentified texts are masked

@@ -521,8 +521,9 @@ namespace cfg
         using mapped_type = uint32_t;
         type value { 40 };
     };
-    /// Value that will be deleted by the proxy. <br/>
+    /// Defined flags will be removed. <br/>
     /// See "Performance flags force present" above for available values. <br/>
+    /// A flag present in "Performance flags force present" and "Performance flags force not present" will be removed. <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct client::performance_flags_force_not_present {
@@ -561,6 +562,7 @@ namespace cfg
         type value { RdpSecurityEncryptionLevel::high };
     };
     /// Fallback to RDP Legacy Encryption if client does not support TLS. <br/>
+    /// ⚠ Enabling this option is a security risk. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::tls_fallback_legacy {
@@ -579,6 +581,7 @@ namespace cfg
         type value { true };
     };
     /// Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
+    /// ⚠ Lower this value only for compatibility reasons. <br/>
     /// type: uint32_t <br/>
     /// default: 2 <br/>
     struct client::tls_min_level {
@@ -588,6 +591,7 @@ namespace cfg
         type value { 2 };
     };
     /// Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
+    /// ⚠ Change this value only for compatibility reasons. <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct client::tls_max_level {
@@ -597,6 +601,7 @@ namespace cfg
         type value { 0 };
     };
     /// Show in the logs the common cipher list supported by client and server <br/>
+    /// ⚠ Only for debug purposes <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::show_common_cipher_list {
@@ -955,6 +960,7 @@ namespace cfg
         type value { "ALL" };
     };
     /// Show in the logs the common cipher list supported by client and server <br/>
+    /// ⚠ Only for debug purposes <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: mod_rdp:show_common_cipher_list <br/>
@@ -2643,8 +2649,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Writes session logs to syslog. <br/>
-    /// The SIEM format can be redirected to a SIEM solution. <br/>
+    /// Writes session logs to syslog and define its format. <br/>
     /// type: SessionLogFormat <br/>
     /// default: SessionLogFormat::SIEM <br/>
     struct session_log::enable_syslog_format {
@@ -2653,7 +2658,8 @@ namespace cfg
         using mapped_type = SessionLogFormat;
         type value { SessionLogFormat::SIEM };
     };
-    /// Classification of input data is performed using Session Probe. Without the latter, all the texts entered are considered unidentified. <br/>
+    /// Classification of input data is performed using Session Probe. <br/>
+    /// Without Session Probe, all the texts entered are considered unidentified. <br/>
     /// type: KeyboardInputMaskingLevel <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: session_log:keyboard_input_masking_level <br/>

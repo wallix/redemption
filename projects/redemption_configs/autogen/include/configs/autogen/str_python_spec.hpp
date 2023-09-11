@@ -93,8 +93,9 @@ ignore_logon_password = boolean(default=False)
 #_hex
 performance_flags_force_present = integer(min=0, default=40)
 
-# Value that will be deleted by the proxy.
+# Defined flags will be removed.
 # See "Performance flags force present" above for available values.
+# A flag present in "Performance flags force present" and "Performance flags force not present" will be removed.
 #_advanced
 #_hex
 performance_flags_force_not_present = integer(min=0, default=0)
@@ -105,18 +106,19 @@ performance_flags_force_not_present = integer(min=0, default=0)
 auto_adjust_performance_flags = boolean(default=True)
 
 # Fallback to RDP Legacy Encryption if client does not support TLS.
+# ⚠ Enabling this option is a security risk.
 tls_fallback_legacy = boolean(default=False)
 
-# Enable TLS between client and proxy.
-tls_support = boolean(default=True)
-
 # Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+# ⚠ Lower this value only for compatibility reasons.
 tls_min_level = integer(min=0, default=2)
 
 # Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+# ⚠ Change this value only for compatibility reasons.
 tls_max_level = integer(min=0, default=0)
 
 # Show in the logs the common cipher list supported by client and server
+# ⚠ Only for debug purposes
 #_advanced
 show_common_cipher_list = boolean(default=False)
 
@@ -335,17 +337,6 @@ server_clipboard_encoding_type = option('utf-8', 'latin1', default="latin1")
 # &nbsp; &nbsp;   2: No special processing is done, the proxy always responds immediately.
 #_advanced
 bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)
-
-[session_log]
-
-# Writes session logs to syslog.
-# The SIEM format can be redirected to a SIEM solution.
-# &nbsp; &nbsp;   0x0: disabled
-# &nbsp; &nbsp;   0x1: SIEM
-# &nbsp; &nbsp;   0x2: ArcSight<br/>
-# Note: values can be added (enable all: 0x1 + 0x2 = 0x3)
-#_hex
-enable_syslog_format = integer(min=0, max=3, default=1)
 
 [ocr]
 
