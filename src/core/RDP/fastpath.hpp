@@ -244,6 +244,11 @@ namespace FastPath {
             // Consumes everything remaining in stream after decrypting was done
             stream.in_skip_bytes(stream.in_remain());
             if (this->numEvents == 0) {
+                if (!istream.in_check_rem(1)) {
+                    LOG(LOG_ERR,
+                        "FastPath::ClientInputEventPDU_Recv: numEvents, expected=1 remains=0");
+                    throw Error(ERR_RDP_FASTPATH);
+                }
                 this->numEvents = istream.in_uint8();
             }
             return istream;

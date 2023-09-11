@@ -61,7 +61,7 @@ constexpr auto data1 = cstr_array_view(
 /* 0040 */ "\x63\x52\xc7\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //cR..............
 /* 0050 */ "\x00\x00\x00\x00\x00" //.....
 );
-static_assert(data1.size() == 85 );
+static_assert(data1.size() == 85);
 
 constexpr auto data2 = cstr_array_view(
 /* 0000 */ "\x03\x00\x00\x55\x50\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...UP......Cooki
@@ -77,7 +77,7 @@ constexpr auto data2 = cstr_array_view(
 /* 0040 */ "\x63\x52\xc7\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //cR..............
 /* 0050 */ "\x00\x00\x00\x00\x00" //.....
 );
-static_assert(data2.size() == 85*2 );
+static_assert(data2.size() == 85*2);
 
 
 RED_AUTO_TEST_CASE(Test1Read1)
@@ -217,4 +217,24 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     RED_CHECK(buf.current_pdu_get_type() != Extractors::FASTPATH);
 
     RED_CHECK(buf.current_pdu_buffer() == data2.from_offset(85));
+}
+
+RED_AUTO_TEST_CASE(Test2ReadTooShortLen)
+{
+    // fast-path
+    {
+        BlockTransport t("\x00\x00\x02\x00"_av, 1000);
+        TpduBuffer buf;
+
+        buf.load_data(t);
+        RED_CHECK_EXCEPTION_ERROR_ID(buf.next(TpduBuffer::PDU), ERR_X224);
+    }
+    // slow-path
+    {
+        BlockTransport t("\x03\x00\x00\x02"_av, 1000);
+        TpduBuffer buf;
+
+        buf.load_data(t);
+        RED_CHECK_EXCEPTION_ERROR_ID(buf.next(TpduBuffer::PDU), ERR_X224);
+    }
 }
