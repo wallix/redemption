@@ -201,6 +201,10 @@ struct TpduBuffer
 
     TpduBuffer() = default;
 
+    TpduBuffer(bool verbose) noexcept
+    : trace_pdu(verbose)
+    {}
+
     void load_data(InTransport trans)
     {
         this->buf.read_from(trans);
@@ -322,10 +326,9 @@ private:
         Extractors::CreedsppExtractor credssp;
 
         char dummy;
-        U():dummy() {}
+        U() noexcept :dummy() {}
     } extractors;
     uint16_t pdu_len = 0;
-    Buf64k buf;
-public:
     bool trace_pdu = false;
+    Buf64k buf;
 };

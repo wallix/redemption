@@ -45,12 +45,11 @@ ProxyRecorder::ProxyRecorder(
 , outFile(outFile)
 , time_base(time_base)
 , host(host)
+, frontBuffer(verbosity > 512)
+, backBuffer(verbosity > 512)
 , enable_kerberos(enable_kerberos)
 , verbosity(verbosity)
-{
-    this->frontBuffer.trace_pdu = (this->verbosity > 512);
-    this->backBuffer.trace_pdu = (this->verbosity > 512);
-}
+{}
 
 ProxyRecorder::~ProxyRecorder() = default;
 

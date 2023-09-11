@@ -261,8 +261,7 @@ public:
 
             TimeBase time_base {MonotonicTimePoint{}, RealTimePoint{}};
 
-            TpduBuffer buffer;
-            buffer.trace_pdu = true;
+            TpduBuffer buffer{/*verbose = */true};
             SocketTransport trans(
                 "front"_sck_name, std::move(sck_in), "127.0.0.1"_av, 3389,
                 std::chrono::milliseconds(1000), std::chrono::milliseconds::zero(),
