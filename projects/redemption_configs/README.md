@@ -104,10 +104,10 @@ auto VNL = Loggable::OnlyWhenContainsPasswordString;
 
 ### Global Spec
 
-Correspondent au fichier `.spec` utilisé par wallix bastion pour afficher une GUI.
+Corresponds to the `.spec` file used by wallix bastion to display a GUI.
 
 - `spec::global_spec(SesmanInfo, attributes = {})`: global spec file generated with `rdpproxy --print-spec`
-- `spec::external(attributes = {})`: Les valeurs ne sont pas utilisé par le proxy, mais par d'autre programme qui vont lire le même fichier ini.
+- `spec::external(attributes = {})`: The values are not used by the proxy, but by other programs that will read the same ini file.
 
 #### Attributes
 
@@ -122,7 +122,8 @@ Correspondent au fichier `.spec` utilisé par wallix bastion pour afficher une G
 
 ### Conn Policy
 
-Correspondent au fichier `.spec` utilisé par wallix bastion pour afficher une GUI. En dehors d'un bastion, cela correspond à `acl_to_proxy(ResetBackToSelector::No, ...)`.
+Corresponds to the `.spec` file used by wallix bastion to display a GUI.
+Outside a bastion, this corresponds to `acl_to_proxy(ResetBackToSelector::No, ...)`.
 
 - `spec::connpolicy(vnc | rdp_and_jh | rdp_without_jh, Loggable, attributes = {})`
 
