@@ -74,6 +74,24 @@ namespace
         return zstring_view::from_null_terminated(zbuf.data(), 7);
     }
 
+    zstring_view assign_zbuf_from_cfg(
+        writable_chars_view zbuf,
+        cfg_s_type<RdpPerformanceFlags> /*type*/,
+        RdpPerformanceFlags performance_flags
+    ) {
+        auto p = zbuf.data();
+        *p++ = '0';
+        *p++ = 'x';
+        p = std::to_chars(p, zbuf.end(), performance_flags.force_present, 16).ptr;
+        *p++ = ',';
+        *p++ = '-';
+        *p++ = '0';
+        *p++ = 'x';
+        p = std::to_chars(p, zbuf.end(), performance_flags.force_not_present, 16).ptr;
+        *p = '\0';
+        return zstring_view::from_null_terminated({zbuf.data(), p});
+    }
+
     template<bool>
     struct ToIntType
     {

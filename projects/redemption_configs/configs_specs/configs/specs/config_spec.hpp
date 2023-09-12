@@ -527,12 +527,13 @@ _.section("client", [&]
     // example: +wallpaper,-cursor_blinking,+font_smoothing,-desktop_composition
     // = remove 0x1, add 0x40, add 0x80, remove 0x100, and leave the other flags as the client request
     // and fix potential behaviors
+    // TODO move to [mod_rdp] ?
     _.member(MemberInfo{
-        .name = "performance_flags_force_present",
-        .value = value<types::u32>(0x28),
+        .name = "force_performance_flags",
+        .value = value<types::performance_flags>("-mouse_cursor_shadows,-theme"),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc =
-            "It specifies a list of server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n"
+            "It specifies a list of RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n"
             "\n"
             "    0x1: Disable wallpaper\n"
             "    0x4: Disable menu animations\n"
@@ -541,25 +542,6 @@ _.section("client", [&]
             "   0x40: Disable cursor blinking\n"
             "   0x80: Enable font smoothing\n"
             "  0x100: Enable Desktop Composition\n"
-    });
-
-    _.member(MemberInfo{
-        .name = "performance_flags_force_not_present",
-        .value = value<types::u32>(0),
-        .spec = global_spec(no_acl, spec::advanced | spec::hex),
-        .desc =
-            "Defined flags will be removed.\n"
-            "See \"Performance flags force present\" above for available values.\n"
-            "A flag present in \"Performance flags force present\" and \"Performance flags force not present\" will be removed."
-    });
-
-    _.member(MemberInfo{
-        .name = "performance_flags_default",
-        .value = value<types::u32>(0x80),
-        .spec = ini_only(no_acl),
-        .desc =
-            "Default value when the RDP client does not specify any option.\n"
-            "See \"Performance flags force present\" above for available values."
     });
 
     _.member(MemberInfo{

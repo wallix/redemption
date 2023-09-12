@@ -1,21 +1,7 @@
 /*
-*   This program is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   This program is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with this program; if not, write to the Free Software
-*   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2015
-*   Author(s): Jonathan Poelen
+SPDX-FileCopyrightText: 2023 Wallix Proxies Team
+
+SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #pragma once
@@ -36,6 +22,9 @@
 #include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/bounded_array_view.hpp"
 #include "utils/sugar/cast.hpp"
+
+#include "core/RDP/rdp_performance_flags.hpp"
+#include "parse_performance_flags.hpp"
 
 #include <bitset>
 #include <charconv>
@@ -1192,6 +1181,29 @@ ValueAsStrings compute_value_as_strings(type_<types::range<Int, min, max>>, V co
         .values = integer_value_to_strings(value),
         .spec_note = spec_note,
         .ini_note = str_concat(spec_note, sep, "min = "_av, smin, ", max = "_av, smax),
+    };
+}
+
+inline ValueAsStrings compute_value_as_strings(type_<types::performance_flags>, std::string_view value)
+{
+    RdpPerformanceFlags performace_flags {};
+    char const* err = parse_performance_flags(performace_flags, value);
+    if (err) {
+        throw std::runtime_error(err);
+    }
+
+    auto force_present = int_to_hexadecimal_lower_chars(performace_flags.force_present);
+    auto force_not_present = int_to_hexadecimal_lower_chars(performace_flags.force_not_present);
+
+    return ValueAsStrings{
+        .prefix_spec_type = "string("s,
+        .cpp_type = "RdpPerformanceFlags"s,
+        .spec_str_buffer_size = 0,
+        .values = {
+            .py = str_concat('"', value, '"'),
+            .ini = std::string(value),
+            .cpp = str_concat("0x", force_present, ", 0x", force_not_present),
+        },
     };
 }
 

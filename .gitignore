@@ -1,5 +1,3 @@
-#.gitignore
-
 # editor/IDE project
 *.kdev*
 
@@ -30,11 +28,10 @@ projects/qtclient/DATA/
 *.pyo
 *.gcov
 
-# user depends
-password.py
-
-# gdb
-/.gdb_history
+# tools
+.mypy_cache
+.ruff_cache
+.gdb_history
 
 # GNU global
 /src/GPATH

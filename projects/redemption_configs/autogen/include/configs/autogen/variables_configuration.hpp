@@ -504,7 +504,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// It specifies a list of server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage). <br/>
+    /// It specifies a list of RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage). <br/>
     ///  <br/>
     ///     0x1: Disable wallpaper <br/>
     ///     0x4: Disable menu animations <br/>
@@ -513,34 +513,13 @@ namespace cfg
     ///    0x40: Disable cursor blinking <br/>
     ///    0x80: Enable font smoothing <br/>
     ///   0x100: Enable Desktop Composition <br/>
-    /// type: uint32_t <br/>
-    /// default: 40 <br/>
-    struct client::performance_flags_force_present {
+    /// type: RdpPerformanceFlags <br/>
+    /// default: 0x28, 0x0 <br/>
+    struct client::force_performance_flags {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = uint32_t;
-        using mapped_type = uint32_t;
-        type value { 40 };
-    };
-    /// Defined flags will be removed. <br/>
-    /// See "Performance flags force present" above for available values. <br/>
-    /// A flag present in "Performance flags force present" and "Performance flags force not present" will be removed. <br/>
-    /// type: uint32_t <br/>
-    /// default: 0 <br/>
-    struct client::performance_flags_force_not_present {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = uint32_t;
-        using mapped_type = uint32_t;
-        type value { 0 };
-    };
-    /// Default value when the RDP client does not specify any option. <br/>
-    /// See "Performance flags force present" above for available values. <br/>
-    /// type: uint32_t <br/>
-    /// default: 128 <br/>
-    struct client::performance_flags_default {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = uint32_t;
-        using mapped_type = uint32_t;
-        type value { 128 };
+        using type = RdpPerformanceFlags;
+        using mapped_type = RdpPerformanceFlags;
+        type value { 0x28, 0x0 };
     };
     /// If enabled, avoid automatically font smoothing in recorded session. <br/>
     /// This allows OCR (when session probe is disabled) to better detect window titles. <br/>
@@ -5047,9 +5026,7 @@ struct client
 : cfg::client::ssl_cipher_list
 , cfg::client::keyboard_layout
 , cfg::client::ignore_logon_password
-, cfg::client::performance_flags_force_present
-, cfg::client::performance_flags_force_not_present
-, cfg::client::performance_flags_default
+, cfg::client::force_performance_flags
 , cfg::client::auto_adjust_performance_flags
 , cfg::client::encryption_level
 , cfg::client::tls_fallback_legacy

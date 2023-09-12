@@ -181,6 +181,38 @@ RED_AUTO_TEST_CASE(TestColorParser)
 #undef TEST_RGB
 }
 
+namespace
+{
+    std::string parse_and_to_string_performance_flags(chars_view value)
+    {
+        RdpPerformanceFlags flags {};
+        char const* err = parse_performance_flags(flags, value);
+        if (err) {
+            return err;
+        }
+
+        auto force_present = int_to_hexadecimal_lower_chars(flags.force_present);
+        auto force_not_present = int_to_hexadecimal_lower_chars(flags.force_not_present);
+        return str_concat("{0x", force_present, ", 0x", force_not_present, '}');
+    }
+}
+
+RED_AUTO_TEST_CASE(TestPerformanceFlagsParser)
+{
+    #define TEST_PERFORMANCE_FLAGS(r, v) \
+        RED_CHECK(parse_and_to_string_performance_flags(v ""_av) == r)
+
+    TEST_PERFORMANCE_FLAGS("{0x0, 0x0}", "");
+    TEST_PERFORMANCE_FLAGS("{0x0, 0x1}", "wallpaper");
+    TEST_PERFORMANCE_FLAGS("{0x0, 0x1}", "+wallpaper");
+    TEST_PERFORMANCE_FLAGS("{0x1, 0x0}", "-wallpaper");
+    TEST_PERFORMANCE_FLAGS("{0x1, 0x0}", "-wallpaper, ");
+    TEST_PERFORMANCE_FLAGS("{0x1, 0x1}", "wallpaper, -wallpaper");
+    TEST_PERFORMANCE_FLAGS("{0x20, 0x80}", "-mouse_cursor_shadows, -font_smoothing");
+    TEST_PERFORMANCE_FLAGS("{0x80, 0x20}", "+mouse_cursor_shadows, +font_smoothing");
+    TEST_PERFORMANCE_FLAGS("{0x80, 0x20}", "0x80, -0x20");
+}
+
 RED_AUTO_TEST_CASE(TestOtherParser)
 {
     // unsigned

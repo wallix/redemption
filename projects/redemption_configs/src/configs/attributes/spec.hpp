@@ -143,6 +143,8 @@ namespace types
     {
         static_assert(std::is_base_of_v<impl::unsigned_base, T>);
     };
+
+    struct performance_flags {};
 }
 
 namespace cpp

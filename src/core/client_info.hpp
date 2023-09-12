@@ -45,6 +45,7 @@
 #include "core/RDP/capabilities/bitmapcodecs.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/rdp_performance_flags.hpp"
 #include "keyboard/keylayout.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/get_printable_password.hpp"
@@ -168,9 +169,7 @@ struct ClientInfo
 
     void process_logon_info( InStream & stream
                            , bool ignore_logon_password
-                           , uint32_t performance_flags_default
-                           , uint32_t performance_flags_force_present
-                           , uint32_t performance_flags_force_not_present
+                           , RdpPerformanceFlags performance_flags
                            , uint32_t password_printing_mode
                            , bool verbose
                            )
@@ -204,17 +203,13 @@ struct ClientInfo
 
         this->rdp5_performanceflags = infoPacket.extendedInfoPacket.performanceFlags;
 
-        if (this->rdp5_performanceflags == 0){
-            this->rdp5_performanceflags = performance_flags_default;
-        }
-        this->rdp5_performanceflags |= performance_flags_force_present;
-        this->rdp5_performanceflags &= ~performance_flags_force_not_present;
+        this->rdp5_performanceflags |= performance_flags.force_present;
+        this->rdp5_performanceflags &= ~performance_flags.force_not_present;
 
         LOG_IF(verbose, LOG_INFO,
-            "client info: performance flags before=0x%08X after=0x%08X default=0x%08X present=0x%08X not-present=0x%08X",
+            "client info: performance flags before=0x%08X after=0x%08X present=0x%08X not-present=0x%08X",
             infoPacket.extendedInfoPacket.performanceFlags, this->rdp5_performanceflags,
-            performance_flags_default, performance_flags_force_present,
-            performance_flags_force_not_present);
+            performance_flags.force_present, performance_flags.force_not_present);
 
         const uint32_t mandatory_flags = INFO_MOUSE
                                        | INFO_DISABLECTRLALTDEL
@@ -261,4 +256,3 @@ struct ClientInfo
         return this->cs_monitor.get_widget_rect(this->screen_info.width, this->screen_info.height);
     }
 };
-

@@ -31,6 +31,7 @@
 #include "utils/colors.hpp"
 #include "utils/file_permissions.hpp"
 #include "utils/ascii.hpp"
+#include "configs/parsers/parse_performance_flags.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -237,7 +238,7 @@ parse_error parse_integral(
 
     TInt tmp;
     int base = 10;
-    if (value.size() >= 2 && value[0] == '0' && value[1] == 'x') {
+    if (value.size() > 2 && value[0] == '0' && value[1] == 'x') {
         value = value.drop_front(2);
         base = 16;
     }
@@ -508,6 +509,13 @@ inline parse_error parse_from_cfg(
             default: return parsing_error;
         }
     }
+}
+
+inline parse_error parse_from_cfg(
+    RdpPerformanceFlags& x, ::configs::spec_type<RdpPerformanceFlags> /*type*/,
+    bytes_view flags)
+{
+    return parse_error{parse_performance_flags(x, flags.as_chars())};
 }
 
 #define X_COLOR_RGB(f)                  \

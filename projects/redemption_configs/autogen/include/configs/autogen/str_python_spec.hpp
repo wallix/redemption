@@ -81,7 +81,7 @@ enable_ipv6 = boolean(default=True)
 #_advanced
 ignore_logon_password = boolean(default=False)
 
-# It specifies a list of server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).<br/>
+# It specifies a list of RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).<br/>
 # &nbsp; &nbsp;     0x1: Disable wallpaper
 # &nbsp; &nbsp;     0x4: Disable menu animations
 # &nbsp; &nbsp;     0x8: Disable theme
@@ -91,14 +91,7 @@ ignore_logon_password = boolean(default=False)
 # &nbsp; &nbsp;   0x100: Enable Desktop Composition
 #_advanced
 #_hex
-performance_flags_force_present = integer(min=0, default=40)
-
-# Defined flags will be removed.
-# See "Performance flags force present" above for available values.
-# A flag present in "Performance flags force present" and "Performance flags force not present" will be removed.
-#_advanced
-#_hex
-performance_flags_force_not_present = integer(min=0, default=0)
+force_performance_flags = string(default="-mouse_cursor_shadows,-theme")
 
 # If enabled, avoid automatically font smoothing in recorded session.
 # This allows OCR (when session probe is disabled) to better detect window titles.

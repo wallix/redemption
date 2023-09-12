@@ -17,7 +17,8 @@ from conf_migrate import (parse_configuration,
                           ConfigurationFragment,
                           MigrationDescType,
                           migration_defs,
-                          _merge_session_log_format_10_5_31)
+                          _merge_session_log_format_10_5_31,
+                          _merge_performance_flags_10_5_31)
 
 
 def process_migrate(migrate_def: MigrationDescType, ini: str) -> Tuple[bool, str]:
@@ -377,14 +378,11 @@ class TestMigration(unittest.TestCase):
             },
         }
 
-
-        ini = '[sec1]\nvalue1=xy\n'
-        self.assertEqual(process_migrate(migrate_def, ini), (False, ini))
-
-
-        ini = '[session_log]\nvalue1=xy\n'
-        self.assertEqual(process_migrate(migrate_def, ini), (False, ini))
-
+        for ini in (
+            '[sec1]\nvalue1=xy\n',
+            '[session_log]\nvalue1=xy\n',
+        ):
+            self.assertEqual(process_migrate(migrate_def, ini), (False, ini), ini)
 
         for d, r in (
             ('enable_session_log=True', 1),
@@ -392,8 +390,10 @@ class TestMigration(unittest.TestCase):
             ('enable_arcsight_log=True', 3),
             ('enable_arcsight_log=False', 1),
         ):
-            self.assertEqual(process_migrate(migrate_def, f'[session_log]\n{d}\n'),
-                             (True, f'[session_log]\nsyslog_format={r}\n'))
+            ini = f'[session_log]\n{d}\n'
+            self.assertEqual(process_migrate(migrate_def, ini),
+                             (True, f'[session_log]\nsyslog_format={r}\n'),
+                             f'ini: {ini}')
 
         for d, r in (
             ('enable_session_log=True\nenable_arcsight_log=True', 3),
@@ -401,8 +401,54 @@ class TestMigration(unittest.TestCase):
             ('enable_session_log=False\nenable_arcsight_log=True', 2),
             ('enable_session_log=False\nenable_arcsight_log=False', 0),
         ):
-            self.assertEqual(process_migrate(migrate_def, f'[session_log]\n{d}\n'),
-                             (True, f'[session_log]\n\nsyslog_format={r}\n'))
+            ini = f'[session_log]\n{d}\n'
+            self.assertEqual(process_migrate(migrate_def, ini),
+                             (True, f'[session_log]\n\nsyslog_format={r}\n'),
+                             f'ini: {ini}')
+
+
+    def test_merge_performance_flags_10_5_31(self):
+        migrate_def = {
+            'client': {
+                'performance_flags_force_present': UpdateItem(
+                    key='force_performance_flags',
+                    value_transformation=_merge_performance_flags_10_5_31),
+                'performance_flags_force_not_present': UpdateItem(
+                    key='force_performance_flags',
+                    value_transformation=_merge_performance_flags_10_5_31),
+            },
+        }
+
+        for ini in (
+            '[sec1]\nvalue1=xy\n',
+            '[client]\nvalue1=xy\n',
+        ):
+            self.assertEqual(process_migrate(migrate_def, ini), (False, ini), f'ini: {ini}')
+
+        for d, r in (
+            ('performance_flags_force_present=0x28', '-theme,-mouse_cursor_shadows'),
+            ('performance_flags_force_present=0x104', '-menu_animations,+desktop_composition'),
+            ('performance_flags_force_not_present=0x28', '+theme,+mouse_cursor_shadows'),
+            ('performance_flags_force_not_present=0x104', '+menu_animations,-theme,-mouse_cursor_shadows,-desktop_composition'),
+        ):
+            ini = f'[client]\n{d}\n'
+            self.assertEqual(process_migrate(migrate_def, ini),
+                             (True, f'[client]\nforce_performance_flags={r}\n'),
+                             f'ini: {ini}')
+
+        for d, r in (
+            ('performance_flags_force_not_present=0x104\nperformance_flags_force_present=0',
+             '+menu_animations,-desktop_composition'),
+            ('performance_flags_force_not_present=0x185\nperformance_flags_force_present=0x104',
+             '+wallpaper,+menu_animations,-font_smoothing,-desktop_composition'),
+            ('performance_flags_force_not_present=0x104\nperformance_flags_force_present=0x185',
+             '-wallpaper,+menu_animations,+font_smoothing,-desktop_composition'),
+        ):
+            ini = f'[client]\n{d}\n'
+            self.assertEqual(process_migrate(migrate_def, ini),
+                             (True, f'[client]\n\nforce_performance_flags={r}\n'),
+                             f'ini: {ini}')
+
 
     def test_migrate_10_5_31(self):
         migrate_def = next(migrate_def for version, migrate_def in migration_defs

@@ -51,9 +51,7 @@ namespace cfg
     struct client {
         struct keyboard_layout;
         struct ignore_logon_password;
-        struct performance_flags_force_present;
-        struct performance_flags_force_not_present;
-        struct performance_flags_default;
+        struct force_performance_flags;
         struct auto_adjust_performance_flags;
         struct encryption_level;
         struct tls_fallback_legacy;

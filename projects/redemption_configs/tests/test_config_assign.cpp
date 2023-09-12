@@ -91,9 +91,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::internal_mod::keyboard_layout_proposals>(cslist);
     ini.set<cfg::internal_mod::keyboard_layout_proposals>(slist);
     ini.set<cfg::client::max_color_depth>(ColorDepth::depth16);
-    ini.set<cfg::client::performance_flags_default>(1);
-    ini.set<cfg::client::performance_flags_force_not_present>(1);
-    ini.set<cfg::client::performance_flags_force_present>(1);
+    ini.set<cfg::client::force_performance_flags>(RdpPerformanceFlags{1, 1});
     ini.set<cfg::client::persist_bitmap_cache_on_disk>(true);
     ini.set<cfg::client::rdp_compression>(RdpCompression::rdp4);
     ini.set<cfg::client::tls_fallback_legacy>(true);

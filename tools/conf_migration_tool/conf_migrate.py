@@ -10,7 +10,7 @@
 from shutil import copyfile
 from enum import IntEnum
 from typing import (List, Tuple, Dict, Optional, Union, Iterable,
-                    Sequence, NamedTuple, Generator, Callable)
+                    Sequence, NamedTuple, Generator, Callable, TypeVar)
 
 import os
 import re
@@ -370,24 +370,76 @@ def _to_bool(value: str) -> bool:
     return value.strip().lower() in ('1', 'yes', 'true', 'on')
 
 
-def _merge_session_log_format_10_5_31(value: str, fragments: Iterable[ConfigurationFragment]) -> str:
-    is_session_log_section = False
-    enable_session_log = True
-    enable_arcsight_log = False
+def _to_int(value: str) -> int:
+    try:
+        if value.startswith('0x'):
+            return int(value, 16)
+        return int(value)
+    except ValueError:
+        return 0
+
+
+_IniValue = TypeVar("IniValue")
+
+def _get_values(fragments: Iterable[ConfigurationFragment],
+                desc: Sequence[Tuple[str, str, _IniValue, Callable[[str], _IniValue]]]
+                ) -> List[_IniValue]:
+    values = [default_value for section, name, default_value, converter in desc]
+
+    tree = {}
+    for i, t in enumerate(desc):
+        tree.setdefault(t[0], {})[t[1]] = i
+
+    section = None
     for fragment in fragments:
         if fragment.kind == ConfigKind.KeyValue:
-            if is_session_log_section:
-                if fragment.value1 == 'enable_session_log':
-                    enable_session_log = _to_bool(fragment.value2)
-                elif fragment.value1 == 'enable_arcsight_log':
-                    enable_arcsight_log = _to_bool(fragment.value2)
+            if section is not None:
+                i = section.get(fragment.value1)
+                if i is not None:
+                    values[i] = desc[i][3](fragment.value2)
         elif fragment.kind == ConfigKind.Section:
-            is_session_log_section = 'session_log' == fragment.value1
+            section = tree.get(fragment.value1)
+
+    return values
+
+
+def _merge_session_log_format_10_5_31(value: str, fragments: Iterable[ConfigurationFragment]) -> str:
+    enable_session_log, enable_arcsight_log = _get_values(
+        fragments, (('session_log', 'enable_session_log', True, _to_bool),
+                    ('session_log', 'enable_arcsight_log', False, _to_bool)))
 
     return str(
         (1 if enable_session_log else 0) |
         (2 if enable_arcsight_log else 0)
     )
+
+
+PerformanceFlagParts = Tuple[str, str, str, str, str, str, str]
+
+def _performance_flags_to_string(flags: int, enable: bool) -> PerformanceFlagParts:
+    signs = ('-', '+')
+    return (
+        signs[enable] + 'wallpaper' if flags & 0x1 else '',
+        signs[enable] + 'menu_animations' if flags & 0x4 else '',
+        signs[enable] + 'theme' if flags & 0x8 else '',
+        signs[enable] + 'mouse_cursor_shadows' if flags & 0x20 else '',
+        signs[enable] + 'cursor_blinking' if flags & 0x40 else '',
+        signs[not enable] + 'font_smoothing' if flags & 0x80 else '',
+        signs[not enable] + 'desktop_composition' if flags & 0x100 else '',
+    )
+
+def _merge_performance_flags_10_5_31(value: str, fragments: Iterable[ConfigurationFragment]) -> str:
+    force_present, force_not_present = _get_values(
+        fragments, (('client', 'performance_flags_force_present', 0x28, _to_int),
+                    ('client', 'performance_flags_force_not_present', 0, _to_int)))
+
+    force_not_present_elements = _performance_flags_to_string(force_not_present, True)
+    force_present_elements = _performance_flags_to_string(force_present, False)
+
+    return ','.join(not_present or present
+                    for not_present, present in zip(force_not_present_elements,
+                                                    force_present_elements)
+                    if not_present or present)
 
 
 migration_defs: List[MigrationType] = [
@@ -463,6 +515,13 @@ migration_defs: List[MigrationType] = [
         },
         'client': {
             'disable_tsk_switch_shortcuts': RemoveItem(),
+            'performance_flags_default': RemoveItem(),
+            'performance_flags_force_present': UpdateItem(
+                key='force_performance_flags',
+                value_transformation=_merge_performance_flags_10_5_31),
+            'performance_flags_force_not_present': UpdateItem(
+                key='force_performance_flags',
+                value_transformation=_merge_performance_flags_10_5_31),
         },
         'session_log': {
             'enable_session_log': UpdateItem(key='syslog_format',

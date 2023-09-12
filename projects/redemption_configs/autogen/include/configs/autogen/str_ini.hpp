@@ -148,7 +148,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #ignore_logon_password = 0
 
-# It specifies a list of server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).
+# It specifies a list of RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).
 # 
 #     0x1: Disable wallpaper
 #     0x4: Disable menu animations
@@ -158,21 +158,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #    0x80: Enable font smoothing
 #   0x100: Enable Desktop Composition
 # 
-# (min = 0)
 #_advanced
-#performance_flags_force_present = 40
-
-# Defined flags will be removed.
-# See "Performance flags force present" above for available values.
-# A flag present in "Performance flags force present" and "Performance flags force not present" will be removed.
-# (min = 0)
-#_advanced
-#performance_flags_force_not_present = 0
-
-# Default value when the RDP client does not specify any option.
-# See "Performance flags force present" above for available values.
-# (min = 0)
-#performance_flags_default = 128
+#force_performance_flags = -mouse_cursor_shadows,-theme
 
 # If enabled, avoid automatically font smoothing in recorded session.
 # This allows OCR (when session probe is disabled) to better detect window titles.

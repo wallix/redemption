@@ -150,9 +150,8 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_default>());
-    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::performance_flags_force_present>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
+    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -279,9 +278,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "[client]\n"
         "encryption_level=low\n"
         "ignore_logon_password=yes\n"
-        "performance_flags_default=0x00000007\n"
-        "performance_flags_force_present=0x1\n"
-        "performance_flags_force_not_present=0x0\n"
+        "force_performance_flags=-wallpaper,\n"
         "tls_fallback_legacy=yes\n"
         "tls_support=no\n"
         "rdp_compression=1\n"
@@ -407,9 +404,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(7,                                ini.get<cfg::client::performance_flags_default>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::performance_flags_force_present>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
+    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp4,             ini.get<cfg::client::rdp_compression>());
@@ -472,9 +468,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "enable_bitmap_update=no\n"
         "[client]\n"
         "encryption_level=medium\n"
-        "performance_flags_default=7\n"
-        "performance_flags_force_present=1\n"
-        "performance_flags_force_not_present=0\n"
+        "force_performance_flags=1\n"
         "tls_support=yes\n"
         "rdp_compression=0\n"
         "max_color_depth=8\n"
@@ -589,9 +583,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(7,                                ini.get<cfg::client::performance_flags_default>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::performance_flags_force_present>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
+    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::none,             ini.get<cfg::client::rdp_compression>());
@@ -650,9 +643,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
         "[client]\n"
         "encryption_level=low\n"
         "tls_support=yes\n"
-        "performance_flags_default=07\n"
-        "performance_flags_force_present=1\n"
-        "performance_flags_force_not_present=0x\n"
+        "force_performance_flags=1\n"
         "max_color_depth=24\n"
         "persistent_disk_bitmap_cache=yes\n"
         "cache_waiting_list=no\n"
@@ -732,9 +723,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(7,                                ini.get<cfg::client::performance_flags_default>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::performance_flags_force_present>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
+    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -798,9 +788,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
         "[client]\t\n"
         "encryption_level=low\n"
         "tls_support=yes\n"
-        "performance_flags_default=07\n"
-        "performance_flags_force_present=1\n"
-        "performance_flags_force_not_present=0x\n"
+        "force_performance_flags=1\n"
         "max_color_depth=24\n"
         "persistent_disk_bitmap_cache=yes\n"
         "cache_waiting_list=no\n"
@@ -889,9 +877,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(7,                                ini.get<cfg::client::performance_flags_default>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::performance_flags_force_present>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
+    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -1022,9 +1009,8 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_default>());
-    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::performance_flags_force_present>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
+    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -1154,9 +1140,8 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_default>());
-    RED_CHECK_EQUAL(0x28,                              ini.get<cfg::client::performance_flags_force_present>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
+    RED_CHECK_EQUAL(0x28,                              ini.get<cfg::client::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -1273,9 +1258,8 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_default>());
-    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::performance_flags_force_present>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
+    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -1393,9 +1377,8 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_default>());
-    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::performance_flags_force_present>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
+    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());

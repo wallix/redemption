@@ -2226,9 +2226,7 @@ public:
         this->client_info.process_logon_info(
             sec.payload
           , ini.get<cfg::client::ignore_logon_password>()
-          , ini.get<cfg::client::performance_flags_default>()
-          , ini.get<cfg::client::performance_flags_force_present>()
-          , ini.get<cfg::client::performance_flags_force_not_present>()
+          , ini.get<cfg::client::force_performance_flags>()
           , ini.get<cfg::debug::password>()
           , bool(this->verbose & Verbose::basic_trace)
         );

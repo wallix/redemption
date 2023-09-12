@@ -12,6 +12,7 @@ project configs
     <include>$(REDEMPTION_CONFIG_PATH)/src
     <include>$(REDEMPTION_CONFIG_PATH)/autogen/include
     <include>$(REDEMPTION_CONFIG_PATH)/configs_specs
+    <include>$(REDEMPTION_CONFIG_PATH)/redemption_src/configs/parsers
     <include>$(REDEMPTION_INCLUDE_PATH)
     <include>$(REDEMPTION_SRC_PATH)
     <include>$(SYSTEM_SRC_PATH)
