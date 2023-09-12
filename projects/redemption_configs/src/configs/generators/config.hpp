@@ -1430,20 +1430,28 @@ struct ConnectionPolicyValue
     }
 };
 
+template<class T, class Decayed> struct minify_type { using type = Decayed; };
+template<class T> struct minify_type<T, char*> { using type = std::string_view; };
+template<class T> struct minify_type<T, char const*> { using type = std::string_view; };
+template<class T> struct minify_type<T, std::string> { using type = std::string_view; };
+
+template<class T> using minify_type_t = typename minify_type<T, std::decay_t<T>>::type;
+
+
 template<class T>
-ConnectionPolicyValue<std::decay_t<T>> rdp_policy_value(T&& value)
+ConnectionPolicyValue<minify_type_t<T>> rdp_policy_value(T&& value)
 {
     return {DestSpecFile::rdp, static_cast<T&&>(value), false};
 }
 
 template<class T>
-ConnectionPolicyValue<std::decay_t<T>> vnc_policy_value(T&& value)
+ConnectionPolicyValue<minify_type_t<T>> vnc_policy_value(T&& value)
 {
     return {DestSpecFile::vnc, static_cast<T&&>(value), false};
 }
 
 template<class T>
-ConnectionPolicyValue<std::decay_t<T>> jh_policy_value(T&& value)
+ConnectionPolicyValue<minify_type_t<T>> jh_policy_value(T&& value)
 {
     return {DestSpecFile::jh, static_cast<T&&>(value), false};
 }
@@ -1540,7 +1548,7 @@ ValueAsStrings value(U const& value = T(), TConnPolicy const&... conn_policy_val
 
     check_policy({conn_policy_value.policy_type...});
 
-    auto ret = compute_value_as_strings(type_<ty>(), value);
+    auto ret = compute_value_as_strings(type_<ty>(), static_cast<minify_type_t<U> const&>(value));
 
     (..., (ret.values.connection_policies.push_back({
         conn_policy_value.policy_type,
