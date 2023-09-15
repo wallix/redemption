@@ -207,6 +207,7 @@ public:
         int const connection_status = SSL_connect(this->allocated_ssl);
         if (connection_status <= 0) {
             char const* error_msg;
+            int errnum = 0;
             switch (SSL_get_error(this->allocated_ssl, connection_status))
             {
                 case SSL_ERROR_WANT_READ:
@@ -217,6 +218,7 @@ public:
                     break;
                 case SSL_ERROR_SYSCALL:
                     error_msg = "I/O error";
+                    errnum = errno;
                     break;
                 case SSL_ERROR_SSL:
                     error_msg = "Failure in SSL library (protocol error?)";
@@ -226,6 +228,10 @@ public:
                     break;
             }
             tls_ctx_print_error("enable_client_tls", error_msg, error_message);
+            if (errnum) {
+                LOG(LOG_ERR, "TLSContext::enable_client_tls errno=%d %s",
+                    errnum, strerror(errnum));
+            }
             return Transport::TlsResult::Fail;
         }
 
