@@ -632,7 +632,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Specifies the highest compression support available <br/>
+    /// Specifies the highest RDP compression support available on client connection session. <br/>
     /// type: RdpCompression <br/>
     /// default: RdpCompression::rdp6_1 <br/>
     struct client::rdp_compression {
@@ -641,7 +641,7 @@ namespace cfg
         using mapped_type = RdpCompression;
         type value { RdpCompression::rdp6_1 };
     };
-    /// Specifies the maximum color resolution (color depth) for client session: <br/>
+    /// Specifies the maximum color resolution (color depth) for client connection session: <br/>
     /// type: ColorDepth <br/>
     /// default: ColorDepth::depth24 <br/>
     struct client::max_color_depth {
@@ -659,7 +659,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled). <br/>
+    /// Support of Cache Waiting List: Experimental cache strategy (this value is ignored if Persistent Disk Bitmap Cache is disabled). <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct client::cache_waiting_list {
@@ -696,7 +696,7 @@ namespace cfg
         type value { true };
     };
     /// Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth. <br/>
-    /// If changes occur on the target, they will not be visible in the recordings either. <br/>
+    /// ⚠ If changes occur on the target, they will not be visible in the recordings either. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::enable_suppress_output {
@@ -761,7 +761,9 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Enable front remoteFx <br/>
+    /// Enable RemoteFx on client connection. <br/>
+    /// Needs - "Max Color Depth" option set to 32 (32-bit RGB mask + alpha) <br/>
+    ///       - "Enable RemoteFX" option enabled in target connection policy <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::enable_remotefx {
@@ -773,7 +775,7 @@ namespace cfg
     /// This option should only be used if the server or client is showing graphical issues. <br/>
     /// In general, disabling RDP orders has a negative impact on performance. <br/>
     ///  <br/>
-    /// Disables supported drawing orders: <br/>
+    /// Drawing orders that can be disabled: <br/>
     ///    0: DstBlt <br/>
     ///    1: PatBlt <br/>
     ///    2: ScrBlt <br/>
@@ -831,7 +833,7 @@ namespace cfg
         type value { true };
     };
 
-    /// Specifies the highest compression support available <br/>
+    /// Specifies the highest RDP compression support available on server connection. <br/>
     /// type: RdpCompression <br/>
     /// default: RdpCompression::rdp6_1 <br/>
     struct mod_rdp::rdp_compression {
@@ -861,7 +863,7 @@ namespace cfg
     /// This option should only be used if the server or client is showing graphical issues. <br/>
     /// In general, disabling RDP orders has a negative impact on performance. <br/>
     ///  <br/>
-    /// Disables supported drawing orders: <br/>
+    /// Drawing orders that can be disabled: <br/>
     ///    0: DstBlt <br/>
     ///    1: PatBlt <br/>
     ///    2: ScrBlt <br/>
@@ -1384,7 +1386,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Enables support of the remoteFX codec. <br/>
+    /// Enables support of the remoteFX codec on target connection. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: mod_rdp:enable_remotefx <br/>
@@ -2878,7 +2880,7 @@ namespace cfg
         using mapped_type = FileSystemLogFlags;
         type value { FileSystemLogFlags::none };
     };
-    /// The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture: <br/>
+    /// The method by which the proxy RDP establishes criteria on which to chosse a color depth for Session recording file (wrm): <br/>
     /// type: ColorDepthSelectionStrategy <br/>
     /// default: ColorDepthSelectionStrategy::depth16 <br/>
     struct video::wrm_color_depth_selection_strategy {
@@ -2887,7 +2889,7 @@ namespace cfg
         using mapped_type = ColorDepthSelectionStrategy;
         type value { ColorDepthSelectionStrategy::depth16 };
     };
-    /// The compression method of wrm recording file: <br/>
+    /// The compression method of Session recording file (wrm): <br/>
     /// type: WrmCompressionAlgorithm <br/>
     /// default: WrmCompressionAlgorithm::gzip <br/>
     struct video::wrm_compression_algorithm {
@@ -3337,7 +3339,7 @@ namespace cfg
         using mapped_type = std::string;
         type value {  };
     };
-    /// Specifies the maximum color resolution (color depth) for client session: <br/>
+    /// Specifies the maximum color resolution (color depth) for client connection session: <br/>
     /// type: ColorDepth <br/>
     /// acl ⇐ proxy <br/>
     /// acl::name: bpp <br/>

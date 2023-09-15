@@ -41,7 +41,7 @@ enum class CaptureFlags : uint8_t
 {
     none = 0,
     png = 1,
-    // wrm: Session recording file. Also know as native video capture.
+    // wrm: Session recording file.
     wrm = 2,
     video = 4,
     ocr = 8,
@@ -225,7 +225,7 @@ inline FileSystemLogFlags operator ~ (FileSystemLogFlags x)
 inline FileSystemLogFlags & operator |= (FileSystemLogFlags & x, FileSystemLogFlags y) { return x = x | y; }
 inline FileSystemLogFlags & operator &= (FileSystemLogFlags & x, FileSystemLogFlags y) { return x = x & y; }
 
-// Specifies the maximum color resolution (color depth) for client session:
+// Specifies the maximum color resolution (color depth) for client connection session:
 enum class ColorDepth : uint8_t
 {
     // 8-bit
@@ -381,7 +381,7 @@ template<> struct is_valid_enum_value<VncBogusClipboardInfiniteLoop>
     constexpr static bool is_valid(uint64_t n) { return n <= 2; }
 };
 
-// The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
+// The method by which the proxy RDP establishes criteria on which to chosse a color depth for Session recording file (wrm):
 enum class ColorDepthSelectionStrategy : uint8_t
 {
     // 24-bit
@@ -395,7 +395,7 @@ template<> struct is_valid_enum_value<ColorDepthSelectionStrategy>
     constexpr static bool is_valid(uint64_t n) { return n <= 1; }
 };
 
-// The compression method of wrm recording file:
+// The compression method of Session recording file (wrm):
 enum class WrmCompressionAlgorithm : uint8_t
 {
     no_compression = 0,
@@ -410,7 +410,7 @@ template<> struct is_valid_enum_value<WrmCompressionAlgorithm>
     constexpr static bool is_valid(uint64_t n) { return n <= 2; }
 };
 
-// Specifies the highest compression support available
+// Specifies the highest RDP compression support available
 enum class RdpCompression : uint8_t
 {
     // The RDP bulk compression is disabled

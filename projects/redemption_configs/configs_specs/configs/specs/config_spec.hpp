@@ -138,7 +138,7 @@ std::string_view disabled_orders_desc =
     "This option should only be used if the server or client is showing graphical issues.\n"
     "In general, disabling RDP orders has a negative impact on performance.\n"
     "\n"
-    "Disables supported drawing orders:\n"
+    "Drawing orders that can be disabled:\n"
     "   0: DstBlt\n"
     "   1: PatBlt\n"
     "   2: ScrBlt\n"
@@ -638,6 +638,8 @@ _.section("client", [&]
         .name = "rdp_compression",
         .value = from_enum(RdpCompression::rdp6_1),
         .spec = global_spec(no_acl, spec::advanced),
+        .desc = "Specifies the highest RDP compression support available on client connection session.",
+        // RZH: This option can help debugging error during connection in specific cases.
     });
 
     _.member(MemberInfo{
@@ -656,8 +658,8 @@ _.section("client", [&]
     _.member(MemberInfo{
         .name = "cache_waiting_list",
         .value = value(false),
-        .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
+        .spec = ini_only(no_acl),
+        .desc = "Support of Cache Waiting List: Experimental cache strategy (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
     });
 
     _.member(MemberInfo{
@@ -689,7 +691,7 @@ _.section("client", [&]
         .spec = global_spec(no_acl),
         .desc =
             "Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.\n"
-            "If changes occur on the target, they will not be visible in the recordings either."
+            "⚠ If changes occur on the target, they will not be visible in the recordings either."
     });
 
     _.member(MemberInfo{
@@ -738,13 +740,16 @@ _.section("client", [&]
         .value = value(true),
         .spec = global_spec(no_acl),
         .desc = "Enables display of message informing user that his/her session is being audited.",
+        // Add warning about legal issue specific of the country in use.
     });
 
     _.member(MemberInfo{
         .name = "enable_remotefx",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Enable front remoteFx",
+        .desc = "Enable RemoteFx on client connection.\n"
+        "Needs - \"Max Color Depth\" option set to 32 (32-bit RGB mask + alpha)\n"
+        "      - \"Enable RemoteFX\" option enabled in target connection policy",
     });
 
     _.member(MemberInfo{
@@ -791,6 +796,8 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "rdp_compression",
         .value = from_enum(RdpCompression::rdp6_1),
         .spec = global_spec(no_acl, spec::advanced),
+        .desc = "Specifies the highest RDP compression support available on server connection.",
+        // RZH: This option can help debugging error during connection in specific cases.
     });
 
     _.member(MemberInfo{
@@ -1145,7 +1152,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "enable_remotefx",
         .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
-        .desc = "Enables support of the remoteFX codec.",
+        .desc = "Enables support of the remoteFX codec on target connection.",
     });
 
     _.member(MemberInfo{

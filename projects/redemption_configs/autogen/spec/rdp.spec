@@ -38,7 +38,7 @@ tcp_user_timeout = integer(min=0, max=3600000, default=0)
 
 # This option should only be used if the server or client is showing graphical issues.
 # In general, disabling RDP orders has a negative impact on performance.<br/>
-# Disables supported drawing orders:
+# Drawing orders that can be disabled:
 # &nbsp; &nbsp;    0: DstBlt
 # &nbsp; &nbsp;    1: PatBlt
 # &nbsp; &nbsp;    2: ScrBlt
@@ -114,7 +114,7 @@ enable_rdpdr_data_analysis = boolean(default=True)
 #_display_name=Enable translated RemoteApp with AM
 wabam_uses_translated_remoteapp = boolean(default=False)
 
-# Enables support of the remoteFX codec.
+# Enables support of the remoteFX codec on target connection.
 enable_remotefx = boolean(default=False)
 
 # Connect to the server in Restricted Admin mode.

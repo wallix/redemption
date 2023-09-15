@@ -44,7 +44,7 @@ cfg::mod_rdp::disabled_orders ⇐ mod_rdp:disabled_orders   [std::string]
     This option should only be used if the server or client is showing graphical issues.
     In general, disabling RDP orders has a negative impact on performance.
     
-    Disables supported drawing orders:
+    Drawing orders that can be disabled:
        0: DstBlt
        1: PatBlt
        2: ScrBlt
@@ -113,7 +113,7 @@ cfg::mod_rdp::wabam_uses_translated_remoteapp ⇐ mod_rdp:wabam_uses_translated_
     Otherwise, Alternate Shell will be used.
     Some Windows Shell features may be unavailable in one or both cases, and applications using them may behave differently.
 cfg::mod_rdp::enable_remotefx ⇐ mod_rdp:enable_remotefx   [bool]
-    Enables support of the remoteFX codec.
+    Enables support of the remoteFX codec on target connection.
 cfg::mod_rdp::enable_restricted_admin_mode ⇐ mod_rdp:enable_restricted_admin_mode   [bool]
     Connect to the server in Restricted Admin mode.
     This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
@@ -550,7 +550,7 @@ cfg::crypto::sign_key ⇐ sign_key   [std::array<unsigned char, 32>]
 cfg::context::psid ⇒ psid   [std::string]
     Proxy session log id
 cfg::context::opt_bpp ⇒ bpp   [ColorDepth]
-    Specifies the maximum color resolution (color depth) for client session:
+    Specifies the maximum color resolution (color depth) for client connection session:
       8: 8-bit
       15: 15-bit 555 RGB mask
       16: 16-bit 565 RGB mask

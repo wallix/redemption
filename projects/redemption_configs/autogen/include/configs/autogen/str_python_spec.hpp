@@ -122,7 +122,7 @@ tls_max_level = integer(min=0, default=0)
 #_advanced
 show_common_cipher_list = boolean(default=False)
 
-# Specifies the highest compression support available
+# Specifies the highest RDP compression support available on client connection session.
 # &nbsp; &nbsp;   0: The RDP bulk compression is disabled
 # &nbsp; &nbsp;   1: RDP 4.0 bulk compression
 # &nbsp; &nbsp;   2: RDP 5.0 bulk compression
@@ -131,7 +131,7 @@ show_common_cipher_list = boolean(default=False)
 #_advanced
 rdp_compression = option(0, 1, 2, 3, 4, default=4)
 
-# Specifies the maximum color resolution (color depth) for client session:
+# Specifies the maximum color resolution (color depth) for client connection session:
 # &nbsp; &nbsp;   8: 8-bit
 # &nbsp; &nbsp;   15: 15-bit 555 RGB mask
 # &nbsp; &nbsp;   16: 16-bit 565 RGB mask
@@ -144,10 +144,6 @@ max_color_depth = option(8, 15, 16, 24, 32, default=24)
 #_advanced
 persistent_disk_bitmap_cache = boolean(default=True)
 
-# Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
-#_advanced
-cache_waiting_list = boolean(default=False)
-
 # If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
@@ -157,7 +153,7 @@ persist_bitmap_cache_on_disk = boolean(default=False)
 bitmap_compression = boolean(default=True)
 
 # Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.
-# If changes occur on the target, they will not be visible in the recordings either.
+# ⚠ If changes occur on the target, they will not be visible in the recordings either.
 enable_suppress_output = boolean(default=True)
 
 # [Not configured]: Compatible with more RDP clients (less secure)
@@ -179,13 +175,15 @@ transform_glyph_to_bitmap = boolean(default=False)
 # Enables display of message informing user that his/her session is being audited.
 enable_osd_4_eyes = boolean(default=True)
 
-# Enable front remoteFx
+# Enable RemoteFx on client connection.
+# Needs - "Max Color Depth" option set to 32 (32-bit RGB mask + alpha)
+# &nbsp; &nbsp;       - "Enable RemoteFX" option enabled in target connection policy
 #_advanced
 enable_remotefx = boolean(default=True)
 
 # This option should only be used if the server or client is showing graphical issues.
 # In general, disabling RDP orders has a negative impact on performance.<br/>
-# Disables supported drawing orders:
+# Drawing orders that can be disabled:
 # &nbsp; &nbsp;    0: DstBlt
 # &nbsp; &nbsp;    1: PatBlt
 # &nbsp; &nbsp;    2: ScrBlt
@@ -218,7 +216,7 @@ allow_resize_hosted_desktop = boolean(default=True)
 
 [mod_rdp]
 
-# Specifies the highest compression support available
+# Specifies the highest RDP compression support available on server connection.
 # &nbsp; &nbsp;   0: The RDP bulk compression is disabled
 # &nbsp; &nbsp;   1: RDP 4.0 bulk compression
 # &nbsp; &nbsp;   2: RDP 5.0 bulk compression
@@ -371,7 +369,7 @@ max_unrecog_char_rate = integer(min=0, max=100, default=40)
 # Specifies the type of data to be captured:
 # &nbsp; &nbsp;   0x0: none
 # &nbsp; &nbsp;   0x1: png
-# &nbsp; &nbsp;   0x2: wrm: Session recording file. Also know as native video capture.
+# &nbsp; &nbsp;   0x2: wrm: Session recording file.
 # &nbsp; &nbsp;   0x8: ocr<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x8 = 0xb)
 #_advanced
@@ -407,13 +405,13 @@ disable_clipboard_log = integer(min=0, max=3, default=0)
 #_hex
 disable_file_system_log = integer(min=0, max=3, default=0)
 
-# The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
+# The method by which the proxy RDP establishes criteria on which to chosse a color depth for Session recording file (wrm):
 # &nbsp; &nbsp;   0: 24-bit
 # &nbsp; &nbsp;   1: 16-bit
 #_advanced
 wrm_color_depth_selection_strategy = option(0, 1, default=1)
 
-# The compression method of wrm recording file:
+# The compression method of Session recording file (wrm):
 # &nbsp; &nbsp;   0: no compression
 # &nbsp; &nbsp;   1: GZip: Files are better compressed, but this takes more time and CPU load
 # &nbsp; &nbsp;   2: Snappy: Faster than GZip, but files are less compressed

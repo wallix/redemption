@@ -51,7 +51,7 @@ inline void config_type_definition(type_enumerations & e)
     e.enumeration_flags("CaptureFlags", "Specifies the type of data to be captured:")
       .value("none")
       .value("png")
-      .value("wrm", "wrm: Session recording file. Also know as native video capture.")
+      .value("wrm", "wrm: Session recording file.")
       .value("video").exclude()
       .value("ocr")
     ;
@@ -91,7 +91,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("meta", "(redirected) file system log in recorded meta")
     ;
 
-    e.enumeration_set("ColorDepth", "Specifies the maximum color resolution (color depth) for client session:")
+    e.enumeration_set("ColorDepth", "Specifies the maximum color resolution (color depth) for client connection session:")
       .value("depth8", 8, "8-bit")
       .value("depth15", 15, "15-bit 555 RGB mask")
       .value("depth16", 16, "16-bit 565 RGB mask")
@@ -138,18 +138,18 @@ inline void config_type_definition(type_enumerations & e)
       .value("continued", "No special processing is done, the proxy always responds immediately.")
     ;
 
-    e.enumeration_list("ColorDepthSelectionStrategy", "The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:")
+    e.enumeration_list("ColorDepthSelectionStrategy", "The method by which the proxy RDP establishes criteria on which to chosse a color depth for Session recording file (wrm):")
       .value("depth24", "24-bit")
       .value("depth16", "16-bit")
     ;
 
-    e.enumeration_list("WrmCompressionAlgorithm", "The compression method of wrm recording file:")
+    e.enumeration_list("WrmCompressionAlgorithm", "The compression method of Session recording file (wrm):")
       .value("no_compression")
       .value("gzip", "GZip: Files are better compressed, but this takes more time and CPU load")
       .value("snappy", "Snappy: Faster than GZip, but files are less compressed")
     ;
 
-    e.enumeration_list("RdpCompression", "Specifies the highest compression support available")
+    e.enumeration_list("RdpCompression", "Specifies the highest RDP compression support available")
       .value("none", "The RDP bulk compression is disabled")
       .value("rdp4", "RDP 4.0 bulk compression")
       .value("rdp5", "RDP 5.0 bulk compression")
