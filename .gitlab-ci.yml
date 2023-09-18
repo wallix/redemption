@@ -55,6 +55,8 @@ pages:
 build-project:
   stage: build
   needs: []
+  except:
+    - tags
   image: debian:buster-slim
   script:
     - apt-get -qq update
@@ -73,7 +75,7 @@ build-project:
       - bin/gcc-*/release/*.o
       - bin/gcc-*/release/libunit_test.so
     expire_in: 1 day
-
+    
 
 build-analyze:
   stage: build
