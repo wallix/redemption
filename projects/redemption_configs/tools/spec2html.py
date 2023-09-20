@@ -73,9 +73,9 @@ with f:
                     in_list_elem = True
                     if comments:
                         comments.append('</p>\n')
-                    comments.append('<dl>\n')
+                    comments.append('<table>\n')
                 item_name, desc = desc_list_re.match(line).groups()
-                comments.append(f'<dt>{item_name}</dt><dd>{desc}</dd>\n')
+                comments.append(f'<tr><td>{item_name}</td><td>{desc}</td></tr>\n')
             elif line == '#_advanced':
                 advanced = True
             elif line.startswith('# (in '):
@@ -88,7 +88,7 @@ with f:
             elif not line.startswith('#_') and not line.startswith('##'):
                 if in_list_elem:
                     in_list_elem = False
-                    comments.append('</dl>\n<p>\n')
+                    comments.append('</table>\n<p>\n')
                 comments.append(line[2:])
                 comments.append('<br/>')
 
@@ -108,7 +108,7 @@ with f:
             option_name, option_type, default_value = declare_option_re.match(line).groups()
 
             if in_list_elem:
-                comments.append('</dl>\n')
+                comments.append('</table>\n')
             desc = htmlize_comment(comments) if comments else ''
             documented_param = is_documented(section_name, option_name,
                                              comments)
@@ -127,7 +127,7 @@ with f:
                 display_name = option_name.replace('_', ' ').title()
             options.append((display_name, ref))
 
-            html.append(f'<div class=option><h3 id={ref}>'
+            html.append(f'<div class="option advanced-{str(advanced).lower()}"><h3 id={ref}>'
                         f'[{section_name_displayed}] {display_name}</h3>\n'
                         f'<p>(type: {special_type or option_type}{extra} '
                         f'| default: <code>{default_value}</code>)</p>\n'
@@ -153,7 +153,9 @@ nav.append('</nav>')
 
 css_column_width = int(option_name_max_len / 1.8)
 
-print(f'''<!DOCTYPE html>\n<html><head><title>{filename}</title><style>
+print(f'''<!DOCTYPE html>\n<html>
+<head><title>{filename}</title>
+<style>
 body {{
     background: #fff;
     margin-left: 0;
@@ -210,7 +212,24 @@ nav {{
 .menu-item-section {{
     background: #e3e3e3;
 }}
-</style></head><body>\n<h1>{filename}</h1>
+</style></head><body>
+<h1>{filename}</h1>
+<script type="text/javascript">
+const head = document.head;
+const style = document.createElement("style");
+head.appendChild(style);
+const setAdvanced = function(a, b) {{
+    style.innerText = `
+        .advanced-true{{ display: ${{a ? 'block' : 'none'}}; }}
+        .advanced-false{{ display: ${{b ? 'block' : 'none'}}; }}
+    `;
+}}
+</script>
+<p>Show options:
+<button onclick="setAdvanced(true, false)">Advanced</button>
+<button onclick="setAdvanced(false, true)">Normal</button>
+<button onclick="setAdvanced(true, true)">Both</button>
+</p>
 ''')
 print('\n'.join(nav))
 print(f"<p>Number of documented parameters = {nb_desc} / {nb_params}</p>")
