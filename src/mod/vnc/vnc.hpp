@@ -1226,11 +1226,12 @@ private:
                 case State::Data:
                     {
                         if (this->last == VNC::Encoder::EncoderState::NeedMoreData){
+                            // No data. This can happen when TLS is enabled
                             if (this->last_avail == buf.remaining()){
-                                LOG(LOG_ERR, "new call to vnc::mod without new data");
-                                throw Error(ERR_VNC);
+                                return false;
                             }
                         }
+
                         if (!bool(this->encoder)){
                             LOG(LOG_ERR, "Call to vnc::mod with null encoder");
                             throw Error(ERR_VNC);
