@@ -81,14 +81,16 @@ enable_ipv6 = boolean(default=True)
 #_advanced
 ignore_logon_password = boolean(default=False)
 
-# It specifies a list of RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).<br/>
-# &nbsp; &nbsp;     0x1: Disable wallpaper
-# &nbsp; &nbsp;     0x4: Disable menu animations
-# &nbsp; &nbsp;     0x8: Disable theme
-# &nbsp; &nbsp;    0x20: Disable mouse cursor shadows
-# &nbsp; &nbsp;    0x40: Disable cursor blinking
-# &nbsp; &nbsp;    0x80: Enable font smoothing
-# &nbsp; &nbsp;   0x100: Enable Desktop Composition
+# It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).<br/>
+# If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.<br/>
+# Available features:
+# &nbsp; &nbsp;   wallpaper
+# &nbsp; &nbsp;   menu_animations
+# &nbsp; &nbsp;   theme
+# &nbsp; &nbsp;   mouse_cursor_shadows
+# &nbsp; &nbsp;   cursor_blinking
+# &nbsp; &nbsp;   font_smoothing
+# &nbsp; &nbsp;   desktop_composition
 #_advanced
 #_hex
 force_performance_flags = string(default="-mouse_cursor_shadows,-theme")

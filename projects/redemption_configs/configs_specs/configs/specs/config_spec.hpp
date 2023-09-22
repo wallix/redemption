@@ -522,26 +522,24 @@ _.section("client", [&]
         .desc = "If true, ignore password provided by RDP client, user need do login manually.",
     });
 
-    // TODO: merge performance_flags_force_present and performance_flags_force_not_present
-    // into performance_flags as list of feature to force enable or disable
-    // example: +wallpaper,-cursor_blinking,+font_smoothing,-desktop_composition
-    // = remove 0x1, add 0x40, add 0x80, remove 0x100, and leave the other flags as the client request
-    // and fix potential behaviors
     // TODO move to [mod_rdp] ?
     _.member(MemberInfo{
         .name = "force_performance_flags",
         .value = value<types::performance_flags>("-mouse_cursor_shadows,-theme"),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc =
-            "It specifies a list of RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n"
+            "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n"
             "\n"
-            "    0x1: Disable wallpaper\n"
-            "    0x4: Disable menu animations\n"
-            "    0x8: Disable theme\n"
-            "   0x20: Disable mouse cursor shadows\n"
-            "   0x40: Disable cursor blinking\n"
-            "   0x80: Enable font smoothing\n"
-            "  0x100: Enable Desktop Composition\n"
+            "If a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n"
+            "\n"
+            "Available features:\n"
+            "  wallpaper\n"
+            "  menu_animations\n"
+            "  theme\n"
+            "  mouse_cursor_shadows\n"
+            "  cursor_blinking\n"
+            "  font_smoothing\n"
+            "  desktop_composition\n"
     });
 
     _.member(MemberInfo{

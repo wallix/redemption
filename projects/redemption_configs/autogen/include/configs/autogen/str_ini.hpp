@@ -148,15 +148,18 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #ignore_logon_password = 0
 
-# It specifies a list of RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).
+# It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).
 # 
-#     0x1: Disable wallpaper
-#     0x4: Disable menu animations
-#     0x8: Disable theme
-#    0x20: Disable mouse cursor shadows
-#    0x40: Disable cursor blinking
-#    0x80: Enable font smoothing
-#   0x100: Enable Desktop Composition
+# If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.
+# 
+# Available features:
+#   wallpaper
+#   menu_animations
+#   theme
+#   mouse_cursor_shadows
+#   cursor_blinking
+#   font_smoothing
+#   desktop_composition
 # 
 #_advanced
 #force_performance_flags = -mouse_cursor_shadows,-theme

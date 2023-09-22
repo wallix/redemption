@@ -504,15 +504,18 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// It specifies a list of RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage). <br/>
+    /// It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage). <br/>
     ///  <br/>
-    ///     0x1: Disable wallpaper <br/>
-    ///     0x4: Disable menu animations <br/>
-    ///     0x8: Disable theme <br/>
-    ///    0x20: Disable mouse cursor shadows <br/>
-    ///    0x40: Disable cursor blinking <br/>
-    ///    0x80: Enable font smoothing <br/>
-    ///   0x100: Enable Desktop Composition <br/>
+    /// If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client. <br/>
+    ///  <br/>
+    /// Available features: <br/>
+    ///   wallpaper <br/>
+    ///   menu_animations <br/>
+    ///   theme <br/>
+    ///   mouse_cursor_shadows <br/>
+    ///   cursor_blinking <br/>
+    ///   font_smoothing <br/>
+    ///   desktop_composition <br/>
     /// type: RdpPerformanceFlags <br/>
     /// default: 0x28, 0x0 <br/>
     struct client::force_performance_flags {
