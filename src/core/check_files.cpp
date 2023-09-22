@@ -20,10 +20,13 @@ Author(s): Christophe Grosjean, Jonathan Poelen
 
 #include "core/app_path.hpp"
 #include "core/check_files.hpp"
-#include "utils/log.hpp"
 #include "utils/sugar/array_view.hpp"
 
 #include <algorithm>
+
+#include <cstdio>
+
+#include <unistd.h>
 
 
 struct CheckFileData
@@ -71,70 +74,61 @@ namespace
         { IsFile, Readable, app_path(AppPath::CfgKey)           },
         { IsFile, Readable, app_path(AppPath::CfgDhPem)         },
     };
-
-    bool check_files(
-        array_view<CheckFileData> check_file_list,
-        unsigned euid, unsigned egid)
-    {
-        bool result = true;
-
-        CheckFileData const* uses_files[std::size(user_check_file_list)];
-        CheckFileData const** uses_files_last = uses_files;
-
-        for (CheckFileData const& check_file : check_file_list)
-        {
-            // ignore duplicated files
-            if (std::any_of(uses_files, uses_files_last, [&](auto* pcheck_file){
-                using P = void const*;
-                return P(pcheck_file->filename) == P(check_file.filename)
-                    && pcheck_file->accessibility == check_file.accessibility
-                    && pcheck_file->type == check_file.type
-                ;
-            })) {
-                continue;
-            }
-
-            *uses_files_last = &check_file;
-            ++uses_files_last;
-
-            const char * accessibility = nullptr;
-            int access_type = 0;
-
-            switch (check_file.accessibility)
-            {
-            case Readable:
-                accessibility = "read";
-                access_type = R_OK;
-                break;
-            case Writable:
-                accessibility = "write";
-                access_type = W_OK;
-                break;
-            }
-
-            if (!::eaccess(check_file.filename, access_type))
-            {
-                LOG(LOG_INFO,
-                    "%s \"%s\" is present and accessible by user (euid=%u egid=%u) ... yes",
-                    (check_file.type == IsFile ? "File" : "Directory"),
-                    check_file.filename, euid, egid);
-            }
-            else
-            {
-                result = false;
-                LOG(LOG_ERR,
-                    "User (euid=%u egid=%u) has no %s access to %s \"%s\"",
-                    euid, egid, accessibility,
-                    (check_file.type == IsFile ? "file" : "directory"),
-                    check_file.filename);
-            }
-        }
-
-        return result;
-    }
 }  // namespace
 
 bool check_files(unsigned euid, unsigned egid)
 {
-    return check_files(user_check_file_list, euid, egid);
+    bool result = true;
+
+    CheckFileData const* uses_files[std::size(user_check_file_list)];
+    CheckFileData const** uses_files_last = uses_files;
+
+    for (CheckFileData const& check_file : user_check_file_list)
+    {
+        // ignore duplicated files
+        if (std::any_of(uses_files, uses_files_last, [&](auto* pcheck_file){
+            using P = void const*;
+            return P(pcheck_file->filename) == P(check_file.filename)
+                && pcheck_file->accessibility == check_file.accessibility
+                && pcheck_file->type == check_file.type
+            ;
+        })) {
+            continue;
+        }
+
+        *uses_files_last = &check_file;
+        ++uses_files_last;
+
+        const char * accessibility = nullptr;
+        int access_type = 0;
+
+        switch (check_file.accessibility)
+        {
+        case Readable:
+            accessibility = "read";
+            access_type = R_OK;
+            break;
+        case Writable:
+            accessibility = "write";
+            access_type = W_OK;
+            break;
+        }
+
+        if (!::eaccess(check_file.filename, access_type))
+        {
+            printf("%s \"%s\" is present and accessible by user (euid=%u egid=%u) ... yes\n",
+                (check_file.type == IsFile ? "File" : "Directory"),
+                check_file.filename, euid, egid);
+        }
+        else
+        {
+            result = false;
+            printf("User (euid=%u egid=%u) has no %s access to %s \"%s\"\n",
+                euid, egid, accessibility,
+                (check_file.type == IsFile ? "file" : "directory"),
+                check_file.filename);
+        }
+    }
+
+    return result;
 }

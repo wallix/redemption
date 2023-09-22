@@ -372,10 +372,10 @@ int main(int argc, char** argv)
 
         if (!euser_check_file_result)
         {
-            LOG(LOG_INFO,
+            fprintf(stderr,
                 "Please verify that all tests passed. If not, you may need "
                 "to remove %s or reinstall rdpproxy if some configuration "
-                "files are missing.", app_path(AppPath::LockFile));
+                "files are missing.\n", app_path(AppPath::LockFile).c_str());
             return 1;
         }
 
