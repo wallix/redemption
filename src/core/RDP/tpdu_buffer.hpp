@@ -76,14 +76,13 @@ namespace Extractors
     {
         HeaderResult read_header(Buf64k & buf)
         {
-            // fast path header occupies 2 or 3 octets, but assume then data len at least 2 octets.
-            if (buf.remaining() < 4)
-            {
+            // fast-path min length = 2
+            // slow-path min length = 4, but tpdu min length is 7
+            if (buf.remaining() < 2) {
                 return HeaderResult::fail();
             }
 
-            auto av = buf.av(4);
-            uint16_t len;
+            auto av = buf.av();
 
             REDEMPTION_DIAGNOSTIC_PUSH()
             REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
@@ -91,12 +90,16 @@ namespace Extractors
             {
                 case FastPath::FASTPATH_OUTPUT_ACTION_FASTPATH:
                 {
-                    len = av[1];
+                    uint16_t len = av[1];
+                    uint16_t min_len = 2;
                     if (len & 0x80u) {
+                        if (av.size() < 3) {
+                            return HeaderResult::fail();
+                        }
+                        ++min_len;
                         len = static_cast<uint16_t>((len & 0x7Fu) << 8) | av[2];
                     }
-                    // assume then data len at least 2 octets.
-                    if (len < 4) {
+                    if (len < min_len) {
                         LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", len);
                         throw Error(ERR_X224);
                     }
@@ -108,8 +111,12 @@ namespace Extractors
 
                 case FastPath::FASTPATH_OUTPUT_ACTION_X224:
                 {
-                    len = Parse(av.subarray(2, 2).data()).in_uint16_be();
-                    if (len < 6) {
+                    uint16_t min_len = 6;
+                    if (av.size() < min_len) {
+                        return HeaderResult::fail();
+                    }
+                    uint16_t len = Parse(av.subarray(2, 2).data()).in_uint16_be();
+                    if (len < min_len) {
                         LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", len);
                         throw Error(ERR_X224);
                     }

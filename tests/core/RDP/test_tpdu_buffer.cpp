@@ -86,9 +86,9 @@ RED_AUTO_TEST_CASE(Test1Read1)
     TpduBuffer buf;
 
     for (int i = 0; i < 84; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
+        buf.load_data(t); RED_REQUIRE(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(buf.current_pdu_get_type() != Extractors::FASTPATH);
@@ -102,9 +102,9 @@ RED_AUTO_TEST_CASE(Test1Read10)
     TpduBuffer buf;
 
     for (int i = 0; i < 8; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
+        buf.load_data(t); RED_REQUIRE(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(buf.current_pdu_get_type() != Extractors::FASTPATH);
@@ -117,7 +117,7 @@ RED_AUTO_TEST_CASE(Test1Read100)
     BlockTransport t(data1, 100);
     TpduBuffer buf;
 
-    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(buf.current_pdu_get_type() != Extractors::FASTPATH);
@@ -132,9 +132,9 @@ RED_AUTO_TEST_CASE(Test2Read1)
     TpduBuffer buf;
 
     for (int i = 0; i < 84; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
+        buf.load_data(t); RED_REQUIRE(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 85);
 
     RED_CHECK(buf.current_pdu_get_type() != Extractors::FASTPATH);
@@ -142,9 +142,9 @@ RED_AUTO_TEST_CASE(Test2Read1)
     RED_CHECK(buf.current_pdu_buffer() == data2.from_offset(85));
 
     for (int i = 0; i < 84; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
+        buf.load_data(t); RED_REQUIRE(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
@@ -158,9 +158,9 @@ RED_AUTO_TEST_CASE(Test2Read10)
     TpduBuffer buf;
 
     for (int i = 0; i < 8; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
+        buf.load_data(t); RED_REQUIRE(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 80);
 
     RED_CHECK(buf.current_pdu_get_type() != Extractors::FASTPATH);
@@ -168,9 +168,9 @@ RED_AUTO_TEST_CASE(Test2Read10)
     RED_CHECK(buf.current_pdu_buffer() == data2.from_offset(85));
 
     for (int i = 0; i < 7; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
+        buf.load_data(t); RED_REQUIRE(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
@@ -183,7 +183,7 @@ RED_AUTO_TEST_CASE(Test2Read100)
     BlockTransport t(data2, 100);
     TpduBuffer buf;
 
-    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 70);
 
     RED_CHECK(buf.current_pdu_get_type() != Extractors::FASTPATH);
@@ -191,7 +191,7 @@ RED_AUTO_TEST_CASE(Test2Read100)
     auto av = buf.current_pdu_buffer();
     RED_CHECK(av == data2.from_offset(85));
 
-    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
@@ -204,7 +204,7 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     BlockTransport t(data2, 1000);
     TpduBuffer buf;
 
-    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(buf.current_pdu_get_type() != Extractors::FASTPATH);
@@ -219,11 +219,64 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     RED_CHECK(buf.current_pdu_buffer() == data2.from_offset(85));
 }
 
+RED_AUTO_TEST_CASE(TestFastPathRead0)
+{
+    auto data = "\x00\x02"_av;
+    BlockTransport t(data, 1000);
+    TpduBuffer buf;
+
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
+    RED_CHECK_EQ(t.remaining(), 0);
+
+    RED_CHECK(buf.current_pdu_get_type() == Extractors::FASTPATH);
+
+    RED_CHECK(buf.current_pdu_buffer() == data);
+
+    RED_CHECK(!buf.next(TpduBuffer::PDU));
+}
+
+RED_AUTO_TEST_CASE(TestFastPathRead1)
+{
+    auto data = "\x00\x03\x42"_av;
+    BlockTransport t(data, 1000);
+    TpduBuffer buf;
+
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
+    RED_CHECK_EQ(t.remaining(), 0);
+
+    RED_CHECK(buf.current_pdu_get_type() == Extractors::FASTPATH);
+
+    RED_CHECK(buf.current_pdu_buffer() == data);
+
+    RED_CHECK(!buf.next(TpduBuffer::PDU));
+}
+
+RED_AUTO_TEST_CASE(TestFastPathRead129)
+{
+    auto data = "\x00\x80\x81"
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaX"
+        ""_av;
+    BlockTransport t(data, 1000);
+    TpduBuffer buf;
+
+    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
+    RED_CHECK_EQ(t.remaining(), 0);
+
+    RED_CHECK(buf.current_pdu_get_type() == Extractors::FASTPATH);
+
+    RED_CHECK(buf.current_pdu_buffer() == data);
+
+    RED_CHECK(!buf.next(TpduBuffer::PDU));
+}
+
 RED_AUTO_TEST_CASE(Test2ReadTooShortLen)
 {
     // fast-path
     {
-        BlockTransport t("\x00\x00\x02\x00"_av, 1000);
+        BlockTransport t("\x00\x00"_av, 1000);
         TpduBuffer buf;
 
         buf.load_data(t);
@@ -231,7 +284,7 @@ RED_AUTO_TEST_CASE(Test2ReadTooShortLen)
     }
     // slow-path
     {
-        BlockTransport t("\x03\x00\x00\x02"_av, 1000);
+        BlockTransport t("\x03\x00\x00\x02\x00\x00"_av, 1000);
         TpduBuffer buf;
 
         buf.load_data(t);
