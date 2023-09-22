@@ -365,7 +365,7 @@ int main(int argc, char const** argv)
 
             if ((e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
              && sck_trans && mod
-             && static_cast<uintptr_t>(sck_trans->get_fd()) == e.data
+             && sck_trans->get_fd() == e.data
              && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
              && mod->is_auto_reconnectable()
              && !mod->server_error_encountered()

@@ -216,13 +216,13 @@ struct Error
     error_type id;
     int errnum;
 
-    uintptr_t data;
+    intptr_t data;
 
 public:
     Error() = delete;
     explicit Error(error_type id) noexcept;
     explicit Error(error_type id, int errnum) noexcept;
-    explicit Error(error_type id, int errnum, uintptr_t data) noexcept;
+    explicit Error(error_type id, int errnum, intptr_t data) noexcept;
 
     [[nodiscard]] zstring_view errmsg(bool with_id = true) const noexcept; /*NOLINT*/
 };

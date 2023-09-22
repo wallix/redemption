@@ -418,7 +418,7 @@ private:
 
         if ((e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
          && mod_factory.mod_sck_transport()
-         && static_cast<uintptr_t>(mod_factory.mod_sck_transport()->get_fd()) == e.data
+         && mod_factory.mod_sck_transport()->get_fd() == e.data
          && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
          && mod_factory.mod().is_auto_reconnectable()
          && !mod_factory.mod().server_error_encountered()
@@ -1316,7 +1316,7 @@ private:
                         SocketTransport* socket_transport_ptr = mod_factory.mod_sck_transport();
 
                         if (socket_transport_ptr
-                         && e.data == static_cast<uintptr_t>(socket_transport_ptr->get_fd())
+                         && e.data == socket_transport_ptr->get_fd()
                          && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
                          && mod_factory.mod().is_auto_reconnectable()
                          && !mod_factory.mod().server_error_encountered())
