@@ -35,18 +35,27 @@ namespace
 
 struct TypeName : std::string_view {};
 
+#ifdef __clang__
+#if REDEMPTION_COMP_CLANG_VERSION_LESS(16, 0, 0)
+// clang < 16: (anonymous namespace)::TypeName (anonymous namespace)::get_type_name() [T = E]
+constexpr std::size_t get_type_prefix_length = 76;
+#else
+// clang >= 16: TypeName (anonymous namespace)::get_type_name() [T = E]
+constexpr std::size_t get_type_prefix_length = 53;
+#endif
+#endif
+
 template<class T>
 constexpr TypeName get_type_name()
 {
     std::string_view s = __PRETTY_FUNCTION__;
     s.remove_suffix(1);
 #ifdef __clang__
-    s.remove_prefix(76);
-    return {s};
+    s.remove_prefix(get_type_prefix_length);
 #elif defined(__GNUG__)
     s.remove_prefix(71);
-    return {s};
 #endif
+    return {s};
 }
 
 template<class E, E e>
@@ -55,7 +64,7 @@ constexpr TypeName get_enum_name()
 #if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 9)
     std::string_view s = __PRETTY_FUNCTION__;
 #ifdef __clang__
-    s.remove_prefix(76 + get_type_name<E>().size() + 6);
+    s.remove_prefix(get_type_prefix_length + get_type_name<E>().size() + 6);
     if ('0' <= s[0] && s[0] <= '9')
     {
         return {};
@@ -92,7 +101,7 @@ class enum_names
         {
             if (name.empty())
             {
-                return &name - names;
+                return static_cast<std::size_t>(&name - names);
             }
         }
         return 0;
