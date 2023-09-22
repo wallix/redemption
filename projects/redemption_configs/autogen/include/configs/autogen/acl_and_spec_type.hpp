@@ -87,6 +87,7 @@ template<> struct acl_and_spec_type<cfg::mod_rdp::enable_nla> { using type = boo
 template<> struct acl_and_spec_type<cfg::mod_rdp::enable_kerberos> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::tls_min_level> { using type = uint32_t; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::tls_max_level> { using type = uint32_t; };
+template<> struct acl_and_spec_type<cfg::mod_rdp::tls_security_level> { using type = int; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::cipher_string> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::show_common_cipher_list> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::mod_rdp::persistent_disk_bitmap_cache> { using type = bool; };

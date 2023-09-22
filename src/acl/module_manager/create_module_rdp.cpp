@@ -581,11 +581,13 @@ ModPack create_mod_rdp(
     mod_rdp_params.device_id = ini.get<cfg::globals::device_id>().c_str();
 
     //mod_rdp_params.enable_tls                          = true;
-    TLSClientParams tls_client_params;
-    tls_client_params.tls_min_level                       = ini.get<cfg::mod_rdp::tls_min_level>();
-    tls_client_params.tls_max_level                       = ini.get<cfg::mod_rdp::tls_max_level>();
-    tls_client_params.show_common_cipher_list             = ini.get<cfg::mod_rdp::show_common_cipher_list>();
-    tls_client_params.cipher_string                       = ini.get<cfg::mod_rdp::cipher_string>();
+    TLSClientParams tls_client_params {
+        .tls_min_level = ini.get<cfg::mod_rdp::tls_min_level>(),
+        .tls_max_level = ini.get<cfg::mod_rdp::tls_max_level>(),
+        .show_common_cipher_list = ini.get<cfg::mod_rdp::show_common_cipher_list>(),
+        .cipher_string = ini.get<cfg::mod_rdp::cipher_string>(),
+        .security_level = ini.get<cfg::mod_rdp::tls_security_level>(),
+    };
 
     mod_rdp_params.enable_nla = mod_rdp_params.target_password[0]
                              && ini.get<cfg::mod_rdp::enable_nla>();

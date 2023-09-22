@@ -834,6 +834,17 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
     });
 
     _.member(MemberInfo{
+        .name = "tls_security_level",
+        .value = value<types::int_>(1),
+        // .spec = connpolicy(rdp_and_jh, L, spec::advanced),
+        .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+        .desc =
+            "Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0\n"
+            "\n"
+            "A negative value uses the default value configured in OpenSSL.",
+    });
+
+    _.member(MemberInfo{
         .name = "cipher_string",
         .value = value<std::string>("ALL"),
         .spec = connpolicy(rdp_and_jh, L),

@@ -388,6 +388,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ mod_rdp:tls_max_level)
 #tls_max_level = 0
 
+# Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0
+# 
+# A negative value uses the default value configured in OpenSSL.
+# (acl config: proxy ⇐ tls_security_level)
+#tls_security_level = 1
+
 # TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
 # (acl config: proxy ⇐ mod_rdp:cipher_string)
 #cipher_string = ALL
