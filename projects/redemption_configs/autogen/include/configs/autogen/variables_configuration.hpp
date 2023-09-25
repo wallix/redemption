@@ -220,6 +220,7 @@ namespace cfg
         type value { REDEMPTION_CONFIG_AUTHFILE };
     };
     /// Time out during RDP connection initialization. <br/>
+    /// Increase the value if connection between workstations and Bastion can be slow. <br/>
     /// type: std::chrono::seconds <br/>
     /// default: 10 <br/>
     struct globals::handshake_timeout {
@@ -364,7 +365,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Show target device name with F12 during the session. <br/>
+    /// Allow to show target device name with F12 during the session <br/>
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>
     /// default: true <br/>
@@ -386,6 +387,7 @@ namespace cfg
         type value { REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION };
     };
     /// Sends the client screen count to the server. Not supported for VNC targets. <br/>
+    /// Uncheck to disable multiple monitor. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::allow_using_multiple_monitors {
@@ -405,7 +407,8 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Needed to refresh screen of Windows Server 2012. <br/>
+    /// Workaround option to fix some drawing issues with Windows Server 2012. <br/>
+    /// Can be disabled when none of the targets are Windows Server 2012. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::bogus_refresh_rect {
@@ -660,6 +663,7 @@ namespace cfg
         type value { false };
     };
     /// Enable Bitmap Compression when supported by the RDP client. <br/>
+    /// Disable this option will increase network bandwith usage. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::bitmap_compression {
@@ -1296,7 +1300,7 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Disable shared disk for RDP client on iOS platform. <br/>
+    /// Workaround option to disable shared disk for RDP client on iOS platform only. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::bogus_ios_rdpdr_virtual_channel {
@@ -1375,6 +1379,9 @@ namespace cfg
         type value { false };
     };
     /// Enables Session Shadowing Support. <br/>
+    /// Session probe must be enabled on target connection policy. <br/>
+    /// Target server must support "Remote Desktop Shadowing" feature. <br/>
+    /// When enabled, users can share their RDP sessions with auditors who request it. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::session_shadowing_support {
@@ -2512,7 +2519,8 @@ namespace cfg
         type value {  };
     };
 
-    /// Enable or disable the clipboard from client (client to server). <br/>
+    /// Check this option to enable the upload clipboard (from client to server). <br/>
+    /// This only support text data clipboard (not files). <br/>
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>
     /// default: false <br/>
@@ -2525,7 +2533,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Enable or disable the clipboard from server (server to client). <br/>
+    /// Check this option to enable the clipboard download (from server to client).This only support text data clipboard (not files). <br/>
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>
     /// default: false <br/>
@@ -2550,7 +2558,7 @@ namespace cfg
         using mapped_type = ::configs::spec_types::list<int>;
         type value {  };
     };
-    /// VNC server clipboard data encoding type. <br/>
+    /// VNC server clipboard text data encoding type. <br/>
     /// type: ClipboardEncodingType <br/>
     /// acl ⇒ proxy <br/>
     /// acl::name: vnc_server_clipboard_encoding_type <br/>
@@ -2924,7 +2932,8 @@ namespace cfg
         using mapped_type = std::string;
         type value { "crf=35 preset=superfast" };
     };
-    /// Remove the top left banner that adds the date of the video <br/>
+    /// In the generated video of the session record traces, remove the top left banner with the timestamp. <br/>
+    /// Can slightly speed up the video generation. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct video::notimestamp {
@@ -2941,7 +2950,7 @@ namespace cfg
         using mapped_type = SmartVideoCropping;
         type value { SmartVideoCropping::v2 };
     };
-    /// Needed to play a video with corrupted Bitmap Update. <br/>
+    /// Check this option will allow to play a video with corrupted Bitmap Update. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct video::play_video_with_corrupted_bitmap {
@@ -4451,7 +4460,7 @@ namespace cfg
         type value {  };
     };
 
-    /// Enable target edit field in login page. <br/>
+    /// Enable target edit field in login page. This target edit field allows to enter the target and the login separately. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct internal_mod::enable_target_field {

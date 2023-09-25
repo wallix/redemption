@@ -18,6 +18,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #authfile = )gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(
 
 # Time out during RDP connection initialization.
+# Increase the value if connection between workstations and Bastion can be slow.
 # (in seconds)
 #handshake_timeout = 10
 
@@ -83,7 +84,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #enable_osd = 1
 
-# Show target device name with F12 during the session.
+# Allow to show target device name with F12 during the session
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 # (acl config: proxy ⇐ enable_osd_display_remote_target)
@@ -93,6 +94,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_wab_integration = )gen_config_ini" << (REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) << R"gen_config_ini(
 
 # Sends the client screen count to the server. Not supported for VNC targets.
+# Uncheck to disable multiple monitor.
 # (type: boolean (0/no/false or 1/yes/true))
 #allow_using_multiple_monitors = 1
 
@@ -103,7 +105,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #allow_scale_factor = 0
 
-# Needed to refresh screen of Windows Server 2012.
+# Workaround option to fix some drawing issues with Windows Server 2012.
+# Can be disabled when none of the targets are Windows Server 2012.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #bogus_refresh_rect = 1
@@ -237,6 +240,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #persist_bitmap_cache_on_disk = 0
 
 # Enable Bitmap Compression when supported by the RDP client.
+# Disable this option will increase network bandwith usage.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #bitmap_compression = 1
@@ -537,7 +541,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #use_license_store = 1
 
-# Disable shared disk for RDP client on iOS platform.
+# Workaround option to disable shared disk for RDP client on iOS platform only.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #bogus_ios_rdpdr_virtual_channel = 1
@@ -579,6 +583,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #wabam_uses_translated_remoteapp = 0
 
 # Enables Session Shadowing Support.
+# Session probe must be enabled on target connection policy.
+# Target server must support "Remote Desktop Shadowing" feature.
+# When enabled, users can share their RDP sessions with auditors who request it.
+# 
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #session_shadowing_support = 1
@@ -1136,12 +1144,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [mod_vnc]
 
-# Enable or disable the clipboard from client (client to server).
+# Check this option to enable the upload clipboard (from client to server).
+# This only support text data clipboard (not files).
 # (type: boolean (0/no/false or 1/yes/true))
 # (acl config: proxy ⇐ clipboard_up)
 #clipboard_up = 0
 
-# Enable or disable the clipboard from server (server to client).
+# Check this option to enable the clipboard download (from server to client).This only support text data clipboard (not files).
 # (type: boolean (0/no/false or 1/yes/true))
 # (acl config: proxy ⇐ clipboard_down)
 #clipboard_down = 0
@@ -1155,7 +1164,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #encodings = 
 
-# VNC server clipboard data encoding type.
+# VNC server clipboard text data encoding type.
 # values: utf-8, latin1
 #_advanced
 # (acl config: proxy ⇐ vnc_server_clipboard_encoding_type)
@@ -1345,7 +1354,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #ffmpeg_options = crf=35 preset=superfast
 
-# Remove the top left banner that adds the date of the video
+# In the generated video of the session record traces, remove the top left banner with the timestamp.
+# Can slightly speed up the video generation.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #notimestamp = 0
@@ -1355,7 +1365,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
 #smart_video_cropping = 2
 
-# Needed to play a video with corrupted Bitmap Update.
+# Check this option will allow to play a video with corrupted Bitmap Update.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #play_video_with_corrupted_bitmap = 0
@@ -1477,7 +1487,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [internal_mod]
 
-# Enable target edit field in login page.
+# Enable target edit field in login page. This target edit field allows to enter the target and the login separately.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #enable_target_field = 1

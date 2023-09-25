@@ -29,7 +29,7 @@ cfg::globals::trace_type ⇐ trace_type   [TraceType]
     When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.
 cfg::globals::is_rec ⇐ is_rec   [bool]
 cfg::globals::enable_osd_display_remote_target ⇐ enable_osd_display_remote_target   [bool]
-    Show target device name with F12 during the session.
+    Allow to show target device name with F12 during the session
 
 cfg::client::keyboard_layout ⇒ keyboard_layout   [unsigned]
 cfg::client::disable_tsk_switch_shortcuts ⇐ disable_tsk_switch_shortcuts   [bool]
@@ -433,11 +433,12 @@ cfg::server_cert::external_response ⇐ external_response   [std::string]
     empty string for wait, 'Ok' or error message
 
 cfg::mod_vnc::clipboard_up ⇐ clipboard_up   [bool]
-    Enable or disable the clipboard from client (client to server).
+    Check this option to enable the upload clipboard (from client to server).
+    This only support text data clipboard (not files).
 cfg::mod_vnc::clipboard_down ⇐ clipboard_down   [bool]
-    Enable or disable the clipboard from server (server to client).
+    Check this option to enable the clipboard download (from server to client).This only support text data clipboard (not files).
 cfg::mod_vnc::server_clipboard_encoding_type ⇐ vnc_server_clipboard_encoding_type   [ClipboardEncodingType ⇐ std::string]
-    VNC server clipboard data encoding type.
+    VNC server clipboard text data encoding type.
 cfg::mod_vnc::bogus_clipboard_infinite_loop ⇐ vnc_bogus_clipboard_infinite_loop   [VncBogusClipboardInfiniteLoop]
     The RDP clipboard is based on a token that indicates who owns data between server and client. However, some RDP clients, such as Freerpd, always appropriate this token. This conflicts with VNC, which also appropriates this token, causing clipboard data to be sent in loops.
     This option indicates the strategy to adopt in such situations.

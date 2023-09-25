@@ -268,7 +268,8 @@ _.section("globals", [&]
         .name = "handshake_timeout",
         .value = value<std::chrono::seconds>(10),
         .spec = global_spec(no_acl),
-        .desc = "Time out during RDP connection initialization.",
+        .desc = "Time out during RDP connection initialization.\n"
+        "Increase the value if connection between workstations and Bastion can be slow.",
     });
 
     _.member(MemberInfo{
@@ -381,7 +382,7 @@ _.section("globals", [&]
         .name = "enable_osd_display_remote_target",
         .value = value(true),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
-        .desc = "Show target device name with F12 during the session.",
+        .desc = "Allow to show target device name with F12 during the session",
     });
 
 
@@ -397,7 +398,8 @@ _.section("globals", [&]
         .name = "allow_using_multiple_monitors",
         .value = value(true),
         .spec = global_spec(no_acl),
-        .desc = "Sends the client screen count to the server. Not supported for VNC targets.",
+        .desc = "Sends the client screen count to the server. Not supported for VNC targets.\n"
+        "Uncheck to disable multiple monitor.",
     });
 
     // TODO move to [client] / [mod_rdp]
@@ -418,7 +420,8 @@ _.section("globals", [&]
         .name = "bogus_refresh_rect",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Needed to refresh screen of Windows Server 2012.",
+        .desc = "Workaround option to fix some drawing issues with Windows Server 2012.\n"
+        "Can be disabled when none of the targets are Windows Server 2012.",
     });
 
     _.member(MemberInfo{
@@ -654,7 +657,8 @@ _.section("client", [&]
         .name = "bitmap_compression",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Enable Bitmap Compression when supported by the RDP client.",
+        .desc = "Enable Bitmap Compression when supported by the RDP client.\n"
+        "Disable this option will increase network bandwith usage.",
     });
 
     // TODO remove ?
@@ -1069,13 +1073,14 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Stores CALs issued by the terminal servers.",
+        // TODO: Has it consequences with Device CAL and Users CAL ?
     });
 
     _.member(MemberInfo{
         .name = "bogus_ios_rdpdr_virtual_channel",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Disable shared disk for RDP client on iOS platform.",
+        .desc = "Workaround option to disable shared disk for RDP client on iOS platform only.",
     });
 
     _.member(MemberInfo{
@@ -1136,7 +1141,11 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "session_shadowing_support",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Enables Session Shadowing Support.",
+        .desc = "Enables Session Shadowing Support.\n"
+        "Session probe must be enabled on target connection policy.\n"
+        "Target server must support \"Remote Desktop Shadowing\" feature.\n"
+        "When enabled, users can share their RDP sessions with auditors who request it.\n",
+        // TODO: Move to connection policy ? if so, change reference in admin guide also.
     });
 
     _.member(MemberInfo{
@@ -1870,14 +1879,16 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
         .name = "clipboard_up",
         .value = value(false),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L)),
-        .desc = "Enable or disable the clipboard from client (client to server).",
+        .desc = "Check this option to enable the upload clipboard (from client to server).\n"
+        "This only support text data clipboard (not files).",
     });
 
     _.member(MemberInfo{
         .name = "clipboard_down",
         .value = value(false),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L)),
-        .desc = "Enable or disable the clipboard from server (server to client).",
+        .desc = "Check this option to enable the clipboard download (from server to client)."
+        "This only support text data clipboard (not files).",
     });
 
     // TODO should be connpolicy and named disabled_encodings (disabled_orders ?)
@@ -1902,7 +1913,7 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
         },
         .value = enum_as_string(ClipboardEncodingType::latin1),
         .spec = global_spec(acl_to_proxy(no_reset_back_to_selector, L), spec::advanced),
-        .desc = "VNC server clipboard data encoding type.",
+        .desc = "VNC server clipboard text data encoding type.",
     });
 
     _.member(MemberInfo{
@@ -2350,7 +2361,8 @@ _.section("video", [&]
         .name = "notimestamp",
         .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Remove the top left banner that adds the date of the video",
+        .desc = "In the generated video of the session record traces, remove the top left banner with the timestamp.\n"
+        "Can slightly speed up the video generation.",
     });
 
     _.member(MemberInfo{
@@ -2364,7 +2376,7 @@ _.section("video", [&]
         .name = "play_video_with_corrupted_bitmap",
         .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Needed to play a video with corrupted Bitmap Update.",
+        .desc = "Check this option will allow to play a video with corrupted Bitmap Update.",
     });
 
     _.member(MemberInfo{
@@ -2671,7 +2683,7 @@ _.section("internal_mod", [&]
         .name = "enable_target_field",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Enable target edit field in login page.",
+        .desc = "Enable target edit field in login page. This target edit field allows to enter the target and the login separately.",
     });
 
     // to_string()

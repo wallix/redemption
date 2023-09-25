@@ -14,7 +14,8 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 #_logged
 port = integer(min=0, default=3389)
 
-# Time out during RDP connection initialization.<br/>
+# Time out during RDP connection initialization.
+# Increase the value if connection between workstations and Bastion can be slow.<br/>
 # (in seconds)
 handshake_timeout = integer(min=0, default=10)
 
@@ -48,11 +49,12 @@ close_timeout = integer(min=0, default=600)
 #_advanced
 enable_osd = boolean(default=True)
 
-# Show target device name with F12 during the session.
+# Allow to show target device name with F12 during the session
 #_advanced
 enable_osd_display_remote_target = boolean(default=True)
 
 # Sends the client screen count to the server. Not supported for VNC targets.
+# Uncheck to disable multiple monitor.
 allow_using_multiple_monitors = boolean(default=True)
 
 # Sends Scale &amp; Layout configuration to the server.
@@ -60,7 +62,8 @@ allow_using_multiple_monitors = boolean(default=True)
 # ⚠ Title bar detection via OCR will no longer work.
 allow_scale_factor = boolean(default=False)
 
-# Needed to refresh screen of Windows Server 2012.
+# Workaround option to fix some drawing issues with Windows Server 2012.
+# Can be disabled when none of the targets are Windows Server 2012.
 #_advanced
 bogus_refresh_rect = boolean(default=True)
 
@@ -144,6 +147,7 @@ persistent_disk_bitmap_cache = boolean(default=True)
 persist_bitmap_cache_on_disk = boolean(default=False)
 
 # Enable Bitmap Compression when supported by the RDP client.
+# Disable this option will increase network bandwith usage.
 #_advanced
 bitmap_compression = boolean(default=True)
 
@@ -262,7 +266,7 @@ hide_client_name = boolean(default=True)
 #_advanced
 use_license_store = boolean(default=True)
 
-# Disable shared disk for RDP client on iOS platform.
+# Workaround option to disable shared disk for RDP client on iOS platform only.
 #_advanced
 bogus_ios_rdpdr_virtual_channel = boolean(default=True)
 
@@ -287,6 +291,9 @@ log_only_relevant_clipboard_activities = boolean(default=True)
 split_domain = boolean(default=False)
 
 # Enables Session Shadowing Support.
+# Session probe must be enabled on target connection policy.
+# Target server must support "Remote Desktop Shadowing" feature.
+# When enabled, users can share their RDP sessions with auditors who request it.
 #_advanced
 session_shadowing_support = boolean(default=True)
 
@@ -305,10 +312,11 @@ allow_multiple_handshake = boolean(default=False)
 
 [mod_vnc]
 
-# Enable or disable the clipboard from client (client to server).
+# Check this option to enable the upload clipboard (from client to server).
+# This only support text data clipboard (not files).
 clipboard_up = boolean(default=False)
 
-# Enable or disable the clipboard from server (server to client).
+# Check this option to enable the clipboard download (from server to client).This only support text data clipboard (not files).
 clipboard_down = boolean(default=False)
 
 # Sets additional graphics encoding types that will be negotiated with the VNC server:
@@ -319,7 +327,7 @@ clipboard_down = boolean(default=False)
 #_advanced
 encodings = string(default="")
 
-# VNC server clipboard data encoding type.
+# VNC server clipboard text data encoding type.
 #_advanced
 server_clipboard_encoding_type = option('utf-8', 'latin1', default="latin1")
 
@@ -424,7 +432,8 @@ framerate = integer(min=1, max=120, default=5)
 #_advanced
 ffmpeg_options = string(default="crf=35 preset=superfast")
 
-# Remove the top left banner that adds the date of the video
+# In the generated video of the session record traces, remove the top left banner with the timestamp.
+# Can slightly speed up the video generation.
 #_advanced
 notimestamp = boolean(default=False)
 
@@ -433,7 +442,7 @@ notimestamp = boolean(default=False)
 # &nbsp; &nbsp;   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
 smart_video_cropping = option(0, 1, 2, default=2)
 
-# Needed to play a video with corrupted Bitmap Update.
+# Check this option will allow to play a video with corrupted Bitmap Update.
 #_advanced
 play_video_with_corrupted_bitmap = boolean(default=False)
 
@@ -486,7 +495,7 @@ filename_percent_encoding = boolean(default=False)
 
 [internal_mod]
 
-# Enable target edit field in login page.
+# Enable target edit field in login page. This target edit field allows to enter the target and the login separately.
 #_advanced
 enable_target_field = boolean(default=True)
 
