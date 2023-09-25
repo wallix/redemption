@@ -2,7 +2,7 @@ variables:
   GIT_STRATEGY: fetch
   # GIT_SUBMODULE_STRATEGY: recursive
   IMAGE_SESMAN_TESTS: sshproxies-tests  # image from sshproxies repo
-  BRANCH_VERSION: '10.0'
+  BRANCH_VERSION: "10.0"
 
 stages:
   - pages
