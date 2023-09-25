@@ -15,7 +15,7 @@ pages:
     key: gitlab-pages
     paths: [public]
   script:
-    - rm -rf public/${BRANCH_VERSION} ||:
+    - rm -rf public/${BRANCH_VERSION} || true
     - mkdir -p public/${BRANCH_VERSION}
     - tools/compute_doc_percent.sh public/${BRANCH_VERSION}
   artifacts:
