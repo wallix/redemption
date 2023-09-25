@@ -1,0 +1,25 @@
+variables:
+  GIT_STRATEGY: fetch
+  # GIT_SUBMODULE_STRATEGY: recursive
+  IMAGE_SESMAN_TESTS: sshproxies-tests  # image from sshproxies repo
+  BRANCH_VERSION: 10.0
+
+stages:
+  - pages
+
+pages:
+  stage: pages
+  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
+  # Required to keep artifacts from old builds, e.g. from master
+  cache:
+    key: gitlab-pages
+    paths: [public]
+  script:
+    - rm -rf public/${BRANCH_VERSION} ||:
+    - mkdir -p public/${BRANCH_VERSION}
+    - tools/compute_doc_percent.sh public/${BRANCH_VERSION}
+  artifacts:
+    name: ${BRANCH_VERSION}
+    paths: [public]
+  only:
+    - maintenance_bastion_10.0
