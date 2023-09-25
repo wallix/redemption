@@ -41,15 +41,13 @@ test-sesman:
 pages:
   stage: build
   image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
-  cache:
-    key: gitlab-pages
-    paths: [public]
   script:
-    - mkdir public
-    - tools/compute_doc_percent.sh public/
+    - mkdir -p public/future
+    - tools/compute_doc_percent.sh public/future
   artifacts:
+    name: future
     paths:
-      - public
+      - public/future
   only:
     - merge_requests
     - future
