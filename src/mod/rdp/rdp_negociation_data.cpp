@@ -35,9 +35,10 @@ RdpLogonInfo::RdpLogonInfo(bounded_chars_view<0, HOST_NAME_MAX> hostname, bool h
             array.back() = '\0';
             char* separator = strchr(array.data(), '.');
             if (!separator) {
-                separator = &array.back();
+                return strlen(array.data());
             }
-            return checked_int(separator - array.data());
+            size_t hostlen = checked_int(separator - array.data());
+            return hostlen;
         });
     }
     else{
@@ -89,4 +90,3 @@ RdpLogonInfo::RdpLogonInfo(bounded_chars_view<0, HOST_NAME_MAX> hostname, bool h
     LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"",
         this->_domain, this->_username, this->_hostname);
 }
-

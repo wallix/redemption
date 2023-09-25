@@ -1401,7 +1401,7 @@ bool RdpNegociation::get_license(InStream & stream)
                         std::size_t const pktlen = LIC::LICENSE_HWID_SIZE - 4;
                         std::size_t const slen = std::min(pktlen, hostname.size());
                         memcpy(hwid + 4, hostname.data(), slen);
-                        memset(hwid + 4, 0, pktlen - slen);
+                        memset(hwid + 4 + slen, 0, pktlen - slen);
 
                         /* Generate a signature for the HWID buffer */
                         uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
@@ -1473,7 +1473,7 @@ bool RdpNegociation::get_license(InStream & stream)
                 std::size_t const pktlen = LIC::LICENSE_HWID_SIZE - 4;
                 std::size_t const slen = std::min(pktlen, hostname.size());
                 memcpy(hwid + 4, hostname.data(), slen);
-                memset(hwid + 4, 0, pktlen - slen);
+                memset(hwid + 4 + slen, 0, pktlen - slen);
 
                 uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
                 memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
