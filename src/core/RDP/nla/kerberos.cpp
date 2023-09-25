@@ -461,6 +461,7 @@ bool Krb5Creds::configure_fast(KrbErrLogger& err_ctx, const char *fast_cache_nam
         return true;
     }
 
+    LOG(LOG_INFO, "Resolve and set FAST cache");
     // resolve and set FAST cache
     CHECK_OR_SET_ERR(return false, err_ctx,
         krb5_get_init_creds_opt_set_fast_ccache_name(this->ctx, options, fast_cache_name),
