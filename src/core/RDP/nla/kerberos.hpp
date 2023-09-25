@@ -313,6 +313,7 @@ private:
             return 0;
         }
 
+        LOG(LOG_INFO, "Resolve and set FAST cache");
         // resolve and set FAST cache
         ret = krb5_get_init_creds_opt_set_fast_ccache_name(this->ctx, options, fast_cache_name);
         if (ret)
