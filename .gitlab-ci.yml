@@ -45,7 +45,7 @@ pages:
     key: gitlab-pages
     paths: [public]
   script:
-    - mkdir public
+    - mkdir -p public
     - tools/compute_doc_percent.sh public/
   artifacts:
     paths:
@@ -78,7 +78,7 @@ build-project:
       - bin/gcc-*/release/*.o
       - bin/gcc-*/release/libunit_test.so
     expire_in: 1 day
-    
+
 
 build-analyze:
   stage: build
