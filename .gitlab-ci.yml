@@ -47,16 +47,16 @@ branch-pages:
     GITLAB_REMOTE: ci
     GIT_BRANCH: pages
   script:
+    - tools/compute_doc_percent.sh "tmp/${CI_COMMIT_BRANCH}"
     - git config user.email "cipipeline@wallix.com"
     - git config user.name "CI Pipeline"
     - git remote add "${GITLAB_REMOTE}" "https://${PAGES_ACCESS_NAME}:${PAGES_ACCESS_TOKEN}@gitlab.corp.wallix.com/git/redemption.git"
-    - git checkout "${GIT_BRANCH}"
-    - SUBDIR="public/${CI_COMMIT_BRANCH}"
-    - rm -rf "$SUBDIR"
-    - mkdir -p "$SUBDIR"
-    - tools/compute_doc_percent.sh "$SUBDIR"
-    - git add "$SUBDIR"
-    - git commit -m "$SUBDIR"
+    - git checkout -b "${GIT_BRANCH}" "${GITLAB_REMOTE}/${GIT_BRANCH}"
+    - rm -rf "public/${CI_COMMIT_BRANCH}"
+    - mkdir -p "public/${CI_COMMIT_BRANCH}"
+    - mv "tmp/${CI_COMMIT_BRANCH}" "public/"
+    - git add "public/${CI_COMMIT_BRANCH}"
+    - git commit -m "Update page from ${CI_COMMIT_BRANCH} ${CI_COMMIT_SHORT_SHA}"
     - git push "${GITLAB_REMOTE}" "${GIT_BRANCH}"
   only:
     - future
