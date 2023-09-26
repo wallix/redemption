@@ -1,0 +1,22 @@
+variables:
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: recursive
+  IMAGE_REDEMPTION_ANALYZE: redemption-analyze
+  IMAGE_SESMAN_TESTS: sshproxies-tests  # image from sshproxies repo
+  TESTDIR: test_tmpdir
+
+stages:
+  - build-docker-images
+  - build
+
+pages:
+  stage: build
+  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
+  script:
+    - cd public
+    - ../generate_index.sh > index.html
+  artifacts:
+    paths:
+      - public
+  only:
+    - pushes
