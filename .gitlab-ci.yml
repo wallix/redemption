@@ -1,24 +1,37 @@
 variables:
   GIT_STRATEGY: fetch
-  # GIT_SUBMODULE_STRATEGY: recursive
-  IMAGE_SESMAN_TESTS: sshproxies-tests  # image from sshproxies repo
-  BRANCH_VERSION: "10.0"
+  GIT_SUBMODULE_STRATEGY: recursive
+  IMAGE_PAGES: sshproxies-tagger  # image from sshproxies repo
 
 stages:
-  - pages
+  - build
 
-pages:
-  stage: pages
-  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
-  cache:
-    key: gitlab-pages
-    paths: [public]
+branch-pages:
+  stage: build
+  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_PAGES}
+  variables:
+    GITLAB_REMOTE: ci
+    GIT_BRANCH: pages
   script:
-    - rm -rf public/${BRANCH_VERSION} || true
-    - mkdir -p public/${BRANCH_VERSION}
-    - tools/compute_doc_percent.sh public/${BRANCH_VERSION}
-  artifacts:
-    name: ${BRANCH_VERSION}
-    paths: [public]
+    - mkdir "tmp"
+    - tools/compute_doc_percent.sh "tmp"
+    - git config user.email "cipipeline@wallix.com"
+    - git config user.name "CI Pipeline"
+    - git remote remove "${GITLAB_REMOTE}" || true
+    - git remote add "${GITLAB_REMOTE}" "https://${PAGES_ACCESS_NAME}:${PAGES_ACCESS_TOKEN}@gitlab.corp.wallix.com/git/redemption.git"
+    - git fetch "${GITLAB_REMOTE}"
+    - git switch "${GIT_BRANCH}" || git checkout -b "${GIT_BRANCH}" "${GITLAB_REMOTE}/${GIT_BRANCH}"
+    - rm -rf "public/${CI_COMMIT_BRANCH}"
+    - mkdir -p "public"
+    - mv "tmp" "public/${CI_COMMIT_BRANCH}"
+    - if ! git diff --no-ext-diff --quiet --exit-code; then
+    -   git add "public/${CI_COMMIT_BRANCH}"
+    -   git commit -m "Update page from ${CI_COMMIT_BRANCH} ${CI_COMMIT_SHORT_SHA}"
+    -   git push "${GITLAB_REMOTE}" "${GIT_BRANCH}"
+    - else
+    -   echo NO changes
+    - fi
   only:
+    - future
+    - maintenance_bastion_9.0
     - maintenance_bastion_10.0
