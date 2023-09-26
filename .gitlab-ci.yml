@@ -54,7 +54,7 @@ branch-pages:
     - git remote remove "${GITLAB_REMOTE}" || true
     - git remote add "${GITLAB_REMOTE}" "https://${PAGES_ACCESS_NAME}:${PAGES_ACCESS_TOKEN}@gitlab.corp.wallix.com/git/redemption.git"
     - git fetch "${GITLAB_REMOTE}"
-    - git checkout -b "${GIT_BRANCH}" "${GITLAB_REMOTE}/${GIT_BRANCH}"
+    - git switch "${GIT_BRANCH}" || git checkout -b "${GIT_BRANCH}" "${GITLAB_REMOTE}/${GIT_BRANCH}"
     - rm -rf "public/${CI_COMMIT_BRANCH}"
     - mkdir -p "public"
     - mv "tmp" "public/${CI_COMMIT_BRANCH}"
