@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+<head><title>rdp.spec</title>
+<style>
+body {
+    background: #fff;
+    margin-left: 0;
+    margin-right: 0;
+}
+section {
+    border-top: 1px dashed black;
+}
+
+code {
+    background: #eee;
+}
+
+h1, nav {
+    margin-left: .5em;
+    margin-right: .5em;
+}
+
+h2 {
+    background: #ddd;
+    padding-left: .5em;
+    padding-right: .5em;
+}
+
+.option {
+    padding: 1em .5em;
+}
+
+.option:nth-child(even) {
+    background: #f6f6f6;
+}
+
+a:hover, a:active {
+    outline: 2px solid #30AA64;
+}
+
+nav {
+    column-count: auto;
+    column-width: 31em;
+}
+
+.menu-group {
+    display: inline-grid;
+    border: 1px solid black;
+    padding: 0;
+    width: 31em;
+}
+
+.menu-item {
+    display: block;
+    padding: .25em .5em;
+}
+
+.menu-item-section {
+    background: #e3e3e3;
+}
+</style></head><body>
+<h1>rdp.spec</h1>
+<script type="text/javascript">
+const head = document.head;
+const style = document.createElement("style");
+head.appendChild(style);
+const setAdvanced = function(a, b) {
+    style.innerText = `
+        .advanced-true{ display: ${a ? 'block' : 'none'}; }
+        .advanced-false{ display: ${b ? 'block' : 'none'}; }
+    `;
+}
+</script>
+<p>Show options:
+<button onclick="setAdvanced(true, false)">Advanced</button>
+<button onclick="setAdvanced(false, true)">Normal</button>
+<button onclick="setAdvanced(true, true)">Both</button>
+</p>
+
+<nav>
+<p class=menu-group><a class="menu-item menu-item-section" href=#all_target_mod>[all target mod]</a>
+<a class=menu-item href=#all_target_mod-tcp_user_timeout>Tcp User Timeout</a>
+</p>
+<p class=menu-group><a class="menu-item menu-item-section" href=#file_storage>[file storage]</a>
+<a class=menu-item href=#file_storage-store_file>Store File</a>
+</p>
+<p class=menu-group><a class="menu-item menu-item-section" href=#file_verification>[file verification]</a>
+<a class=menu-item href=#file_verification-block_invalid_file_down>Block Invalid File Down</a>
+<a class=menu-item href=#file_verification-block_invalid_file_up>Block Invalid File Up</a>
+<a class=menu-item href=#file_verification-clipboard_text_down>Clipboard Text Down</a>
+<a class=menu-item href=#file_verification-clipboard_text_up>Clipboard Text Up</a>
+<a class=menu-item href=#file_verification-enable_down>Enable Down</a>
+<a class=menu-item href=#file_verification-enable_up>Enable Up</a>
+<a class=menu-item href=#file_verification-log_if_accepted>Log If Accepted</a>
+<a class=menu-item href=#file_verification-max_file_size_rejected>Max File Size Rejected</a>
+</p>
+<p class=menu-group><a class="menu-item menu-item-section" href=#general>[general]</a>
+<a class=menu-item href=#general-transformation_rule>Transformation Rule</a>
+<a class=menu-item href=#general-vault_transformation_rule>Vault Transformation Rule</a>
+</p>
+<p class=menu-group><a class="menu-item menu-item-section" href=#rdp>[rdp]</a>
+<a class=menu-item href=#rdp-allowed_dynamic_channels>Allowed Dynamic Channels</a>
+<a class=menu-item href=#rdp-auto_reconnection_on_losing_target_link>Auto Reconnection On Losing Target Link</a>
+<a class=menu-item href=#rdp-bogus_monitor_layout_treatment>Bogus Monitor Layout Treatment</a>
+<a class=menu-item href=#rdp-cipher_string>Cipher String</a>
+<a class=menu-item href=#rdp-denied_dynamic_channels>Denied Dynamic Channels</a>
+<a class=menu-item href=#rdp-disabled_orders>Disabled Orders</a>
+<a class=menu-item href=#rdp-enable_ipv6>Enable Ipv6</a>
+<a class=menu-item href=#rdp-enable_kerberos>Enable Kerberos</a>
+<a class=menu-item href=#rdp-enable_nla>Enable Nla</a>
+<a class=menu-item href=#rdp-enable_rdpdr_data_analysis>Enable Rdpdr Data Analysis</a>
+<a class=menu-item href=#rdp-enable_remotefx>Enable Remotefx</a>
+<a class=menu-item href=#rdp-enable_restricted_admin_mode>Enable Restricted Admin Mode</a>
+<a class=menu-item href=#rdp-force_smartcard_authentication>Force Smartcard Authentication</a>
+<a class=menu-item href=#rdp-forward_client_build_number>Forward Client Build Number</a>
+<a class=menu-item href=#rdp-krb_armoring_account>Krb Armoring Account</a>
+<a class=menu-item href=#rdp-krb_armoring_fallback_password>Krb Armoring Fallback Password</a>
+<a class=menu-item href=#rdp-krb_armoring_fallback_user>Krb Armoring Fallback User</a>
+<a class=menu-item href=#rdp-krb_armoring_realm>Krb Armoring Realm</a>
+<a class=menu-item href=#rdp-load_balance_info>Load Balance Info</a>
+<a class=menu-item href=#rdp-mode_console>Mode Console</a>
+<a class=menu-item href=#rdp-remote_programs_disconnect_message_delay>Remote Programs Disconnect Message Delay</a>
+<a class=menu-item href=#rdp-replace_null_pointer_by_default_pointer>Replace Null Pointer By Default Pointer</a>
+<a class=menu-item href=#rdp-server_redirection>Server Redirection</a>
+<a class=menu-item href=#rdp-show_common_cipher_list>Show Common Cipher List</a>
+<a class=menu-item href=#rdp-tls_max_level>Tls Max Level</a>
+<a class=menu-item href=#rdp-tls_min_level>Tls Min Level</a>
+<a class=menu-item href=#rdp-use_client_provided_alternate_shell>Use Client Provided Alternate Shell</a>
+<a class=menu-item href=#rdp-use_client_provided_remoteapp>Use Client Provided Remoteapp</a>
+<a class=menu-item href=#rdp-use_native_remoteapp_capability>Use Native Remoteapp Capability</a>
+<a class=menu-item href=#rdp-use_session_probe_to_launch_remote_program>Use Session Probe To Launch Remote Program</a>
+<a class=menu-item href=#rdp-wabam_uses_translated_remoteapp>Wabam Uses Translated Remoteapp</a>
+</p>
+<p class=menu-group><a class="menu-item menu-item-section" href=#server_cert>[server cert]</a>
+<a class=menu-item href=#server_cert-server_access_allowed_message>Server Access Allowed Message</a>
+<a class=menu-item href=#server_cert-server_cert_check>Server Cert Check</a>
+<a class=menu-item href=#server_cert-server_cert_create_message>Server Cert Create Message</a>
+<a class=menu-item href=#server_cert-server_cert_failure_message>Server Cert Failure Message</a>
+<a class=menu-item href=#server_cert-server_cert_store>Server Cert Store</a>
+<a class=menu-item href=#server_cert-server_cert_success_message>Server Cert Success Message</a>
+</p>
+<p class=menu-group><a class="menu-item menu-item-section" href=#session>[session]</a>
+<a class=menu-item href=#session-inactivity_timeout>Inactivity Timeout</a>
+</p>
+<p class=menu-group><a class="menu-item menu-item-section" href=#session_log>[session log]</a>
+<a class=menu-item href=#session_log-keyboard_input_masking_level>Keyboard Input Masking Level</a>
+</p>
+<p class=menu-group><a class="menu-item menu-item-section" href=#session_probe>[session probe]</a>
+<a class=menu-item href=#session_probe-alternate_directory_environment_variable>Alternate Directory Environment Variable</a>
+<a class=menu-item href=#session_probe-childless_window_as_unidentified_input_field>Childless Window As Unidentified Input Field</a>
+<a class=menu-item href=#session_probe-disabled_features>Disabled Features</a>
+<a class=menu-item href=#session_probe-disconnected_application_limit>Disconnected Application Limit</a>
+<a class=menu-item href=#session_probe-disconnected_session_limit>Disconnected Session Limit</a>
+<a class=menu-item href=#session_probe-enable_bestsafe_interaction>Enable Bestsafe Interaction</a>
+<a class=menu-item href=#session_probe-enable_crash_dump>Enable Crash Dump</a>
+<a class=menu-item href=#session_probe-enable_launch_mask>Enable Launch Mask</a>
+<a class=menu-item href=#session_probe-enable_log>Enable Log</a>
+<a class=menu-item href=#session_probe-enable_log_rotation>Enable Log Rotation</a>
+<a class=menu-item href=#session_probe-enable_session_probe>Enable Session Probe</a>
+<a class=menu-item href=#session_probe-end_disconnected_session>End Disconnected Session</a>
+<a class=menu-item href=#session_probe-end_of_session_check_delay_time>End Of Session Check Delay Time</a>
+<a class=menu-item href=#session_probe-extra_system_processes>Extra System Processes</a>
+<a class=menu-item href=#session_probe-handle_usage_limit>Handle Usage Limit</a>
+<a class=menu-item href=#session_probe-idle_session_limit>Idle Session Limit</a>
+<a class=menu-item href=#session_probe-ignore_ui_less_processes_during_end_of_session_check>Ignore Ui Less Processes During End Of Session Check</a>
+<a class=menu-item href=#session_probe-keepalive_timeout>Keepalive Timeout</a>
+<a class=menu-item href=#session_probe-launch_fallback_timeout>Launch Fallback Timeout</a>
+<a class=menu-item href=#session_probe-launch_timeout>Launch Timeout</a>
+<a class=menu-item href=#session_probe-launcher_abort_delay>Launcher Abort Delay</a>
+<a class=menu-item href=#session_probe-log_level>Log Level</a>
+<a class=menu-item href=#session_probe-memory_usage_limit>Memory Usage Limit</a>
+<a class=menu-item href=#session_probe-on_account_manipulation>On Account Manipulation</a>
+<a class=menu-item href=#session_probe-on_keepalive_timeout>On Keepalive Timeout</a>
+<a class=menu-item href=#session_probe-on_launch_failure>On Launch Failure</a>
+<a class=menu-item href=#session_probe-outbound_connection_monitoring_rules>Outbound Connection Monitoring Rules</a>
+<a class=menu-item href=#session_probe-pause_if_session_is_disconnected>Pause If Session Is Disconnected</a>
+<a class=menu-item href=#session_probe-periodic_task_run_interval>Periodic Task Run Interval</a>
+<a class=menu-item href=#session_probe-process_command_line_retrieve_method>Process Command Line Retrieve Method</a>
+<a class=menu-item href=#session_probe-process_monitoring_rules>Process Monitoring Rules</a>
+<a class=menu-item href=#session_probe-public_session>Public Session</a>
+<a class=menu-item href=#session_probe-smart_launcher_clipboard_initialization_delay>Smart Launcher Clipboard Initialization Delay</a>
+<a class=menu-item href=#session_probe-smart_launcher_enable_wabam_affinity>Smart Launcher Enable Wabam Affinity</a>
+<a class=menu-item href=#session_probe-smart_launcher_long_delay>Smart Launcher Long Delay</a>
+<a class=menu-item href=#session_probe-smart_launcher_short_delay>Smart Launcher Short Delay</a>
+<a class=menu-item href=#session_probe-smart_launcher_start_delay>Smart Launcher Start Delay</a>
+<a class=menu-item href=#session_probe-start_launch_timeout_timer_only_after_logon>Start Launch Timeout Timer Only After Logon</a>
+<a class=menu-item href=#session_probe-update_disabled_features>Update Disabled Features</a>
+<a class=menu-item href=#session_probe-use_smart_launcher>Use Smart Launcher</a>
+<a class=menu-item href=#session_probe-windows_of_these_applications_as_unidentified_input_field>Windows Of These Applications As Unidentified Input Field</a>
+</p>
+<p class=menu-group><a class="menu-item menu-item-section" href=#video>[video]</a>
+<a class=menu-item href=#video-disable_keyboard_log>Disable Keyboard Log</a>
+</p>
+</nav>
+<p>Number of documented parameters = 48 / 93</p>
+<p>Undocumented (45):</p><dl id="shortdesc">
+<li><a href="#rdp-enable_nla">[rdp] enable_nla</a>:  NLA authentication in secondary target. 
+</li><li><a href="#rdp-tls_min_level">[rdp] tls_min_level</a>:  Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 
+</li><li><a href="#rdp-show_common_cipher_list">[rdp] show_common_cipher_list</a>:  Show common cipher list supported by client and server 
+</li><li><a href="#rdp-server_redirection">[rdp] server_redirection</a>:  Enables Server Redirection Support. 
+</li><li><a href="#rdp-load_balance_info">[rdp] load_balance_info</a>:  Load balancing information 
+</li><li><a href="#rdp-use_client_provided_alternate_shell">[rdp] use_client_provided_alternate_shell</a>:  As far as possible, use client-provided initial program (Alternate Shell) 
+</li><li><a href="#rdp-use_client_provided_remoteapp">[rdp] use_client_provided_remoteapp</a>:  As far as possible, use client-provided remote program (RemoteApp) 
+</li><li><a href="#rdp-use_native_remoteapp_capability">[rdp] use_native_remoteapp_capability</a>:  As far as possible, use native RemoteApp capability 
+</li><li><a href="#rdp-enable_rdpdr_data_analysis">[rdp] enable_rdpdr_data_analysis</a>: </li><li><a href="#rdp-wabam_uses_translated_remoteapp">[rdp] wabam_uses_translated_remoteapp</a>: </li><li><a href="#rdp-enable_remotefx">[rdp] enable_remotefx</a>:  Enables support of the remoteFX codec. 
+</li><li><a href="#rdp-enable_ipv6">[rdp] enable_ipv6</a>:  Enable target connection on ipv6 
+</li><li><a href="#rdp-auto_reconnection_on_losing_target_link">[rdp] auto_reconnection_on_losing_target_link</a>: </li><li><a href="#rdp-krb_armoring_realm">[rdp] krb_armoring_realm</a>:  Realm to be used for armoring Kerberos tickets. 
+</li><li><a href="#rdp-krb_armoring_fallback_user">[rdp] krb_armoring_fallback_user</a>:  Fallback username to be used for armoring Kerberos tickets. 
+</li><li><a href="#rdp-krb_armoring_fallback_password">[rdp] krb_armoring_fallback_password</a>:  Fallback password to be used for armoring Kerberos tickets. 
+</li><li><a href="#rdp-use_session_probe_to_launch_remote_program">[rdp] use_session_probe_to_launch_remote_program</a>:  Use Session Probe to launch Remote Program as much as possible. 
+</li><li><a href="#session_probe-enable_session_probe">[session_probe] enable_session_probe</a>: </li><li><a href="#session_probe-enable_launch_mask">[session_probe] enable_launch_mask</a>: </li><li><a href="#session_probe-start_launch_timeout_timer_only_after_logon">[session_probe] start_launch_timeout_timer_only_after_logon</a>:  Minimum supported server : Windows Server 2008. 
+</li><li><a href="#session_probe-keepalive_timeout">[session_probe] keepalive_timeout</a>: </li><li><a href="#session_probe-enable_log">[session_probe] enable_log</a>: </li><li><a href="#session_probe-enable_log_rotation">[session_probe] enable_log_rotation</a>: </li><li><a href="#session_probe-smart_launcher_clipboard_initialization_delay">[session_probe] smart_launcher_clipboard_initialization_delay</a>: </li><li><a href="#session_probe-smart_launcher_start_delay">[session_probe] smart_launcher_start_delay</a>: </li><li><a href="#session_probe-smart_launcher_long_delay">[session_probe] smart_launcher_long_delay</a>: </li><li><a href="#session_probe-smart_launcher_short_delay">[session_probe] smart_launcher_short_delay</a>: </li><li><a href="#session_probe-smart_launcher_enable_wabam_affinity">[session_probe] smart_launcher_enable_wabam_affinity</a>: </li><li><a href="#session_probe-launcher_abort_delay">[session_probe] launcher_abort_delay</a>: </li><li><a href="#session_probe-enable_crash_dump">[session_probe] enable_crash_dump</a>: </li><li><a href="#session_probe-handle_usage_limit">[session_probe] handle_usage_limit</a>: </li><li><a href="#session_probe-memory_usage_limit">[session_probe] memory_usage_limit</a>: </li><li><a href="#session_probe-end_of_session_check_delay_time">[session_probe] end_of_session_check_delay_time</a>: </li><li><a href="#session_probe-ignore_ui_less_processes_during_end_of_session_check">[session_probe] ignore_ui_less_processes_during_end_of_session_check</a>: </li><li><a href="#session_probe-childless_window_as_unidentified_input_field">[session_probe] childless_window_as_unidentified_input_field</a>: </li><li><a href="#session_probe-update_disabled_features">[session_probe] update_disabled_features</a>: </li><li><a href="#session_probe-enable_bestsafe_interaction">[session_probe] enable_bestsafe_interaction</a>: </li><li><a href="#session_probe-periodic_task_run_interval">[session_probe] periodic_task_run_interval</a>: </li><li><a href="#session_probe-pause_if_session_is_disconnected">[session_probe] pause_if_session_is_disconnected</a>: </li><li><a href="#session_probe-extra_system_processes">[session_probe] extra_system_processes</a>:  Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe) 
+</li><li><a href="#session_probe-windows_of_these_applications_as_unidentified_input_field">[session_probe] windows_of_these_applications_as_unidentified_input_field</a>:  Comma-separated processes (Ex.: chrome.exe,ngf.exe) 
+</li><li><a href="#server_cert-server_cert_store">[server_cert] server_cert_store</a>:  Keep known server certificates on WAB 
+</li><li><a href="#file_verification-enable_up">[file_verification] enable_up</a>:  Enable use of ICAP service for file verification on upload. 
+</li><li><a href="#file_verification-enable_down">[file_verification] enable_down</a>:  Enable use of ICAP service for file verification on download. 
+</li><li><a href="#file_verification-log_if_accepted">[file_verification] log_if_accepted</a>: </li>
+</dl>
+<section>
+<h2 id=general>Section: general</h2>
+<div class="option advanced-false"><h3 id=general-transformation_rule>[general] Transformation Rule</h3>
+<p>(type: string | default: <code>''</code>)</p>
+<p>Secondary login Transformation rule<br/>${LOGIN} will be replaced by login<br/>${DOMAIN} (optional) will be replaced by domain if it exists.<br/>Empty value means no transformation rule.</p>
+</div>
+<div class="option advanced-false"><h3 id=general-vault_transformation_rule>[general] Vault Transformation Rule</h3>
+<p>(type: string | default: <code>''</code>)</p>
+<p>Account Mapping password retriever<br/>Transformation to apply to find the correct account.<br/>${USER} will be replaced by the user's login.<br/>${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).<br/>${USER_DOMAIN} will be replaced by the user's login + "@" + user's domain (or just user's login if there's no domain).<br/>${GROUP} will be replaced by the authorization's user group.<br/>${DEVICE} will be replaced by the device's name.<br/>A regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \1, \2, ...<br/>For example to replace leading "A" by "B" in the username: ${USER:/^A/B}<br/>Empty value means no transformation rule.</p>
+</div>
+</section>
+<section>
+<h2 id=session>Section: session</h2>
+<div class="option advanced-false"><h3 id=session-inactivity_timeout>[session] Inactivity Timeout</h3>
+<p>(type: seconds | default: <code>0</code>)</p>
+<p>No automatic disconnection due to inactivity, timer is set on target session.<br/>If value is between 1 and 30, then 30 is used.<br/>If value is set to 0, then value set in "Session timeout" (in "RDP Proxy" configuration option) is used.</p>
+</div>
+</section>
+<section>
+<h2 id=session_log>Section: session log</h2>
+<div class="option advanced-false"><h3 id=session_log-keyboard_input_masking_level>[session log] Keyboard Input Masking Level</h3>
+<p>(type: option | default: <code>2</code>)</p>
+<p>Keyboard Input Masking Level:<br/>  0: keyboard input are not masked<br/>  1: only passwords are masked<br/>  2: passwords and unidentified texts are masked<br/>  3: keyboard inputs are not logged</p>
+</div>
+</section>
+<section>
+<h2 id=all_target_mod>Section: all target mod</h2>
+<div class="option advanced-true"><h3 id=all_target_mod-tcp_user_timeout>[all target mod] Tcp User Timeout</h3>
+<p>(type: milliseconds| advanced | default: <code>0</code>)</p>
+<p>This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.</p>
+</div>
+</section>
+<section>
+<h2 id=rdp>Section: rdp</h2>
+<div class="option advanced-true"><h3 id=rdp-disabled_orders>[rdp] Disabled Orders</h3>
+<p>(type: string| advanced | default: <code>''</code>)</p>
+<p>Disables supported drawing orders:<br/>   0: DstBlt<br/>   1: PatBlt<br/>   2: ScrBlt<br/>   3: MemBlt<br/>   4: Mem3Blt<br/>   8: LineTo<br/>  15: MultiDstBlt<br/>  16: MultiPatBlt<br/>  17: MultiScrBlt<br/>  18: MultiOpaqueRect<br/>  22: Polyline<br/>  25: EllipseSC<br/>  27: GlyphIndex</p>
+<p>(values are comma-separated)</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-enable_nla>[rdp] Enable Nla</h3>
+<p>(type: boolean | default: <code>True</code>)</p>
+<p>NLA authentication in secondary target.</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-enable_kerberos>[rdp] Enable Kerberos</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>If enabled, NLA authentication will try Kerberos before NTLM.<br/>(if enable_nla is disabled, this value is ignored).</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-tls_min_level>[rdp] Tls Min Level</h3>
+<p>(type: integer | default: <code>0</code>)</p>
+<p>Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-tls_max_level>[rdp] Tls Max Level</h3>
+<p>(type: integer | default: <code>0</code>)</p>
+<p>Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-cipher_string>[rdp] Cipher String</h3>
+<p>(type: string | default: <code>'ALL'</code>)</p>
+<p>TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-show_common_cipher_list>[rdp] Show Common Cipher List</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Show common cipher list supported by client and server</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-allowed_dynamic_channels>[rdp] Allowed Dynamic Channels</h3>
+<p>(type: string| advanced | default: <code>'*'</code>)</p>
+<p>List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all.</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-denied_dynamic_channels>[rdp] Denied Dynamic Channels</h3>
+<p>(type: string| advanced | default: <code>''</code>)</p>
+<p>List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all.</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-server_redirection>[rdp] Server Redirection</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Enables Server Redirection Support.</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-load_balance_info>[rdp] Load Balance Info</h3>
+<p>(type: string | default: <code>''</code>)</p>
+<p>Load balancing information</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-use_client_provided_alternate_shell>[rdp] Use Client Provided Alternate Shell</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>As far as possible, use client-provided initial program (Alternate Shell)</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-use_client_provided_remoteapp>[rdp] Use Client Provided Remoteapp</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>As far as possible, use client-provided remote program (RemoteApp)</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-use_native_remoteapp_capability>[rdp] Use Native Remoteapp Capability</h3>
+<p>(type: boolean | default: <code>True</code>)</p>
+<p>As far as possible, use native RemoteApp capability</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-enable_rdpdr_data_analysis>[rdp] Enable Rdpdr Data Analysis</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-wabam_uses_translated_remoteapp>[rdp] Wabam Uses Translated Remoteapp</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-enable_remotefx>[rdp] Enable Remotefx</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Enables support of the remoteFX codec.</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-enable_restricted_admin_mode>[rdp] Enable Restricted Admin Mode</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Connect to the server in Restricted Admin mode.<br/>This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.<br/>NLA must be enabled.</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-force_smartcard_authentication>[rdp] Force Smartcard Authentication</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>NLA will be disabled.<br/>Target must be set for interactive login, otherwise server connection may not be guaranteed.<br/>Smartcard device must be available on client desktop.<br/>Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-enable_ipv6>[rdp] Enable Ipv6</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Enable target connection on ipv6</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-mode_console>[rdp] Mode Console</h3>
+<p>(type: option | default: <code>'allow'</code>)</p>
+<p>Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)<br/>  allow: Forward Console mode request from client to the target.<br/>  force: Force Console mode on target regardless of client request.<br/>  forbid: Block Console mode request from client.</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-auto_reconnection_on_losing_target_link>[rdp] Auto Reconnection On Losing Target Link</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-forward_client_build_number>[rdp] Forward Client Build Number</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+<p>Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-bogus_monitor_layout_treatment>[rdp] Bogus Monitor Layout Treatment</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>To resolve the session freeze issue with Windows 7/Windows Server 2008 target.</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-krb_armoring_account>[rdp] Krb Armoring Account</h3>
+<p>(type: string| advanced | default: <code>''</code>)</p>
+<p>Account to be used for armoring Kerberos tickets. Must be in the form 'account_name@domain_name[@device_name]'. If account resolution succeeds the username and password associated with this account will be used; otherwise the below fallback username and password will be used instead.</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-krb_armoring_realm>[rdp] Krb Armoring Realm</h3>
+<p>(type: string| advanced | default: <code>''</code>)</p>
+<p>Realm to be used for armoring Kerberos tickets.</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-krb_armoring_fallback_user>[rdp] Krb Armoring Fallback User</h3>
+<p>(type: string| advanced | default: <code>''</code>)</p>
+<p>Fallback username to be used for armoring Kerberos tickets.</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-krb_armoring_fallback_password>[rdp] Krb Armoring Fallback Password</h3>
+<p>(type: string| advanced | default: <code>''</code>)</p>
+<p>Fallback password to be used for armoring Kerberos tickets.</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-replace_null_pointer_by_default_pointer>[rdp] Replace Null Pointer By Default Pointer</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+<p>The use of this feature is not recommended!<br/>Replace an empty mouse pointer with normal pointer.</p>
+</div>
+<div class="option advanced-true"><h3 id=rdp-remote_programs_disconnect_message_delay>[rdp] Remote Programs Disconnect Message Delay</h3>
+<p>(type: milliseconds| advanced | default: <code>3000</code>)</p>
+<p>Delay before showing disconnect message after the last RemoteApp window is closed.</p>
+</div>
+<div class="option advanced-false"><h3 id=rdp-use_session_probe_to_launch_remote_program>[rdp] Use Session Probe To Launch Remote Program</h3>
+<p>(type: boolean | default: <code>True</code>)</p>
+<p>Use Session Probe to launch Remote Program as much as possible.</p>
+</div>
+</section>
+<section>
+<h2 id=session_probe>Section: session probe</h2>
+<div class="option advanced-false"><h3 id=session_probe-enable_session_probe>[session probe] Enable Session Probe</h3>
+<p>(type: boolean | default: <code>True</code>)</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-use_smart_launcher>[session probe] Use Smart Launcher</h3>
+<p>(type: boolean | default: <code>True</code>)</p>
+<p>Minimum supported server : Windows Server 2008.<br/>Clipboard redirection should be remain enabled on Terminal Server.</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-enable_launch_mask>[session probe] Enable Launch Mask</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-on_launch_failure>[session probe] On Launch Failure</h3>
+<p>(type: option | default: <code>1</code>)</p>
+<p>Behavior on failure to launch Session Probe.<br/>  0: ignore failure and continue.<br/>  1: disconnect user.<br/>  2: reconnect without Session Probe.</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-launch_timeout>[session probe] Launch Timeout</h3>
+<p>(type: milliseconds| advanced | default: <code>40000</code>)</p>
+<p>This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).<br/>0 to disable timeout.</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-launch_fallback_timeout>[session probe] Launch Fallback Timeout</h3>
+<p>(type: milliseconds| advanced | default: <code>40000</code>)</p>
+<p>This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).<br/>0 to disable timeout.</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-start_launch_timeout_timer_only_after_logon>[session probe] Start Launch Timeout Timer Only After Logon</h3>
+<p>(type: boolean | default: <code>True</code>)</p>
+<p>Minimum supported server : Windows Server 2008.</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-keepalive_timeout>[session probe] Keepalive Timeout</h3>
+<p>(type: milliseconds| advanced | default: <code>5000</code>)</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-on_keepalive_timeout>[session probe] On Keepalive Timeout</h3>
+<p>(type: option | default: <code>1</code>)</p>
+<p>  0: ignore and continue<br/>  1: disconnect user<br/>  2: freeze connection and wait</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-end_disconnected_session>[session probe] End Disconnected Session</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Automatically end a disconnected Desktop session or clean up a disconnected RemoteApp session.<br/>This option is recommended for Web applications running in Desktop mode.<br/>Session Probe must be enabled to use this feature.</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-enable_log>[session probe] Enable Log</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-enable_log_rotation>[session probe] Enable Log Rotation</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-log_level>[session probe] Log Level</h3>
+<p>(type: option| advanced | default: <code>5</code>)</p>
+<p>  1: Fatal<br/>  2: Error<br/>  3: Info<br/>  4: Warning<br/>  5: Debug<br/>  6: Detail</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-disconnected_application_limit>[session probe] Disconnected Application Limit</h3>
+<p>(type: milliseconds| advanced | default: <code>0</code>)</p>
+<p>(Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.<br/>0 to disable timeout.</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-disconnected_session_limit>[session probe] Disconnected Session Limit</h3>
+<p>(type: milliseconds| advanced | default: <code>0</code>)</p>
+<p>This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.<br/>0 to disable timeout.</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-idle_session_limit>[session probe] Idle Session Limit</h3>
+<p>(type: milliseconds| advanced | default: <code>0</code>)</p>
+<p>This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.<br/>0 to disable timeout.</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-smart_launcher_clipboard_initialization_delay>[session probe] Smart Launcher Clipboard Initialization Delay</h3>
+<p>(type: milliseconds| advanced | default: <code>2000</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-smart_launcher_start_delay>[session probe] Smart Launcher Start Delay</h3>
+<p>(type: milliseconds| advanced | default: <code>0</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-smart_launcher_long_delay>[session probe] Smart Launcher Long Delay</h3>
+<p>(type: milliseconds| advanced | default: <code>500</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-smart_launcher_short_delay>[session probe] Smart Launcher Short Delay</h3>
+<p>(type: milliseconds| advanced | default: <code>50</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-smart_launcher_enable_wabam_affinity>[session probe] Smart Launcher Enable Wabam Affinity</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-launcher_abort_delay>[session probe] Launcher Abort Delay</h3>
+<p>(type: milliseconds| advanced | default: <code>2000</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-enable_crash_dump>[session probe] Enable Crash Dump</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-handle_usage_limit>[session probe] Handle Usage Limit</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-memory_usage_limit>[session probe] Memory Usage Limit</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-end_of_session_check_delay_time>[session probe] End Of Session Check Delay Time</h3>
+<p>(type: milliseconds| advanced | default: <code>0</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-ignore_ui_less_processes_during_end_of_session_check>[session probe] Ignore Ui Less Processes During End Of Session Check</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-childless_window_as_unidentified_input_field>[session probe] Childless Window As Unidentified Input Field</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-update_disabled_features>[session probe] Update Disabled Features</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-disabled_features>[session probe] Disabled Features</h3>
+<p>(type: integer| advanced | default: <code>352</code>)</p>
+<p>It is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'.<br/>  0x000: none<br/>  0x001: Java Access Bridge<br/>  0x002: MS Active Accessbility<br/>  0x004: MS UI Automation<br/>  0x010: Inspect Edge location URL<br/>  0x020: Inspect Chrome Address/Search bar<br/>  0x040: Inspect Firefox Address/Search bar<br/>  0x080: Monitor Internet Explorer event<br/>  0x100: Inspect group membership of user<br/>Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-enable_bestsafe_interaction>[session probe] Enable Bestsafe Interaction</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-on_account_manipulation>[session probe] On Account Manipulation</h3>
+<p>(type: option | default: <code>0</code>)</p>
+<p>For targets running WALLIX BestSafe only.<br/>  0: User action will be accepted<br/>  1: (Same thing as 'allow')<br/>  2: User action will be rejected</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-alternate_directory_environment_variable>[session probe] Alternate Directory Environment Variable</h3>
+<p>(type: string| advanced | default: <code>''</code>)</p>
+<p>The name of the environment variable pointing to the alternative directory to launch Session Probe.<br/>If empty, the environment variable TMP will be used.</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-public_session>[session probe] Public Session</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>If enabled, disconnected session can be recovered by a different primary user.</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-process_command_line_retrieve_method>[session probe] Process Command Line Retrieve Method</h3>
+<p>(type: option| advanced | default: <code>0</code>)</p>
+<p>  0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)<br/>  1: Calling internal system APIs to get the process command line. (More efficient but less stable)<br/>  2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-periodic_task_run_interval>[session probe] Periodic Task Run Interval</h3>
+<p>(type: milliseconds| advanced | default: <code>500</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-pause_if_session_is_disconnected>[session probe] Pause If Session Is Disconnected</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-outbound_connection_monitoring_rules>[session probe] Outbound Connection Monitoring Rules</h3>
+<p>(type: string | default: <code>''</code>)</p>
+<p>Comma-separated rules<br/>(Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)<br/>(Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)<br/>(Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)<br/>(Ex. for backwards compatibility only: 10.1.0.0/16:22)<br/>Session Probe must be enabled to use this feature.</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-process_monitoring_rules>[session probe] Process Monitoring Rules</h3>
+<p>(type: string | default: <code>''</code>)</p>
+<p>Comma-separated rules (Ex.: $deny:Taskmgr)<br/>@ = All child processes of Bastion Application (Ex.: $deny:@)<br/>Session Probe must be enabled to use this feature.</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-extra_system_processes>[session probe] Extra System Processes</h3>
+<p>(type: string | default: <code>''</code>)</p>
+<p>Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)</p>
+</div>
+<div class="option advanced-false"><h3 id=session_probe-windows_of_these_applications_as_unidentified_input_field>[session probe] Windows Of These Applications As Unidentified Input Field</h3>
+<p>(type: string | default: <code>''</code>)</p>
+<p>Comma-separated processes (Ex.: chrome.exe,ngf.exe)</p>
+</div>
+</section>
+<section>
+<h2 id=server_cert>Section: server cert</h2>
+<div class="option advanced-false"><h3 id=server_cert-server_cert_store>[server cert] Server Cert Store</h3>
+<p>(type: boolean | default: <code>True</code>)</p>
+<p>Keep known server certificates on WAB</p>
+</div>
+<div class="option advanced-false"><h3 id=server_cert-server_cert_check>[server cert] Server Cert Check</h3>
+<p>(type: option | default: <code>1</code>)</p>
+<p>Behavior of certificates check.<br/>  0: fails if certificates doesn't match or miss.<br/>  1: fails if certificate doesn't match, succeed if no known certificate.<br/>  2: succeed if certificates exists (not checked), fails if missing.<br/>  3: always succeed.<br/>System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.</p>
+</div>
+<div class="option advanced-true"><h3 id=server_cert-server_access_allowed_message>[server cert] Server Access Allowed Message</h3>
+<p>(type: integer| advanced | default: <code>1</code>)</p>
+<p>Warn if check allow connexion to server.<br/>  0x0: nobody<br/>  0x1: message sent to syslog<br/>  0x2: User notified (through proxy interface)<br/>  0x4: admin notified (wab notification)<br/>Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)</p>
+</div>
+<div class="option advanced-true"><h3 id=server_cert-server_cert_create_message>[server cert] Server Cert Create Message</h3>
+<p>(type: integer| advanced | default: <code>1</code>)</p>
+<p>Warn that new server certificate file was created.<br/>  0x0: nobody<br/>  0x1: message sent to syslog<br/>  0x2: User notified (through proxy interface)<br/>  0x4: admin notified (wab notification)<br/>Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)</p>
+</div>
+<div class="option advanced-true"><h3 id=server_cert-server_cert_success_message>[server cert] Server Cert Success Message</h3>
+<p>(type: integer| advanced | default: <code>1</code>)</p>
+<p>Warn that server certificate file was successfully checked.<br/>  0x0: nobody<br/>  0x1: message sent to syslog<br/>  0x2: User notified (through proxy interface)<br/>  0x4: admin notified (wab notification)<br/>Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)</p>
+</div>
+<div class="option advanced-true"><h3 id=server_cert-server_cert_failure_message>[server cert] Server Cert Failure Message</h3>
+<p>(type: integer| advanced | default: <code>1</code>)</p>
+<p>Warn that server certificate file checking failed.<br/>  0x0: nobody<br/>  0x1: message sent to syslog<br/>  0x2: User notified (through proxy interface)<br/>  0x4: admin notified (wab notification)<br/>Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)</p>
+</div>
+</section>
+<section>
+<h2 id=file_verification>Section: file verification</h2>
+<div class="option advanced-false"><h3 id=file_verification-enable_up>[file verification] Enable Up</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Enable use of ICAP service for file verification on upload.</p>
+</div>
+<div class="option advanced-false"><h3 id=file_verification-enable_down>[file verification] Enable Down</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Enable use of ICAP service for file verification on download.</p>
+</div>
+<div class="option advanced-false"><h3 id=file_verification-clipboard_text_up>[file verification] Clipboard Text Up</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Verify text data via clipboard from client to server.<br/>File verification on upload must be enabled via option Enable up.</p>
+</div>
+<div class="option advanced-false"><h3 id=file_verification-clipboard_text_down>[file verification] Clipboard Text Down</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Verify text data via clipboard from server to client<br/>File verification on download must be enabled via option Enable down.</p>
+</div>
+<div class="option advanced-false"><h3 id=file_verification-block_invalid_file_up>[file verification] Block Invalid File Up</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Block file transfer from client to server on invalid file verification.<br/>File verification on upload must be enabled via option Enable up.</p>
+</div>
+<div class="option advanced-false"><h3 id=file_verification-block_invalid_file_down>[file verification] Block Invalid File Down</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Block file transfer from server to client on invalid file verification.<br/>File verification on download must be enabled via option Enable down.</p>
+</div>
+<div class="option advanced-true"><h3 id=file_verification-log_if_accepted>[file verification] Log If Accepted</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=file_verification-max_file_size_rejected>[file verification] Max File Size Rejected</h3>
+<p>(type: integer| advanced | default: <code>256</code>)</p>
+<p>If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).<br/>Warning: This value affects the RAM used by the session.</p>
+</div>
+</section>
+<section>
+<h2 id=file_storage>Section: file storage</h2>
+<div class="option advanced-false"><h3 id=file_storage-store_file>[file storage] Store File</h3>
+<p>(type: option | default: <code>'never'</code>)</p>
+<p>Enable storage of transferred files (via RDP Clipboard).<br/>  never: Never store transferred files.<br/>  always: Always store transferred files.<br/>  on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).</p>
+</div>
+</section>
+<section>
+<h2 id=video>Section: video</h2>
+<div class="option advanced-true"><h3 id=video-disable_keyboard_log>[video] Disable Keyboard Log</h3>
+<p>(type: integer| advanced | default: <code>1</code>)</p>
+<p>Disable keyboard log:<br/>(Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)<br/>  0x0: none<br/>  0x1: disable keyboard log in syslog<br/>  0x2: disable keyboard log in recorded sessions<br/>Note: values can be added (disable all: 0x1 + 0x2 = 0x3)</p>
+</div>
+</section></body></html>
