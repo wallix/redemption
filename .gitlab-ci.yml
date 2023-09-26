@@ -41,7 +41,7 @@ test-sesman:
 
 branch-pages:
   stage: build
-  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
+  image: docker.io/docker:19.03
   script:
     - git config user.email "cipipeline@wallix.com"
     - git config user.name "CI Pipeline"
