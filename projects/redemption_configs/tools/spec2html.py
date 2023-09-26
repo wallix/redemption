@@ -63,6 +63,7 @@ with f:
     display_name = ''
     in_list_elem = False
     special_type = ''
+    hidden = False
 
     for line in map(str.rstrip, f):
 
@@ -78,6 +79,8 @@ with f:
                 comments.append(f'<tr><td>{item_name}</td><td>{desc}</td></tr>\n')
             elif line == '#_advanced':
                 advanced = True
+            elif line == '#_hidden':
+                hidden = True
             elif line.startswith('# (in '):
                 if line.startswith('# (in rgb'):
                     special_type = 'RGB color'
@@ -104,40 +107,42 @@ with f:
 
         # declare option
         elif line:
-            # TODO display_name
-            option_name, option_type, default_value = declare_option_re.match(line).groups()
+            if not hidden:
+                # TODO display_name
+                option_name, option_type, default_value = declare_option_re.match(line).groups()
 
-            if in_list_elem:
-                comments.append('</table>\n')
-            desc = htmlize_comment(comments) if comments else ''
-            documented_param = is_documented(section_name, option_name,
-                                             comments)
-            ref = f'{section_name}-{option_name}'
+                if in_list_elem:
+                    comments.append('</table>\n')
+                desc = htmlize_comment(comments) if comments else ''
+                documented_param = is_documented(section_name, option_name,
+                                                comments)
+                ref = f'{section_name}-{option_name}'
 
-            if documented_param is not None:
-                nb_desc += documented_param
-                nb_params += 1
-                if not documented_param:
-                    undocumented.append((f'[{section_name}] {option_name}',
-                                         ref, desc))
+                if documented_param is not None:
+                    nb_desc += documented_param
+                    nb_params += 1
+                    if not documented_param:
+                        undocumented.append((f'[{section_name}] {option_name}',
+                                            ref, desc))
 
-            extra = '| advanced' if advanced else ''
+                extra = '| advanced' if advanced else ''
 
-            if not display_name:
-                display_name = option_name.replace('_', ' ').title()
-            options.append((display_name, ref))
+                if not display_name:
+                    display_name = option_name.replace('_', ' ').title()
+                options.append((display_name, ref))
 
-            html.append(f'<div class="option advanced-{str(advanced).lower()}"><h3 id={ref}>'
-                        f'[{section_name_displayed}] {display_name}</h3>\n'
-                        f'<p>(type: {special_type or option_type}{extra} '
-                        f'| default: <code>{default_value}</code>)</p>\n'
-                        f'{desc}</div>')
+                html.append(f'<div class="option advanced-{str(advanced).lower()}"><h3 id={ref}>'
+                            f'[{section_name_displayed}] {display_name}</h3>\n'
+                            f'<p>(type: {special_type or option_type}{extra} '
+                            f'| default: <code>{default_value}</code>)</p>\n'
+                            f'{desc}</div>')
 
             comments = []
             advanced = False
             display_name = ''
             in_list_elem = False
             special_type = ''
+            hidden = False
 
 
 option_name_max_len = 0
