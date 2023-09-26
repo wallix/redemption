@@ -47,6 +47,8 @@ branch-pages:
     GITLAB_REMOTE: ci
     GIT_BRANCH: pages
   script:
+    - rm -rf "tmp/${CI_COMMIT_BRANCH}"
+    - mkdir -p "tmp/${CI_COMMIT_BRANCH}"
     - tools/compute_doc_percent.sh "tmp/${CI_COMMIT_BRANCH}"
     - git config user.email "cipipeline@wallix.com"
     - git config user.name "CI Pipeline"
