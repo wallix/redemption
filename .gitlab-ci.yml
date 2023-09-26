@@ -38,21 +38,29 @@ test-sesman:
     - merge_requests
     - future
 
-pages:
+
+branch-pages:
   stage: build
   image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
-  cache:
-    key: gitlab-pages
-    paths: [public]
   script:
-    - mkdir -p public
-    - tools/compute_doc_percent.sh public/
-  artifacts:
-    paths:
-      - public
+    - git config user.email "cipipeline@wallix.com"
+    - git config user.name "CI Pipeline"
+    - git remote remove "${GITLAB_REMOTE}" || true
+    - git remote add "${GITLAB_REMOTE}" "https://${PAGES_ACCESS_NAME}:${PAGES_ACCESS_TOKEN}@gitlab.corp.wallix.com/git/redemption.git"
+    - git checkout "${GIT_BRANCH}"
+    - SUBDIR="public/${CI_COMMIT_BRANCH}"
+    - rm -rf "$SUBDIR"
+    - mkdir -p "$SUBDIR"
+    - tools/compute_doc_percent.sh "$SUBDIR"
+    - git add "$SUBDIR"
+    - git commit -m "$SUBDIR"
+    - git push origin "${GIT_BRANCH}"
+  variables:
+    GIT_BRANCH: pages
   only:
-    - merge_requests
     - future
+    - maintenance_bastion_9.0
+    - maintenance_bastion_10.0
 
 
 build-project:
