@@ -53,6 +53,7 @@ branch-pages:
     - git config user.email "cipipeline@wallix.com"
     - git config user.name "CI Pipeline"
     - git remote add "${GITLAB_REMOTE}" "https://${PAGES_ACCESS_NAME}:${PAGES_ACCESS_TOKEN}@gitlab.corp.wallix.com/git/redemption.git"
+    - git fetch "${GITLAB_REMOTE}"
     - git checkout -b "${GIT_BRANCH}" "${GITLAB_REMOTE}/${GIT_BRANCH}"
     - rm -rf "public/${CI_COMMIT_BRANCH}"
     - mkdir -p "public/${CI_COMMIT_BRANCH}"
