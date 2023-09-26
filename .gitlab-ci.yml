@@ -24,12 +24,9 @@ branch-pages:
     - rm -rf "public/${CI_COMMIT_BRANCH}"
     - mkdir -p "public"
     - mv "tmp" "public/${CI_COMMIT_BRANCH}"
-    - if ! git diff --no-ext-diff --quiet --exit-code; then
-    -   git add "public/${CI_COMMIT_BRANCH}"
-    -   git commit -m "Update page from ${CI_COMMIT_BRANCH} ${CI_COMMIT_SHORT_SHA}"
+    - git add "public/${CI_COMMIT_BRANCH}"
+    - if git commit -m "Update page from ${CI_COMMIT_BRANCH} ${CI_COMMIT_SHORT_SHA}"; then
     -   git push "${GITLAB_REMOTE}" "${GIT_BRANCH}"
-    - else
-    -   echo NO changes
     - fi
   only:
     - future
