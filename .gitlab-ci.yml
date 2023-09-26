@@ -43,10 +43,12 @@ test-sesman:
 branch-pages:
   stage: build
   image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_PAGES}
+  variables:
+    GITLAB_REMOTE: ci
+    GIT_BRANCH: pages
   script:
     - git config user.email "cipipeline@wallix.com"
     - git config user.name "CI Pipeline"
-    - git remote remove "${GITLAB_REMOTE}" || true
     - git remote add "${GITLAB_REMOTE}" "https://${PAGES_ACCESS_NAME}:${PAGES_ACCESS_TOKEN}@gitlab.corp.wallix.com/git/redemption.git"
     - git checkout "${GIT_BRANCH}"
     - SUBDIR="public/${CI_COMMIT_BRANCH}"
@@ -55,9 +57,7 @@ branch-pages:
     - tools/compute_doc_percent.sh "$SUBDIR"
     - git add "$SUBDIR"
     - git commit -m "$SUBDIR"
-    - git push origin "${GIT_BRANCH}"
-  variables:
-    GIT_BRANCH: pages
+    - git push "${GITLAB_REMOTE}" "${GIT_BRANCH}"
   only:
     - future
     - maintenance_bastion_9.0
