@@ -3,6 +3,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   IMAGE_REDEMPTION_ANALYZE: redemption-analyze
   IMAGE_SESMAN_TESTS: sshproxies-tests  # image from sshproxies repo
+  IMAGE_PAGES: sshproxies-tagger  # image from sshproxies repo
   TESTDIR: test_tmpdir
 
 stages:
@@ -41,7 +42,7 @@ test-sesman:
 
 branch-pages:
   stage: build
-  image: docker.io/docker:19.03
+  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_PAGES}
   script:
     - git config user.email "cipipeline@wallix.com"
     - git config user.name "CI Pipeline"
