@@ -28,6 +28,15 @@ def to_display_section(s: str) -> str:
     return s.replace('_', ' ')
 
 
+def advanced_class_group(it) -> bool:
+    advanced_counter = sum(it)
+    if advanced_counter == 0:
+        return 'advanced-False'
+    if len(options) == advanced_counter:
+        return 'advanced-True'
+    return ''
+
+
 declare_option_re = re.compile(r'^([^ ]+) = ([^(]+)\(.*default="?(.*?)"?\)')
 desc_list_re = re.compile(r"^# &nbsp; &nbsp; +([^:]+)(?:: )?(.*)")
 nb_desc = 0
@@ -94,13 +103,11 @@ with f:
 
         # new section
         elif line.startswith('['):
-            if section_name:
-                html.append('</section>')
             section_name = line[1:-1]
             section_name_displayed = to_display_section(section_name)
             options = []
-            sections.append((section_name, options))
-            html.append(f'<section>\n<h2 id={section_name}>Section: {section_name_displayed}</h2>')
+            html = []
+            sections.append((section_name, options, section_name_displayed, html))
 
         # declare option
         elif line:
@@ -119,15 +126,15 @@ with f:
                 nb_params += 1
                 if not documented_param:
                     undocumented.append((f'[{section_name}] {option_name}',
-                                         ref, desc))
+                                         ref, desc, advanced))
 
             extra = '| advanced' if advanced else ''
 
             if not display_name:
                 display_name = option_name.replace('_', ' ').title()
-            options.append((display_name, ref))
+            options.append((display_name, ref, advanced))
 
-            html.append(f'<div class="option advanced-{str(advanced).lower()}"><h3 id={ref}>'
+            html.append(f'<div class="option advanced-{advanced}"><h3 id={ref}>'
                         f'[{section_name_displayed}] {display_name}</h3>\n'
                         f'<p>(type: {special_type or option_type}{extra} '
                         f'| default: <code>{default_value}</code>)</p>\n'
@@ -143,10 +150,15 @@ with f:
 option_name_max_len = 0
 nav = ['<nav>']
 sections.sort(key=lambda t: t[0])
-for section_name, options in sections:
-    nav.append(f'<p class=menu-group><a class="menu-item menu-item-section" href=#{section_name}>[{to_display_section(section_name)}]</a>')
-    for display_name, ref in sorted(options, key=lambda t: t[1]):
-        nav.append(f'<a class=menu-item href=#{ref}>{display_name}</a>')
+html_output = []
+for section_name, options, section_name_displayed, html in sections:
+    advanced_class = advanced_class_group(t[2] for t in options)
+    html_output.append(f'<section class="{advanced_class}">\n<h2 id={section_name}>Section: {section_name_displayed}</h2>')
+    html_output.append('\n'.join(html))
+    html_output.append('</section>')
+    nav.append(f'<p class="menu-group {advanced_class}"><a class="menu-item menu-item-section" href=#{section_name}>[{to_display_section(section_name)}]</a>')
+    for display_name, ref, advanced in sorted(options, key=lambda t: t[1]):
+        nav.append(f'<a class="menu-item advanced-{advanced}" href=#{ref}>{display_name}</a>')
         option_name_max_len = max(option_name_max_len, len(display_name))
     nav.append('</p>')
 nav.append('</nav>')
@@ -220,8 +232,8 @@ const style = document.createElement("style");
 head.appendChild(style);
 const setAdvanced = function(a, b) {{
     style.innerText = `
-        .advanced-true{{ display: ${{a ? 'block' : 'none'}}; }}
-        .advanced-false{{ display: ${{b ? 'block' : 'none'}}; }}
+        .advanced-True{{ display: ${{a ? 'block' : 'none'}}; }}
+        .advanced-False{{ display: ${{b ? 'block' : 'none'}}; }}
     `;
 }}
 </script>
@@ -235,9 +247,10 @@ print('\n'.join(nav))
 print(f"<p>Number of documented parameters = {nb_desc} / {nb_params}</p>")
 if undocumented:
     remove_tag = re.compile('<[^>]+>')
-    print(f'<p>Undocumented ({len(undocumented)}):</p><dl id="shortdesc">')
-    print(''.join(f'<li><a href="#{ref}">{name}</a>: {remove_tag.sub(" ", desc)}</li>'
-                  for name, ref, desc in undocumented))
-    print('</dl>')
-print('\n'.join(html))
+    advanced_class = advanced_class_group(t[3] for t in undocumented)
+    print(f'<div class="{advanced_class}"><p>Undocumented ({len(undocumented)}):</p><dl id="shortdesc">')
+    print(''.join(f'<li class="advanced-{advanced}"><a href="#{ref}">{name}</a>: {remove_tag.sub(" ", desc)}</li>'
+                  for name, ref, desc, advanced in undocumented))
+    print('</dl></div>')
+print('\n'.join(html_output))
 print('</section></body></html>')
