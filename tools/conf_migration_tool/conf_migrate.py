@@ -4,7 +4,6 @@
 # Licensed computer software. Property of WALLIX.
 # Product Name: WALLIX Bastion v9.0
 # Author(s): Raphael Zhou, Jonathan Poelen
-# Module description:  Sesman Worker
 ##
 
 from shutil import copyfile
@@ -135,6 +134,8 @@ class UpdateItem(NamedTuple):
     section: Optional[str] = None
     key: Optional[str] = None
     value_transformation: Optional[Callable[[str, Iterable[ConfigurationFragment]], str]] = None
+    reason: str = ''
+    display_name: str = ''
 
     def update(self, section: str, key: str, value: str,
                fragments: Iterable[ConfigurationFragment]) -> Tuple[str, str, str]:
@@ -147,15 +148,22 @@ class UpdateItem(NamedTuple):
         return section, key, value
 
 
-class RemoveItem:
-    pass
+class RemoveItem(NamedTuple):
+    reason: str = ''
+    display_name: str = ''
+
+
+# for information only
+class HiddenItem(NamedTuple):
+    reason: str = ''
+    display_name: str = ''
 
 
 class MoveSection(NamedTuple):
     name: str
 
 
-MigrationKeyOrderType = Union[RemoveItem, UpdateItem]
+MigrationKeyOrderType = Union[RemoveItem, UpdateItem, HiddenItem]
 MigrationSectionOrderType = Union[RemoveItem,
                                   MoveSection,
                                   Dict[str, MigrationKeyOrderType]]
@@ -450,26 +458,9 @@ migration_defs: List[MigrationType] = [
     }),
     (RedemptionVersion("9.1.71"), {
         'video': {
-            'replay_path': UpdateItem(section='mod_replay'),
+            'replay_path': UpdateItem(section='mod_replay', reason='useless in Bastion'),
         },
-    }),
-    (RedemptionVersion("9.1.76"), {
-        'all_target_mod': {
-            'connection_retry_count': RemoveItem(),
-        },
-    }),
-    (RedemptionVersion("10.2.8"), {
-        'video': {
-            'capture_groupid': RemoveItem(),
-        },
-    }),
-    (RedemptionVersion("10.3.3"), {
-        'metrics': RemoveItem(),
-    }),
-    (RedemptionVersion("10.5.27"), {
         'mod_rdp': {
-            'glyph_cache': RemoveItem(),
-            # this change should be in 9.1.71, but the section name was wrong ('rdp' instead of 'mod_rdp')
             'session_probe_exe_or_file': UpdateItem(section='session_probe', key='exe_or_file'),
             'session_probe_arguments': UpdateItem(section='session_probe', key='arguments'),
             'session_probe_customize_executable_name': UpdateItem(section='session_probe',
@@ -486,48 +477,78 @@ migration_defs: List[MigrationType] = [
             'session_probe_bestsafe_integration': UpdateItem(section='session_probe',
                                                              key='enable_bestsafe_interaction'),
         },
+    }),
+    (RedemptionVersion("9.1.76"), {
+        'all_target_mod': {
+            'connection_retry_count': RemoveItem(),
+        },
+    }),
+    (RedemptionVersion("10.2.8"), {
+        'video': {
+            'capture_groupid': RemoveItem(
+                reason='old mechanism for the apache server to access the file'),
+        },
+    }),
+    (RedemptionVersion("10.3.3"), {
+        'metrics': RemoveItem(reason='abandoned project'),
+    }),
+    (RedemptionVersion("10.5.27"), {
         'globals': {
-            'glyph_cache': UpdateItem(section='mod_rdp'),
+            'glyph_cache': RemoveItem(reason='is configurable with "Disabled Orders"'),
         },
         'client': {
-            'bogus_user_id': RemoveItem(),
-            'keyboard_layoutkeyboard_layout': UpdateItem(section='internal_mod'),
+            'bogus_user_id': RemoveItem(
+                reason='a malformed packet containing UserId is now still supported'),
+            'keyboard_layout': UpdateItem(section='internal_mod'),
         },
         'video': {
-            'bogus_vlc_frame_rate': RemoveItem(),
+            'bogus_vlc_frame_rate': RemoveItem(reason='workaround for old version of VLC'),
         },
         'session_log': {
-            'hide_non_printable_kbd_input': RemoveItem(),
+            'hide_non_printable_kbd_input': RemoveItem(
+                reason='no longer used and replaced by "Keyboard input masking level"'),
         },
     }),
     (RedemptionVersion("10.5.31"), {
         'mod_rdp': {
             'allow_channels': UpdateItem(key='allowed_channels'),
             'deny_channels': UpdateItem(key='denied_channels'),
-            'accept_monitor_layout_change_if_capture_is_not_started': RemoveItem(),
+            'accept_monitor_layout_change_if_capture_is_not_started': RemoveItem(
+                reason='is now still accepted'),
         },
         'globals': {
-            'experimental_support_resize_session_during_recording': RemoveItem(),
-            'support_connection_redirection_during_recording': RemoveItem(),
-            'new_pointer_update_support': RemoveItem(),
+            'experimental_support_resize_session_during_recording': RemoveItem(
+                reason='is now still supported'),
+            'support_connection_redirection_during_recording': RemoveItem(
+                reason='is now still supported'),
+            'new_pointer_update_support': RemoveItem(
+                reason='is now still supported'),
             'encryptionLevel': UpdateItem(section='client', key='encryption_level',
                                           value_transformation=lambda *_: 'high'),
         },
         'client': {
-            'disable_tsk_switch_shortcuts': RemoveItem(),
-            'performance_flags_default': RemoveItem(),
+            'disable_tsk_switch_shortcuts': RemoveItem(
+                reason='has no effect because it is overwritten by other configurations at Bastion level'),
+            'performance_flags_default': RemoveItem(
+                reason='redundancy with options that add or remove flags'),
             'performance_flags_force_present': UpdateItem(
                 key='force_performance_flags',
-                value_transformation=_merge_performance_flags_10_5_31),
+                value_transformation=_merge_performance_flags_10_5_31,
+                reason='merger of "Performance Flags Force Present" and "Performance Flags Not Force Present"'),
             'performance_flags_force_not_present': UpdateItem(
                 key='force_performance_flags',
-                value_transformation=_merge_performance_flags_10_5_31),
+                value_transformation=_merge_performance_flags_10_5_31,
+                reason='merger of "Performance Flags Force Present" and "Performance Flags Not Force Present"'),
         },
         'session_log': {
-            'enable_session_log': UpdateItem(key='syslog_format',
-                                             value_transformation=_merge_session_log_format_10_5_31),
-            'enable_arcsight_log': UpdateItem(key='syslog_format',
-                                              value_transformation=_merge_session_log_format_10_5_31),
+            'enable_session_log': UpdateItem(
+                key='syslog_format',
+                value_transformation=_merge_session_log_format_10_5_31,
+                reason='merger of "Enable Session Log" and "Enable Arcsight Log"'),
+            'enable_arcsight_log': UpdateItem(
+                key='syslog_format',
+                value_transformation=_merge_session_log_format_10_5_31,
+                reason='merger of "Enable Session Log" and "Enable Arcsight Log"'),
         },
         'video': {
             'disable_keyboard_log': UpdateItem(
@@ -545,6 +566,12 @@ migration_defs: List[MigrationType] = [
 ]
 
 
+def remove_hidden_type(desc: MigrationDescType) -> MigrationDescType:
+    return {section: ({k: v for k, v in values_or_item.items() if type(v) != HiddenItem}
+                      if isinstance(values_or_item, dict) else values_or_item)
+            for section, values_or_item in desc.items() if type(values_or_item) != HiddenItem}
+
+
 def migrate_file(version: RedemptionVersion,
                  ini_filename: str,
                  temporary_ini_filename: str,
@@ -554,7 +581,7 @@ def migrate_file(version: RedemptionVersion,
 
     is_changed = False
     for _, desc in migration_filter(migration_defs, version):
-        is_updated, fragments = migrate(fragments, desc)
+        is_updated, fragments = migrate(fragments, remove_hidden_type(desc))
         is_changed = is_changed or is_updated
 
     if is_changed:
@@ -568,11 +595,78 @@ def migrate_file(version: RedemptionVersion,
     return is_changed
 
 
+def dump_json(defs: List[MigrationType]) -> None:
+    def update_if(d, k, v):
+        if v:
+            d[k] = v
+
+    def remove_to_dict(item: RemoveItem):
+        d = {'kind': 'remove'}
+        update_if(d, 'reason', item.reason)
+        update_if(d, 'displayName', item.display_name)
+        return d
+
+    def hidden_to_dict(item: HiddenItem):
+        d = {'kind': 'hidden'}
+        update_if(d, 'reason', item.reason)
+        update_if(d, 'displayName', item.display_name)
+        return d
+
+    def move_to_dict(item: MoveSection):
+        d = {'kind': 'move'}
+        d['reason'] = item.reason
+        return d
+
+    def update_to_dict(item: UpdateItem) -> Optional[Dict[str, str]]:
+        if not (item.section or item.key):
+            return None
+        d = {'kind': 'update'}
+        update_if(d, 'newSection', item.section)
+        update_if(d, 'newKey', item.key)
+        update_if(d, 'reason', item.reason)
+        update_if(d, 'displayName', item.display_name)
+        return d
+
+    def dict_to_dict(values: Dict[str, MigrationKeyOrderType]):
+        data = {}
+        for k, item in values.items():
+            obj = visitor[type(item)](item)
+            if obj:
+                data[k] = obj
+        return {'kind': 'values', 'values': data}
+
+    visitor = {
+        RemoveItem: remove_to_dict,
+        HiddenItem: hidden_to_dict,
+        MoveSection: move_to_dict,
+        UpdateItem: update_to_dict,
+        dict: dict_to_dict,
+    }
+
+    l = []
+    for version, desc in defs:
+        data = {}
+        for section, values_or_item in desc.items():
+            obj = visitor[type(values_or_item)](values_or_item)
+            if obj:
+                data[section] = obj
+        if data:
+            l.append({'version': str(version), 'data': data})
+
+    return l
+
+
 if __name__ == '__main__':
     if len(sys.argv) != 4 or sys.argv[1] not in ('-s', '-f'):
+        if len(sys.argv) == 2 and sys.argv[1] == '--dump=json':
+            import json
+            print(json.dumps(dump_json(migration_defs)))
+            exit(0)
+
         print(f'{sys.argv[0]} {{-s|-f}} old_version ini_filename\n'
               '  -s   <version> is a output format of redemption --version\n'
-              '  -f   <version> is a version of redemption from file',
+              '  -f   <version> is a version of redemption from file\n\n'
+              f'{sys.argv[0]} --dump=json\n',
               file=sys.stderr)
         exit(1)
 

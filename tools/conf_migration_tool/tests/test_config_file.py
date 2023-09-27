@@ -232,6 +232,8 @@ class TestMigration(unittest.TestCase):
 
         self.assertEqual(migrate(fragments, {}), (False, fragments))
 
+        self.assertEqual(migrate(fragments, {'video': {}}), (False, fragments))
+
         self.assertEqual(migrate(fragments, migrate_def), (True, [
             ConfigurationFragment('[new_moved_section]', kind=ConfigKind.Section, value1='new_moved_section'),
             ConfigurationFragment('\n', kind=ConfigKind.NewLine),
