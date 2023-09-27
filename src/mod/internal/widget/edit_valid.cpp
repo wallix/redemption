@@ -61,6 +61,7 @@ WidgetEditValid::WidgetEditValid(
 
 void WidgetEditValid::init_focus()
 {
+    this->has_focus = true;
     this->editbox->init_focus();
 }
 
