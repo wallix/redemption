@@ -251,13 +251,13 @@ const setAdvanced = function(a, b) {
 </li><li class="advanced-False"><a href="#icap_server_down-host">[icap_server_down] host</a>:  Ip or fqdn of ICAP server 
 </li><li class="advanced-False"><a href="#icap_server_down-port">[icap_server_down] port</a>:  Port of ICAP server 
 </li><li class="advanced-False"><a href="#icap_server_down-service_name">[icap_server_down] service_name</a>:  Service name on ICAP server 
-</li><li class="advanced-False"><a href="#icap_server_down-tls">[icap_server_down] tls</a>:  ICAP server uses tls 
+</li><li class="advanced-False"><a href="#icap_server_down-tls">[icap_server_down] tls</a>:  Activate TLS on ICAP server connection 
 </li><li class="advanced-True"><a href="#icap_server_down-enable_x_context">[icap_server_down] enable_x_context</a>:  Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server 
 </li><li class="advanced-True"><a href="#icap_server_down-filename_percent_encoding">[icap_server_down] filename_percent_encoding</a>:  Filename sent to ICAP as percent encoding 
 </li><li class="advanced-False"><a href="#icap_server_up-host">[icap_server_up] host</a>:  Ip or fqdn of ICAP server 
 </li><li class="advanced-False"><a href="#icap_server_up-port">[icap_server_up] port</a>:  Port of ICAP server 
 </li><li class="advanced-False"><a href="#icap_server_up-service_name">[icap_server_up] service_name</a>:  Service name on ICAP server 
-</li><li class="advanced-False"><a href="#icap_server_up-tls">[icap_server_up] tls</a>:  ICAP server uses tls 
+</li><li class="advanced-False"><a href="#icap_server_up-tls">[icap_server_up] tls</a>:  Activate TLS on ICAP server connection 
 </li><li class="advanced-True"><a href="#icap_server_up-enable_x_context">[icap_server_up] enable_x_context</a>:  Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server 
 </li><li class="advanced-True"><a href="#icap_server_up-filename_percent_encoding">[icap_server_up] filename_percent_encoding</a>:  Filename sent to ICAP as percent encoding 
 </li>
@@ -292,7 +292,7 @@ const setAdvanced = function(a, b) {
 </div>
 <div class="option advanced-True"><h3 id=client-auto_adjust_performance_flags>[client] Auto Adjust Performance Flags</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>If enabled, avoid automatically font smoothing in recorded session.<br/>This allows OCR (when session probe is disabled) to better detect window titles.</p>
+<p>If enabled, avoid automatically font smoothing in recorded session.<br/>This allows OCR (when session probe is disabled) to better detect window titles.<br/>If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.<br/>In this case, windows titles will not be detected.</p>
 </div>
 <div class="option advanced-False"><h3 id=client-tls_fallback_legacy>[client] Tls Fallback Legacy</h3>
 <p>(type: boolean | default: <code>False</code>)</p>
@@ -334,7 +334,7 @@ const setAdvanced = function(a, b) {
 </div>
 <div class="option advanced-True"><h3 id=client-persistent_disk_bitmap_cache>[client] Persistent Disk Bitmap Cache</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>Persistent Disk Bitmap Cache on the front side. If supported by the RDP client, the size of image caches will be increased</p>
+<p>Persistent Disk Bitmap Cache on the primary connection side. If supported by the RDP client, the size of image caches will be increased</p>
 </div>
 <div class="option advanced-True"><h3 id=client-persist_bitmap_cache_on_disk>[client] Persist Bitmap Cache On Disk</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
@@ -541,7 +541,7 @@ const setAdvanced = function(a, b) {
 </div>
 <div class="option advanced-False"><h3 id=icap_server_down-tls>[icap server down] Tls</h3>
 <p>(type: boolean | default: <code>False</code>)</p>
-<p>ICAP server uses tls</p>
+<p>Activate TLS on ICAP server connection</p>
 </div>
 <div class="option advanced-True"><h3 id=icap_server_down-enable_x_context>[icap server down] Enable X Context</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
@@ -568,7 +568,7 @@ const setAdvanced = function(a, b) {
 </div>
 <div class="option advanced-False"><h3 id=icap_server_up-tls>[icap server up] Tls</h3>
 <p>(type: boolean | default: <code>False</code>)</p>
-<p>ICAP server uses tls</p>
+<p>Activate TLS on ICAP server connection</p>
 </div>
 <div class="option advanced-True"><h3 id=icap_server_up-enable_x_context>[icap server up] Enable X Context</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
@@ -613,7 +613,7 @@ const setAdvanced = function(a, b) {
 </div>
 <div class="option advanced-True"><h3 id=mod_rdp-persistent_disk_bitmap_cache>[mod rdp] Persistent Disk Bitmap Cache</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>Persistent Disk Bitmap Cache on the mod side. If supported by the RDP server, the size of image caches will be increased</p>
+<p>Persistent Disk Bitmap Cache on the secondary connection side. If supported by the RDP server, the size of image caches will be increased</p>
 </div>
 <div class="option advanced-True"><h3 id=mod_rdp-cache_waiting_list>[mod rdp] Cache Waiting List</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
