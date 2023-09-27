@@ -529,6 +529,8 @@ namespace cfg
     };
     /// If enabled, avoid automatically font smoothing in recorded session. <br/>
     /// This allows OCR (when session probe is disabled) to better detect window titles. <br/>
+    /// If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled. <br/>
+    /// In this case, windows titles will not be detected. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::auto_adjust_performance_flags {
@@ -635,7 +637,7 @@ namespace cfg
         using mapped_type = ColorDepth;
         type value { ColorDepth::depth24 };
     };
-    /// Persistent Disk Bitmap Cache on the front side. If supported by the RDP client, the size of image caches will be increased <br/>
+    /// Persistent Disk Bitmap Cache on the primary connection side. If supported by the RDP client, the size of image caches will be increased <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct client::persistent_disk_bitmap_cache {
@@ -977,7 +979,7 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// Persistent Disk Bitmap Cache on the mod side. If supported by the RDP server, the size of image caches will be increased <br/>
+    /// Persistent Disk Bitmap Cache on the secondary connection side. If supported by the RDP server, the size of image caches will be increased <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::persistent_disk_bitmap_cache {

@@ -169,6 +169,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # If enabled, avoid automatically font smoothing in recorded session.
 # This allows OCR (when session probe is disabled) to better detect window titles.
+# If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.
+# In this case, windows titles will not be detected.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #auto_adjust_performance_flags = 1
@@ -225,7 +227,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #max_color_depth = 24
 
-# Persistent Disk Bitmap Cache on the front side. If supported by the RDP client, the size of image caches will be increased
+# Persistent Disk Bitmap Cache on the primary connection side. If supported by the RDP client, the size of image caches will be increased
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #persistent_disk_bitmap_cache = 1
@@ -409,7 +411,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ mod_rdp:show_common_cipher_list)
 #show_common_cipher_list = 0
 
-# Persistent Disk Bitmap Cache on the mod side. If supported by the RDP server, the size of image caches will be increased
+# Persistent Disk Bitmap Cache on the secondary connection side. If supported by the RDP server, the size of image caches will be increased
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #persistent_disk_bitmap_cache = 1

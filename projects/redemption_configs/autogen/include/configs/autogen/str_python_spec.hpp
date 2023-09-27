@@ -100,6 +100,8 @@ force_performance_flags = string(default="-mouse_cursor_shadows,-theme")
 
 # If enabled, avoid automatically font smoothing in recorded session.
 # This allows OCR (when session probe is disabled) to better detect window titles.
+# If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.
+# In this case, windows titles will not be detected.
 #_advanced
 auto_adjust_performance_flags = boolean(default=True)
 
@@ -138,7 +140,7 @@ rdp_compression = option(0, 1, 2, 3, 4, default=4)
 #_advanced
 max_color_depth = option(8, 15, 16, 24, 32, default=24)
 
-# Persistent Disk Bitmap Cache on the front side. If supported by the RDP client, the size of image caches will be increased
+# Persistent Disk Bitmap Cache on the primary connection side. If supported by the RDP client, the size of image caches will be increased
 #_advanced
 persistent_disk_bitmap_cache = boolean(default=True)
 
@@ -233,7 +235,7 @@ disconnect_on_logon_user_change = boolean(default=False)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
 
-# Persistent Disk Bitmap Cache on the mod side. If supported by the RDP server, the size of image caches will be increased
+# Persistent Disk Bitmap Cache on the secondary connection side. If supported by the RDP server, the size of image caches will be increased
 #_advanced
 persistent_disk_bitmap_cache = boolean(default=True)
 
@@ -460,7 +462,7 @@ port = integer(min=0, default=1344)
 # Service name on ICAP server
 service_name = string(default="avscan")
 
-# ICAP server uses tls
+# Activate TLS on ICAP server connection
 tls = boolean(default=False)
 
 # Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
@@ -482,7 +484,7 @@ port = integer(min=0, default=1344)
 # Service name on ICAP server
 service_name = string(default="avscan")
 
-# ICAP server uses tls
+# Activate TLS on ICAP server connection
 tls = boolean(default=False)
 
 # Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
