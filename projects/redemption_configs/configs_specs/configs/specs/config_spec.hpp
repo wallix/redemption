@@ -551,7 +551,9 @@ _.section("client", [&]
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
             "If enabled, avoid automatically font smoothing in recorded session.\n"
-            "This allows OCR (when session probe is disabled) to better detect window titles.",
+            "This allows OCR (when session probe is disabled) to better detect window titles.\n"
+        "If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.\n"
+        "In this case, windows titles will not be detected.",
     });
 
 
@@ -635,7 +637,7 @@ _.section("client", [&]
         .name = "persistent_disk_bitmap_cache",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Persistent Disk Bitmap Cache on the front side. If supported by the RDP client, the size of image caches will be increased",
+        .desc = "Persistent Disk Bitmap Cache on the primary connection side. If supported by the RDP client, the size of image caches will be increased",
     });
 
     _.member(MemberInfo{
@@ -868,7 +870,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "persistent_disk_bitmap_cache",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc = "Persistent Disk Bitmap Cache on the mod side. If supported by the RDP server, the size of image caches will be increased",
+        .desc = "Persistent Disk Bitmap Cache on the secondary connection side. If supported by the RDP server, the size of image caches will be increased",
     });
 
     _.member(MemberInfo{
@@ -2159,7 +2161,7 @@ for (char const* section_name : {"icap_server_down", "icap_server_up"}) {
             .name = "tls",
             .value = value(false),
             .spec = spec::external(),
-            .desc = "ICAP server uses tls",
+            .desc = "Activate TLS on ICAP server connection",
         });
 
         _.member(MemberInfo{
