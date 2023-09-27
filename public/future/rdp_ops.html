@@ -66,8 +66,8 @@ const style = document.createElement("style");
 head.appendChild(style);
 const setAdvanced = function(a, b) {
     style.innerText = `
-        .advanced-true{ display: ${a ? 'block' : 'none'}; }
-        .advanced-false{ display: ${b ? 'block' : 'none'}; }
+        .advanced-True{ display: ${a ? 'block' : 'none'}; }
+        .advanced-False{ display: ${b ? 'block' : 'none'}; }
     `;
 }
 </script>
@@ -78,258 +78,204 @@ const setAdvanced = function(a, b) {
 </p>
 
 <nav>
-<p class=menu-group><a class="menu-item menu-item-section" href=#all_target_mod>[all target mod]</a>
-<a class=menu-item href=#all_target_mod-connection_establishment_timeout>Connection Establishment Timeout</a>
+<p class="menu-group advanced-True"><a class="menu-item menu-item-section" href=#all_target_mod>[all target mod]</a>
+<a class="menu-item advanced-True" href=#all_target_mod-connection_establishment_timeout>Connection Establishment Timeout</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#client>[client]</a>
-<a class=menu-item href=#client-auto_adjust_performance_flags>Auto Adjust Performance Flags</a>
-<a class=menu-item href=#client-bitmap_compression>Bitmap Compression</a>
-<a class=menu-item href=#client-bogus_ios_glyph_support_level>Bogus Ios Glyph Support Level</a>
-<a class=menu-item href=#client-disabled_orders>Disabled Orders</a>
-<a class=menu-item href=#client-enable_osd_4_eyes>Enable Osd 4 Eyes</a>
-<a class=menu-item href=#client-enable_remotefx>Enable Remotefx</a>
-<a class=menu-item href=#client-enable_suppress_output>Enable Suppress Output</a>
-<a class=menu-item href=#client-force_performance_flags>Force Performance Flags</a>
-<a class=menu-item href=#client-ignore_logon_password>Ignore Logon Password</a>
-<a class=menu-item href=#client-max_color_depth>Max Color Depth</a>
-<a class=menu-item href=#client-persist_bitmap_cache_on_disk>Persist Bitmap Cache On Disk</a>
-<a class=menu-item href=#client-persistent_disk_bitmap_cache>Persistent Disk Bitmap Cache</a>
-<a class=menu-item href=#client-rdp_compression>Rdp Compression</a>
-<a class=menu-item href=#client-show_common_cipher_list>Show Common Cipher List</a>
-<a class=menu-item href=#client-show_target_user_in_f12_message>Show Target User In F12 Message</a>
-<a class=menu-item href=#client-ssl_cipher_list>Ssl Cipher List</a>
-<a class=menu-item href=#client-tls_fallback_legacy>Tls Fallback Legacy</a>
-<a class=menu-item href=#client-tls_max_level>Tls Max Level</a>
-<a class=menu-item href=#client-tls_min_level>Tls Min Level</a>
-<a class=menu-item href=#client-transform_glyph_to_bitmap>Transform Glyph To Bitmap</a>
+<p class="menu-group "><a class="menu-item menu-item-section" href=#client>[client]</a>
+<a class="menu-item advanced-True" href=#client-auto_adjust_performance_flags>Auto Adjust Performance Flags</a>
+<a class="menu-item advanced-True" href=#client-bitmap_compression>Bitmap Compression</a>
+<a class="menu-item advanced-False" href=#client-bogus_ios_glyph_support_level>Bogus Ios Glyph Support Level</a>
+<a class="menu-item advanced-True" href=#client-disabled_orders>Disabled Orders</a>
+<a class="menu-item advanced-False" href=#client-enable_osd_4_eyes>Enable Osd 4 Eyes</a>
+<a class="menu-item advanced-True" href=#client-enable_remotefx>Enable Remotefx</a>
+<a class="menu-item advanced-False" href=#client-enable_suppress_output>Enable Suppress Output</a>
+<a class="menu-item advanced-True" href=#client-force_performance_flags>Force Performance Flags</a>
+<a class="menu-item advanced-True" href=#client-ignore_logon_password>Ignore Logon Password</a>
+<a class="menu-item advanced-True" href=#client-max_color_depth>Max Color Depth</a>
+<a class="menu-item advanced-True" href=#client-persist_bitmap_cache_on_disk>Persist Bitmap Cache On Disk</a>
+<a class="menu-item advanced-True" href=#client-persistent_disk_bitmap_cache>Persistent Disk Bitmap Cache</a>
+<a class="menu-item advanced-True" href=#client-rdp_compression>Rdp Compression</a>
+<a class="menu-item advanced-True" href=#client-show_common_cipher_list>Show Common Cipher List</a>
+<a class="menu-item advanced-False" href=#client-show_target_user_in_f12_message>Show Target User In F12 Message</a>
+<a class="menu-item advanced-False" href=#client-ssl_cipher_list>Ssl Cipher List</a>
+<a class="menu-item advanced-False" href=#client-tls_fallback_legacy>Tls Fallback Legacy</a>
+<a class="menu-item advanced-False" href=#client-tls_max_level>Tls Max Level</a>
+<a class="menu-item advanced-False" href=#client-tls_min_level>Tls Min Level</a>
+<a class="menu-item advanced-True" href=#client-transform_glyph_to_bitmap>Transform Glyph To Bitmap</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#debug>[debug]</a>
-<a class=menu-item href=#debug-auth>Auth</a>
-<a class=menu-item href=#debug-cache>Cache</a>
-<a class=menu-item href=#debug-capture>Capture</a>
-<a class=menu-item href=#debug-compression>Compression</a>
-<a class=menu-item href=#debug-config>Config</a>
-<a class=menu-item href=#debug-ffmpeg>Ffmpeg</a>
-<a class=menu-item href=#debug-front>Front</a>
-<a class=menu-item href=#debug-mod_internal>Mod Internal</a>
-<a class=menu-item href=#debug-mod_rdp>Mod Rdp</a>
-<a class=menu-item href=#debug-mod_vnc>Mod Vnc</a>
-<a class=menu-item href=#debug-ocr>Ocr</a>
-<a class=menu-item href=#debug-probe_client_addresses>Probe Client Addresses</a>
-<a class=menu-item href=#debug-sck_front>Sck Front</a>
-<a class=menu-item href=#debug-sck_mod>Sck Mod</a>
-<a class=menu-item href=#debug-session>Session</a>
+<p class="menu-group advanced-True"><a class="menu-item menu-item-section" href=#debug>[debug]</a>
+<a class="menu-item advanced-True" href=#debug-auth>Auth</a>
+<a class="menu-item advanced-True" href=#debug-cache>Cache</a>
+<a class="menu-item advanced-True" href=#debug-capture>Capture</a>
+<a class="menu-item advanced-True" href=#debug-compression>Compression</a>
+<a class="menu-item advanced-True" href=#debug-config>Config</a>
+<a class="menu-item advanced-True" href=#debug-ffmpeg>Ffmpeg</a>
+<a class="menu-item advanced-True" href=#debug-front>Front</a>
+<a class="menu-item advanced-True" href=#debug-mod_internal>Mod Internal</a>
+<a class="menu-item advanced-True" href=#debug-mod_rdp>Mod Rdp</a>
+<a class="menu-item advanced-True" href=#debug-mod_vnc>Mod Vnc</a>
+<a class="menu-item advanced-True" href=#debug-ocr>Ocr</a>
+<a class="menu-item advanced-True" href=#debug-probe_client_addresses>Probe Client Addresses</a>
+<a class="menu-item advanced-True" href=#debug-sck_front>Sck Front</a>
+<a class="menu-item advanced-True" href=#debug-sck_mod>Sck Mod</a>
+<a class="menu-item advanced-True" href=#debug-session>Session</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#globals>[globals]</a>
-<a class=menu-item href=#globals-allow_scale_factor>Allow Scale Factor</a>
-<a class=menu-item href=#globals-allow_using_multiple_monitors>Allow Using Multiple Monitors</a>
-<a class=menu-item href=#globals-authentication_timeout>Authentication Timeout</a>
-<a class=menu-item href=#globals-base_inactivity_timeout>Base Inactivity Timeout</a>
-<a class=menu-item href=#globals-bogus_refresh_rect>Bogus Refresh Rect</a>
-<a class=menu-item href=#globals-close_timeout>Close Timeout</a>
-<a class=menu-item href=#globals-enable_close_box>Enable Close Box</a>
-<a class=menu-item href=#globals-enable_ipv6>Enable Ipv6</a>
-<a class=menu-item href=#globals-enable_osd>Enable Osd</a>
-<a class=menu-item href=#globals-enable_osd_display_remote_target>Enable Osd Display Remote Target</a>
-<a class=menu-item href=#globals-enable_transparent_mode>Enable Transparent Mode</a>
-<a class=menu-item href=#globals-handshake_timeout>Handshake Timeout</a>
-<a class=menu-item href=#globals-port>Port</a>
-<a class=menu-item href=#globals-rdp_keepalive_connection_interval>Rdp Keepalive Connection Interval</a>
+<p class="menu-group "><a class="menu-item menu-item-section" href=#globals>[globals]</a>
+<a class="menu-item advanced-False" href=#globals-allow_scale_factor>Allow Scale Factor</a>
+<a class="menu-item advanced-False" href=#globals-allow_using_multiple_monitors>Allow Using Multiple Monitors</a>
+<a class="menu-item advanced-True" href=#globals-authentication_timeout>Authentication Timeout</a>
+<a class="menu-item advanced-False" href=#globals-base_inactivity_timeout>Base Inactivity Timeout</a>
+<a class="menu-item advanced-True" href=#globals-bogus_refresh_rect>Bogus Refresh Rect</a>
+<a class="menu-item advanced-True" href=#globals-close_timeout>Close Timeout</a>
+<a class="menu-item advanced-False" href=#globals-enable_close_box>Enable Close Box</a>
+<a class="menu-item advanced-True" href=#globals-enable_ipv6>Enable Ipv6</a>
+<a class="menu-item advanced-True" href=#globals-enable_osd>Enable Osd</a>
+<a class="menu-item advanced-True" href=#globals-enable_osd_display_remote_target>Enable Osd Display Remote Target</a>
+<a class="menu-item advanced-False" href=#globals-enable_transparent_mode>Enable Transparent Mode</a>
+<a class="menu-item advanced-False" href=#globals-handshake_timeout>Handshake Timeout</a>
+<a class="menu-item advanced-True" href=#globals-port>Port</a>
+<a class="menu-item advanced-False" href=#globals-rdp_keepalive_connection_interval>Rdp Keepalive Connection Interval</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#icap_server_down>[icap server down]</a>
-<a class=menu-item href=#icap_server_down-enable_x_context>Enable X Context</a>
-<a class=menu-item href=#icap_server_down-filename_percent_encoding>Filename Percent Encoding</a>
-<a class=menu-item href=#icap_server_down-host>Host</a>
-<a class=menu-item href=#icap_server_down-port>Port</a>
-<a class=menu-item href=#icap_server_down-service_name>Service Name</a>
-<a class=menu-item href=#icap_server_down-tls>Tls</a>
+<p class="menu-group "><a class="menu-item menu-item-section" href=#icap_server_down>[icap server down]</a>
+<a class="menu-item advanced-True" href=#icap_server_down-enable_x_context>Enable X Context</a>
+<a class="menu-item advanced-True" href=#icap_server_down-filename_percent_encoding>Filename Percent Encoding</a>
+<a class="menu-item advanced-False" href=#icap_server_down-host>Host</a>
+<a class="menu-item advanced-False" href=#icap_server_down-port>Port</a>
+<a class="menu-item advanced-False" href=#icap_server_down-service_name>Service Name</a>
+<a class="menu-item advanced-False" href=#icap_server_down-tls>Tls</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#icap_server_up>[icap server up]</a>
-<a class=menu-item href=#icap_server_up-enable_x_context>Enable X Context</a>
-<a class=menu-item href=#icap_server_up-filename_percent_encoding>Filename Percent Encoding</a>
-<a class=menu-item href=#icap_server_up-host>Host</a>
-<a class=menu-item href=#icap_server_up-port>Port</a>
-<a class=menu-item href=#icap_server_up-service_name>Service Name</a>
-<a class=menu-item href=#icap_server_up-tls>Tls</a>
+<p class="menu-group "><a class="menu-item menu-item-section" href=#icap_server_up>[icap server up]</a>
+<a class="menu-item advanced-True" href=#icap_server_up-enable_x_context>Enable X Context</a>
+<a class="menu-item advanced-True" href=#icap_server_up-filename_percent_encoding>Filename Percent Encoding</a>
+<a class="menu-item advanced-False" href=#icap_server_up-host>Host</a>
+<a class="menu-item advanced-False" href=#icap_server_up-port>Port</a>
+<a class="menu-item advanced-False" href=#icap_server_up-service_name>Service Name</a>
+<a class="menu-item advanced-False" href=#icap_server_up-tls>Tls</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#internal_mod>[internal mod]</a>
-<a class=menu-item href=#internal_mod-enable_target_field>Enable Target Field</a>
-<a class=menu-item href=#internal_mod-keyboard_layout_proposals>Keyboard Layout Proposals</a>
+<p class="menu-group advanced-True"><a class="menu-item menu-item-section" href=#internal_mod>[internal mod]</a>
+<a class="menu-item advanced-True" href=#internal_mod-enable_target_field>Enable Target Field</a>
+<a class="menu-item advanced-True" href=#internal_mod-keyboard_layout_proposals>Keyboard Layout Proposals</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#mod_rdp>[mod rdp]</a>
-<a class=menu-item href=#mod_rdp-auth_channel>Auth Channel</a>
-<a class=menu-item href=#mod_rdp-bogus_ios_rdpdr_virtual_channel>Bogus Ios Rdpdr Virtual Channel</a>
-<a class=menu-item href=#mod_rdp-cache_waiting_list>Cache Waiting List</a>
-<a class=menu-item href=#mod_rdp-checkout_channel>Checkout Channel</a>
-<a class=menu-item href=#mod_rdp-client_address_sent>Client Address Sent</a>
-<a class=menu-item href=#mod_rdp-disconnect_on_logon_user_change>Disconnect On Logon User Change</a>
-<a class=menu-item href=#mod_rdp-hide_client_name>Hide Client Name</a>
-<a class=menu-item href=#mod_rdp-log_only_relevant_clipboard_activities>Log Only Relevant Clipboard Activities</a>
-<a class=menu-item href=#mod_rdp-open_session_timeout>Open Session Timeout</a>
-<a class=menu-item href=#mod_rdp-persist_bitmap_cache_on_disk>Persist Bitmap Cache On Disk</a>
-<a class=menu-item href=#mod_rdp-persistent_disk_bitmap_cache>Persistent Disk Bitmap Cache</a>
-<a class=menu-item href=#mod_rdp-rdp_compression>Rdp Compression</a>
-<a class=menu-item href=#mod_rdp-remoteapp_bypass_legal_notice_delay>Remoteapp Bypass Legal Notice Delay</a>
-<a class=menu-item href=#mod_rdp-remoteapp_bypass_legal_notice_timeout>Remoteapp Bypass Legal Notice Timeout</a>
-<a class=menu-item href=#mod_rdp-session_shadowing_support>Session Shadowing Support</a>
-<a class=menu-item href=#mod_rdp-split_domain>Split Domain</a>
-<a class=menu-item href=#mod_rdp-use_license_store>Use License Store</a>
+<p class="menu-group "><a class="menu-item menu-item-section" href=#mod_rdp>[mod rdp]</a>
+<a class="menu-item advanced-False" href=#mod_rdp-auth_channel>Auth Channel</a>
+<a class="menu-item advanced-True" href=#mod_rdp-bogus_ios_rdpdr_virtual_channel>Bogus Ios Rdpdr Virtual Channel</a>
+<a class="menu-item advanced-True" href=#mod_rdp-cache_waiting_list>Cache Waiting List</a>
+<a class="menu-item advanced-False" href=#mod_rdp-checkout_channel>Checkout Channel</a>
+<a class="menu-item advanced-True" href=#mod_rdp-client_address_sent>Client Address Sent</a>
+<a class="menu-item advanced-True" href=#mod_rdp-disconnect_on_logon_user_change>Disconnect On Logon User Change</a>
+<a class="menu-item advanced-False" href=#mod_rdp-hide_client_name>Hide Client Name</a>
+<a class="menu-item advanced-True" href=#mod_rdp-log_only_relevant_clipboard_activities>Log Only Relevant Clipboard Activities</a>
+<a class="menu-item advanced-True" href=#mod_rdp-open_session_timeout>Open Session Timeout</a>
+<a class="menu-item advanced-True" href=#mod_rdp-persist_bitmap_cache_on_disk>Persist Bitmap Cache On Disk</a>
+<a class="menu-item advanced-True" href=#mod_rdp-persistent_disk_bitmap_cache>Persistent Disk Bitmap Cache</a>
+<a class="menu-item advanced-True" href=#mod_rdp-rdp_compression>Rdp Compression</a>
+<a class="menu-item advanced-True" href=#mod_rdp-remoteapp_bypass_legal_notice_delay>Remoteapp Bypass Legal Notice Delay</a>
+<a class="menu-item advanced-True" href=#mod_rdp-remoteapp_bypass_legal_notice_timeout>Remoteapp Bypass Legal Notice Timeout</a>
+<a class="menu-item advanced-True" href=#mod_rdp-session_shadowing_support>Session Shadowing Support</a>
+<a class="menu-item advanced-True" href=#mod_rdp-split_domain>Split Domain</a>
+<a class="menu-item advanced-True" href=#mod_rdp-use_license_store>Use License Store</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#mod_vnc>[mod vnc]</a>
-<a class=menu-item href=#mod_vnc-bogus_clipboard_infinite_loop>Bogus Clipboard Infinite Loop</a>
-<a class=menu-item href=#mod_vnc-clipboard_down>Clipboard Down</a>
-<a class=menu-item href=#mod_vnc-clipboard_up>Clipboard Up</a>
-<a class=menu-item href=#mod_vnc-encodings>Encodings</a>
-<a class=menu-item href=#mod_vnc-server_clipboard_encoding_type>Server Clipboard Encoding Type</a>
+<p class="menu-group "><a class="menu-item menu-item-section" href=#mod_vnc>[mod vnc]</a>
+<a class="menu-item advanced-True" href=#mod_vnc-bogus_clipboard_infinite_loop>Bogus Clipboard Infinite Loop</a>
+<a class="menu-item advanced-False" href=#mod_vnc-clipboard_down>Clipboard Down</a>
+<a class="menu-item advanced-False" href=#mod_vnc-clipboard_up>Clipboard Up</a>
+<a class="menu-item advanced-True" href=#mod_vnc-encodings>Encodings</a>
+<a class="menu-item advanced-True" href=#mod_vnc-server_clipboard_encoding_type>Server Clipboard Encoding Type</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#ocr>[ocr]</a>
-<a class=menu-item href=#ocr-interval>Interval</a>
-<a class=menu-item href=#ocr-locale>Locale</a>
-<a class=menu-item href=#ocr-max_unrecog_char_rate>Max Unrecog Char Rate</a>
-<a class=menu-item href=#ocr-on_title_bar_only>On Title Bar Only</a>
-<a class=menu-item href=#ocr-version>Version</a>
+<p class="menu-group "><a class="menu-item menu-item-section" href=#ocr>[ocr]</a>
+<a class="menu-item advanced-True" href=#ocr-interval>Interval</a>
+<a class="menu-item advanced-False" href=#ocr-locale>Locale</a>
+<a class="menu-item advanced-True" href=#ocr-max_unrecog_char_rate>Max Unrecog Char Rate</a>
+<a class="menu-item advanced-True" href=#ocr-on_title_bar_only>On Title Bar Only</a>
+<a class="menu-item advanced-False" href=#ocr-version>Version</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#remote_program>[remote program]</a>
-<a class=menu-item href=#remote_program-allow_resize_hosted_desktop>Allow Resize Hosted Desktop</a>
+<p class="menu-group advanced-False"><a class="menu-item menu-item-section" href=#remote_program>[remote program]</a>
+<a class="menu-item advanced-False" href=#remote_program-allow_resize_hosted_desktop>Allow Resize Hosted Desktop</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#session_probe>[session probe]</a>
-<a class=menu-item href=#session_probe-allow_multiple_handshake>Allow multiple handshakes</a>
-<a class=menu-item href=#session_probe-customize_executable_name>Customize Executable Name</a>
+<p class="menu-group advanced-True"><a class="menu-item menu-item-section" href=#session_probe>[session probe]</a>
+<a class="menu-item advanced-True" href=#session_probe-allow_multiple_handshake>Allow multiple handshakes</a>
+<a class="menu-item advanced-True" href=#session_probe-customize_executable_name>Customize Executable Name</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#theme>[theme]</a>
-<a class=menu-item href=#theme-bgcolor>Bgcolor</a>
-<a class=menu-item href=#theme-edit_bgcolor>Edit Bgcolor</a>
-<a class=menu-item href=#theme-edit_fgcolor>Edit Fgcolor</a>
-<a class=menu-item href=#theme-edit_focus_color>Edit Focus Color</a>
-<a class=menu-item href=#theme-enable_theme>Enable Theme</a>
-<a class=menu-item href=#theme-error_color>Error Color</a>
-<a class=menu-item href=#theme-fgcolor>Fgcolor</a>
-<a class=menu-item href=#theme-focus_color>Focus Color</a>
-<a class=menu-item href=#theme-logo>Logo</a>
-<a class=menu-item href=#theme-selector_focus_bgcolor>Selector Focus Bgcolor</a>
-<a class=menu-item href=#theme-selector_focus_fgcolor>Selector Focus Fgcolor</a>
-<a class=menu-item href=#theme-selector_label_bgcolor>Selector Label Bgcolor</a>
-<a class=menu-item href=#theme-selector_label_fgcolor>Selector Label Fgcolor</a>
-<a class=menu-item href=#theme-selector_line1_bgcolor>Selector Line1 Bgcolor</a>
-<a class=menu-item href=#theme-selector_line1_fgcolor>Selector Line1 Fgcolor</a>
-<a class=menu-item href=#theme-selector_line2_bgcolor>Selector Line2 Bgcolor</a>
-<a class=menu-item href=#theme-selector_line2_fgcolor>Selector Line2 Fgcolor</a>
-<a class=menu-item href=#theme-selector_selected_bgcolor>Selector Selected Bgcolor</a>
-<a class=menu-item href=#theme-selector_selected_fgcolor>Selector Selected Fgcolor</a>
-<a class=menu-item href=#theme-separator_color>Separator Color</a>
-<a class=menu-item href=#theme-tooltip_bgcolor>Tooltip Bgcolor</a>
-<a class=menu-item href=#theme-tooltip_border_color>Tooltip Border Color</a>
-<a class=menu-item href=#theme-tooltip_fgcolor>Tooltip Fgcolor</a>
+<p class="menu-group advanced-False"><a class="menu-item menu-item-section" href=#theme>[theme]</a>
+<a class="menu-item advanced-False" href=#theme-bgcolor>Bgcolor</a>
+<a class="menu-item advanced-False" href=#theme-edit_bgcolor>Edit Bgcolor</a>
+<a class="menu-item advanced-False" href=#theme-edit_fgcolor>Edit Fgcolor</a>
+<a class="menu-item advanced-False" href=#theme-edit_focus_color>Edit Focus Color</a>
+<a class="menu-item advanced-False" href=#theme-enable_theme>Enable Theme</a>
+<a class="menu-item advanced-False" href=#theme-error_color>Error Color</a>
+<a class="menu-item advanced-False" href=#theme-fgcolor>Fgcolor</a>
+<a class="menu-item advanced-False" href=#theme-focus_color>Focus Color</a>
+<a class="menu-item advanced-False" href=#theme-logo>Logo</a>
+<a class="menu-item advanced-False" href=#theme-selector_focus_bgcolor>Selector Focus Bgcolor</a>
+<a class="menu-item advanced-False" href=#theme-selector_focus_fgcolor>Selector Focus Fgcolor</a>
+<a class="menu-item advanced-False" href=#theme-selector_label_bgcolor>Selector Label Bgcolor</a>
+<a class="menu-item advanced-False" href=#theme-selector_label_fgcolor>Selector Label Fgcolor</a>
+<a class="menu-item advanced-False" href=#theme-selector_line1_bgcolor>Selector Line1 Bgcolor</a>
+<a class="menu-item advanced-False" href=#theme-selector_line1_fgcolor>Selector Line1 Fgcolor</a>
+<a class="menu-item advanced-False" href=#theme-selector_line2_bgcolor>Selector Line2 Bgcolor</a>
+<a class="menu-item advanced-False" href=#theme-selector_line2_fgcolor>Selector Line2 Fgcolor</a>
+<a class="menu-item advanced-False" href=#theme-selector_selected_bgcolor>Selector Selected Bgcolor</a>
+<a class="menu-item advanced-False" href=#theme-selector_selected_fgcolor>Selector Selected Fgcolor</a>
+<a class="menu-item advanced-False" href=#theme-separator_color>Separator Color</a>
+<a class="menu-item advanced-False" href=#theme-tooltip_bgcolor>Tooltip Bgcolor</a>
+<a class="menu-item advanced-False" href=#theme-tooltip_border_color>Tooltip Border Color</a>
+<a class="menu-item advanced-False" href=#theme-tooltip_fgcolor>Tooltip Fgcolor</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#translation>[translation]</a>
-<a class=menu-item href=#translation-login_language>Login Language</a>
+<p class="menu-group advanced-True"><a class="menu-item menu-item-section" href=#translation>[translation]</a>
+<a class="menu-item advanced-True" href=#translation-login_language>Login Language</a>
 </p>
-<p class=menu-group><a class="menu-item menu-item-section" href=#video>[video]</a>
-<a class=menu-item href=#video-allow_rt_without_recording>Allow Rt Without Recording</a>
-<a class=menu-item href=#video-break_interval>Break Interval</a>
-<a class=menu-item href=#video-capture_flags>Capture Flags</a>
-<a class=menu-item href=#video-disable_clipboard_log>Disable Clipboard Log</a>
-<a class=menu-item href=#video-disable_file_system_log>Disable File System Log</a>
-<a class=menu-item href=#video-enable_keyboard_log>Enable Keyboard Log</a>
-<a class=menu-item href=#video-ffmpeg_options>Ffmpeg Options</a>
-<a class=menu-item href=#video-framerate>Frame rate</a>
-<a class=menu-item href=#video-notimestamp>Notimestamp</a>
-<a class=menu-item href=#video-play_video_with_corrupted_bitmap>Play Video With Corrupted Bitmap</a>
-<a class=menu-item href=#video-smart_video_cropping>Smart Video Cropping</a>
-<a class=menu-item href=#video-wrm_color_depth_selection_strategy>Wrm Color Depth Selection Strategy</a>
-<a class=menu-item href=#video-wrm_compression_algorithm>Wrm Compression Algorithm</a>
+<p class="menu-group "><a class="menu-item menu-item-section" href=#video>[video]</a>
+<a class="menu-item advanced-False" href=#video-allow_rt_without_recording>Allow Rt Without Recording</a>
+<a class="menu-item advanced-True" href=#video-break_interval>Break Interval</a>
+<a class="menu-item advanced-True" href=#video-capture_flags>Capture Flags</a>
+<a class="menu-item advanced-True" href=#video-disable_clipboard_log>Disable Clipboard Log</a>
+<a class="menu-item advanced-True" href=#video-disable_file_system_log>Disable File System Log</a>
+<a class="menu-item advanced-True" href=#video-enable_keyboard_log>Enable Keyboard Log</a>
+<a class="menu-item advanced-True" href=#video-ffmpeg_options>Ffmpeg Options</a>
+<a class="menu-item advanced-True" href=#video-framerate>Frame rate</a>
+<a class="menu-item advanced-True" href=#video-notimestamp>Notimestamp</a>
+<a class="menu-item advanced-True" href=#video-play_video_with_corrupted_bitmap>Play Video With Corrupted Bitmap</a>
+<a class="menu-item advanced-False" href=#video-smart_video_cropping>Smart Video Cropping</a>
+<a class="menu-item advanced-True" href=#video-wrm_color_depth_selection_strategy>Wrm Color Depth Selection Strategy</a>
+<a class="menu-item advanced-True" href=#video-wrm_compression_algorithm>Wrm Compression Algorithm</a>
 </p>
 </nav>
 <p>Number of documented parameters = 74 / 93</p>
-<p>Undocumented (19):</p><dl id="shortdesc">
-<li><a href="#globals-enable_osd_display_remote_target">[globals] enable_osd_display_remote_target</a>:  Allow to show target device name with F12 during the session 
-</li><li><a href="#mod_rdp-disconnect_on_logon_user_change">[mod_rdp] disconnect_on_logon_user_change</a>: </li><li><a href="#mod_rdp-use_license_store">[mod_rdp] use_license_store</a>:  Stores CALs issued by the terminal servers. 
-</li><li><a href="#mod_rdp-split_domain">[mod_rdp] split_domain</a>:  Force to split target domain and username with '@' separator. 
-</li><li><a href="#mod_vnc-server_clipboard_encoding_type">[mod_vnc] server_clipboard_encoding_type</a>:  VNC server clipboard text data encoding type. 
-</li><li><a href="#ocr-on_title_bar_only">[ocr] on_title_bar_only</a>:  Checks shape and color to determine if the text is on a title bar 
-</li><li><a href="#video-play_video_with_corrupted_bitmap">[video] play_video_with_corrupted_bitmap</a>:  Check this option will allow to play a video with corrupted Bitmap Update. 
-</li><li><a href="#icap_server_down-host">[icap_server_down] host</a>:  Ip or fqdn of ICAP server 
-</li><li><a href="#icap_server_down-port">[icap_server_down] port</a>:  Port of ICAP server 
-</li><li><a href="#icap_server_down-service_name">[icap_server_down] service_name</a>:  Service name on ICAP server 
-</li><li><a href="#icap_server_down-tls">[icap_server_down] tls</a>:  ICAP server uses tls 
-</li><li><a href="#icap_server_down-enable_x_context">[icap_server_down] enable_x_context</a>:  Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server 
-</li><li><a href="#icap_server_down-filename_percent_encoding">[icap_server_down] filename_percent_encoding</a>:  Filename sent to ICAP as percent encoding 
-</li><li><a href="#icap_server_up-host">[icap_server_up] host</a>:  Ip or fqdn of ICAP server 
-</li><li><a href="#icap_server_up-port">[icap_server_up] port</a>:  Port of ICAP server 
-</li><li><a href="#icap_server_up-service_name">[icap_server_up] service_name</a>:  Service name on ICAP server 
-</li><li><a href="#icap_server_up-tls">[icap_server_up] tls</a>:  ICAP server uses tls 
-</li><li><a href="#icap_server_up-enable_x_context">[icap_server_up] enable_x_context</a>:  Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server 
-</li><li><a href="#icap_server_up-filename_percent_encoding">[icap_server_up] filename_percent_encoding</a>:  Filename sent to ICAP as percent encoding 
+<div class=""><p>Undocumented (19):</p><dl id="shortdesc">
+<li class="advanced-True"><a href="#globals-enable_osd_display_remote_target">[globals] enable_osd_display_remote_target</a>:  Allow to show target device name with F12 during the session 
+</li><li class="advanced-True"><a href="#mod_rdp-disconnect_on_logon_user_change">[mod_rdp] disconnect_on_logon_user_change</a>: </li><li class="advanced-True"><a href="#mod_rdp-use_license_store">[mod_rdp] use_license_store</a>:  Stores CALs issued by the terminal servers. 
+</li><li class="advanced-True"><a href="#mod_rdp-split_domain">[mod_rdp] split_domain</a>:  Force to split target domain and username with '@' separator. 
+</li><li class="advanced-True"><a href="#mod_vnc-server_clipboard_encoding_type">[mod_vnc] server_clipboard_encoding_type</a>:  VNC server clipboard text data encoding type. 
+</li><li class="advanced-True"><a href="#ocr-on_title_bar_only">[ocr] on_title_bar_only</a>:  Checks shape and color to determine if the text is on a title bar 
+</li><li class="advanced-True"><a href="#video-play_video_with_corrupted_bitmap">[video] play_video_with_corrupted_bitmap</a>:  Check this option will allow to play a video with corrupted Bitmap Update. 
+</li><li class="advanced-False"><a href="#icap_server_down-host">[icap_server_down] host</a>:  Ip or fqdn of ICAP server 
+</li><li class="advanced-False"><a href="#icap_server_down-port">[icap_server_down] port</a>:  Port of ICAP server 
+</li><li class="advanced-False"><a href="#icap_server_down-service_name">[icap_server_down] service_name</a>:  Service name on ICAP server 
+</li><li class="advanced-False"><a href="#icap_server_down-tls">[icap_server_down] tls</a>:  ICAP server uses tls 
+</li><li class="advanced-True"><a href="#icap_server_down-enable_x_context">[icap_server_down] enable_x_context</a>:  Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server 
+</li><li class="advanced-True"><a href="#icap_server_down-filename_percent_encoding">[icap_server_down] filename_percent_encoding</a>:  Filename sent to ICAP as percent encoding 
+</li><li class="advanced-False"><a href="#icap_server_up-host">[icap_server_up] host</a>:  Ip or fqdn of ICAP server 
+</li><li class="advanced-False"><a href="#icap_server_up-port">[icap_server_up] port</a>:  Port of ICAP server 
+</li><li class="advanced-False"><a href="#icap_server_up-service_name">[icap_server_up] service_name</a>:  Service name on ICAP server 
+</li><li class="advanced-False"><a href="#icap_server_up-tls">[icap_server_up] tls</a>:  ICAP server uses tls 
+</li><li class="advanced-True"><a href="#icap_server_up-enable_x_context">[icap_server_up] enable_x_context</a>:  Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server 
+</li><li class="advanced-True"><a href="#icap_server_up-filename_percent_encoding">[icap_server_up] filename_percent_encoding</a>:  Filename sent to ICAP as percent encoding 
 </li>
-</dl>
-<section>
-<h2 id=globals>Section: globals</h2>
-<div class="option advanced-true"><h3 id=globals-port>[globals] Port</h3>
-<p>(type: integer| advanced | default: <code>3389</code>)</p>
-<p>Port of RDP Proxy service.</p>
-<p>Service will be automatically restarted and active sessions will be disconnected.<br/>The port set in this field must not be already used, otherwise the service will not run.<br/>Changing the port number will prevent WALLIX Access Manager from working properly.</p>
-</div>
-<div class="option advanced-false"><h3 id=globals-handshake_timeout>[globals] Handshake Timeout</h3>
-<p>(type: seconds | default: <code>10</code>)</p>
-<p>Time out during RDP connection initialization.<br/>Increase the value if connection between workstations and Bastion can be slow.</p>
-</div>
-<div class="option advanced-false"><h3 id=globals-base_inactivity_timeout>[globals] Base Inactivity Timeout</h3>
-<p>(type: seconds | default: <code>900</code>)</p>
-<p>No automatic disconnection due to inactivity, timer is set on primary authentication.<br/>If value is between 1 and 30, then 30 is used.<br/>If value is set to 0, then inactivity timeout value is unlimited.</p>
-</div>
-<div class="option advanced-true"><h3 id=globals-authentication_timeout>[globals] Authentication Timeout</h3>
-<p>(type: seconds| advanced | default: <code>120</code>)</p>
-<p>Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).</p>
-</div>
-<div class="option advanced-false"><h3 id=globals-enable_transparent_mode>[globals] Enable Transparent Mode</h3>
-<p>(type: boolean | default: <code>False</code>)</p>
-<p>The transparent mode allows to intercept network traffic for a target even when the user specifies the target's address directly, instead of using the proxy address.</p>
-</div>
-<div class="option advanced-false"><h3 id=globals-enable_close_box>[globals] Enable Close Box</h3>
-<p>(type: boolean | default: <code>True</code>)</p>
-<p>Show close screen.<br/>This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request.</p>
-</div>
-<div class="option advanced-true"><h3 id=globals-close_timeout>[globals] Close Timeout</h3>
-<p>(type: seconds| advanced | default: <code>600</code>)</p>
-<p>Specifies the time to spend on the close box of proxy RDP before closing client window.<br/>⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects.</p>
-</div>
-<div class="option advanced-true"><h3 id=globals-enable_osd>[globals] Enable Osd</h3>
-<p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval).<br/>The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed.</p>
-</div>
-<div class="option advanced-true"><h3 id=globals-enable_osd_display_remote_target>[globals] Enable Osd Display Remote Target</h3>
-<p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>Allow to show target device name with F12 during the session</p>
-</div>
-<div class="option advanced-false"><h3 id=globals-allow_using_multiple_monitors>[globals] Allow Using Multiple Monitors</h3>
-<p>(type: boolean | default: <code>True</code>)</p>
-<p>Sends the client screen count to the server. Not supported for VNC targets.<br/>Uncheck to disable multiple monitor.</p>
-</div>
-<div class="option advanced-false"><h3 id=globals-allow_scale_factor>[globals] Allow Scale Factor</h3>
-<p>(type: boolean | default: <code>False</code>)</p>
-<p>Sends Scale &amp; Layout configuration to the server.<br/>On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.<br/>⚠ Title bar detection via OCR will no longer work.</p>
-</div>
-<div class="option advanced-true"><h3 id=globals-bogus_refresh_rect>[globals] Bogus Refresh Rect</h3>
-<p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>Workaround option to fix some drawing issues with Windows Server 2012.<br/>Can be disabled when none of the targets are Windows Server 2012.</p>
-</div>
-<div class="option advanced-false"><h3 id=globals-rdp_keepalive_connection_interval>[globals] Rdp Keepalive Connection Interval</h3>
-<p>(type: milliseconds | default: <code>0</code>)</p>
-<p>Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.<br/>!!!May cause FreeRDP-based client to CRASH!!!<br/>Set to 0 to disable this feature.</p>
-</div>
-<div class="option advanced-true"><h3 id=globals-enable_ipv6>[globals] Enable Ipv6</h3>
-<p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>⚠ Service need to be manually restarted to take changes into account</p>
-<p>Enable primary connection on ipv6.</p>
+</dl></div>
+<section class="advanced-True">
+<h2 id=all_target_mod>Section: all target mod</h2>
+<div class="option advanced-True"><h3 id=all_target_mod-connection_establishment_timeout>[all target mod] Connection Establishment Timeout</h3>
+<p>(type: milliseconds| advanced | default: <code>3000</code>)</p>
+<p>The maximum time that the proxy will wait while attempting to connect to an target.</p>
 </div>
 </section>
-<section>
+<section class="">
 <h2 id=client>Section: client</h2>
-<div class="option advanced-true"><h3 id=client-ignore_logon_password>[client] Ignore Logon Password</h3>
+<div class="option advanced-True"><h3 id=client-ignore_logon_password>[client] Ignore Logon Password</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
 <p>If true, ignore password provided by RDP client, user need do login manually.</p>
 </div>
-<div class="option advanced-true"><h3 id=client-force_performance_flags>[client] Force Performance Flags</h3>
+<div class="option advanced-True"><h3 id=client-force_performance_flags>[client] Force Performance Flags</h3>
 <p>(type: string| advanced | default: <code>-mouse_cursor_shadows,-theme</code>)</p>
 <p>It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).</p>
 <p>If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.</p>
@@ -344,27 +290,27 @@ const setAdvanced = function(a, b) {
 <tr><td>desktop_composition</td><td></td></tr>
 </table></p>
 </div>
-<div class="option advanced-true"><h3 id=client-auto_adjust_performance_flags>[client] Auto Adjust Performance Flags</h3>
+<div class="option advanced-True"><h3 id=client-auto_adjust_performance_flags>[client] Auto Adjust Performance Flags</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>If enabled, avoid automatically font smoothing in recorded session.<br/>This allows OCR (when session probe is disabled) to better detect window titles.</p>
 </div>
-<div class="option advanced-false"><h3 id=client-tls_fallback_legacy>[client] Tls Fallback Legacy</h3>
+<div class="option advanced-False"><h3 id=client-tls_fallback_legacy>[client] Tls Fallback Legacy</h3>
 <p>(type: boolean | default: <code>False</code>)</p>
 <p>Fallback to RDP Legacy Encryption if client does not support TLS.<br/>⚠ Enabling this option is a security risk.</p>
 </div>
-<div class="option advanced-false"><h3 id=client-tls_min_level>[client] Tls Min Level</h3>
+<div class="option advanced-False"><h3 id=client-tls_min_level>[client] Tls Min Level</h3>
 <p>(type: integer | default: <code>2</code>)</p>
 <p>Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3<br/>⚠ Lower this value only for compatibility reasons.</p>
 </div>
-<div class="option advanced-false"><h3 id=client-tls_max_level>[client] Tls Max Level</h3>
+<div class="option advanced-False"><h3 id=client-tls_max_level>[client] Tls Max Level</h3>
 <p>(type: integer | default: <code>0</code>)</p>
 <p>Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3<br/>⚠ Change this value only for compatibility reasons.</p>
 </div>
-<div class="option advanced-true"><h3 id=client-show_common_cipher_list>[client] Show Common Cipher List</h3>
+<div class="option advanced-True"><h3 id=client-show_common_cipher_list>[client] Show Common Cipher List</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
 <p>Show in the logs the common cipher list supported by client and server<br/>⚠ Only for debug purposes</p>
 </div>
-<div class="option advanced-true"><h3 id=client-rdp_compression>[client] Rdp Compression</h3>
+<div class="option advanced-True"><h3 id=client-rdp_compression>[client] Rdp Compression</h3>
 <p>(type: option| advanced | default: <code>4</code>)</p>
 <p>Specifies the highest RDP compression support available on client connection session.</p>
 <table>
@@ -375,7 +321,7 @@ const setAdvanced = function(a, b) {
 <tr><td>4</td><td>RDP 6.1 bulk compression</td></tr>
 </table></p>
 </div>
-<div class="option advanced-true"><h3 id=client-max_color_depth>[client] Max Color Depth</h3>
+<div class="option advanced-True"><h3 id=client-max_color_depth>[client] Max Color Depth</h3>
 <p>(type: option| advanced | default: <code>24</code>)</p>
 <p>Specifies the maximum color resolution (color depth) for client connection session:</p>
 <table>
@@ -386,50 +332,50 @@ const setAdvanced = function(a, b) {
 <tr><td>32</td><td>32-bit RGB mask + alpha</td></tr>
 </table></p>
 </div>
-<div class="option advanced-true"><h3 id=client-persistent_disk_bitmap_cache>[client] Persistent Disk Bitmap Cache</h3>
+<div class="option advanced-True"><h3 id=client-persistent_disk_bitmap_cache>[client] Persistent Disk Bitmap Cache</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Persistent Disk Bitmap Cache on the front side. If supported by the RDP client, the size of image caches will be increased</p>
 </div>
-<div class="option advanced-true"><h3 id=client-persist_bitmap_cache_on_disk>[client] Persist Bitmap Cache On Disk</h3>
+<div class="option advanced-True"><h3 id=client-persist_bitmap_cache_on_disk>[client] Persist Bitmap Cache On Disk</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
 <p>If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).</p>
 </div>
-<div class="option advanced-true"><h3 id=client-bitmap_compression>[client] Bitmap Compression</h3>
+<div class="option advanced-True"><h3 id=client-bitmap_compression>[client] Bitmap Compression</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Enable Bitmap Compression when supported by the RDP client.<br/>Disable this option will increase network bandwith usage.</p>
 </div>
-<div class="option advanced-false"><h3 id=client-enable_suppress_output>[client] Enable Suppress Output</h3>
+<div class="option advanced-False"><h3 id=client-enable_suppress_output>[client] Enable Suppress Output</h3>
 <p>(type: boolean | default: <code>True</code>)</p>
 <p>Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.<br/>⚠ If changes occur on the target, they will not be visible in the recordings either.</p>
 </div>
-<div class="option advanced-false"><h3 id=client-ssl_cipher_list>[client] Ssl Cipher List</h3>
+<div class="option advanced-False"><h3 id=client-ssl_cipher_list>[client] Ssl Cipher List</h3>
 <p>(type: string | default: <code>HIGH:!ADH:!3DES:!SHA</code>)</p>
 <p>[Not configured]: Compatible with more RDP clients (less secure)<br/>HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)<br/>HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)</p>
 </div>
-<div class="option advanced-false"><h3 id=client-show_target_user_in_f12_message>[client] Show Target User In F12 Message</h3>
+<div class="option advanced-False"><h3 id=client-show_target_user_in_f12_message>[client] Show Target User In F12 Message</h3>
 <p>(type: boolean | default: <code>False</code>)</p>
 <p>Show in session the target username when F12 is pressed.<br/>This option needs "Enable Osd Display Remote Target".</p>
 </div>
-<div class="option advanced-false"><h3 id=client-bogus_ios_glyph_support_level>[client] Bogus Ios Glyph Support Level</h3>
+<div class="option advanced-False"><h3 id=client-bogus_ios_glyph_support_level>[client] Bogus Ios Glyph Support Level</h3>
 <p>(type: boolean | default: <code>True</code>)</p>
 <p>Same effect as "Transform glyph to bitmap", but only for RDP client on iOS platform.</p>
 </div>
-<div class="option advanced-true"><h3 id=client-transform_glyph_to_bitmap>[client] Transform Glyph To Bitmap</h3>
+<div class="option advanced-True"><h3 id=client-transform_glyph_to_bitmap>[client] Transform Glyph To Bitmap</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
 <p>Some RDP clients advertise glyph support, but this does not work properly with the RDP proxy. This option replaces glyph orders with bitmap orders.</p>
 </div>
-<div class="option advanced-false"><h3 id=client-enable_osd_4_eyes>[client] Enable Osd 4 Eyes</h3>
+<div class="option advanced-False"><h3 id=client-enable_osd_4_eyes>[client] Enable Osd 4 Eyes</h3>
 <p>(type: boolean | default: <code>True</code>)</p>
 <p>Enables display of message informing user that his/her session is being audited.</p>
 </div>
-<div class="option advanced-true"><h3 id=client-enable_remotefx>[client] Enable Remotefx</h3>
+<div class="option advanced-True"><h3 id=client-enable_remotefx>[client] Enable Remotefx</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Enable RemoteFx on client connection.<br/>Needs - "Max Color Depth" option set to 32 (32-bit RGB mask + alpha)</p>
 <table>
 <tr><td>- "Enable RemoteFX" option enabled in target connection policy</td><td></td></tr>
 </table></p>
 </div>
-<div class="option advanced-true"><h3 id=client-disabled_orders>[client] Disabled Orders</h3>
+<div class="option advanced-True"><h3 id=client-disabled_orders>[client] Disabled Orders</h3>
 <p>(type: string| advanced | default: <code>25</code>)</p>
 <p>This option should only be used if the server or client is showing graphical issues.<br/>In general, disabling RDP orders has a negative impact on performance.</p>
 <p>Drawing orders that can be disabled:</p>
@@ -452,23 +398,202 @@ const setAdvanced = function(a, b) {
 (values are comma-separated)</p>
 </div>
 </section>
-<section>
-<h2 id=all_target_mod>Section: all target mod</h2>
-<div class="option advanced-true"><h3 id=all_target_mod-connection_establishment_timeout>[all target mod] Connection Establishment Timeout</h3>
-<p>(type: milliseconds| advanced | default: <code>3000</code>)</p>
-<p>The maximum time that the proxy will wait while attempting to connect to an target.</p>
+<section class="advanced-True">
+<h2 id=debug>Section: debug</h2>
+<div class="option advanced-True"><h3 id=debug-capture>[debug] Capture</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- kbd / ocr when != 0</p>
+<p>(Wrm)<br/>- pointer             = 0x0004<br/>- primary_orders      = 0x0020<br/>- secondary_orders    = 0x0040<br/>- bitmap_update       = 0x0080<br/>- surface_commands    = 0x0100<br/>- bmp_cache           = 0x0200<br/>- internal_buffer     = 0x0400<br/>- sec_decrypted       = 0x1000</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-auth>[debug] Auth</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- variable = 0x0002<br/>- buffer   = 0x0040<br/>- dump     = 0x1000</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-session>[debug] Session</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- Log   = 0x01<br/>- Event = 0x02<br/>- Acl   = 0x04<br/>- Trace = 0x08</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-front>[debug] Front</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- basic_trace     = 0x00000001<br/>- basic_trace2    = 0x00000002<br/>- basic_trace3    = 0x00000004<br/>- basic_trace4    = 0x00000008<br/>- basic_trace5    = 0x00000020<br/>- graphic         = 0x00000040<br/>- channel         = 0x00000080<br/>- cache_from_disk = 0x00000400<br/>- bmp_info        = 0x00000800<br/>- global_channel  = 0x00002000<br/>- sec_decrypted   = 0x00004000<br/>- keymap          = 0x00008000</p>
+<p>(Serializer)<br/>- pointer             = 0x00040000<br/>- primary_orders      = 0x00200000<br/>- secondary_orders    = 0x00400000<br/>- bitmap_update       = 0x00800000<br/>- surface_commands    = 0x01000000<br/>- bmp_cache           = 0x02000000<br/>- internal_buffer     = 0x04000000<br/>- sec_decrypted       = 0x10000000</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-mod_rdp>[debug] Mod Rdp</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- basic_trace         = 0x00000001<br/>- connection          = 0x00000002<br/>- security            = 0x00000004<br/>- capabilities        = 0x00000008<br/>- license             = 0x00000010<br/>- asynchronous_task   = 0x00000020<br/>- graphics_pointer    = 0x00000040<br/>- graphics            = 0x00000080<br/>- input               = 0x00000100<br/>- rail_order          = 0x00000200<br/>- credssp             = 0x00000400<br/>- negotiation         = 0x00000800<br/>- cache_persister     = 0x00001000<br/>- fsdrvmgr            = 0x00002000<br/>- sesprobe_launcher   = 0x00004000<br/>- sesprobe_repetitive = 0x00008000<br/>- drdynvc             = 0x00010000<br/>- surfaceCmd          = 0x00020000<br/>- cache_from_disk     = 0x00040000<br/>- bmp_info            = 0x00080000<br/>- drdynvc_dump        = 0x00100000<br/>- printer             = 0x00200000<br/>- rdpsnd              = 0x00400000<br/>- channels            = 0x00800000<br/>- rail                = 0x01000000<br/>- sesprobe            = 0x02000000<br/>- cliprdr             = 0x04000000<br/>- rdpdr               = 0x08000000<br/>- rail_dump           = 0x10000000<br/>- sesprobe_dump       = 0x20000000<br/>- cliprdr_dump        = 0x40000000<br/>- rdpdr_dump          = 0x80000000</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-mod_vnc>[debug] Mod Vnc</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- basic_trace     = 0x00000001<br/>- keymap_stack    = 0x00000002<br/>- draw_event      = 0x00000004<br/>- input           = 0x00000008<br/>- connection      = 0x00000010<br/>- hextile_encoder = 0x00000020<br/>- cursor_encoder  = 0x00000040<br/>- clipboard       = 0x00000080<br/>- zrle_encoder    = 0x00000100<br/>- zrle_trace      = 0x00000200<br/>- hextile_trace   = 0x00000400<br/>- cursor_trace    = 0x00001000<br/>- rre_encoder     = 0x00002000<br/>- rre_trace       = 0x00004000<br/>- raw_encoder     = 0x00008000<br/>- raw_trace       = 0x00010000<br/>- copyrect_encoder= 0x00020000<br/>- copyrect_trace  = 0x00040000<br/>- keymap          = 0x00080000</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-mod_internal>[debug] Mod Internal</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- copy_paste != 0<br/>- client_execute = 0x01</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-sck_mod>[debug] Sck Mod</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- basic    = 0x0001<br/>- dump     = 0x0002<br/>- watchdog = 0x0004<br/>- meta     = 0x0008</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-sck_front>[debug] Sck Front</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- basic    = 0x0001<br/>- dump     = 0x0002<br/>- watchdog = 0x0004<br/>- meta     = 0x0008</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-compression>[debug] Compression</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- when != 0</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-cache>[debug] Cache</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- life       = 0x0001<br/>- persistent = 0x0200</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-ocr>[debug] Ocr</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>- when != 0</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-ffmpeg>[debug] Ffmpeg</h3>
+<p>(type: integer| advanced | default: <code>0</code>)</p>
+<p>Value passed to function av_log_set_level()<br/>See https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-config>[debug] Config</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+<p>Log unknown members or sections</p>
+</div>
+<div class="option advanced-True"><h3 id=debug-probe_client_addresses>[debug] Probe Client Addresses</h3>
+<p>(type: string| advanced | default: <code></code>)</p>
+<p>List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs</p>
+<p>(values are comma-separated)</p>
 </div>
 </section>
-<section>
-<h2 id=remote_program>Section: remote program</h2>
-<div class="option advanced-false"><h3 id=remote_program-allow_resize_hosted_desktop>[remote program] Allow Resize Hosted Desktop</h3>
+<section class="">
+<h2 id=globals>Section: globals</h2>
+<div class="option advanced-True"><h3 id=globals-port>[globals] Port</h3>
+<p>(type: integer| advanced | default: <code>3389</code>)</p>
+<p>Port of RDP Proxy service.</p>
+<p>Service will be automatically restarted and active sessions will be disconnected.<br/>The port set in this field must not be already used, otherwise the service will not run.<br/>Changing the port number will prevent WALLIX Access Manager from working properly.</p>
+</div>
+<div class="option advanced-False"><h3 id=globals-handshake_timeout>[globals] Handshake Timeout</h3>
+<p>(type: seconds | default: <code>10</code>)</p>
+<p>Time out during RDP connection initialization.<br/>Increase the value if connection between workstations and Bastion can be slow.</p>
+</div>
+<div class="option advanced-False"><h3 id=globals-base_inactivity_timeout>[globals] Base Inactivity Timeout</h3>
+<p>(type: seconds | default: <code>900</code>)</p>
+<p>No automatic disconnection due to inactivity, timer is set on primary authentication.<br/>If value is between 1 and 30, then 30 is used.<br/>If value is set to 0, then inactivity timeout value is unlimited.</p>
+</div>
+<div class="option advanced-True"><h3 id=globals-authentication_timeout>[globals] Authentication Timeout</h3>
+<p>(type: seconds| advanced | default: <code>120</code>)</p>
+<p>Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).</p>
+</div>
+<div class="option advanced-False"><h3 id=globals-enable_transparent_mode>[globals] Enable Transparent Mode</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>The transparent mode allows to intercept network traffic for a target even when the user specifies the target's address directly, instead of using the proxy address.</p>
+</div>
+<div class="option advanced-False"><h3 id=globals-enable_close_box>[globals] Enable Close Box</h3>
 <p>(type: boolean | default: <code>True</code>)</p>
-<p>Allows resizing of a desktop session opened in a RemoteApp window.<br/>This happens when an RDP client opened in RemoteApp accesses a desktop target.</p>
+<p>Show close screen.<br/>This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request.</p>
+</div>
+<div class="option advanced-True"><h3 id=globals-close_timeout>[globals] Close Timeout</h3>
+<p>(type: seconds| advanced | default: <code>600</code>)</p>
+<p>Specifies the time to spend on the close box of proxy RDP before closing client window.<br/>⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects.</p>
+</div>
+<div class="option advanced-True"><h3 id=globals-enable_osd>[globals] Enable Osd</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+<p>Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval).<br/>The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed.</p>
+</div>
+<div class="option advanced-True"><h3 id=globals-enable_osd_display_remote_target>[globals] Enable Osd Display Remote Target</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+<p>Allow to show target device name with F12 during the session</p>
+</div>
+<div class="option advanced-False"><h3 id=globals-allow_using_multiple_monitors>[globals] Allow Using Multiple Monitors</h3>
+<p>(type: boolean | default: <code>True</code>)</p>
+<p>Sends the client screen count to the server. Not supported for VNC targets.<br/>Uncheck to disable multiple monitor.</p>
+</div>
+<div class="option advanced-False"><h3 id=globals-allow_scale_factor>[globals] Allow Scale Factor</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Sends Scale &amp; Layout configuration to the server.<br/>On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.<br/>⚠ Title bar detection via OCR will no longer work.</p>
+</div>
+<div class="option advanced-True"><h3 id=globals-bogus_refresh_rect>[globals] Bogus Refresh Rect</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+<p>Workaround option to fix some drawing issues with Windows Server 2012.<br/>Can be disabled when none of the targets are Windows Server 2012.</p>
+</div>
+<div class="option advanced-False"><h3 id=globals-rdp_keepalive_connection_interval>[globals] Rdp Keepalive Connection Interval</h3>
+<p>(type: milliseconds | default: <code>0</code>)</p>
+<p>Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.<br/>!!!May cause FreeRDP-based client to CRASH!!!<br/>Set to 0 to disable this feature.</p>
+</div>
+<div class="option advanced-True"><h3 id=globals-enable_ipv6>[globals] Enable Ipv6</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+<p>⚠ Service need to be manually restarted to take changes into account</p>
+<p>Enable primary connection on ipv6.</p>
 </div>
 </section>
-<section>
+<section class="">
+<h2 id=icap_server_down>Section: icap server down</h2>
+<div class="option advanced-False"><h3 id=icap_server_down-host>[icap server down] Host</h3>
+<p>(type: string | default: <code></code>)</p>
+<p>Ip or fqdn of ICAP server</p>
+</div>
+<div class="option advanced-False"><h3 id=icap_server_down-port>[icap server down] Port</h3>
+<p>(type: integer | default: <code>1344</code>)</p>
+<p>Port of ICAP server</p>
+</div>
+<div class="option advanced-False"><h3 id=icap_server_down-service_name>[icap server down] Service Name</h3>
+<p>(type: string | default: <code>avscan</code>)</p>
+<p>Service name on ICAP server</p>
+</div>
+<div class="option advanced-False"><h3 id=icap_server_down-tls>[icap server down] Tls</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>ICAP server uses tls</p>
+</div>
+<div class="option advanced-True"><h3 id=icap_server_down-enable_x_context>[icap server down] Enable X Context</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+<p>Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server</p>
+</div>
+<div class="option advanced-True"><h3 id=icap_server_down-filename_percent_encoding>[icap server down] Filename Percent Encoding</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+<p>Filename sent to ICAP as percent encoding</p>
+</div>
+</section>
+<section class="">
+<h2 id=icap_server_up>Section: icap server up</h2>
+<div class="option advanced-False"><h3 id=icap_server_up-host>[icap server up] Host</h3>
+<p>(type: string | default: <code></code>)</p>
+<p>Ip or fqdn of ICAP server</p>
+</div>
+<div class="option advanced-False"><h3 id=icap_server_up-port>[icap server up] Port</h3>
+<p>(type: integer | default: <code>1344</code>)</p>
+<p>Port of ICAP server</p>
+</div>
+<div class="option advanced-False"><h3 id=icap_server_up-service_name>[icap server up] Service Name</h3>
+<p>(type: string | default: <code>avscan</code>)</p>
+<p>Service name on ICAP server</p>
+</div>
+<div class="option advanced-False"><h3 id=icap_server_up-tls>[icap server up] Tls</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>ICAP server uses tls</p>
+</div>
+<div class="option advanced-True"><h3 id=icap_server_up-enable_x_context>[icap server up] Enable X Context</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+<p>Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server</p>
+</div>
+<div class="option advanced-True"><h3 id=icap_server_up-filename_percent_encoding>[icap server up] Filename Percent Encoding</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+<p>Filename sent to ICAP as percent encoding</p>
+</div>
+</section>
+<section class="advanced-True">
+<h2 id=internal_mod>Section: internal mod</h2>
+<div class="option advanced-True"><h3 id=internal_mod-enable_target_field>[internal mod] Enable Target Field</h3>
+<p>(type: boolean| advanced | default: <code>True</code>)</p>
+<p>Enable target edit field in login page. This target edit field allows to enter the target and the login separately.</p>
+</div>
+<div class="option advanced-True"><h3 id=internal_mod-keyboard_layout_proposals>[internal mod] Keyboard Layout Proposals</h3>
+<p>(type: string| advanced | default: <code>en-US, fr-FR, de-DE, ru-RU</code>)</p>
+<p>List of keyboard layouts available by the internal pages button located at bottom left of some internal pages (login, selector, etc).<br/>Possible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy</p>
+<p>(values are comma-separated)</p>
+</div>
+</section>
+<section class="">
 <h2 id=mod_rdp>Section: mod rdp</h2>
-<div class="option advanced-true"><h3 id=mod_rdp-rdp_compression>[mod rdp] Rdp Compression</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-rdp_compression>[mod rdp] Rdp Compression</h3>
 <p>(type: option| advanced | default: <code>4</code>)</p>
 <p>Specifies the highest RDP compression support available on server connection.</p>
 <table>
@@ -479,26 +604,26 @@ const setAdvanced = function(a, b) {
 <tr><td>4</td><td>RDP 6.1 bulk compression</td></tr>
 </table></p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-disconnect_on_logon_user_change>[mod rdp] Disconnect On Logon User Change</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-disconnect_on_logon_user_change>[mod rdp] Disconnect On Logon User Change</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-open_session_timeout>[mod rdp] Open Session Timeout</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-open_session_timeout>[mod rdp] Open Session Timeout</h3>
 <p>(type: seconds| advanced | default: <code>0</code>)</p>
 <p>The maximum time that the proxy will wait while attempting to logon to an RDP session.<br/>Value 0 is equivalent to 15 seconds.</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-persistent_disk_bitmap_cache>[mod rdp] Persistent Disk Bitmap Cache</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-persistent_disk_bitmap_cache>[mod rdp] Persistent Disk Bitmap Cache</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Persistent Disk Bitmap Cache on the mod side. If supported by the RDP server, the size of image caches will be increased</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-cache_waiting_list>[mod rdp] Cache Waiting List</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-cache_waiting_list>[mod rdp] Cache Waiting List</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-persist_bitmap_cache_on_disk>[mod rdp] Persist Bitmap Cache On Disk</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-persist_bitmap_cache_on_disk>[mod rdp] Persist Bitmap Cache On Disk</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
 <p>If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-client_address_sent>[mod rdp] Client Address Sent</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-client_address_sent>[mod rdp] Client Address Sent</h3>
 <p>(type: option| advanced | default: <code>0</code>)</p>
 <p>Client Address to send to target (in InfoPacket)</p>
 <table>
@@ -507,69 +632,58 @@ const setAdvanced = function(a, b) {
 <tr><td>2</td><td>Send user client address of front connexion</td></tr>
 </table></p>
 </div>
-<div class="option advanced-false"><h3 id=mod_rdp-auth_channel>[mod rdp] Auth Channel</h3>
+<div class="option advanced-False"><h3 id=mod_rdp-auth_channel>[mod rdp] Auth Channel</h3>
 <p>(type: string | default: <code>*</code>)</p>
 <p>Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.</p>
 </div>
-<div class="option advanced-false"><h3 id=mod_rdp-checkout_channel>[mod rdp] Checkout Channel</h3>
+<div class="option advanced-False"><h3 id=mod_rdp-checkout_channel>[mod rdp] Checkout Channel</h3>
 <p>(type: string | default: <code></code>)</p>
 <p>Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel.</p>
 </div>
-<div class="option advanced-false"><h3 id=mod_rdp-hide_client_name>[mod rdp] Hide Client Name</h3>
+<div class="option advanced-False"><h3 id=mod_rdp-hide_client_name>[mod rdp] Hide Client Name</h3>
 <p>(type: boolean | default: <code>True</code>)</p>
 <p>Do not transmit client machine name to RDP server.<br/>If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host.</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-use_license_store>[mod rdp] Use License Store</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-use_license_store>[mod rdp] Use License Store</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Stores CALs issued by the terminal servers.</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-bogus_ios_rdpdr_virtual_channel>[mod rdp] Bogus Ios Rdpdr Virtual Channel</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-bogus_ios_rdpdr_virtual_channel>[mod rdp] Bogus Ios Rdpdr Virtual Channel</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Workaround option to disable shared disk for RDP client on iOS platform only.</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-remoteapp_bypass_legal_notice_delay>[mod rdp] Remoteapp Bypass Legal Notice Delay</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-remoteapp_bypass_legal_notice_delay>[mod rdp] Remoteapp Bypass Legal Notice Delay</h3>
 <p>(type: milliseconds| advanced | default: <code>0</code>)</p>
 <p>Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.<br/>Set to 0 to disable this feature.</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-remoteapp_bypass_legal_notice_timeout>[mod rdp] Remoteapp Bypass Legal Notice Timeout</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-remoteapp_bypass_legal_notice_timeout>[mod rdp] Remoteapp Bypass Legal Notice Timeout</h3>
 <p>(type: milliseconds| advanced | default: <code>20000</code>)</p>
 <p>Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.<br/>Set to 0 to disable this feature.</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-log_only_relevant_clipboard_activities>[mod rdp] Log Only Relevant Clipboard Activities</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-log_only_relevant_clipboard_activities>[mod rdp] Log Only Relevant Clipboard Activities</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Some events such as 'Preferred DropEffect' have no particular meaning. This option allows you to exclude these types of events from the logs.</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-split_domain>[mod rdp] Split Domain</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-split_domain>[mod rdp] Split Domain</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
 <p>Force to split target domain and username with '@' separator.</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_rdp-session_shadowing_support>[mod rdp] Session Shadowing Support</h3>
+<div class="option advanced-True"><h3 id=mod_rdp-session_shadowing_support>[mod rdp] Session Shadowing Support</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Enables Session Shadowing Support.<br/>Session probe must be enabled on target connection policy.<br/>Target server must support "Remote Desktop Shadowing" feature.<br/>When enabled, users can share their RDP sessions with auditors who request it.</p>
 </div>
 </section>
-<section>
-<h2 id=session_probe>Section: session probe</h2>
-<div class="option advanced-true"><h3 id=session_probe-customize_executable_name>[session probe] Customize Executable Name</h3>
-<p>(type: boolean| advanced | default: <code>False</code>)</p>
-<p>If enabled, a string of random characters will be added to the name of the executable of Session Probe.<br/>The result could be: SesProbe-5420.exe<br/>Some other features automatically enable customization of the Session Probe executable name. Application Driver auto-deployment for example.</p>
-</div>
-<div class="option advanced-true"><h3 id=session_probe-allow_multiple_handshake>[session probe] Allow multiple handshakes</h3>
-<p>(type: boolean| advanced | default: <code>False</code>)</p>
-<p>If enabled, the RDP Proxy accepts to perform the handshake several times during the same RDP session. Otherwise, any new handshake attempt will interrupt the current session with the display of an alert message.</p>
-</div>
-</section>
-<section>
+<section class="">
 <h2 id=mod_vnc>Section: mod vnc</h2>
-<div class="option advanced-false"><h3 id=mod_vnc-clipboard_up>[mod vnc] Clipboard Up</h3>
+<div class="option advanced-False"><h3 id=mod_vnc-clipboard_up>[mod vnc] Clipboard Up</h3>
 <p>(type: boolean | default: <code>False</code>)</p>
 <p>Check this option to enable the upload clipboard (from client to server).<br/>This only support text data clipboard (not files).</p>
 </div>
-<div class="option advanced-false"><h3 id=mod_vnc-clipboard_down>[mod vnc] Clipboard Down</h3>
+<div class="option advanced-False"><h3 id=mod_vnc-clipboard_down>[mod vnc] Clipboard Down</h3>
 <p>(type: boolean | default: <code>False</code>)</p>
 <p>Check this option to enable the clipboard download (from server to client).This only support text data clipboard (not files).</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_vnc-encodings>[mod vnc] Encodings</h3>
+<div class="option advanced-True"><h3 id=mod_vnc-encodings>[mod vnc] Encodings</h3>
 <p>(type: string| advanced | default: <code></code>)</p>
 <p>Sets additional graphics encoding types that will be negotiated with the VNC server:</p>
 <table>
@@ -581,11 +695,11 @@ const setAdvanced = function(a, b) {
 <p>
 (values are comma-separated)</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_vnc-server_clipboard_encoding_type>[mod vnc] Server Clipboard Encoding Type</h3>
+<div class="option advanced-True"><h3 id=mod_vnc-server_clipboard_encoding_type>[mod vnc] Server Clipboard Encoding Type</h3>
 <p>(type: option| advanced | default: <code>latin1</code>)</p>
 <p>VNC server clipboard text data encoding type.</p>
 </div>
-<div class="option advanced-true"><h3 id=mod_vnc-bogus_clipboard_infinite_loop>[mod vnc] Bogus Clipboard Infinite Loop</h3>
+<div class="option advanced-True"><h3 id=mod_vnc-bogus_clipboard_infinite_loop>[mod vnc] Bogus Clipboard Infinite Loop</h3>
 <p>(type: option| advanced | default: <code>0</code>)</p>
 <p>The RDP clipboard is based on a token that indicates who owns data between server and client. However, some RDP clients, such as Freerpd, always appropriate this token. This conflicts with VNC, which also appropriates this token, causing clipboard data to be sent in loops.<br/>This option indicates the strategy to adopt in such situations.</p>
 <table>
@@ -595,9 +709,9 @@ const setAdvanced = function(a, b) {
 </table></p>
 </div>
 </section>
-<section>
+<section class="">
 <h2 id=ocr>Section: ocr</h2>
-<div class="option advanced-false"><h3 id=ocr-version>[ocr] Version</h3>
+<div class="option advanced-False"><h3 id=ocr-version>[ocr] Version</h3>
 <p>(type: option | default: <code>2</code>)</p>
 <p>Selects the OCR (Optical Character Recognition) version used to detect title bars when Session Probe is not running.<br/>Version 1 is a bit faster, but has a higher failure rate in character recognition.</p>
 <table>
@@ -605,22 +719,22 @@ const setAdvanced = function(a, b) {
 <tr><td>2</td><td>v2</td></tr>
 </table></p>
 </div>
-<div class="option advanced-false"><h3 id=ocr-locale>[ocr] Locale</h3>
+<div class="option advanced-False"><h3 id=ocr-locale>[ocr] Locale</h3>
 <p>(type: option | default: <code>latin</code>)</p>
 <p><table>
 <tr><td>latin</td><td>Recognizes Latin characters</td></tr>
 <tr><td>cyrillic</td><td>Recognizes Latin and Cyrillic characters</td></tr>
 </table></p>
 </div>
-<div class="option advanced-true"><h3 id=ocr-interval>[ocr] Interval</h3>
+<div class="option advanced-True"><h3 id=ocr-interval>[ocr] Interval</h3>
 <p>(type: 1/100 seconds| advanced | default: <code>100</code>)</p>
 <p>Time interval between 2 analyzes.<br/>Too low a value will affect session reactivity.</p>
 </div>
-<div class="option advanced-true"><h3 id=ocr-on_title_bar_only>[ocr] On Title Bar Only</h3>
+<div class="option advanced-True"><h3 id=ocr-on_title_bar_only>[ocr] On Title Bar Only</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Checks shape and color to determine if the text is on a title bar</p>
 </div>
-<div class="option advanced-true"><h3 id=ocr-max_unrecog_char_rate>[ocr] Max Unrecog Char Rate</h3>
+<div class="option advanced-True"><h3 id=ocr-max_unrecog_char_rate>[ocr] Max Unrecog Char Rate</h3>
 <p>(type: integer| advanced | default: <code>40</code>)</p>
 <p>Expressed in percentage,</p>
 <table>
@@ -629,9 +743,134 @@ const setAdvanced = function(a, b) {
 </table></p>
 </div>
 </section>
-<section>
+<section class="advanced-False">
+<h2 id=remote_program>Section: remote program</h2>
+<div class="option advanced-False"><h3 id=remote_program-allow_resize_hosted_desktop>[remote program] Allow Resize Hosted Desktop</h3>
+<p>(type: boolean | default: <code>True</code>)</p>
+<p>Allows resizing of a desktop session opened in a RemoteApp window.<br/>This happens when an RDP client opened in RemoteApp accesses a desktop target.</p>
+</div>
+</section>
+<section class="advanced-True">
+<h2 id=session_probe>Section: session probe</h2>
+<div class="option advanced-True"><h3 id=session_probe-customize_executable_name>[session probe] Customize Executable Name</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+<p>If enabled, a string of random characters will be added to the name of the executable of Session Probe.<br/>The result could be: SesProbe-5420.exe<br/>Some other features automatically enable customization of the Session Probe executable name. Application Driver auto-deployment for example.</p>
+</div>
+<div class="option advanced-True"><h3 id=session_probe-allow_multiple_handshake>[session probe] Allow multiple handshakes</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+<p>If enabled, the RDP Proxy accepts to perform the handshake several times during the same RDP session. Otherwise, any new handshake attempt will interrupt the current session with the display of an alert message.</p>
+</div>
+</section>
+<section class="advanced-False">
+<h2 id=theme>Section: theme</h2>
+<div class="option advanced-False"><h3 id=theme-enable_theme>[theme] Enable Theme</h3>
+<p>(type: boolean | default: <code>False</code>)</p>
+<p>Enable custom theme color configuration</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-logo>[theme] Logo</h3>
+<p>(type: string | default: <code>(REDEMPTION_CONFIG_THEME_LOGO</code>)</p>
+<p>Logo displayed when theme is enabled</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-bgcolor>[theme] Bgcolor</h3>
+<p>(type: RGB color | default: <code>#081F60</code>)</p>
+<p>Background color for window, label and button</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-fgcolor>[theme] Fgcolor</h3>
+<p>(type: RGB color | default: <code>#FFFFFF</code>)</p>
+<p>Foreground color for window, label and button</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-separator_color>[theme] Separator Color</h3>
+<p>(type: RGB color | default: <code>#CFD5EB</code>)</p>
+<p>Separator line color used with some widgets</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-focus_color>[theme] Focus Color</h3>
+<p>(type: RGB color | default: <code>#004D9C</code>)</p>
+<p>Background color used by buttons when they have focus</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-error_color>[theme] Error Color</h3>
+<p>(type: RGB color | default: <code>#FFFF00</code>)</p>
+<p>Text color for error messages. For example, an authentication error in the login</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-edit_bgcolor>[theme] Edit Bgcolor</h3>
+<p>(type: RGB color | default: <code>#FFFFFF</code>)</p>
+<p>Background color for editing field</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-edit_fgcolor>[theme] Edit Fgcolor</h3>
+<p>(type: RGB color | default: <code>#000000</code>)</p>
+<p>Foreground color for editing field</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-edit_focus_color>[theme] Edit Focus Color</h3>
+<p>(type: RGB color | default: <code>#004D9C</code>)</p>
+<p>Outline color for editing field that has focus</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-tooltip_bgcolor>[theme] Tooltip Bgcolor</h3>
+<p>(type: RGB color | default: <code>#000000</code>)</p>
+<p>Background color for tooltip</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-tooltip_fgcolor>[theme] Tooltip Fgcolor</h3>
+<p>(type: RGB color | default: <code>#FFFF9F</code>)</p>
+<p>Foreground color for tooltip</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-tooltip_border_color>[theme] Tooltip Border Color</h3>
+<p>(type: RGB color | default: <code>#000000</code>)</p>
+<p>Border color for tooltip</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-selector_line1_bgcolor>[theme] Selector Line1 Bgcolor</h3>
+<p>(type: RGB color | default: <code>#E9ECF6</code>)</p>
+<p>Background color for even rows in the selector widget</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-selector_line1_fgcolor>[theme] Selector Line1 Fgcolor</h3>
+<p>(type: RGB color | default: <code>#000000</code>)</p>
+<p>Foreground color for even rows in the selector widget</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-selector_line2_bgcolor>[theme] Selector Line2 Bgcolor</h3>
+<p>(type: RGB color | default: <code>#CFD5EB</code>)</p>
+<p>Background color for odd rows in the selector widget</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-selector_line2_fgcolor>[theme] Selector Line2 Fgcolor</h3>
+<p>(type: RGB color | default: <code>#000000</code>)</p>
+<p>Foreground color for odd rows in the selector widget</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-selector_focus_bgcolor>[theme] Selector Focus Bgcolor</h3>
+<p>(type: RGB color | default: <code>#004D9C</code>)</p>
+<p>Background color for the row that has focus in the selector widget</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-selector_focus_fgcolor>[theme] Selector Focus Fgcolor</h3>
+<p>(type: RGB color | default: <code>#FFFFFF</code>)</p>
+<p>Foreground color for the row that has focus in the selector widget</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-selector_selected_bgcolor>[theme] Selector Selected Bgcolor</h3>
+<p>(type: RGB color | default: <code>#4472C4</code>)</p>
+<p>Background color for the row that is selected in the selector widget but does not have focus</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-selector_selected_fgcolor>[theme] Selector Selected Fgcolor</h3>
+<p>(type: RGB color | default: <code>#FFFFFF</code>)</p>
+<p>Foreground color for the row that is selected in the selector widget but does not have focus</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-selector_label_bgcolor>[theme] Selector Label Bgcolor</h3>
+<p>(type: RGB color | default: <code>#4472C4</code>)</p>
+<p>Background color for name of filter fields in the selector widget</p>
+</div>
+<div class="option advanced-False"><h3 id=theme-selector_label_fgcolor>[theme] Selector Label Fgcolor</h3>
+<p>(type: RGB color | default: <code>#FFFFFF</code>)</p>
+<p>Foreground color for name of filter fields in the selector widget</p>
+</div>
+</section>
+<section class="advanced-True">
+<h2 id=translation>Section: translation</h2>
+<div class="option advanced-True"><h3 id=translation-login_language>[translation] Login Language</h3>
+<p>(type: option| advanced | default: <code>Auto</code>)</p>
+<p>Language used on the login page. When the user logs in, their user preference language is used.</p>
+<table>
+<tr><td>Auto</td><td>The language will be deduced according to the keyboard layout announced by the client</td></tr>
+<tr><td>EN</td><td>:</td></tr>
+<tr><td>FR</td><td>:</td></tr>
+</table></p>
+</div>
+</section>
+<section class="">
 <h2 id=video>Section: video</h2>
-<div class="option advanced-true"><h3 id=video-capture_flags>[video] Capture Flags</h3>
+<div class="option advanced-True"><h3 id=video-capture_flags>[video] Capture Flags</h3>
 <p>(type: integer| advanced | default: <code>11</code>)</p>
 <p>Specifies the type of data to be captured:</p>
 <table>
@@ -643,15 +882,15 @@ const setAdvanced = function(a, b) {
 <p>
 Note: values can be added (enable all: 0x1 + 0x2 + 0x8 = 0xb)</p>
 </div>
-<div class="option advanced-true"><h3 id=video-break_interval>[video] Break Interval</h3>
+<div class="option advanced-True"><h3 id=video-break_interval>[video] Break Interval</h3>
 <p>(type: seconds| advanced | default: <code>600</code>)</p>
 <p>Time between 2 wrm recording file.<br/>⚠ A value that is too small increases the disk space required for recordings.</p>
 </div>
-<div class="option advanced-true"><h3 id=video-enable_keyboard_log>[video] Enable Keyboard Log</h3>
+<div class="option advanced-True"><h3 id=video-enable_keyboard_log>[video] Enable Keyboard Log</h3>
 <p>(type: boolean| advanced | default: <code>True</code>)</p>
 <p>Show keyboard input event in meta file<br/>(Please see also "Keyboard input masking level" in "session_log".)</p>
 </div>
-<div class="option advanced-true"><h3 id=video-disable_clipboard_log>[video] Disable Clipboard Log</h3>
+<div class="option advanced-True"><h3 id=video-disable_clipboard_log>[video] Disable Clipboard Log</h3>
 <p>(type: integer| advanced | default: <code>0</code>)</p>
 <p>Disable clipboard log:</p>
 <table>
@@ -662,7 +901,7 @@ Note: values can be added (enable all: 0x1 + 0x2 + 0x8 = 0xb)</p>
 <p>
 Note: values can be added (disable all: 0x1 + 0x2 = 0x3)</p>
 </div>
-<div class="option advanced-true"><h3 id=video-disable_file_system_log>[video] Disable File System Log</h3>
+<div class="option advanced-True"><h3 id=video-disable_file_system_log>[video] Disable File System Log</h3>
 <p>(type: integer| advanced | default: <code>0</code>)</p>
 <p>Disable (redirected) file system log:</p>
 <table>
@@ -673,7 +912,7 @@ Note: values can be added (disable all: 0x1 + 0x2 = 0x3)</p>
 <p>
 Note: values can be added (disable all: 0x1 + 0x2 = 0x3)</p>
 </div>
-<div class="option advanced-true"><h3 id=video-wrm_color_depth_selection_strategy>[video] Wrm Color Depth Selection Strategy</h3>
+<div class="option advanced-True"><h3 id=video-wrm_color_depth_selection_strategy>[video] Wrm Color Depth Selection Strategy</h3>
 <p>(type: option| advanced | default: <code>1</code>)</p>
 <p>The method by which the proxy RDP establishes criteria on which to chosse a color depth for Session recording file (wrm):</p>
 <table>
@@ -681,7 +920,7 @@ Note: values can be added (disable all: 0x1 + 0x2 = 0x3)</p>
 <tr><td>1</td><td>16-bit</td></tr>
 </table></p>
 </div>
-<div class="option advanced-true"><h3 id=video-wrm_compression_algorithm>[video] Wrm Compression Algorithm</h3>
+<div class="option advanced-True"><h3 id=video-wrm_compression_algorithm>[video] Wrm Compression Algorithm</h3>
 <p>(type: option| advanced | default: <code>1</code>)</p>
 <p>The compression method of Session recording file (wrm):</p>
 <table>
@@ -690,19 +929,19 @@ Note: values can be added (disable all: 0x1 + 0x2 = 0x3)</p>
 <tr><td>2</td><td>Snappy: Faster than GZip, but files are less compressed</td></tr>
 </table></p>
 </div>
-<div class="option advanced-true"><h3 id=video-framerate>[video] Frame rate</h3>
+<div class="option advanced-True"><h3 id=video-framerate>[video] Frame rate</h3>
 <p>(type: integer| advanced | default: <code>5</code>)</p>
 <p>Maximum number of images per second for video generation.<br/>A higher value will produce smoother videos, but the file weight is higher and the generation time longer.</p>
 </div>
-<div class="option advanced-true"><h3 id=video-ffmpeg_options>[video] Ffmpeg Options</h3>
+<div class="option advanced-True"><h3 id=video-ffmpeg_options>[video] Ffmpeg Options</h3>
 <p>(type: string| advanced | default: <code>crf=35 preset=superfast</code>)</p>
 <p>FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264<br/>⚠ Some browsers and video decoders don't support crf=0</p>
 </div>
-<div class="option advanced-true"><h3 id=video-notimestamp>[video] Notimestamp</h3>
+<div class="option advanced-True"><h3 id=video-notimestamp>[video] Notimestamp</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
 <p>In the generated video of the session record traces, remove the top left banner with the timestamp.<br/>Can slightly speed up the video generation.</p>
 </div>
-<div class="option advanced-false"><h3 id=video-smart_video_cropping>[video] Smart Video Cropping</h3>
+<div class="option advanced-False"><h3 id=video-smart_video_cropping>[video] Smart Video Cropping</h3>
 <p>(type: option | default: <code>2</code>)</p>
 <p><table>
 <tr><td>0</td><td>Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop</td></tr>
@@ -710,251 +949,13 @@ Note: values can be added (disable all: 0x1 + 0x2 = 0x3)</p>
 <tr><td>2</td><td>When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session</td></tr>
 </table></p>
 </div>
-<div class="option advanced-true"><h3 id=video-play_video_with_corrupted_bitmap>[video] Play Video With Corrupted Bitmap</h3>
+<div class="option advanced-True"><h3 id=video-play_video_with_corrupted_bitmap>[video] Play Video With Corrupted Bitmap</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
 <p>Check this option will allow to play a video with corrupted Bitmap Update.</p>
 </div>
-<div class="option advanced-false"><h3 id=video-allow_rt_without_recording>[video] Allow Rt Without Recording</h3>
+<div class="option advanced-False"><h3 id=video-allow_rt_without_recording>[video] Allow Rt Without Recording</h3>
 <p>(type: boolean | default: <code>False</code>)</p>
 <p>Allow real-time view (4 eyes) without session recording enabled in the authorization</p>
 </div>
 </section>
-<section>
-<h2 id=icap_server_down>Section: icap server down</h2>
-<div class="option advanced-false"><h3 id=icap_server_down-host>[icap server down] Host</h3>
-<p>(type: string | default: <code></code>)</p>
-<p>Ip or fqdn of ICAP server</p>
-</div>
-<div class="option advanced-false"><h3 id=icap_server_down-port>[icap server down] Port</h3>
-<p>(type: integer | default: <code>1344</code>)</p>
-<p>Port of ICAP server</p>
-</div>
-<div class="option advanced-false"><h3 id=icap_server_down-service_name>[icap server down] Service Name</h3>
-<p>(type: string | default: <code>avscan</code>)</p>
-<p>Service name on ICAP server</p>
-</div>
-<div class="option advanced-false"><h3 id=icap_server_down-tls>[icap server down] Tls</h3>
-<p>(type: boolean | default: <code>False</code>)</p>
-<p>ICAP server uses tls</p>
-</div>
-<div class="option advanced-true"><h3 id=icap_server_down-enable_x_context>[icap server down] Enable X Context</h3>
-<p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server</p>
-</div>
-<div class="option advanced-true"><h3 id=icap_server_down-filename_percent_encoding>[icap server down] Filename Percent Encoding</h3>
-<p>(type: boolean| advanced | default: <code>False</code>)</p>
-<p>Filename sent to ICAP as percent encoding</p>
-</div>
-</section>
-<section>
-<h2 id=icap_server_up>Section: icap server up</h2>
-<div class="option advanced-false"><h3 id=icap_server_up-host>[icap server up] Host</h3>
-<p>(type: string | default: <code></code>)</p>
-<p>Ip or fqdn of ICAP server</p>
-</div>
-<div class="option advanced-false"><h3 id=icap_server_up-port>[icap server up] Port</h3>
-<p>(type: integer | default: <code>1344</code>)</p>
-<p>Port of ICAP server</p>
-</div>
-<div class="option advanced-false"><h3 id=icap_server_up-service_name>[icap server up] Service Name</h3>
-<p>(type: string | default: <code>avscan</code>)</p>
-<p>Service name on ICAP server</p>
-</div>
-<div class="option advanced-false"><h3 id=icap_server_up-tls>[icap server up] Tls</h3>
-<p>(type: boolean | default: <code>False</code>)</p>
-<p>ICAP server uses tls</p>
-</div>
-<div class="option advanced-true"><h3 id=icap_server_up-enable_x_context>[icap server up] Enable X Context</h3>
-<p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server</p>
-</div>
-<div class="option advanced-true"><h3 id=icap_server_up-filename_percent_encoding>[icap server up] Filename Percent Encoding</h3>
-<p>(type: boolean| advanced | default: <code>False</code>)</p>
-<p>Filename sent to ICAP as percent encoding</p>
-</div>
-</section>
-<section>
-<h2 id=internal_mod>Section: internal mod</h2>
-<div class="option advanced-true"><h3 id=internal_mod-enable_target_field>[internal mod] Enable Target Field</h3>
-<p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>Enable target edit field in login page. This target edit field allows to enter the target and the login separately.</p>
-</div>
-<div class="option advanced-true"><h3 id=internal_mod-keyboard_layout_proposals>[internal mod] Keyboard Layout Proposals</h3>
-<p>(type: string| advanced | default: <code>en-US, fr-FR, de-DE, ru-RU</code>)</p>
-<p>List of keyboard layouts available by the internal pages button located at bottom left of some internal pages (login, selector, etc).<br/>Possible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy</p>
-<p>(values are comma-separated)</p>
-</div>
-</section>
-<section>
-<h2 id=translation>Section: translation</h2>
-<div class="option advanced-true"><h3 id=translation-login_language>[translation] Login Language</h3>
-<p>(type: option| advanced | default: <code>Auto</code>)</p>
-<p>Language used on the login page. When the user logs in, their user preference language is used.</p>
-<table>
-<tr><td>Auto</td><td>The language will be deduced according to the keyboard layout announced by the client</td></tr>
-<tr><td>EN</td><td>:</td></tr>
-<tr><td>FR</td><td>:</td></tr>
-</table></p>
-</div>
-</section>
-<section>
-<h2 id=theme>Section: theme</h2>
-<div class="option advanced-false"><h3 id=theme-enable_theme>[theme] Enable Theme</h3>
-<p>(type: boolean | default: <code>False</code>)</p>
-<p>Enable custom theme color configuration</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-logo>[theme] Logo</h3>
-<p>(type: string | default: <code>(REDEMPTION_CONFIG_THEME_LOGO</code>)</p>
-<p>Logo displayed when theme is enabled</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-bgcolor>[theme] Bgcolor</h3>
-<p>(type: RGB color | default: <code>#081F60</code>)</p>
-<p>Background color for window, label and button</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-fgcolor>[theme] Fgcolor</h3>
-<p>(type: RGB color | default: <code>#FFFFFF</code>)</p>
-<p>Foreground color for window, label and button</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-separator_color>[theme] Separator Color</h3>
-<p>(type: RGB color | default: <code>#CFD5EB</code>)</p>
-<p>Separator line color used with some widgets</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-focus_color>[theme] Focus Color</h3>
-<p>(type: RGB color | default: <code>#004D9C</code>)</p>
-<p>Background color used by buttons when they have focus</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-error_color>[theme] Error Color</h3>
-<p>(type: RGB color | default: <code>#FFFF00</code>)</p>
-<p>Text color for error messages. For example, an authentication error in the login</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-edit_bgcolor>[theme] Edit Bgcolor</h3>
-<p>(type: RGB color | default: <code>#FFFFFF</code>)</p>
-<p>Background color for editing field</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-edit_fgcolor>[theme] Edit Fgcolor</h3>
-<p>(type: RGB color | default: <code>#000000</code>)</p>
-<p>Foreground color for editing field</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-edit_focus_color>[theme] Edit Focus Color</h3>
-<p>(type: RGB color | default: <code>#004D9C</code>)</p>
-<p>Outline color for editing field that has focus</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-tooltip_bgcolor>[theme] Tooltip Bgcolor</h3>
-<p>(type: RGB color | default: <code>#000000</code>)</p>
-<p>Background color for tooltip</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-tooltip_fgcolor>[theme] Tooltip Fgcolor</h3>
-<p>(type: RGB color | default: <code>#FFFF9F</code>)</p>
-<p>Foreground color for tooltip</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-tooltip_border_color>[theme] Tooltip Border Color</h3>
-<p>(type: RGB color | default: <code>#000000</code>)</p>
-<p>Border color for tooltip</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-selector_line1_bgcolor>[theme] Selector Line1 Bgcolor</h3>
-<p>(type: RGB color | default: <code>#E9ECF6</code>)</p>
-<p>Background color for even rows in the selector widget</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-selector_line1_fgcolor>[theme] Selector Line1 Fgcolor</h3>
-<p>(type: RGB color | default: <code>#000000</code>)</p>
-<p>Foreground color for even rows in the selector widget</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-selector_line2_bgcolor>[theme] Selector Line2 Bgcolor</h3>
-<p>(type: RGB color | default: <code>#CFD5EB</code>)</p>
-<p>Background color for odd rows in the selector widget</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-selector_line2_fgcolor>[theme] Selector Line2 Fgcolor</h3>
-<p>(type: RGB color | default: <code>#000000</code>)</p>
-<p>Foreground color for odd rows in the selector widget</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-selector_focus_bgcolor>[theme] Selector Focus Bgcolor</h3>
-<p>(type: RGB color | default: <code>#004D9C</code>)</p>
-<p>Background color for the row that has focus in the selector widget</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-selector_focus_fgcolor>[theme] Selector Focus Fgcolor</h3>
-<p>(type: RGB color | default: <code>#FFFFFF</code>)</p>
-<p>Foreground color for the row that has focus in the selector widget</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-selector_selected_bgcolor>[theme] Selector Selected Bgcolor</h3>
-<p>(type: RGB color | default: <code>#4472C4</code>)</p>
-<p>Background color for the row that is selected in the selector widget but does not have focus</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-selector_selected_fgcolor>[theme] Selector Selected Fgcolor</h3>
-<p>(type: RGB color | default: <code>#FFFFFF</code>)</p>
-<p>Foreground color for the row that is selected in the selector widget but does not have focus</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-selector_label_bgcolor>[theme] Selector Label Bgcolor</h3>
-<p>(type: RGB color | default: <code>#4472C4</code>)</p>
-<p>Background color for name of filter fields in the selector widget</p>
-</div>
-<div class="option advanced-false"><h3 id=theme-selector_label_fgcolor>[theme] Selector Label Fgcolor</h3>
-<p>(type: RGB color | default: <code>#FFFFFF</code>)</p>
-<p>Foreground color for name of filter fields in the selector widget</p>
-</div>
-</section>
-<section>
-<h2 id=debug>Section: debug</h2>
-<div class="option advanced-true"><h3 id=debug-capture>[debug] Capture</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- kbd / ocr when != 0</p>
-<p>(Wrm)<br/>- pointer             = 0x0004<br/>- primary_orders      = 0x0020<br/>- secondary_orders    = 0x0040<br/>- bitmap_update       = 0x0080<br/>- surface_commands    = 0x0100<br/>- bmp_cache           = 0x0200<br/>- internal_buffer     = 0x0400<br/>- sec_decrypted       = 0x1000</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-auth>[debug] Auth</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- variable = 0x0002<br/>- buffer   = 0x0040<br/>- dump     = 0x1000</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-session>[debug] Session</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- Log   = 0x01<br/>- Event = 0x02<br/>- Acl   = 0x04<br/>- Trace = 0x08</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-front>[debug] Front</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- basic_trace     = 0x00000001<br/>- basic_trace2    = 0x00000002<br/>- basic_trace3    = 0x00000004<br/>- basic_trace4    = 0x00000008<br/>- basic_trace5    = 0x00000020<br/>- graphic         = 0x00000040<br/>- channel         = 0x00000080<br/>- cache_from_disk = 0x00000400<br/>- bmp_info        = 0x00000800<br/>- global_channel  = 0x00002000<br/>- sec_decrypted   = 0x00004000<br/>- keymap          = 0x00008000</p>
-<p>(Serializer)<br/>- pointer             = 0x00040000<br/>- primary_orders      = 0x00200000<br/>- secondary_orders    = 0x00400000<br/>- bitmap_update       = 0x00800000<br/>- surface_commands    = 0x01000000<br/>- bmp_cache           = 0x02000000<br/>- internal_buffer     = 0x04000000<br/>- sec_decrypted       = 0x10000000</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-mod_rdp>[debug] Mod Rdp</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- basic_trace         = 0x00000001<br/>- connection          = 0x00000002<br/>- security            = 0x00000004<br/>- capabilities        = 0x00000008<br/>- license             = 0x00000010<br/>- asynchronous_task   = 0x00000020<br/>- graphics_pointer    = 0x00000040<br/>- graphics            = 0x00000080<br/>- input               = 0x00000100<br/>- rail_order          = 0x00000200<br/>- credssp             = 0x00000400<br/>- negotiation         = 0x00000800<br/>- cache_persister     = 0x00001000<br/>- fsdrvmgr            = 0x00002000<br/>- sesprobe_launcher   = 0x00004000<br/>- sesprobe_repetitive = 0x00008000<br/>- drdynvc             = 0x00010000<br/>- surfaceCmd          = 0x00020000<br/>- cache_from_disk     = 0x00040000<br/>- bmp_info            = 0x00080000<br/>- drdynvc_dump        = 0x00100000<br/>- printer             = 0x00200000<br/>- rdpsnd              = 0x00400000<br/>- channels            = 0x00800000<br/>- rail                = 0x01000000<br/>- sesprobe            = 0x02000000<br/>- cliprdr             = 0x04000000<br/>- rdpdr               = 0x08000000<br/>- rail_dump           = 0x10000000<br/>- sesprobe_dump       = 0x20000000<br/>- cliprdr_dump        = 0x40000000<br/>- rdpdr_dump          = 0x80000000</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-mod_vnc>[debug] Mod Vnc</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- basic_trace     = 0x00000001<br/>- keymap_stack    = 0x00000002<br/>- draw_event      = 0x00000004<br/>- input           = 0x00000008<br/>- connection      = 0x00000010<br/>- hextile_encoder = 0x00000020<br/>- cursor_encoder  = 0x00000040<br/>- clipboard       = 0x00000080<br/>- zrle_encoder    = 0x00000100<br/>- zrle_trace      = 0x00000200<br/>- hextile_trace   = 0x00000400<br/>- cursor_trace    = 0x00001000<br/>- rre_encoder     = 0x00002000<br/>- rre_trace       = 0x00004000<br/>- raw_encoder     = 0x00008000<br/>- raw_trace       = 0x00010000<br/>- copyrect_encoder= 0x00020000<br/>- copyrect_trace  = 0x00040000<br/>- keymap          = 0x00080000</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-mod_internal>[debug] Mod Internal</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- copy_paste != 0<br/>- client_execute = 0x01</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-sck_mod>[debug] Sck Mod</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- basic    = 0x0001<br/>- dump     = 0x0002<br/>- watchdog = 0x0004<br/>- meta     = 0x0008</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-sck_front>[debug] Sck Front</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- basic    = 0x0001<br/>- dump     = 0x0002<br/>- watchdog = 0x0004<br/>- meta     = 0x0008</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-compression>[debug] Compression</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- when != 0</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-cache>[debug] Cache</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- life       = 0x0001<br/>- persistent = 0x0200</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-ocr>[debug] Ocr</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>- when != 0</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-ffmpeg>[debug] Ffmpeg</h3>
-<p>(type: integer| advanced | default: <code>0</code>)</p>
-<p>Value passed to function av_log_set_level()<br/>See https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-config>[debug] Config</h3>
-<p>(type: boolean| advanced | default: <code>True</code>)</p>
-<p>Log unknown members or sections</p>
-</div>
-<div class="option advanced-true"><h3 id=debug-probe_client_addresses>[debug] Probe Client Addresses</h3>
-<p>(type: string| advanced | default: <code></code>)</p>
-<p>List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs</p>
-<p>(values are comma-separated)</p>
-</div>
 </section></body></html>
