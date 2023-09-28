@@ -190,9 +190,7 @@ REDEMPTION_DIAGNOSTIC_POP()
 
     void session_server_start(
         int incoming_sck, bool forkable, unsigned uid, unsigned gid,
-        char const* config_filename,
-        uint64_t minimal_memory_available_kibi,
-        SocketType socket_type, Font const& font)
+        Inifile & ini, SocketType socket_type, Font const& font)
     {
         union
         {
@@ -227,14 +225,14 @@ REDEMPTION_DIAGNOSTIC_POP()
         const bool source_is_localhost = source_ip.to_sv() == "127.0.0.1"sv
                                       || source_ip.to_sv() == "::1"sv;
 
-        auto parse_ini_and_prevent_early_log = [&](Inifile& ini){
-            configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), config_filename);
+        auto prevent_early_log
+          = source_is_localhost
+          || find_probe_client(ini.get<cfg::debug::probe_client_addresses>(),
+                               source_ip, is_ipv6);
 
-            return source_is_localhost
-                || find_probe_client(ini.get<cfg::debug::probe_client_addresses>(),
-                                     source_ip, is_ipv6);
-        };
-
+        const auto minimal_memory_available_kibi
+            = ini.get<cfg::globals::minimal_memory_available_before_connection_silently_closed>()
+            * 1024;
         if (!check_memory_available(minimal_memory_available_kibi)) {
             fd_set wfds;
             fd_set efds;
@@ -249,7 +247,7 @@ REDEMPTION_DIAGNOSTIC_POP()
 
             if (!source_is_localhost) {
                 Inifile ini;
-                if (!parse_ini_and_prevent_early_log(ini)) {
+                if (!prevent_early_log) {
                     LOG(LOG_ERR, "memory less than %" PRIu64 "MiB, connection rejected",
                         minimal_memory_available_kibi / 1024);
                 }
@@ -269,8 +267,6 @@ REDEMPTION_DIAGNOSTIC_POP()
             close(incoming_sck);
 
             Inifile ini;
-
-            bool const prevent_early_log = parse_ini_and_prevent_early_log(ini);
 
             if (ini.get<cfg::debug::session>()){
                 LOG(LOG_INFO, "Setting new session socket to %d", sck);
@@ -546,18 +542,26 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     REDEMPTION_DIAGNOSTIC_POP()
 
-    const auto minimal_memory_available_kibi
-      = ini.get<cfg::globals::minimal_memory_available_before_connection_silently_closed>()
-      * 1024;
+    auto reload_ini = [&, old_mtime = timespec{}, inifile = config_filename.c_str()] () mutable {
+        struct stat statbuf;
+        if (!stat(inifile, &statbuf)) {
+            if (old_mtime.tv_sec < statbuf.st_mtim.tv_sec
+             || (old_mtime.tv_sec == statbuf.st_mtim.tv_sec
+              && old_mtime.tv_nsec < statbuf.st_mtim.tv_nsec
+            )) {
+                old_mtime = statbuf.st_mtim;
+                configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), inifile);
+            }
+        }
+    };
+
     const EnableTransparentMode enable_transparent_mode
       = EnableTransparentMode(ini.get<cfg::globals::enable_transparent_mode>());
     const bool enable_ipv6 = ini.get<cfg::globals::enable_ipv6>();
-    unique_fd sck1 = interface_create_server(enable_ipv6,
-                                             s_addr,
+    unique_fd sck1 = interface_create_server(enable_ipv6, s_addr,
                                              ini.get<cfg::globals::port>(),
                                              enable_transparent_mode);
     const Font font(app_path(AppPath::DefaultFontFile));
-    const char* config_filename_s = config_filename.c_str();
 
     if (ini.get<cfg::websocket::enable_websocket>())
     {
@@ -567,16 +571,15 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
             enable_transparent_mode,
             enable_ipv6);
         const auto ws_sck = sck2.fd();
-        const bool use_tls = ini.get<cfg::websocket::use_tls>();
         two_server_loop(std::move(sck1), std::move(sck2), [&](int sck)
         {
+            reload_ini();
             auto const socket_type = (ws_sck == sck)
-                ? use_tls
+                ? ini.get<cfg::websocket::use_tls>()
                     ? SocketType::Wss
                     : SocketType::Ws
                 : SocketType::Tls;
-            session_server_start(sck, forkable, uid, gid, config_filename_s,
-                                 minimal_memory_available_kibi, socket_type, font);
+            session_server_start(sck, forkable, uid, gid, ini, socket_type, font);
             return true;
         });
     }
@@ -584,8 +587,8 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
     {
         unique_server_loop(std::move(sck1), [&](int sck)
         {
-            session_server_start(sck, forkable, uid, gid, config_filename_s,
-                                 minimal_memory_available_kibi, SocketType::Tls, font);
+            reload_ini();
+            session_server_start(sck, forkable, uid, gid, ini, SocketType::Tls, font);
             return true;
         });
     }
