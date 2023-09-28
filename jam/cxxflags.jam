@@ -729,17 +729,20 @@ rule flags ( properties * )
     }
     if $(x_unsafe_buffer_usage_warnings) != "default"
     {
-      if $(x_unsafe_buffer_usage_warnings) = "off"
+      if ! [ numbers.less $(JLN_NORMALIZED_CXX_COMP_VERSION) 1600000 ]
       {
-        flags +=
-          <cxxflags>"-Wno-unsafe-buffer-usage"
-        ;
-      }
-      else
-      {
-        flags +=
-          <cxxflags>"-Wunsafe-buffer-usage"
-        ;
+        if $(x_unsafe_buffer_usage_warnings) = "off"
+        {
+          flags +=
+            <cxxflags>"-Wno-unsafe-buffer-usage"
+          ;
+        }
+        else
+        {
+          flags +=
+            <cxxflags>"-Wunsafe-buffer-usage"
+          ;
+        }
       }
     }
     if $(x_diagnostics_show_template_tree) != "default"
