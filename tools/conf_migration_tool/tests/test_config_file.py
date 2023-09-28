@@ -361,11 +361,11 @@ class TestMigration(unittest.TestCase):
                 '\n'
                 '[all_target_mod]\n'
                 '\n'
-                '[mod_replay]\n'
-                'replay_path=/tmp/\n'
-                '\n'
                 '[session_probe]\n'
-                'exe_or_file=notepad\n')
+                'exe_or_file=notepad\n'
+                '\n'
+                '[mod_replay]\n'
+                'replay_path=/tmp/\n')
 
         os.remove(ini_filename)
         os.remove(f'{ini_filename}.{version}')
