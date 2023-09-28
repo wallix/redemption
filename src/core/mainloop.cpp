@@ -205,7 +205,7 @@ REDEMPTION_DIAGNOSTIC_POP()
         int const sck = accept(incoming_sck, &u.s, &sin_size);
         if (-1 == sck) {
             LOG(LOG_ERR, "Accept failed on socket %d (%s)", incoming_sck, strerror(errno));
-            _exit(1);
+            return;
         }
 
         const MonotonicTimePoint start_time = MonotonicTimePoint::clock::now();
@@ -214,7 +214,7 @@ REDEMPTION_DIAGNOSTIC_POP()
 
         if (auto error = source_ip_port.extract_of(u.s, sizeof(u.ss)).error) {
             LOG(LOG_ERR, "Cannot get ip and port of source : %s", error);
-            _exit(1);
+            return;
         }
 
         const auto source_ip = source_ip_port.ip_address();
