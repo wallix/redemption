@@ -246,7 +246,6 @@ REDEMPTION_DIAGNOSTIC_POP()
             close(sck);
 
             if (!source_is_localhost) {
-                Inifile ini;
                 if (!prevent_early_log) {
                     LOG(LOG_ERR, "memory less than %" PRIu64 "MiB, connection rejected",
                         minimal_memory_available_kibi / 1024);
@@ -265,8 +264,6 @@ REDEMPTION_DIAGNOSTIC_POP()
         // this would also likely have some effect on network ressources management
         // (that means the select() on ressources could be managed by that layer)
             close(incoming_sck);
-
-            Inifile ini;
 
             if (ini.get<cfg::debug::session>()){
                 LOG(LOG_INFO, "Setting new session socket to %d", sck);
