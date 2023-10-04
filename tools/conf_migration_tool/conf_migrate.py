@@ -135,7 +135,9 @@ class UpdateItem(NamedTuple):
     key: Optional[str] = None
     value_transformation: Optional[Callable[[str, Iterable[ConfigurationFragment]], str]] = None
     reason: str = ''
-    display_name: str = ''
+    old_display_name: str = ''
+    ini_only: bool = False
+    to_ini_only: bool = False
 
     def update(self, section: str, key: str, value: str,
                fragments: Iterable[ConfigurationFragment]) -> Tuple[str, str, str]:
@@ -150,20 +152,22 @@ class UpdateItem(NamedTuple):
 
 class RemoveItem(NamedTuple):
     reason: str = ''
-    display_name: str = ''
+    old_display_name: str = ''
+    ini_only: bool = False
 
 
 # for information only
-class HiddenItem(NamedTuple):
+class ToIniOnly(NamedTuple):
     reason: str = ''
-    display_name: str = ''
+    old_display_name: str = ''
 
 
 class MoveSection(NamedTuple):
     name: str
+    old_display_name: str = ''
 
 
-MigrationKeyOrderType = Union[RemoveItem, UpdateItem, HiddenItem]
+MigrationKeyOrderType = Union[RemoveItem, UpdateItem, ToIniOnly]
 MigrationSectionOrderType = Union[RemoveItem,
                                   MoveSection,
                                   Dict[str, MigrationKeyOrderType]]
@@ -458,7 +462,7 @@ migration_defs: List[MigrationType] = [
     }),
     (RedemptionVersion("9.1.71"), {
         'video': {
-            'replay_path': UpdateItem(section='mod_replay', reason='useless in Bastion'),
+            'replay_path': UpdateItem(section='mod_replay'),
         },
         'mod_rdp': {
             'session_probe_exe_or_file': UpdateItem(section='session_probe', key='exe_or_file'),
@@ -486,69 +490,97 @@ migration_defs: List[MigrationType] = [
     (RedemptionVersion("10.2.8"), {
         'video': {
             'capture_groupid': RemoveItem(
-                reason='old mechanism for the apache server to access the file'),
+                reason='Old mechanism for the apache server to access the file.'),
         },
     }),
     (RedemptionVersion("10.3.3"), {
-        'metrics': RemoveItem(reason='abandoned project'),
+        'metrics': RemoveItem(reason='Abandoned project.'),
     }),
     (RedemptionVersion("10.5.27"), {
+        'mod_rdp': {
+            'proxy_managed_drives': ToIniOnly(),
+        },
         'globals': {
-            'glyph_cache': RemoveItem(reason='is configurable with "Disabled Orders"'),
+            'glyph_cache': RemoveItem(reason='Is configurable with "Disabled Orders".'),
+            'authfile': ToIniOnly(),
+            'trace_type': ToIniOnly(reason='Has no effect because it is overwritten by other configurations at Bastion level.'),
         },
         'client': {
             'bogus_user_id': RemoveItem(
-                reason='a malformed packet containing UserId is now still supported'),
-            'keyboard_layout': UpdateItem(section='internal_mod'),
+                reason='A malformed packet containing UserId is now always supported.'),
+            'bogus_sc_net_size': RemoveItem(
+                reason='A malformed SCNet packet length is now always supported.'),
+            'bogus_number_of_fastpath_input_event': RemoveItem(
+                reason='Workaround for old version of freerdp client.'),
+            'bogus_neg_request': RemoveItem(
+                reason='Workaround for old version of jrdp client.'),
+            'keyboard_layout_proposals': UpdateItem(section='internal_mod'),
         },
         'video': {
-            'bogus_vlc_frame_rate': RemoveItem(reason='workaround for old version of VLC'),
+            'bogus_vlc_frame_rate': RemoveItem(reason='Workaround for old version of VLC.'),
         },
         'session_log': {
             'hide_non_printable_kbd_input': RemoveItem(
-                reason='no longer used and replaced by "Keyboard input masking level"'),
+                reason='No longer used and replaced by "Keyboard input masking level".'),
+        },
+        'mod_replay': {
+            'replay_path': ToIniOnly(reason='Useless in Bastion.'),
         },
     }),
     (RedemptionVersion("10.5.31"), {
         'mod_rdp': {
-            'allow_channels': UpdateItem(key='allowed_channels'),
-            'deny_channels': UpdateItem(key='denied_channels'),
+            'allow_channels': UpdateItem(key='allowed_channels', ini_only=True),
+            'deny_channels': UpdateItem(key='denied_channels', ini_only=True),
             'accept_monitor_layout_change_if_capture_is_not_started': RemoveItem(
-                reason='is now still accepted'),
+                reason='Is now always accepted.'),
+            'experimental_fix_too_long_cookie': RemoveItem(
+                reason='Is now always supported.'),
         },
         'globals': {
             'experimental_support_resize_session_during_recording': RemoveItem(
-                reason='is now still supported'),
+                reason='Is now always supported.'),
             'support_connection_redirection_during_recording': RemoveItem(
-                reason='is now still supported'),
+                reason='Is now always supported.'),
             'new_pointer_update_support': RemoveItem(
-                reason='is now still supported'),
-            'encryptionLevel': UpdateItem(section='client', key='encryption_level',
-                                          value_transformation=lambda *_: 'high'),
+                reason='Is now always supported.'),
+            'encryptionLevel': UpdateItem(
+                section='client', key='encryption_level',
+                value_transformation=lambda *_: 'high',
+                to_ini_only=True,
+                reason='Is now always high. Legacy encryption when External Security Protocol (TLS, CredSSP, etc) is disable.'),
+            'certificate_password': ToIniOnly(),
+            'experimental_enable_serializer_data_block_size_limit': ToIniOnly(),
+            'enable_bitmap_update': ToIniOnly(reason='Is now always supported.'),
+            'listen_address': ToIniOnly(),
+            'mod_recv_timeout': ToIniOnly(reason='Unused'),  # soon :D
+            'unicode_keyboard_event_support': ToIniOnly(reason='Is now always supported.'),
         },
         'client': {
             'disable_tsk_switch_shortcuts': RemoveItem(
-                reason='has no effect because it is overwritten by other configurations at Bastion level'),
+                reason='Has no effect because it is overwritten by other configurations at Bastion level.'),
             'performance_flags_default': RemoveItem(
-                reason='redundancy with options that add or remove flags'),
+                reason='Redundancy with options that add or remove flags.'),
             'performance_flags_force_present': UpdateItem(
                 key='force_performance_flags',
                 value_transformation=_merge_performance_flags_10_5_31,
-                reason='merger of "Performance Flags Force Present" and "Performance Flags Not Force Present"'),
+                reason='Merging of "Performance Flags Force Present" and "Performance Flags Not Force Present".'),
             'performance_flags_force_not_present': UpdateItem(
                 key='force_performance_flags',
                 value_transformation=_merge_performance_flags_10_5_31,
-                reason='merger of "Performance Flags Force Present" and "Performance Flags Not Force Present"'),
+                reason='Merging of "Performance Flags Force Present" and "Performance Flags Not Force Present".'),
+            'cache_waiting_list': ToIniOnly(),
+            'enable_nla': ToIniOnly(reason='Is now always supported.'),
+            'recv_timeout': ToIniOnly(reason='Unused'),  # soon :D
         },
         'session_log': {
             'enable_session_log': UpdateItem(
                 key='syslog_format',
                 value_transformation=_merge_session_log_format_10_5_31,
-                reason='merger of "Enable Session Log" and "Enable Arcsight Log"'),
+                reason='Merging of "Enable Session Log" and "Enable Arcsight Log".'),
             'enable_arcsight_log': UpdateItem(
                 key='syslog_format',
                 value_transformation=_merge_session_log_format_10_5_31,
-                reason='merger of "Enable Session Log" and "Enable Arcsight Log"'),
+                reason='Merging of "Enable Session Log" and "Enable Arcsight Log".'),
         },
         'video': {
             'disable_keyboard_log': UpdateItem(
@@ -560,16 +592,18 @@ migration_defs: List[MigrationType] = [
             'disable_file_system_log': UpdateItem(
                 value_transformation=lambda value, _: f'{(int(value) >> 1)}'),
             'png_interval': UpdateItem(
-                value_transformation=lambda value, _: f'{(int(value) * 100)}'),
+                value_transformation=lambda value, _: f'{(int(value) * 100)}',
+                to_ini_only=True),
+            'png_limit': ToIniOnly(reason='Old mechanism before Redis.'),
         }
     }),
 ]
 
 
-def remove_hidden_type(desc: MigrationDescType) -> MigrationDescType:
-    return {section: ({k: v for k, v in values_or_item.items() if type(v) != HiddenItem}
+def remove_ini_only_type(desc: MigrationDescType) -> MigrationDescType:
+    return {section: ({k: v for k, v in values_or_item.items() if type(v) != ToIniOnly}
                       if isinstance(values_or_item, dict) else values_or_item)
-            for section, values_or_item in desc.items() if type(values_or_item) != HiddenItem}
+            for section, values_or_item in desc.items() if type(values_or_item) != ToIniOnly}
 
 
 def migrate_file(version: RedemptionVersion,
@@ -581,7 +615,7 @@ def migrate_file(version: RedemptionVersion,
 
     is_changed = False
     for _, desc in migration_filter(migration_defs, version):
-        is_updated, fragments = migrate(fragments, remove_hidden_type(desc))
+        is_updated, fragments = migrate(fragments, remove_ini_only_type(desc))
         is_changed = is_changed or is_updated
 
     if is_changed:
@@ -596,6 +630,41 @@ def migrate_file(version: RedemptionVersion,
 
 
 def dump_json(defs: List[MigrationType]) -> None:
+    """
+    format: [
+        {
+            "version": str,
+            "data": {
+                <section_name>: RemoveItem | MoveSection | Values
+            }
+        }
+    ]
+    RemoveItem = {
+        "kind": "remove",
+        "reason": optional[str],
+        "oldDisplayName": optional[str],
+    }
+    MoveSection = {
+        "kind": "move",
+        "reason": optional[str],
+        "oldDisplayName": optional[str],
+    }
+    Values = {
+        "kind": "values",
+        "values": {
+            <value_name>: RemoveItem | UpdateItem,
+        }
+    }
+    UpdateItem = {
+        "kind": "update",
+        "newSection": optional[str],
+        "newKey": optional[str],
+        "reason": optional[str],
+        "oldDisplayName": optional[str],
+        "iniOnly": optional[bool],
+        "toIniOnly": optional[bool],
+    }
+    """
     def update_if(d, k, v):
         if v:
             d[k] = v
@@ -603,28 +672,31 @@ def dump_json(defs: List[MigrationType]) -> None:
     def remove_to_dict(item: RemoveItem):
         d = {'kind': 'remove'}
         update_if(d, 'reason', item.reason)
-        update_if(d, 'displayName', item.display_name)
+        update_if(d, 'oldDisplayName', item.old_display_name)
+        update_if(d, 'iniOnly', item.ini_only)
         return d
 
-    def hidden_to_dict(item: HiddenItem):
-        d = {'kind': 'hidden'}
+    def ini_only_to_dict(item: ToIniOnly):
+        d = {'kind': 'update', 'toIniOnly': True}
         update_if(d, 'reason', item.reason)
-        update_if(d, 'displayName', item.display_name)
+        update_if(d, 'oldDisplayName', item.old_display_name)
         return d
 
     def move_to_dict(item: MoveSection):
-        d = {'kind': 'move'}
-        d['reason'] = item.reason
+        d = {'kind': 'move', 'newName': item.name}
+        update_if(d, 'oldDisplayName', item.old_display_name)
         return d
 
     def update_to_dict(item: UpdateItem) -> Optional[Dict[str, str]]:
-        if not (item.section or item.key):
+        if not (item.section or item.key or item.to_ini_only):
             return None
         d = {'kind': 'update'}
         update_if(d, 'newSection', item.section)
         update_if(d, 'newKey', item.key)
         update_if(d, 'reason', item.reason)
-        update_if(d, 'displayName', item.display_name)
+        update_if(d, 'oldDisplayName', item.old_display_name)
+        update_if(d, 'iniOnly', item.ini_only)
+        update_if(d, 'toIniOnly', item.to_ini_only)
         return d
 
     def dict_to_dict(values: Dict[str, MigrationKeyOrderType]):
@@ -637,7 +709,7 @@ def dump_json(defs: List[MigrationType]) -> None:
 
     visitor = {
         RemoveItem: remove_to_dict,
-        HiddenItem: hidden_to_dict,
+        ToIniOnly: ini_only_to_dict,
         MoveSection: move_to_dict,
         UpdateItem: update_to_dict,
         dict: dict_to_dict,

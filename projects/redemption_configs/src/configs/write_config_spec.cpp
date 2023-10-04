@@ -30,6 +30,8 @@ int main()
 
             "autogen/include/configs/autogen/str_python_spec.hpp",
 
+            "autogen/doc/config.json",
+
             "../../tools/sesman/sesmanworker/sesmanbacktoselector.py",
 
             "autogen/doc/acl_dialog.txt",

@@ -20,16 +20,21 @@
 
 #pragma once
 
+#include "configs/generators/utils/json.hpp"
 #include "configs/generators/utils/write_template.hpp"
 #include "configs/generators/utils/multi_filename_writer.hpp"
 
 #include "configs/enumeration.hpp"
+
+#include "utils/sugar/int_to_chars.hpp"
 
 #include <iostream>
 #include <utility>
 
 
 namespace cfg_generators {
+
+using namespace std::string_view_literals;
 
 namespace cpp_enumeration_writer
 {
@@ -333,6 +338,64 @@ namespace cpp_enumeration_writer
             }
         }
     }
+
+    inline void write_json(std::ostream & out, type_enumerations const & enums)
+    {
+        std::string json;
+        json.reserve(1024);
+
+        auto append_quoted_if_not_empty = [&](chars_view json_key, std::string_view str) {
+            if (str.empty()) {
+                return;
+            }
+            str_append(json, ",\n  \""_av, json_key, "\": \""_av);
+            json_quoted(json, str);
+            json += '"';
+        };
+
+        chars_view cat_s[3];
+        cat_s[int(type_enumeration::Category::autoincrement)] = "autoincrement"_av;
+        cat_s[int(type_enumeration::Category::flags)] = "flags"_av;
+        cat_s[int(type_enumeration::Category::set)] = "set"_av;
+
+        json += "["sv;
+        chars_view json_sep1 = ""_av;
+        for (auto const& e : enums.enumerations_) {
+            str_append(json, json_sep1,
+                "{\n  \"name\": \""_av, e.name, "\""
+                ",\n  \"category\": \""_av, cat_s[int(e.cat)], '"'
+            );
+            append_quoted_if_not_empty("description"_av, e.desc);
+            append_quoted_if_not_empty("info"_av, e.info);
+            str_append(json, ",\n  \"values\": [\n"_av);
+
+            chars_view json_sep2 = "    "_av;
+            for (auto & v : e.values) {
+                if (v.exclude) {
+                    continue;
+                }
+                str_append(json, json_sep2, "{"
+                    "\n      \"name\": \""_av, v.name, "\","
+                    "\n      \"value\": "_av, int_to_decimal_chars(v.val)
+                );
+                if (!v.alias.empty()) {
+                    str_append(json, ",\n      \"alias\": \"", v.alias, '"');
+                }
+                if (!v.desc.empty()) {
+                    json += ",\n      \"description\": \""sv;
+                    json_quoted(json, v.desc);
+                    json += '"';
+                }
+                json += "\n    }"sv;
+                json_sep2 = ", "_av;
+            }
+            json += "\n  ]\n}";
+            json_sep1 = ", "_av;
+        }
+
+        json += "]\n"sv;
+        out << json;
+    }
 }
 
 template<class Writer>
@@ -345,6 +408,8 @@ int app_write_cpp_enumeration(Writer && writer, char const * progname)
             &cpp_enumeration_writer::write_type)
       .then("autogen/include/configs/autogen/enums_func_ini.tcc",
             &cpp_enumeration_writer::write_utility_ini_cpp)
+      .then("autogen/doc/enums.json",
+            &cpp_enumeration_writer::write_json)
     ;
     if (sw.err) {
         std::cerr << progname << ": " << sw.filename << ": " << (errno ? strerror(errno) : "unknown error") << "\n";

@@ -340,6 +340,7 @@ _.section("globals", [&]
         .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
+    // TODO remove ?
     _.member(MemberInfo{
         .name = "enable_bitmap_update",
         .value = value(true),
@@ -477,7 +478,7 @@ _.section("globals", [&]
 
     _.member(MemberInfo{
         .name = "minimal_memory_available_before_connection_silently_closed",
-        .value = value<types::megabytes<types::u64>>(100),
+        .value = value<types::mebibytes<types::u64>>(100),
         .spec = ini_only(no_acl),
         .desc = "0 for disabled.",
     });
@@ -529,20 +530,20 @@ _.section("client", [&]
     _.member(MemberInfo{
         .name = "force_performance_flags",
         .value = value<types::performance_flags>("-mouse_cursor_shadows,-theme"),
-        .spec = global_spec(no_acl, spec::advanced | spec::hex),
+        .spec = global_spec(no_acl, spec::advanced),
         .desc =
             "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n"
             "\n"
             "If a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n"
             "\n"
             "Available features:\n"
-            "  wallpaper\n"
-            "  menu_animations\n"
-            "  theme\n"
-            "  mouse_cursor_shadows\n"
-            "  cursor_blinking\n"
-            "  font_smoothing\n"
-            "  desktop_composition\n"
+            "  - wallpaper\n"
+            "  - menu_animations\n"
+            "  - theme\n"
+            "  - mouse_cursor_shadows\n"
+            "  - cursor_blinking\n"
+            "  - font_smoothing\n"
+            "  - desktop_composition\n"
     });
 
     _.member(MemberInfo{
@@ -2103,7 +2104,7 @@ _.section("file_verification", [&]
 
     _.member(MemberInfo{
         .name = "max_file_size_rejected",
-        .value = value<types::megabytes<types::u32>>(256),
+        .value = value<types::mebibytes<types::u32>>(256),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
         .desc =
             "⚠ This value affects the RAM used by the session.\n\n"

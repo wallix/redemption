@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "configs/attributes/spec.hpp"
 #include "configs/generators/utils/multi_filename_writer.hpp"
 #include "configs/generators/utils/write_template.hpp"
+#include "configs/generators/utils/json.hpp"
 #include "configs/enumeration.hpp"
 #include "configs/type_name.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -91,18 +92,19 @@ constexpr std::string_view dest_file_to_filename(DestSpecFile dest)
     return ""sv;
 }
 
-
 struct DataAsStrings
 {
     struct ConnectionPolicy
     {
         DestSpecFile dest_file;
         std::string py;
+        std::string json;
         bool forced;
     };
 
     std::string py;
     std::string ini;
+    std::string json = py;
     std::string cpp = py;
     std::string cpp_comment = cpp;
     std::vector<ConnectionPolicy> connection_policies {};
@@ -138,6 +140,7 @@ struct DataAsStrings
             r.py += c;
         }
         r.py += '"';
+        r.json = r.py;
 
         if (r.py.size() > 2) {
             r.cpp = r.py;
@@ -185,12 +188,18 @@ inline std::string cpp_expr_to_string(cpp::expr expr)
     return str_concat(end_raw_string, " << ("_av, expr.value, ") << "_av, begin_raw_string);
 }
 
+inline std::string cpp_expr_to_json(cpp::expr expr)
+{
+    return str_concat('"', expr.value, "\", \"cppExpr\": true");
+}
+
 inline DataAsStrings string_value_to_strings(cpp::expr expr)
 {
     auto s = cpp_expr_to_string(expr);
     return {
         .py = str_concat('"', s, '"'),
         .ini = std::move(s),
+        .json = cpp_expr_to_json(expr),
         .cpp = expr.value,
     };
 }
@@ -230,15 +239,18 @@ inline DataAsStrings binary_string_value_to_strings(sized_array_view<char, N> av
     *p++ = '}';
 
     constexpr std::size_t ini_len = N*2;
-    char ini[ini_len];
-    p = ini;
+    char ini_and_json[ini_len + 2];
+    p = ini_and_json;
+    *p++ = '"';
     for (char c : av) {
         p = int_to_fixed_hexadecimal_upper_chars(p, static_cast<unsigned char>(c));
     }
+    *p++ = '"';
 
     return {
         .py = std::string(py, py_len),
-        .ini = std::string(ini, ini_len),
+        .ini = std::string(ini_and_json + 1, ini_len),
+        .json = std::string(ini_and_json, ini_len + 2),
         .cpp = std::string(cpp, cpp_len),
     };
 }
@@ -252,6 +264,7 @@ inline DataAsStrings integer_value_to_strings(cpp::expr expr)
     return {
         .py = s,
         .ini = std::move(s),
+        .json = cpp_expr_to_json(expr),
         .cpp = expr.value,
     };
 }
@@ -297,6 +310,7 @@ inline DataAsStrings bool_value_to_strings(bool value)
         return {
             .py = "True",
             .ini = "1",
+            .json = "true",
             .cpp = "true",
         };
     }
@@ -304,6 +318,7 @@ inline DataAsStrings bool_value_to_strings(bool value)
         return {
             .py = "False",
             .ini = "0",
+            .json = "false",
             .cpp = "false",
         };
     }
@@ -315,6 +330,7 @@ inline DataAsStrings bool_value_to_strings(cpp::expr expr)
     return {
         .py = s,
         .ini = std::move(s),
+        .json = cpp_expr_to_json(expr),
         .cpp = expr.value,
     };
 }
@@ -365,6 +381,8 @@ struct ValueAsStrings
 {
     std::string prefix_spec_type;
     std::string cpp_type;
+    std::string_view json_type;
+    std::string json_extra_type = {};
     std::string spec_type = cpp_type;
     std::string acl_diag_type = cpp_type;
     std::size_t spec_str_buffer_size;
@@ -966,6 +984,53 @@ struct type_
     using type = T;
 };
 
+template<class T>
+std::string_view json_subtype(type_<T>)
+{
+    if constexpr (std::is_same_v<T, std::string>) {
+        return "string"sv;
+    }
+    else if constexpr (std::is_same_v<T, std::chrono::milliseconds>) {
+        return "milliseconds"sv;
+    }
+    else if constexpr (std::is_same_v<T, std::chrono::duration<unsigned, std::ratio<1, 100>>>) {
+        return "centiseconds"sv;
+    }
+    else if constexpr (std::is_same_v<T, std::chrono::duration<unsigned, std::ratio<1, 10>>>) {
+        return "deciseconds"sv;
+    }
+    else if constexpr (std::is_same_v<T, std::chrono::seconds>) {
+        return "seconds"sv;
+    }
+    else if constexpr (std::is_same_v<T, std::chrono::minutes>) {
+        return "minutes"sv;
+    }
+    else if constexpr (std::is_same_v<T, std::chrono::hours>) {
+        return "hours"sv;
+    }
+    else if constexpr (std::is_same_v<T, types::int_>) {
+        return "int"sv;
+    }
+    else if constexpr (std::is_same_v<T, types::unsigned_>) {
+        return "uint"sv;
+    }
+    else if constexpr (std::is_same_v<T, types::u8>) {
+        return "u8"sv;
+    }
+    else if constexpr (std::is_same_v<T, types::u16>) {
+        return "u16"sv;
+    }
+    else if constexpr (std::is_same_v<T, types::u32>) {
+        return "u32"sv;
+    }
+    else if constexpr (std::is_same_v<T, types::u64>) {
+        return "u64"sv;
+    }
+    else {
+        static_assert(!sizeof(T), "missing implementation");
+    }
+}
+
 template<class T, class V>
 ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
 {
@@ -973,6 +1038,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         return ValueAsStrings{
             .prefix_spec_type = "string("s,
             .cpp_type = "std::string"s,
+            .json_type = "str"sv,
             .spec_str_buffer_size = 0,
             .values = string_value_to_strings(value),
         };
@@ -981,6 +1047,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         return ValueAsStrings{
             .prefix_spec_type = "boolean("s,
             .cpp_type = "bool"s,
+            .json_type = "bool"sv,
             .spec_str_buffer_size = 5,
             .values = bool_value_to_strings(value),
             .ini_note = "type: boolean (0/no/false or 1/yes/true)"s,
@@ -990,6 +1057,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         return ValueAsStrings{
             .prefix_spec_type = str_concat("string(max="_av, path_max_as_str, ", "_av),
             .cpp_type = "::configs::spec_types::directory_path"s,
+            .json_type = "dirpath"sv,
             .spec_str_buffer_size = 0,
             .values = string_value_to_strings(value),
             .ini_note = str_concat("maxlen = "_av, path_max_as_str),
@@ -999,6 +1067,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         return ValueAsStrings{
             .prefix_spec_type = "ip_addr("s,
             .cpp_type = "std::string"s,
+            .json_type = "ipaddr"sv,
             .spec_type = "::configs::spec_types::ip"s,
             .spec_str_buffer_size = 0,
             .values = string_value_to_strings(value),
@@ -1008,6 +1077,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         return ValueAsStrings{
             .prefix_spec_type = "string("s,
             .cpp_type = "::configs::spec_types::rgb"s,
+            .json_type = "rgb"sv,
             .spec_str_buffer_size = 7,
             .values = color_value_to_strings(value),
             .spec_note = "in rgb format: hexadecimal (0x21AF21), #rgb (#2fa), #rrggbb (#22ffaa) or a <a href=\"https://en.wikipedia.org/wiki/Web_colors#Extended_colors\">named color</a> case insensitive (red, skyBlue, etc)"s,
@@ -1018,6 +1088,7 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         return ValueAsStrings{
             .prefix_spec_type = "string("s,
             .cpp_type = "FilePermissions"s,
+            .json_type = "FilePermissions"sv,
             .spec_str_buffer_size = integral_buffer_size_v<uint16_t>,
             .values = file_permission_value_to_strings(value),
             .spec_note = "in octal or symbolic mode format (as chmod Linux command)"s,
@@ -1027,8 +1098,9 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         return ValueAsStrings{
             .prefix_spec_type = "integer(min=0, "s,
             .cpp_type = std::string(type_name<T>()),
+            .json_type = json_subtype(type_<T>()),
             .spec_str_buffer_size = integral_buffer_size_v<T>,
-            // TODO hexconverter
+            // TODO hexadecimal when SpecAttributes::hex
             .values = integer_value_to_strings(value),
             .ini_note = "min = 0"s,
         };
@@ -1037,8 +1109,9 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         return ValueAsStrings{
             .prefix_spec_type = "integer("s,
             .cpp_type = std::string(type_name<T>()),
+            .json_type = json_subtype(type_<T>()),
             .spec_str_buffer_size = integral_buffer_size_v<T>,
-            // TODO hexconverter
+            // TODO hexadecimal when SpecAttributes::hex
             .values = integer_value_to_strings(value),
         };
     }
@@ -1047,10 +1120,13 @@ ValueAsStrings compute_value_as_strings(type_<T>, V const& value)
         return ValueAsStrings{
             .prefix_spec_type = {},
             .cpp_type = "std::vector<uint8_t>"s,
+            .json_type = "list"sv,
+            .json_extra_type = "\"subtype\": \"u8\""s,
             .spec_str_buffer_size = 0,
             .values = {
                 .py = {},
                 .ini = {},
+                .json = "\"\""s,
                 .cpp = {},
             },
         };
@@ -1068,32 +1144,35 @@ ValueAsStrings compute_value_as_strings(
     std::string_view note;
 
     if constexpr (Num == 1 && Denom == 1000) {
-        note = "in milliseconds";
+        note = "in milliseconds"sv;
     }
     else if constexpr (Num == 1 && Denom == 100) {
         static_assert(std::is_same_v<T, unsigned>);
-        note = "in 1/100 seconds";
+        note = "in 1/100 seconds"sv;
     }
     else if constexpr (Num == 1 && Denom == 10) {
         static_assert(std::is_same_v<T, unsigned>);
-        note = "in 1/10 seconds";
+        note = "in 1/10 seconds"sv;
     }
     else if constexpr (Num == 1 && Denom == 1) {
-        note = "in seconds";
+        note = "in seconds"sv;
     }
     else if constexpr (Num == 60 && Denom == 1) {
-        note = "in minutes";
+        note = "in minutes"sv;
     }
     else if constexpr (Num == 3600 && Denom == 1) {
-        note = "in hours";
+        note = "in hours"sv;
     }
     else {
         static_assert(!Num && !Denom, "missing implementation");
     }
 
+    using Duration = std::chrono::duration<T, std::ratio<Num, Denom>>;
+
     return ValueAsStrings{
         .prefix_spec_type = "integer(min=0, "s,
-        .cpp_type = std::string(type_name<std::chrono::duration<T, std::ratio<Num, Denom>>>()),
+        .cpp_type = std::string(type_name<Duration>()),
+        .json_type = json_subtype(type_<Duration>()),
         .spec_str_buffer_size = integral_buffer_size_v<T>,
         .values = integer_value_to_strings(value),
         .spec_note = std::string(note),
@@ -1108,6 +1187,8 @@ ValueAsStrings compute_value_as_strings(type_<types::fixed_string<N>>, V const& 
     return ValueAsStrings{
         .prefix_spec_type = str_concat("string(max="_av, d, ", "_av),
         .cpp_type = str_concat("char["_av, d, "+1]"_av),
+        .json_type = "str"sv,
+        .json_extra_type = str_concat("\"minlen\": "_av, d, ", \"maxlen\": "_av, d),
         .spec_type = "::configs::spec_types::fixed_string"s,
         .acl_diag_type = str_concat("std::string(maxlen="_av, d, ")"_av),
         .spec_str_buffer_size = 0,
@@ -1123,6 +1204,8 @@ ValueAsStrings compute_value_as_strings(type_<types::fixed_binary<N>>, V const& 
     return ValueAsStrings{
         .prefix_spec_type = str_concat("string(min="_av, d, ", max="_av, d, ", "_av),
         .cpp_type = str_concat("std::array<unsigned char, "_av, d, '>'),
+        .json_type = "bytes"sv,
+        .json_extra_type = str_concat("\"minlen\": "_av, d, ", \"maxlen\": "_av, d),
         .spec_type = "::configs::spec_types::fixed_binary"s,
         .spec_str_buffer_size = N * 2,
         .values = binary_string_value_to_strings<N>(value),
@@ -1137,6 +1220,8 @@ ValueAsStrings compute_value_as_strings(type_<types::list<T>>, V const& value)
     return ValueAsStrings{
         .prefix_spec_type = "string(",
         .cpp_type = "std::string",
+        .json_type = "list"sv,
+        .json_extra_type = str_concat("\"subtype\": \""_av, json_subtype(type_<T>()), '"'),
         .spec_type = str_concat("::configs::spec_types::list<"_av, type_name<T>(), '>'),
         .spec_str_buffer_size = 0,
         .values = string_value_to_strings(value),
@@ -1145,10 +1230,11 @@ ValueAsStrings compute_value_as_strings(type_<types::list<T>>, V const& value)
 }
 
 template<class T, class V>
-ValueAsStrings compute_value_as_strings(type_<types::megabytes<T>>, V const& value)
+ValueAsStrings compute_value_as_strings(type_<types::mebibytes<T>>, V const& value)
 {
     auto res = compute_value_as_strings(type_<T>(), value);
     auto note = "in megabytes"sv;
+    res.json_type = "mebibytes"sv;
     res.spec_note = std::string(note);
     res.ini_note = std::string(note);
     res.acl_diag_note = std::string(note);
@@ -1175,6 +1261,8 @@ ValueAsStrings compute_value_as_strings(type_<types::range<Int, min, max>>, V co
     return ValueAsStrings{
         .prefix_spec_type = str_concat("integer(min="_av, smin, ", max="_av, smax, ", "_av),
         .cpp_type = std::string(type_name<Int>()),
+        .json_type = json_subtype(type_<Int>()),
+        .json_extra_type = str_concat("\"min\": "_av, smin, ", \"max\": "_av, smax),
         .spec_type = str_concat("::configs::spec_types::range<"_av, type_name<Int>(), ", "_av, smin, ", "_av, smax, ">"_av),
         .spec_str_buffer_size = integral_buffer_size_v<Int>,
         // TODO hexconverter
@@ -1198,6 +1286,7 @@ inline ValueAsStrings compute_value_as_strings(type_<types::performance_flags>, 
     return ValueAsStrings{
         .prefix_spec_type = "string("s,
         .cpp_type = "RdpPerformanceFlags"s,
+        .json_type = "PerformanceFlags"sv,
         .spec_str_buffer_size = 0,
         .values = {
             .py = str_concat('"', value, '"'),
@@ -1287,6 +1376,8 @@ inline ValueAsStrings compute_string_enum_as_strings(uint64_t value, type_enumer
     return ValueAsStrings{
         .prefix_spec_type = enum_options_to_prefix_spec_type(e),
         .cpp_type = std::string(e.name),
+        .json_type = "enumStr"sv,
+        .json_extra_type = str_concat("\"subtype\": \""_av, e.name, '"'),
         .spec_type = "std::string"s,
         .acl_diag_type = "std::string"s,
         .spec_str_buffer_size = 0,
@@ -1418,6 +1509,8 @@ inline ValueAsStrings compute_integer_enum_as_strings(uint64_t value, type_enume
     return ValueAsStrings{
         .prefix_spec_type = enum_to_prefix_spec_type(e),
         .cpp_type = std::string(e.name),
+        .json_type = "enum",
+        .json_extra_type = str_concat("\"subtype\": \""_av, e.name, '"'),
         .spec_str_buffer_size = integral_buffer_size_v<uint64_t>,
         .values = {
             .py = std::string(d.sv()),
@@ -1493,6 +1586,17 @@ inline void check_policy(std::initializer_list<DestSpecFile> dest_files)
     }
 }
 
+inline DataAsStrings::ConnectionPolicy make_connpolicy_value(
+    DestSpecFile dest_file, ValueAsStrings&& value_as_string, bool forced)
+{
+    return DataAsStrings::ConnectionPolicy{
+        .dest_file = dest_file,
+        .py = std::move(value_as_string.values.py),
+        .json = std::move(value_as_string.values.json),
+        .forced = forced,
+    };
+}
+
 struct EnumAsString
 {
     type_enumerations const& tenums;
@@ -1507,14 +1611,14 @@ struct EnumAsString
         auto& e = tenums.get_enum<Enum>();
         auto ret = compute_string_enum_as_strings(safe_int(underlying_cast(value)), e);
 
-        (..., (ret.values.connection_policies.push_back({
+        (..., (ret.values.connection_policies.push_back(make_connpolicy_value(
             conn_policy_value.policy_type,
             compute_string_enum_as_strings(
                 safe_int(underlying_cast(Enum{conn_policy_value.value})),
                 e
-            ).values.py,
+            ),
             conn_policy_value.forced
-        })));
+        ))));
 
         ret.align_of = alignof(Enum);
         return ret;
@@ -1535,14 +1639,14 @@ struct ValueFromEnum
         auto& e = tenums.get_enum<Enum>();
         auto ret = compute_integer_enum_as_strings(safe_int(underlying_cast(value)), e);
 
-        (..., (ret.values.connection_policies.push_back({
+        (..., (ret.values.connection_policies.push_back(make_connpolicy_value(
             conn_policy_value.policy_type,
             compute_integer_enum_as_strings(
                 safe_int(underlying_cast(Enum{conn_policy_value.value})),
                 e
-            ).values.py,
+            ),
             conn_policy_value.forced
-        })));
+        ))));
 
         ret.align_of = alignof(Enum);
         return ret;
@@ -1562,11 +1666,11 @@ ValueAsStrings value(U const& value = T(), TConnPolicy const&... conn_policy_val
 
     auto ret = compute_value_as_strings(type_<ty>(), static_cast<minify_type_t<U> const&>(value));
 
-    (..., (ret.values.connection_policies.push_back({
+    (..., (ret.values.connection_policies.push_back(make_connpolicy_value(
         conn_policy_value.policy_type,
-        compute_value_as_strings(type_<ty>(), conn_policy_value.value).values.py,
+        compute_value_as_strings(type_<ty>(), conn_policy_value.value),
         conn_policy_value.forced
-    })));
+    ))));
 
     ret.align_of = alignof(ty);
     return ret;
@@ -1741,7 +1845,7 @@ struct Marker
 
 struct GeneratorConfig
 {
-    struct Spec
+    struct File
     {
         std::string filename;
         std::ofstream out {filename};
@@ -1781,12 +1885,14 @@ struct GeneratorConfig
         std::unordered_set<std::string> acl_mems {};
     };
 
-    Spec spec;
-    Spec ini;
+    File spec;
+    File ini;
+    File json;
     SesmanMap acl_map;
     SesmanDiag acl_diag;
     Policy policy;
     cpp_config_writer::CppConfigWriterBase cpp;
+    std::string json_values;
 
     struct SectionData
     {
@@ -1803,6 +1909,7 @@ struct GeneratorConfig
     GeneratorConfig(
         std::string ini_filename,
         std::string ini_spec_filename,
+        std::string json_filename,
         std::string acl_map_filename,
         std::string acl_diag_filename,
         std::string directory_spec,
@@ -1811,6 +1918,7 @@ struct GeneratorConfig
     )
     : spec{std::move(ini_spec_filename)}
     , ini{std::move(ini_filename)}
+    , json{std::move(json_filename)}
     , acl_map{std::move(acl_map_filename)}
     , acl_diag{std::move(acl_diag_filename)}
     , policy{std::move(directory_spec), std::move(acl_remap_filename)}
@@ -1858,10 +1966,10 @@ struct GeneratorConfig
             << "## Config file for RDP proxy.\n\n\n"
         ;
 
-        for (Spec* f : {&spec, &ini}) {
+        for (File* f : {&spec, &ini}) {
             for (std::string_view section_name : ordered_section_names) {
                 auto& section = sections.find(section_name)->second;
-                std::string& str = (f == &spec) ? section.global_spec : section.ini;
+                std::string_view str = (f == &spec) ? section.global_spec : section.ini;
                 if (!str.empty()) {
                     f->out << "[" << section.names.ini_name() << "]\n\n" << str;
                 }
@@ -1870,6 +1978,21 @@ struct GeneratorConfig
             f->out << end_raw_string << "\n";
             check_file(f->filename, f->out);
         }
+
+
+        json.out << "{\n\"sections\": [\n";
+        std::string_view json_sep = {};
+        for (std::string_view section_name : ordered_section_names) {
+            auto& section = sections.find(section_name)->second;
+            json.out << json_sep << "  {\"name\": \"" << section.names.all << "\"";
+            if (!section.names.connpolicy.empty()) {
+                json.out << ", \"connpolicyName\": \"" << section.names.connpolicy << "\"";
+            }
+            json.out << "}";
+            json_sep = ",\n";
+        }
+        json.out << "\n],\n  \"values\": [\n" << json_values << "\n]\n}\n";
+        check_file(json.filename, json.out);
 
 
         std::sort(acl_map.values_sent.begin(), acl_map.values_sent.end());
@@ -2199,6 +2322,69 @@ vault_transformation_rule = string(default="")
             add_to_acl_diag(mem_info.value.acl_diag_note);
             add_comment(acl_diag.buffer, marker.cut(), "    "sv);
         }
+
+        //
+        // json
+        //
+        {
+            str_append(json_values,
+                json_values.empty() ? ""_av : ","_av,
+                "\n    {"
+                "\n      \"section\": \""_av, section.names.all, "\","
+                "\n      \"name\": \""_av, mem_info.name.all, "\","
+                "\n      \"type\": \""_av, mem_info.value.json_type, "\","
+                "\n      \"value\": "_av, mem_info.value.values.json, ","
+                "\n      \"description\": \""_av
+            );
+            json_quoted(json_values, desc);
+            json_values += '"';
+            if (bool(mem_info.tags)) {
+                json_values += ",\n      \"tags\": ["sv;
+                if (bool(mem_info.tags & TagList::Debug)) json_values += "\"debug\","sv;
+                if (bool(mem_info.tags & TagList::Workaround)) json_values += "\"workaround\","sv;
+                json_values.back() = ']';
+            }
+            auto append_if_not_empty = [&](std::string_view json_key, std::string_view str) {
+                if (str.empty()) {
+                    return;
+                }
+                str_append(json_values, ",\n      \""_av, json_key, "\": \""_av, str, '"');
+            };
+            append_if_not_empty("connpolicySection"sv, mem_info.connpolicy_section);
+            append_if_not_empty("iniName"sv, names.ini);
+            append_if_not_empty("aclName"sv, names.acl);
+            append_if_not_empty("connpolicyName"sv, names.connpolicy);
+            append_if_not_empty("displayName"sv, names.display);
+            append_if_not_empty("imagePath"sv, mem_info.spec.image_path);
+            auto append_if_true = [&](std::string_view json_key, bool value) {
+                if (value) {
+                    str_append(json_values, ",\n      \""_av, json_key, "\": true"_av);
+                }
+            };
+            append_if_true("globalSpec", bool(mem_info.spec.dest & DestSpecFile::global_spec));
+            append_if_true("iniOnly", bool(mem_info.spec.dest & DestSpecFile::ini_only));
+            append_if_true("rdp", bool(mem_info.spec.dest & DestSpecFile::rdp));
+            append_if_true("vnc", bool(mem_info.spec.dest & DestSpecFile::vnc));
+            append_if_true("jh", bool(mem_info.spec.dest & DestSpecFile::jh));
+            append_if_true("aclToProxy", bool(mem_info.spec.acl_io & SesmanIO::acl_to_proxy));
+            append_if_true("ProxyToAcl", bool(mem_info.spec.acl_io & SesmanIO::proxy_to_acl));
+            append_if_true("logged", bool(mem_info.spec.attributes & SpecAttributes::logged));
+            append_if_true("hex", bool(mem_info.spec.attributes & SpecAttributes::hex));
+            append_if_true("advanced", bool(mem_info.spec.attributes & SpecAttributes::advanced));
+            append_if_true("iptables", bool(mem_info.spec.attributes & SpecAttributes::iptables));
+            append_if_true("password", bool(mem_info.spec.attributes & SpecAttributes::password));
+            append_if_true("image", bool(mem_info.spec.attributes & SpecAttributes::image));
+            append_if_true("external", bool(mem_info.spec.attributes & SpecAttributes::external));
+            append_if_true("adminkit", bool(mem_info.spec.attributes & SpecAttributes::adminkit));
+            append_if_true("resetBackToSelector", bool(mem_info.spec.reset_back_to_selector));
+            append_if_not_empty("logStategy", mem_info.spec.loggable == Loggable::No
+                ? ""sv : mem_info.spec.loggable == Loggable::Yes ? "1"sv : "2"sv);
+            if (!mem_info.value.json_extra_type.empty()) {
+                str_append(json_values, ",\n      "_av, mem_info.value.json_extra_type);
+            }
+            json_values += "\n    }"sv;
+        }
+
 
         //
         // connection policy

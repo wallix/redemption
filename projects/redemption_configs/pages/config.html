@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<title>Config</title>
+
+<style>
+body {
+  background: #fff;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+code {
+  background: #eee;
+  font-size: 1rem;
+}
+
+table {
+  border-collapse: collapse;
+}
+td, th {
+  border: 1px #333 solid;
+  padding: .2em .5em;
+}
+
+.enumInt > tbody > tr > td:first-child {
+  text-align: right;
+}
+
+h1, nav {
+  margin-left: .5em;
+  margin-right: .5em;
+}
+
+h2 {
+  background: #ddd;
+  padding-left: .3rem;
+  padding-right: .3rem;
+}
+
+h2 > a, h3 > a {
+  color: #e06d02;
+  text-decoration: none;
+}
+
+.option-group {
+  padding: 0;
+  border-top: 1px dashed black;
+}
+
+.option-group > h2 {
+  margin-bottom: 0;
+}
+
+.option {
+  padding: .4rem  1rem;
+}
+
+.option > * {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.option > h3 {
+  margin-left: 0rem;
+  margin-right: 0rem;
+}
+
+.option > table {
+  margin-left: 2rem;
+  margin-bottom: 1rem;
+}
+
+.option:nth-child(odd) {
+  background: #f6f6f6;
+}
+
+/*.option:hover {
+  outline: 2px solid #30AA64;
+  background: #2f22;
+}*/
+
+.description {
+  white-space: pre-wrap;
+  /* font-family: monospace; */
+  /* font-size: 1rem; */
+}
+
+.type-info {
+  color: #5f5f5f;
+}
+
+.history {
+  font-size: .85em;
+  opacity: 60%;
+}
+
+.hist-old-name {
+  color: #009;
+  background: #f3f3f3;
+}
+
+.hist-new-name {
+  color: #060;
+  background: #f3f3f3;
+}
+
+a:hover, a:active {
+  outline: 2px solid #30AA64;
+}
+
+nav {
+  column-count: auto;
+  /* column-width: ${cssColumnWith}em; */
+}
+
+.menu-group {
+  display: inline-grid;
+  border: 1px solid black;
+  padding: 0;
+  /* width: ${cssColumnWith}em; */
+}
+
+.menu-item {
+  display: block;
+  padding: .25em .5em;
+  color: #53e;
+  text-decoration: none;
+}
+
+.menu-item:first-child {
+  background: #e3e3e3;
+  font-weight: bold;
+}
+
+.name-info {
+  color: #666;
+  font-weight: normal;
+}
+
+.section-prefix {
+  opacity: 50%;
+}
+
+
+.tab-label > a {
+  display: block;
+  padding: .5em 1em;
+  color: #efefef;
+  background: #111;
+  cursor: pointer;
+  border: none;
+}
+
+.tab-label {
+  /* font-size: 1.2em; */
+  font-weight: bold;
+  display: inline-block;
+}
+
+.tab-label:hover {
+  background: #222;
+}
+
+.tab-current {
+  /* color: #caf3fe; */
+  border-left: .5em #f09d62 solid;
+  border-right: .5em #f09d62 solid;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content > p {
+  margin: 1em;
+}
+</style>
+
+</head>
+<body>
+
+<script>
+"strict";
+
+async function getJSON(path)
+{
+  const response = await fetch(path);
+  return await response.json();
+}
+
+const pushOption = (spec, sectionName, option) => {
+  const section = spec[sectionName] || {options: []};
+  spec[sectionName] = section;
+  section.options.push(option);
+};
+
+const default2k = (dict, k1, k2, value) => {
+  const d = dict[k1] || {};
+  dict[k1] = d;
+  d[k2] = value;
+}
+
+const computeDisplayName = (name) => {
+  // aaa_bbb_ccc -> Aaa Bbb Ccc
+  return name.replace(
+    /([a-zA-Z0-9]+)(_?)/g,
+    (_, s, sep) => `${s[0].toUpperCase()}${s.substr(1)}${sep ? ' ' : ''}`
+  );
+}
+
+const computeSpecInfo = (spec) => {
+  for (const sectionName in spec) {
+    const section = spec[sectionName];
+    let counter = 0;
+    for (const option of section.options) {
+      counter += option.advanced | 0;
+    }
+    section.displayName ??= sectionName; //.replaceAll('_', ' ');
+    section.countAdvanced = counter;
+    section.advancedClass
+      = (counter === 0) ? 'advanced-false'
+      : (counter === section.options.length) ? 'advanced-true'
+      : '';
+  }
+};
+
+const makeHtmlHistory = (migrate, spec, historyTransformations) => {
+  const histFragments = ['<p>ReDemPtion versions:</p><ul>'];
+  const histIniOnyFragments = ['<p>ReDemPtion versions:</p><ul>'];
+  for (const {version, data} of migrate.reverse()) {
+    const histGlobalSpec = [];
+    const histIniOnly = [];
+    for (const sectionName in data) {
+      const sectionData = data[sectionName];
+      const kind = sectionData.kind;
+      if (kind === 'values') {
+        const keys = sectionData.values;
+        for (const keyName in keys) {
+          const keyData = keys[keyName];
+          const kind = keyData.kind;
+          if (kind == 'update' && (keyData.newSection || keyData.newKey || keyData.toIniOnly)) {
+            const newSection = keyData.newSection || sectionName;
+            const newKey = keyData.newKey || keyName;
+            const previousKey = keyData.oldDisplayName || computeDisplayName(keyName);
+            const reason = formatReason(keyData.reason);
+            if (keyData.iniOnly || keyData.toIniOnly) {
+              const hist = keyData.iniOnly ? histIniOnly : histGlobalSpec;
+              hist.push(`<li>Remove <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${reason}</li>`);
+              continue;
+            }
+            else {
+              const displayedKey = spec[newSection]?.[newKey]?.displayName || computeDisplayName(newKey);
+              const msg = `<li>Move <span class="hist-old-name">[${sectionName}] ${previousKey}</span> to <span class="hist-new-name">[${newSection}] ${displayedKey}</span>${reason}</li>`;
+              if (keyData.iniOnly) {
+                histIniOnly.push(msg);
+                continue;
+              }
+              histGlobalSpec.push(msg);
+            }
+
+            const option = historyTransformations?.[newSection]?.[newKey];
+            if (!option) continue;
+            option.displayName = previousKey;
+            delete historyTransformations[newSection][newKey];
+            default2k(historyTransformations, sectionName, keyName, option);
+            option.history.push(
+              `${version}: Previous name is <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${reason}`
+            );
+          }
+          else if (kind === 'remove') {
+            const previousKey = keyData.oldDisplayName || computeDisplayName(keyName);
+            const hist = keyData.iniOnly ? histIniOnly : histGlobalSpec;
+            hist.push(`<li>Remove <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${formatReason(keyData.reason)}</li>`);
+          }
+        }
+      }
+      else if (kind === 'move') {
+        const reason = formatReason(sectionData.reason);
+        const oldDisplayName = sectionData.oldDisplayName || sectionName;
+        const msg = `<li>Move <span class="hist-old-name">[${oldDisplayName}]</span> to <span class="hist-old-name">[${sectionData.newName}]</span>${reason}</li>`;
+        if (sectionData.iniOnly) {
+          histIniOnly.push(msg);
+          continue;
+        }
+        histGlobalSpec.push(msg);
+        const currentSection = historyTransformations[sectionData.newName];
+        if (!currentSection) continue;
+        historyTransformations[sectionName] = currentSection;
+        delete historyTransformations[sectionData.newName];
+        for (const option of currentSection) {
+          option.history.push(
+            `${version}: Previous name is <span class="hist-old-name">[${oldDisplayName}] ${option.displayName}</span>${reason}`
+          );
+        }
+      }
+      else if (kind === 'remove') {
+        const oldDisplayName = sectionData.oldDisplayName || sectionName;
+        const hist = sectionData.iniOnly ? histIniOnly : histGlobalSpec;
+        hist.push(`<li>Remove <span class="hist-old-name">[${oldDisplayName}]</span>${formatReason(sectionData.reason)}</li>`);
+      }
+    }
+    if (histGlobalSpec.length) histFragments.push(`<li>${version}<ul>`, ...histGlobalSpec.sort(), '</ul></li>');
+    if (histIniOnly.length) histIniOnyFragments.push(`<li>${version}<ul>`, ...histIniOnly.sort(), '</ul></li>');
+  }
+  histFragments.push('</ul>');
+  histIniOnyFragments.push('</ul>');
+  return [histFragments.join(''), histIniOnyFragments.join('')];
+};
+
+const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy) => {
+  const htmlMenuFragments = ['<nav id="menu-section">'];
+  const htmlBodyFragments = [];
+
+  for (const sectionName in spec) {
+    const sectionData = spec[sectionName];
+    const sectionId = `${prefix}-${sectionName}`;
+    const advancedClass = sectionData.advancedClass ? `${prefix}-${sectionData.advancedClass}` : '';
+
+    const realSectionName = isConnpolicy && sections[sectionName]?.connpolicyName || sectionName;
+    htmlMenuFragments.push(`
+      <p class="menu-group ${advancedClass}">
+        <a class="menu-item ${advancedClass}" href="#${sectionId}">[${realSectionName}]</a>
+    `);
+
+    htmlBodyFragments.push(`
+      <section class="option-group ${advancedClass}">
+        <h2 id="${sectionId}"><a href="#${sectionId}">Section: ${sectionData.displayName}</a></h2>
+    `);
+
+    for (const option of sectionData.options) {
+      const optId = `${sectionId}-${option.name}`;
+      const advancedClass = option.advancedClass ? `${prefix}-${option.advancedClass}` : '';
+      htmlMenuFragments.push(
+        `<a class="menu-item ${advancedClass}" href="#${optId}">- ${option.displayName}</a>`
+      );
+
+      let extraDescription = '';
+      let type = option.type;
+      let description = option.description;
+      let preferHex = option.hex;
+      if (type === 'enumStr') {
+        type = option.subtype;
+        const e = enumDatas[type];
+        extraDescription = e.strValues;
+        description ??= e.description;
+      }
+      else if (type === 'enum') {
+        type = option.subtype;
+        const e = enumDatas[type];
+        extraDescription = e.intValues;
+        description ??= e.description;
+        preferHex = e.category === 'flags';
+      }
+      else if (type === 'list') {
+        type = `list of ${mappingDisplayedType[option.subtype] || option.subtype}`;
+      }
+      else {
+        type = mappingDisplayedType[type] || type;
+      }
+
+      description = description
+        ? htmlEscape(description).replaceAll('\n', '<br>')
+        : 'No description';
+
+      const defaultValue = preferHex
+        ? `<code>0x${option.value.toString(16)}</code>`
+        : toHumanTime(option.value, mappingHumanTime[type]);
+
+      let history = '';
+      if (option.history.length) {
+        history = `<ul class="history"><li>${option.history.join('</li><li>')}</li></ul>`;
+      }
+
+      htmlBodyFragments.push(`
+        <article class="option ${advancedClass}" id="${optId}">
+          <h3><a href="#${optId}"><span class="section-prefix">[${sectionData.displayName}]</span> ${option.displayName}</a></h3>
+          <p class="type-info">type: ${type} | ${option.advanced ? 'advanced | ' : ''}default: ${defaultValue}</p>
+          <p class="description">${description}</p>
+          ${extraDescription}
+          ${history}
+        </article>
+      `)
+    }
+
+    htmlMenuFragments.push('</p>');
+    htmlBodyFragments.push('</section>');
+  }
+
+  htmlMenuFragments.push('</nav>');
+
+  return [htmlMenuFragments.join(''), htmlBodyFragments.join('')];
+};
+
+const makeHtmlAdvancedMod = (name) => {
+  return `<p>Show options:
+    <label><input type="radio" name="${name}-advanced-mode" onchange="setAdvanced('${name}', true, false)">Advanced</label>
+    <label><input type="radio" name="${name}-advanced-mode" onclick="setAdvanced('${name}', false, true)">Normal</label>
+    <label><input type="radio" name="${name}-advanced-mode" onclick="setAdvanced('${name}', true, true)" checked>Both</label>
+  </p>`
+}
+
+const formatReason = (reason) => reason ? ` | ${reason}` : '';
+
+const htmlEscape = (s) => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;');
+
+let currentTab = '';
+const setTab = (newTab) => {
+  document.getElementById(`tab-${newTab}`).classList.add('tab-current');
+  document.getElementById(`tab-content-${newTab}`).style = 'display:block';
+  currentTab = newTab;
+};
+const tabSelect = (newTab) => {
+  document.getElementById(`tab-${currentTab}`).classList.remove('tab-current')
+  document.getElementById(`tab-content-${currentTab}`).style = '';
+  setTab(newTab);
+};
+
+const mappingDisplayedType = {
+  u8: 'number',
+  u16: 'number',
+  u32: 'number',
+  u64: 'number',
+  uint: 'number',
+  i8: 'number',
+  i16: 'number',
+  i32: 'number',
+  i64: 'number',
+  int: 'number',
+  str: 'string',
+  bool: 'boolean',
+  rgb: 'color',
+};
+
+const toHumanTime = (t, millisecondFactor) => {
+  if (!millisecondFactor || !t) return `<code>${t}</code>`;
+
+  // to milliseconds
+  let milliseconds = t * millisecondFactor;
+  const minutes = Math.floor(milliseconds / (1000 * 60));
+  milliseconds = milliseconds - minutes * 1000 * 60;
+  const seconds = Math.floor(milliseconds / 1000);
+  milliseconds = milliseconds - seconds * 1000;
+
+  let s = minutes ? `${minutes}min` : '';
+  if (seconds) {
+    s += `${seconds}s`;
+  }
+  if (milliseconds) {
+    s += `${milliseconds}ms`;
+  }
+  return `<code>${t}</code> (= ${s})`;
+};
+
+const mappingHumanTime = {
+  milliseconds: 1,
+  centiseconds: 10,
+  deciseconds: 100,
+  seconds: 1000,
+  minutes: 1000 * 60,
+};
+
+(async() => {
+  const [enums, config, migrate] = await Promise.all([
+    getJSON('enums.json'),
+    getJSON('config.json'),
+    getJSON('migrate.json'),
+  ]);
+
+  const enumDatas = {};
+  for (const e of enums) {
+    const intDesc = [];
+    const strDesc = [];
+
+    if (e.category !== 'flags') {
+      strDesc.push('<table class="enumStr"><th>Name</th><th>Description</th>');
+      for (const info of e.values) {
+        strDesc.push(`<tr><td>${info.name}</td><td>${info.description || ''}</td></tr>`);
+      }
+      strDesc.push('</table>');
+    }
+
+    intDesc.push('<table class="enumInt"><th>Value</th><th>Description</th>');
+    for (const info of e.values) {
+      const value = (e.category === 'flags') ? `0x${info.value.toString(16)}` : info.value;
+      intDesc.push(`<tr><td>${value}</td><td>${info.description || info.name}</td></tr>`);
+    }
+    intDesc.push('</table>');
+
+    enumDatas[e.name] = {
+      category: e.category,
+      values: e.values,
+      description: e.description,
+      intValues: intDesc.join(''),
+      strValues: strDesc.join(''),
+    };
+  }
+
+
+  const globalSpec = {};
+  const iniOnlySpec = {};
+  const rdpSpec = {};
+  const vncSpec = {};
+  const jhSpec = {};
+  const historyTransformations = {};
+
+  let optionNameMaxLen = 0;
+  for (const option of config.values) {
+    if (!option.displayName) {
+      option.displayName = computeDisplayName(option.name);
+    }
+    optionNameMaxLen = Math.max(optionNameMaxLen, option.displayName.length);
+    option.advancedClass = option.advanced ? 'advanced-true' : 'advanced-false';
+    if (option.globalSpec) pushOption(globalSpec, option.section, option);
+    if (option.iniOnly) pushOption(iniOnlySpec, option.section, option);
+    if (option.rdp) pushOption(rdpSpec, option.connpolicySection || option.section, option);
+    if (option.vnc) pushOption(vncSpec, option.connpolicySection || option.section, option);
+    if (option.jh) pushOption(jhSpec, option.connpolicySection || option.section, option);
+
+    const history = [];
+    option.history = history;
+
+    default2k(historyTransformations, option.section, option.name,
+      {displayName: option.displayName, history});
+  }
+
+  computeSpecInfo(globalSpec);
+  computeSpecInfo(iniOnlySpec);
+  computeSpecInfo(rdpSpec);
+  computeSpecInfo(vncSpec);
+  computeSpecInfo(jhSpec);
+
+  const sections = {}
+  for (const section of config.sections) {
+    sections[section.name] = section;
+  }
+
+  const cssColumnWith = Math.floor(optionNameMaxLen / 2.6);
+  const sheet = window.document.styleSheets[0];
+  sheet.insertRule(`nav { column-width: ${cssColumnWith}em }`, sheet.cssRules.length);
+  sheet.insertRule(`.menu-group { width: ${cssColumnWith}em }`, sheet.cssRules.length);
+
+  const [htmlHistory, htmlIniHistory]
+    = makeHtmlHistory(migrate, globalSpec, historyTransformations);
+  const [htmlMenu, htmlBody] = makeHtmlSpec(enumDatas, sections, globalSpec, 'g', false);
+  const [htmlIniMenu, htmlIniBody] = makeHtmlSpec(enumDatas, sections, iniOnlySpec, 'ini', false);
+  const htmlFragments = [
+    '<ul role="nav" id="tabs">',
+    '  <li class="tab-label" id="tab-g"><a href="#g" onclick="tabSelect(\'g\')">Global Configuration</a></li>',
+    '  <li class="tab-label" id="tab-rdp"><a href="#rdp" onclick="tabSelect(\'rdp\')">RDP Policy</a></li>',
+    '  <li class="tab-label" id="tab-vnc"><a href="#vnc" onclick="tabSelect(\'vnc\')">VNC Policy</a></li>',
+    '  <li class="tab-label" id="tab-jh"><a href="#jh" onclick="tabSelect(\'jh\')">JH Policy</a></li>',
+    '  <li class="tab-label" id="tab-ini"><a href="#ini" onclick="tabSelect(\'ini\')">Ini Only</a></li>',
+    '</ul>',
+
+    '<div id="tab-content-g" class="tab-content">',
+    makeHtmlAdvancedMod('g'),
+    htmlMenu, htmlHistory, htmlBody,
+    '</div>',
+
+    '<div id="tab-content-rdp" class="tab-content">',
+    makeHtmlAdvancedMod('rdp'),
+    ...makeHtmlSpec(enumDatas, sections, rdpSpec, 'rdp', true),
+    '</div>',
+
+    '<div id="tab-content-vnc" class="tab-content">',
+    makeHtmlAdvancedMod('vnc'),
+    ...makeHtmlSpec(enumDatas, sections, vncSpec, 'vnc', true),
+    '</div>',
+
+    '<div id="tab-content-jh" class="tab-content">',
+    makeHtmlAdvancedMod('jh'),
+    ...makeHtmlSpec(enumDatas, sections, jhSpec, 'jh', true),
+    '</div>',
+
+    '<div id="tab-content-ini" class="tab-content">',
+    htmlIniMenu, htmlIniHistory, htmlIniBody,
+    '</div>',
+  ];
+
+  document.body.insertAdjacentHTML('beforeend', htmlFragments.join(''));
+
+  let currentTab = 'g';
+  // move to anchor
+  if (location.hash) {
+    const id = location.hash.substr(1);
+    for (const name of ['g', 'rdp', 'vnc', 'jh', 'ini']) {
+      if (id.startsWith(name)) {
+        currentTab = name;
+        break;
+      }
+    }
+    setTab(currentTab);
+    document.getElementById(id)?.scrollIntoView();
+  }
+  else {
+    setTab(currentTab);
+  }
+})();
+</script>
+<script>
+const head = document.head;
+const styles = {};
+const setAdvanced = function(name, a, b) {
+  let style = styles[name];
+  if (!style) {
+    style = document.createElement("style");
+    head.appendChild(style);
+    styles[name] = style;
+  }
+
+  const style1 = a ? '' : `.${name}-advanced-true{ display: none }`;
+  const style2 = b ? '' : `.${name}-advanced-false{ display: none }`;
+  style.innerText = style1 + style2;
+}
+</script>
+
+</body>
+</html>

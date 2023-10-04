@@ -49,6 +49,9 @@ branch-pages:
   script:
     - mkdir "tmp"
     - tools/compute_doc_percent.sh "tmp"
+    - tools/conf_migration_tool/conf_migrate.py --dump=json > tmp/migrate.json
+    - cp projects/redemption_configs/autogen/doc/*.json tmp
+    - cp projects/redemption_configs/pages/config.html tmp/index.html
     - git config user.email "cipipeline@wallix.com"
     - git config user.name "CI Pipeline"
     - git remote remove "${GITLAB_REMOTE}" || true
@@ -64,8 +67,7 @@ branch-pages:
     - fi
   only:
     - future
-    - maintenance_bastion_9.0
-    - maintenance_bastion_10.0
+    # - maintenance_bastion_11.0
 
 
 build-project:
