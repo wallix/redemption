@@ -49,6 +49,12 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
 #endif
 
+// inline void ssl_debug_log(SSL* ssl)
+// {
+//     SSL_set_msg_callback(ssl, SSL_trace);
+//     SSL_set_msg_callback_arg(ssl, BIO_new_fp(stdout, 0));
+// }
+
 inline bool tls_ctx_print_error(char const* funcname, char const* error_msg, std::string* error_message)
 {
     LOG(LOG_ERR, "TLSContext::%s: %s", funcname, error_msg);
