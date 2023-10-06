@@ -238,7 +238,6 @@ namespace spec
     constexpr inline CheckedSpecAttributes<false, true> advanced {SpecAttributes::advanced};
     constexpr inline CheckedSpecAttributes<false, false> iptables {SpecAttributes::iptables};
     constexpr inline CheckedSpecAttributes<false, true> password {SpecAttributes::password};
-    constexpr inline CheckedSpecAttributes<false, true> acl_only {SpecAttributes::external};
     constexpr inline CheckedSpecAttributes<false, false> adminkit {SpecAttributes::adminkit};
     constexpr inline CheckedSpecAttributes<false, false> logged {SpecAttributes::logged};
 
@@ -305,6 +304,20 @@ namespace spec
             ResetBackToSelector::No,
             Loggable::No,
             checked_attr.image_path,
+        };
+    }
+
+    constexpr SpecInfo acl_connpolicy(
+        DestSpecFile dest,
+        CheckedSpecAttributes<false, true> checked_attr = {})
+    {
+        return {
+            dest,
+            SesmanIO(),
+            checked_attr.attr | SpecAttributes::external,
+            ResetBackToSelector::No,
+            Loggable::No,
+            std::string_view(),
         };
     }
 

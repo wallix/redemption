@@ -234,19 +234,6 @@ namespace
                         }
                     }
                 }
-                else if (auto unused_connpolicy = ini.unused_connpolicy_by_name(key)) {
-                    auto zkey = unused_connpolicy.name;
-                    auto value = reader.read_value(zkey).as_chars();
-                    if (bool(verbose & Verbose::variable)) {
-                        chars_view display_val
-                            = (unused_connpolicy.loggable_cat == configs::LoggableCategory::Loggable)
-                            ? value
-                            : ::get_printable_password(value, ini.get<cfg::debug::password>());
-
-                        LOG(LOG_INFO, "receiving '%s'='%.*s'",
-                            zkey, int(display_val.size()), display_val.data());
-                    }
-                }
                 else {
                     // copy key value because invalidated by reader.read_value()
                     char sauthid[256];

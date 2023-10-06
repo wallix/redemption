@@ -543,12 +543,10 @@ struct CppConfigWriterBase
 
     std::vector<SectionString> sections_parser;
     std::vector<std::string> authstrs;
-    std::vector<std::string> acl_and_connpolicy_strs;
     std::vector<Section> sections;
     std::vector<Member> members;
     std::vector<std::string> variables_acl;
     std::vector<Loggable> authid_policies;
-    std::vector<Loggable> acl_and_connpolicy_policies;
     std::size_t start_section_index = 0;
     std::vector<std::size_t> start_indexes;
     std::string cfg_values;
@@ -691,20 +689,6 @@ inline void write_str_authid_hpp(std::ostream & out_authid, CppConfigWriterBase&
     }
     out_authid <<
       "    };\n\n"
-      "\n"
-      "    // value from connpolicy but not used by the proxy\n"
-      "    constexpr zstring_view const unused_connpolicy_authstr[] = {\n"
-    ;
-    for (auto & authstr : writer.acl_and_connpolicy_strs) {
-        out_authid << "        \"" << authstr << "\"_zv,\n";
-    }
-    out_authid <<
-      "    };\n\n"
-      "\n"
-    ;
-    write_loggable_bitsets(
-        out_authid, writer.acl_and_connpolicy_policies, "unused_connpolicy_loggable");
-    out_authid <<
       "} // namespace configs\n"
     ;
 }
@@ -2151,7 +2135,7 @@ vault_transformation_rule = string(default="")
 
         bool const has_spec = bool(mem_info.spec.dest);
         bool const has_ini = has_spec
-                         && !bool(mem_info.spec.attributes & SpecAttributes::external);
+                          && !bool(mem_info.spec.attributes & SpecAttributes::external);
         bool const has_global_spec = bool(mem_info.spec.dest & DestSpecFile::global_spec);
         bool const has_connpolicy = contains_conn_policy(mem_info.spec.dest);
 
@@ -2301,12 +2285,7 @@ vault_transformation_rule = string(default="")
         if (has_acl) {
             auto add_to_acl_diag = Appender{acl_diag.buffer};
 
-            if (bool(mem_info.spec.attributes & SpecAttributes::external)) {
-                add_to_acl_diag("<acl only>"sv);
-            }
-            else {
-                add_to_acl_diag("cfg::"sv, section_names.acl_name(), "::"sv, names.all);
-            }
+            add_to_acl_diag("cfg::"sv, section_names.acl_name(), "::"sv, names.all);
 
             add_to_acl_diag(acl_direction, acl_network_name, "   ["sv);
 
@@ -2466,10 +2445,6 @@ vault_transformation_rule = string(default="")
                 cpp.out_body_parser_ << "        else if (key == \"" << ini_name << "\"_zv) {\n"
                 "            // ignored\n"
                 "        }\n";
-            }
-            else {
-                cpp.acl_and_connpolicy_policies.emplace_back(mem_info.spec.loggable);
-                cpp.acl_and_connpolicy_strs.emplace_back(acl_network_name);
             }
         }
         else {

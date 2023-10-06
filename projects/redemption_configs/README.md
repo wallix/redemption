@@ -2,7 +2,7 @@
     1. [MemberInfo.value](#memberinfovalue)
         1. [Special values](#special-values)
         2. [Special types](#special-types)
-        3. [Conn Policy Value](#conn-policy-value)
+        3. [Connection Policy Value](#connection-policy-value)
     2. [MemberInfo.spec](#memberinfospec)
         1. [SesmanInfo](#sesmaninfo)
             1. [ResetBackToSelector](#resetbacktoselector)
@@ -10,7 +10,7 @@
         2. [Ini only](#ini-only)
         3. [Global Spec](#global-spec)
             1. [Attributes](#attributes)
-        4. [Conn Policy](#conn-policy)
+        4. [Connection Policy](#connection-policy)
             1. [Attributes](#attributes-1)
 2. [Add/Modify enumeration type](#addmodify-enumeration-type)
 3. [Build](#build)
@@ -57,9 +57,9 @@ Edit `configs_specs/configs/specs/config_type.hpp` to add a new enumeration type
 - `types::rgb`: a color
 
 
-### Conn Policy Value
+### Connection Policy Value
 
-Configures `sesman` to send a different default depending on the connection policy selected. Used in conjunction with `MemberInfo.spec u003d connpolicy(...)`.
+Configures `sesman` to send a different default depending on the connection policy selected. Used in conjunction with `MemberInfo.spec = connpolicy(...)` or `MemberInfo.spec = acl_connpolicy(...)`.
 
 - `rdp_policy_value(value)`: Default value for rdp.spec
 - `vnc_policy_value(value)`: Default value for vnc.spec
@@ -115,24 +115,22 @@ Corresponds to the `.spec` file used by wallix bastion to display a GUI.
 - `spec::advanced`: mark as advanced option
 - `spec::iptables`: reconfigure iptable
 - `spec::password`: the field is a password
-- `spec::acl_only`: implicit with `spec::external`
 - `spec::restart_service`: the service will be restarted
 - `spec::logged`: logged the modifications
 - `spec::image(path)`: the field is an image
 
-### Conn Policy
+### Connection Policy
 
 Corresponds to the `.spec` file used by wallix bastion to display a GUI.
-Outside a bastion, this corresponds to `acl_to_proxy(ResetBackToSelector::No, ...)`.
 
-- `spec::connpolicy(vnc | rdp_and_jh | rdp_without_jh, Loggable, attributes = {})`
+- `spec::connpolicy(vnc | rdp_and_jh | rdp_without_jh, Loggable, attributes = {})`. Outside a bastion, this corresponds to `acl_to_proxy(ResetBackToSelector::No, ...)`.
+- `spec::acl_connpolicy(vnc | rdp_and_jh | rdp_without_jh, attributes = {})`. Value only in `.spec`, not sent to proxy.
 
 #### Attributes
 
 - `spec::hex`: preferably display as hex
 - `spec::advanced`: mark as advanced option
 - `spec::password`: the field is a password
-- `spec::acl_only`: the field is sent to the proxy only for logging
 
 
 

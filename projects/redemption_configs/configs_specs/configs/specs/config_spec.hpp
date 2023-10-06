@@ -113,6 +113,7 @@ using spec::no_acl;
 using spec::global_spec;
 using spec::ini_only;
 using spec::connpolicy;
+using spec::acl_connpolicy;
 
 auto L = Loggable::Yes;
 auto NL = Loggable::No;
@@ -1242,7 +1243,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
     _.member(MemberInfo{
         .name = "krb_armoring_account",
         .value = value<std::string>(),
-        .spec = connpolicy(rdp_without_jh, L, spec::advanced | spec::acl_only),
+        .spec = acl_connpolicy(rdp_without_jh, spec::advanced),
         .desc =
             "Account to be used for armoring Kerberos tickets. "
             "Must be in the form 'account_name@domain_name[@device_name]'. "
@@ -1253,21 +1254,21 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
     _.member(MemberInfo{
         .name = "krb_armoring_realm",
         .value = value<std::string>(),
-        .spec = connpolicy(rdp_without_jh, L, spec::advanced | spec::acl_only),
+        .spec = acl_connpolicy(rdp_without_jh, spec::advanced),
         .desc = "Realm to be used for armoring Kerberos tickets.",
     });
 
     _.member(MemberInfo{
         .name = "krb_armoring_fallback_user",
         .value = value<std::string>(),
-        .spec = connpolicy(rdp_without_jh, L, spec::advanced | spec::acl_only),
+        .spec = acl_connpolicy(rdp_without_jh, spec::advanced),
         .desc = "Fallback username to be used for armoring Kerberos tickets.",
     });
 
     _.member(MemberInfo{
         .name = "krb_armoring_fallback_password",
         .value = value<std::string>(),
-        .spec = connpolicy(rdp_without_jh, NL, spec::advanced | spec::acl_only),
+        .spec = acl_connpolicy(rdp_without_jh, spec::advanced),
         .desc = "Fallback password to be used for armoring Kerberos tickets.",
     });
 
@@ -1964,20 +1965,20 @@ _.section(names{"vnc_over_ssh"}, [&]
     _.member(MemberInfo{
         .name = "enable",
         .value = value(false),
-        .spec = connpolicy(vnc, L, spec::acl_only),
+        .spec = acl_connpolicy(vnc),
     });
 
     _.member(MemberInfo{
         .name = "ssh_port",
         .value = value<types::unsigned_>(22),
-        .spec = connpolicy(vnc, L, spec::acl_only),
+        .spec = acl_connpolicy(vnc),
         .desc = "Port to be used for SSH tunneling",
     });
 
     _.member(MemberInfo{
         .name = "tunneling_credential_source",
         .value = enum_as_string(VncTunnelingCredentialSource::scenario_account),
-        .spec = connpolicy(vnc, L, spec::acl_only),
+        .spec = acl_connpolicy(vnc),
         .desc =
             "static_login: Static values provided in \"Ssh login\" & \"Ssh password\" fields will be used to establish the SSH tunnel.\n"
             "scenario_account: Scenario account provided in \"Scenario account name\" field will be used to establish the SSH tunnel. (Recommended)"
@@ -1986,21 +1987,21 @@ _.section(names{"vnc_over_ssh"}, [&]
     _.member(MemberInfo{
         .name = "ssh_login",
         .value = value<std::string>(),
-        .spec = connpolicy(vnc, L, spec::acl_only),
+        .spec = acl_connpolicy(vnc),
         .desc = "Login to be used for SSH tunneling.",
     });
 
     _.member(MemberInfo{
         .name = "ssh_password",
         .value = value<std::string>(),
-        .spec = connpolicy(vnc, NL, spec::acl_only),
+        .spec = acl_connpolicy(vnc),
         .desc = "Password to be used for SSH tunneling.",
     });
 
     _.member(MemberInfo{
         .name = "scenario_account_name",
         .value = value<std::string>(),
-        .spec = connpolicy(vnc, L, spec::acl_only),
+        .spec = acl_connpolicy(vnc),
         .desc =
             "With the following syntax: \"account_name@domain_name[@[device_name]]\".\n"
             "\n"
@@ -2014,7 +2015,7 @@ _.section(names{"vnc_over_ssh"}, [&]
     _.member(MemberInfo{
         .name = "tunneling_type",
         .value = enum_as_string(VncTunnelingType::pxssh),
-        .spec = connpolicy(vnc, L, spec::acl_only | spec::advanced),
+        .spec = acl_connpolicy(vnc, spec::advanced),
         .desc = "Only for debugging purposes.",
     });
 });

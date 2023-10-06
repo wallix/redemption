@@ -1271,10 +1271,8 @@
       "value": "",
       "description": "Account to be used for armoring Kerberos tickets. Must be in the form 'account_name@domain_name[@device_name]'. If account resolution succeeds the username and password associated with this account will be used; otherwise the below fallback username and password will be used instead.",
       "rdp": true,
-      "aclToProxy": true,
       "advanced": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "mod_rdp",
@@ -1283,10 +1281,8 @@
       "value": "",
       "description": "Realm to be used for armoring Kerberos tickets.",
       "rdp": true,
-      "aclToProxy": true,
       "advanced": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "mod_rdp",
@@ -1295,10 +1291,8 @@
       "value": "",
       "description": "Fallback username to be used for armoring Kerberos tickets.",
       "rdp": true,
-      "aclToProxy": true,
       "advanced": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "mod_rdp",
@@ -1307,7 +1301,6 @@
       "value": "",
       "description": "Fallback password to be used for armoring Kerberos tickets.",
       "rdp": true,
-      "aclToProxy": true,
       "advanced": true,
       "external": true
     },
@@ -2832,9 +2825,7 @@
       "value": false,
       "description": "",
       "vnc": true,
-      "aclToProxy": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "vnc_over_ssh",
@@ -2843,9 +2834,7 @@
       "value": 22,
       "description": "Port to be used for SSH tunneling",
       "vnc": true,
-      "aclToProxy": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "vnc_over_ssh",
@@ -2854,9 +2843,7 @@
       "value": "scenario_account",
       "description": "static_login: Static values provided in \"Ssh login\" & \"Ssh password\" fields will be used to establish the SSH tunnel.\nscenario_account: Scenario account provided in \"Scenario account name\" field will be used to establish the SSH tunnel. (Recommended)",
       "vnc": true,
-      "aclToProxy": true,
       "external": true,
-      "logStategy": "1",
       "subtype": "VncTunnelingCredentialSource"
     },
     {
@@ -2866,9 +2853,7 @@
       "value": "",
       "description": "Login to be used for SSH tunneling.",
       "vnc": true,
-      "aclToProxy": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "vnc_over_ssh",
@@ -2877,7 +2862,6 @@
       "value": "",
       "description": "Password to be used for SSH tunneling.",
       "vnc": true,
-      "aclToProxy": true,
       "external": true
     },
     {
@@ -2887,9 +2871,7 @@
       "value": "",
       "description": "With the following syntax: \"account_name@domain_name[@[device_name]]\".\n\nSyntax for using global domain scenario account:\n  \"account_name@global_domain_name\"\n\nSyntax for using local domain scenario account (with automatic device name deduction):\n  \"account_name@local_domain_name@\"",
       "vnc": true,
-      "aclToProxy": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "vnc_over_ssh",
@@ -2898,10 +2880,8 @@
       "value": "pxssh",
       "description": "Only for debugging purposes.",
       "vnc": true,
-      "aclToProxy": true,
       "advanced": true,
       "external": true,
-      "logStategy": "1",
       "subtype": "VncTunnelingType"
     },
     {

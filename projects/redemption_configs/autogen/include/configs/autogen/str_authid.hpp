@@ -255,27 +255,4 @@ namespace configs
         "login_language"_zv,
     };
 
-
-    // value from connpolicy but not used by the proxy
-    constexpr zstring_view const unused_connpolicy_authstr[] = {
-        "mod_rdp:krb_armoring_account"_zv,
-        "mod_rdp:krb_armoring_realm"_zv,
-        "mod_rdp:krb_armoring_fallback_user"_zv,
-        "mod_rdp:krb_armoring_fallback_password"_zv,
-        "vnc_over_ssh:enable"_zv,
-        "vnc_over_ssh:ssh_port"_zv,
-        "vnc_over_ssh:tunneling_credential_source"_zv,
-        "vnc_over_ssh:ssh_login"_zv,
-        "vnc_over_ssh:ssh_password"_zv,
-        "vnc_over_ssh:scenario_account_name"_zv,
-        "vnc_over_ssh:tunneling_type"_zv,
-    };
-
-
-constexpr U64BitFlags<1> unused_connpolicy_loggable{ {
-  0b0000000000000000000000000000000000000000000000000000011011110111
-},
-{
-  0b0000000000000000000000000000000000000000000000000000000000000000
-} };
 } // namespace configs

@@ -234,20 +234,6 @@ public:
 
     FieldReference get_acl_field_by_name(chars_view name) noexcept;
 
-    struct UnusedConnPolicy
-    {
-        bool has_value;
-        LoggableCategory loggable_cat;
-        zstring_view name;
-
-        explicit operator bool () const noexcept
-        {
-            return this->has_value;
-        }
-    };
-
-    UnusedConnPolicy unused_connpolicy_by_name(chars_view name) noexcept;
-
     void clear_acl_fields_changed() noexcept
     {
         this->to_send_index.clear();

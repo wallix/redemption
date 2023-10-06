@@ -148,14 +148,6 @@ cfg::mod_rdp::forward_client_build_number ⇐ mod_rdp:forward_client_build_numbe
     Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
 cfg::mod_rdp::bogus_monitor_layout_treatment ⇐ mod_rdp:bogus_monitor_layout_treatment   [bool]
     To resolve the session freeze issue with Windows 7/Windows Server 2008 target.
-<acl only> ⇐ mod_rdp:krb_armoring_account   [std::string]
-    Account to be used for armoring Kerberos tickets. Must be in the form 'account_name@domain_name[@device_name]'. If account resolution succeeds the username and password associated with this account will be used; otherwise the below fallback username and password will be used instead.
-<acl only> ⇐ mod_rdp:krb_armoring_realm   [std::string]
-    Realm to be used for armoring Kerberos tickets.
-<acl only> ⇐ mod_rdp:krb_armoring_fallback_user   [std::string]
-    Fallback username to be used for armoring Kerberos tickets.
-<acl only> ⇐ mod_rdp:krb_armoring_fallback_password   [std::string]
-    Fallback password to be used for armoring Kerberos tickets.
 cfg::mod_rdp::effective_krb_armoring_user ⇐ effective_krb_armoring_user   [std::string]
     Effective username to be used for armoring Kerberos tickets.
 cfg::mod_rdp::effective_krb_armoring_password ⇐ effective_krb_armoring_password   [std::string]
@@ -531,26 +523,6 @@ cfg::crypto::sign_key ⇐ sign_key   [std::array<unsigned char, 32>]
     in hexadecimal format
 
 
-<acl only> ⇐ vnc_over_ssh:enable   [bool]
-<acl only> ⇐ vnc_over_ssh:ssh_port   [unsigned]
-    Port to be used for SSH tunneling
-<acl only> ⇐ vnc_over_ssh:tunneling_credential_source   [VncTunnelingCredentialSource ⇐ std::string]
-    static_login: Static values provided in "Ssh login" & "Ssh password" fields will be used to establish the SSH tunnel.
-    scenario_account: Scenario account provided in "Scenario account name" field will be used to establish the SSH tunnel. (Recommended)
-<acl only> ⇐ vnc_over_ssh:ssh_login   [std::string]
-    Login to be used for SSH tunneling.
-<acl only> ⇐ vnc_over_ssh:ssh_password   [std::string]
-    Password to be used for SSH tunneling.
-<acl only> ⇐ vnc_over_ssh:scenario_account_name   [std::string]
-    With the following syntax: "account_name@domain_name[@[device_name]]".
-    
-    Syntax for using global domain scenario account:
-      "account_name@global_domain_name"
-    
-    Syntax for using local domain scenario account (with automatic device name deduction):
-      "account_name@local_domain_name@"
-<acl only> ⇐ vnc_over_ssh:tunneling_type   [VncTunnelingType ⇐ std::string]
-    Only for debugging purposes.
 
 cfg::context::psid ⇒ psid   [std::string]
     Proxy session log id
