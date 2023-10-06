@@ -61,6 +61,8 @@ using namespace cfg_desc;
 
 // force ordering section
 _.set_sections({
+    "general",
+
     "globals",
 
     "client",
@@ -157,6 +159,37 @@ std::string_view disabled_orders_desc =
 
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wc99-designator")
+
+_.section("general", [&]
+{
+    _.member(MemberInfo{
+        .name = "transformation_rule",
+        .value = value<std::string>(),
+        .spec = spec::acl_connpolicy(rdp_and_jh | vnc),
+        .desc =
+            "Secondary login Transformation rule\n"
+            "${LOGIN} will be replaced by login\n"
+            "${DOMAIN} (optional) will be replaced by domain if it exists.\n"
+            "Empty value means no transformation rule."
+    });
+
+    _.member(MemberInfo{
+        .name = "vault_transformation_rule",
+        .value = value<std::string>(),
+        .spec = spec::acl_connpolicy(rdp_and_jh | vnc),
+        .desc =
+            "Account Mapping password retriever\n"
+            "Transformation to apply to find the correct account.\n"
+            "${USER} will be replaced by the user's login.\n"
+            "${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).\n"
+            "${USER_DOMAIN} will be replaced by the user's login + \"@\" + user's domain (or just user's login if there's no domain).\n"
+            "${GROUP} will be replaced by the authorization's user group.\n"
+            "${DEVICE} will be replaced by the device's name.\n"
+            "A regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \\1, \\2, ...\n"
+            "For example to replace leading \"A\" by \"B\" in the username: ${USER:/^A/B}\n"
+            "Empty value means no transformation rule.\n"
+    });
+});
 
 _.section("globals", [&]
 {

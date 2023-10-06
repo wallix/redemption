@@ -22,7 +22,6 @@ transformation_rule = string(default="")
 # Empty value means no transformation rule.
 vault_transformation_rule = string(default="")
 
-
 [session]
 
 # No automatic disconnection due to inactivity, timer is set on target session.

@@ -1,5 +1,6 @@
 {
 "sections": [
+  {"name": "general"},
   {"name": "globals"},
   {"name": "client"},
   {"name": "all_target_mod"},
@@ -30,6 +31,28 @@
 ],
   "values": [
 
+    {
+      "section": "general",
+      "name": "transformation_rule",
+      "type": "str",
+      "value": "",
+      "description": "Secondary login Transformation rule\n${LOGIN} will be replaced by login\n${DOMAIN} (optional) will be replaced by domain if it exists.\nEmpty value means no transformation rule.",
+      "rdp": true,
+      "vnc": true,
+      "jh": true,
+      "external": true
+    },
+    {
+      "section": "general",
+      "name": "vault_transformation_rule",
+      "type": "str",
+      "value": "",
+      "description": "Account Mapping password retriever\nTransformation to apply to find the correct account.\n${USER} will be replaced by the user's login.\n${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).\n${USER_DOMAIN} will be replaced by the user's login + \"@\" + user's domain (or just user's login if there's no domain).\n${GROUP} will be replaced by the authorization's user group.\n${DEVICE} will be replaced by the device's name.\nA regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \\1, \\2, ...\nFor example to replace leading \"A\" by \"B\" in the username: ${USER:/^A/B}\nEmpty value means no transformation rule.\n",
+      "rdp": true,
+      "vnc": true,
+      "jh": true,
+      "external": true
+    },
     {
       "section": "globals",
       "name": "front_connection_time",
