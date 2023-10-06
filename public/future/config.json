@@ -1,5 +1,6 @@
 {
 "sections": [
+  {"name": "general"},
   {"name": "globals"},
   {"name": "client"},
   {"name": "all_target_mod"},
@@ -30,6 +31,28 @@
 ],
   "values": [
 
+    {
+      "section": "general",
+      "name": "transformation_rule",
+      "type": "str",
+      "value": "",
+      "description": "Secondary login Transformation rule\n${LOGIN} will be replaced by login\n${DOMAIN} (optional) will be replaced by domain if it exists.\nEmpty value means no transformation rule.",
+      "rdp": true,
+      "vnc": true,
+      "jh": true,
+      "external": true
+    },
+    {
+      "section": "general",
+      "name": "vault_transformation_rule",
+      "type": "str",
+      "value": "",
+      "description": "Account Mapping password retriever\nTransformation to apply to find the correct account.\n${USER} will be replaced by the user's login.\n${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).\n${USER_DOMAIN} will be replaced by the user's login + \"@\" + user's domain (or just user's login if there's no domain).\n${GROUP} will be replaced by the authorization's user group.\n${DEVICE} will be replaced by the device's name.\nA regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \\1, \\2, ...\nFor example to replace leading \"A\" by \"B\" in the username: ${USER:/^A/B}\nEmpty value means no transformation rule.\n",
+      "rdp": true,
+      "vnc": true,
+      "jh": true,
+      "external": true
+    },
     {
       "section": "globals",
       "name": "front_connection_time",
@@ -418,9 +441,8 @@
       "name": "force_performance_flags",
       "type": "PerformanceFlags",
       "value": "-mouse_cursor_shadows,-theme",
-      "description": "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n\nIf a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n\nAvailable features:\n  wallpaper\n  menu_animations\n  theme\n  mouse_cursor_shadows\n  cursor_blinking\n  font_smoothing\n  desktop_composition\n",
+      "description": "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n\nIf a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n\nAvailable features:\n  - wallpaper\n  - menu_animations\n  - theme\n  - mouse_cursor_shadows\n  - cursor_blinking\n  - font_smoothing\n  - desktop_composition\n",
       "globalSpec": true,
-      "hex": true,
       "advanced": true
     },
     {
@@ -1272,10 +1294,8 @@
       "value": "",
       "description": "Account to be used for armoring Kerberos tickets. Must be in the form 'account_name@domain_name[@device_name]'. If account resolution succeeds the username and password associated with this account will be used; otherwise the below fallback username and password will be used instead.",
       "rdp": true,
-      "aclToProxy": true,
       "advanced": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "mod_rdp",
@@ -1284,10 +1304,8 @@
       "value": "",
       "description": "Realm to be used for armoring Kerberos tickets.",
       "rdp": true,
-      "aclToProxy": true,
       "advanced": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "mod_rdp",
@@ -1296,10 +1314,8 @@
       "value": "",
       "description": "Fallback username to be used for armoring Kerberos tickets.",
       "rdp": true,
-      "aclToProxy": true,
       "advanced": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "mod_rdp",
@@ -1308,7 +1324,6 @@
       "value": "",
       "description": "Fallback password to be used for armoring Kerberos tickets.",
       "rdp": true,
-      "aclToProxy": true,
       "advanced": true,
       "external": true
     },
@@ -2833,9 +2848,7 @@
       "value": false,
       "description": "",
       "vnc": true,
-      "aclToProxy": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "vnc_over_ssh",
@@ -2844,9 +2857,7 @@
       "value": 22,
       "description": "Port to be used for SSH tunneling",
       "vnc": true,
-      "aclToProxy": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "vnc_over_ssh",
@@ -2855,9 +2866,7 @@
       "value": "scenario_account",
       "description": "static_login: Static values provided in \"Ssh login\" & \"Ssh password\" fields will be used to establish the SSH tunnel.\nscenario_account: Scenario account provided in \"Scenario account name\" field will be used to establish the SSH tunnel. (Recommended)",
       "vnc": true,
-      "aclToProxy": true,
       "external": true,
-      "logStategy": "1",
       "subtype": "VncTunnelingCredentialSource"
     },
     {
@@ -2867,9 +2876,7 @@
       "value": "",
       "description": "Login to be used for SSH tunneling.",
       "vnc": true,
-      "aclToProxy": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "vnc_over_ssh",
@@ -2878,7 +2885,6 @@
       "value": "",
       "description": "Password to be used for SSH tunneling.",
       "vnc": true,
-      "aclToProxy": true,
       "external": true
     },
     {
@@ -2888,9 +2894,7 @@
       "value": "",
       "description": "With the following syntax: \"account_name@domain_name[@[device_name]]\".\n\nSyntax for using global domain scenario account:\n  \"account_name@global_domain_name\"\n\nSyntax for using local domain scenario account (with automatic device name deduction):\n  \"account_name@local_domain_name@\"",
       "vnc": true,
-      "aclToProxy": true,
-      "external": true,
-      "logStategy": "1"
+      "external": true
     },
     {
       "section": "vnc_over_ssh",
@@ -2899,10 +2903,8 @@
       "value": "pxssh",
       "description": "Only for debugging purposes.",
       "vnc": true,
-      "aclToProxy": true,
       "advanced": true,
       "external": true,
-      "logStategy": "1",
       "subtype": "VncTunnelingType"
     },
     {
