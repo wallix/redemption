@@ -77,10 +77,6 @@
       "value": 2,
       "description": "wrm: Session recording file."
     }, {
-      "name": "video",
-      "value": 4,
-      "exclude": true
-    }, {
       "name": "ocr",
       "value": 8
     }
@@ -490,11 +486,6 @@
       "value": 4,
       "description": "MS UI Automation. General user activity monitoring (including detection of password fields). (new API)"
     }, {
-      "name": "r1",
-      "value": 8,
-      "exclude": true,
-      "description": "Reserved (do not use)"
-    }, {
       "name": "edge_inspection",
       "value": 16,
       "description": "Inspect Edge location URL. Basic web navigation monitoring."
@@ -577,10 +568,6 @@
   "category": "autoincrement",
   "values": [
     {
-      "name": "Off",
-      "value": 0,
-      "exclude": true
-    }, {
       "name": "Fatal",
       "value": 1,
       "description": "The Fatal level designates very severe error events that will presumably lead the application to abort."

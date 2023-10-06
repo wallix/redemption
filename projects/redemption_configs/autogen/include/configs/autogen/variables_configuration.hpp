@@ -512,13 +512,13 @@ namespace cfg
     /// If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client. <br/>
     ///  <br/>
     /// Available features: <br/>
-    ///   wallpaper <br/>
-    ///   menu_animations <br/>
-    ///   theme <br/>
-    ///   mouse_cursor_shadows <br/>
-    ///   cursor_blinking <br/>
-    ///   font_smoothing <br/>
-    ///   desktop_composition <br/>
+    ///   - wallpaper <br/>
+    ///   - menu_animations <br/>
+    ///   - theme <br/>
+    ///   - mouse_cursor_shadows <br/>
+    ///   - cursor_blinking <br/>
+    ///   - font_smoothing <br/>
+    ///   - desktop_composition <br/>
     /// type: RdpPerformanceFlags <br/>
     /// default: 0x28, 0x0 <br/>
     struct client::force_performance_flags {

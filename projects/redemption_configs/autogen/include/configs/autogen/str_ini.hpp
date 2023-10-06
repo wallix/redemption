@@ -156,13 +156,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 # If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.
 # 
 # Available features:
-#   wallpaper
-#   menu_animations
-#   theme
-#   mouse_cursor_shadows
-#   cursor_blinking
-#   font_smoothing
-#   desktop_composition
+#   - wallpaper
+#   - menu_animations
+#   - theme
+#   - mouse_cursor_shadows
+#   - cursor_blinking
+#   - font_smoothing
+#   - desktop_composition
 # 
 #_advanced
 #force_performance_flags = -mouse_cursor_shadows,-theme
