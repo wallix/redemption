@@ -135,6 +135,17 @@ nav {
   font-weight: bold;
 }
 
+.menu-item-advanced-marker {
+  color: #e53;
+  font-weight: bold;
+}
+
+.menu-group-spec, .section-spec {
+  font-size: .85em;
+  opacity: 55%;
+  font-weight: normal;
+}
+
 .name-info {
   color: #666;
   font-weight: normal;
@@ -177,6 +188,35 @@ nav {
 .tab-content > p {
   margin: 1em;
 }
+
+.tag {
+  border-radius: 4px;
+  display: inline-block;
+  text-transform: capitalize;
+  padding: 0 .2em;
+  font-size: .8rem;
+  color: #555;
+  background-color: #ddd;
+  font-weight: normal;
+}
+
+.tag-filter {
+  border-radius: 4px;
+  display: inline-block;
+  text-transform: capitalize;
+  padding: 0 .2em;
+  color: #333;
+  background-color: #ddd;
+}
+
+#tag-filter {
+  margin: 1em;
+}
+
+.tag-perf { background-color: #fee; }
+.tag-debug { background-color: #eef; }
+.tag-workaround { background-color: #eff; }
+.tag-compatibility { background-color: #efe; }
 </style>
 
 </head>
@@ -184,6 +224,17 @@ nav {
 
 <script>
 "strict";
+
+const tagList = ['perf', 'debug', 'workaround', 'compatibility'];
+
+const titleMapping = {
+    g: 'Configuration Option',
+    rdp: 'RDP Policy',
+    vnc: 'VNC Policy',
+    jh: 'JH Policy',
+    ini: 'Ini',
+    all: 'All without JH or Ini',
+};
 
 async function getJSON(path)
 {
@@ -209,17 +260,30 @@ const computeDisplayName = (name) => {
     /([a-zA-Z0-9]+)(_?)/g,
     (_, s, sep) => `${s[0].toUpperCase()}${s.substr(1)}${sep ? ' ' : ''}`
   );
-}
+};
 
 const computeSpecInfo = (spec) => {
   for (const sectionName in spec) {
     const section = spec[sectionName];
+    const tags = {};
     let counter = 0;
     for (const option of section.options) {
       counter += option.advanced | 0;
+      if (option.tags) {
+        for (const tag of option.tags) {
+          tags[tag] = true;
+        }
+      }
     }
+
+    let tagClasses = 'filter-tag-any';
+    for (const tag in tags) {
+      tagClasses += ` filter-tag-${tag}`;
+    }
+
     section.displayName ??= sectionName; //.replaceAll('_', ' ');
     section.countAdvanced = counter;
+    section.tagClasses = tagClasses;
     section.advancedClass
       = (counter === 0) ? 'advanced-false'
       : (counter === section.options.length) ? 'advanced-true'
@@ -241,24 +305,18 @@ const makeHtmlHistory = (migrate, spec, historyTransformations) => {
         for (const keyName in keys) {
           const keyData = keys[keyName];
           const kind = keyData.kind;
-          if (kind == 'update' && (keyData.newSection || keyData.newKey || keyData.toIniOnly)) {
+          if (kind === 'update' && (keyData.newSection || keyData.newKey || keyData.toIniOnly)) {
             const newSection = keyData.newSection || sectionName;
             const newKey = keyData.newKey || keyName;
             const previousKey = keyData.oldDisplayName || computeDisplayName(keyName);
             const reason = formatReason(keyData.reason);
-            if (keyData.iniOnly || keyData.toIniOnly) {
+            if (keyData.iniOnly || !keyData.toIniOnly) {
               const hist = keyData.iniOnly ? histIniOnly : histGlobalSpec;
-              hist.push(`<li>Remove <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${reason}</li>`);
-              continue;
-            }
-            else {
               const displayedKey = spec[newSection]?.[newKey]?.displayName || computeDisplayName(newKey);
-              const msg = `<li>Move <span class="hist-old-name">[${sectionName}] ${previousKey}</span> to <span class="hist-new-name">[${newSection}] ${displayedKey}</span>${reason}</li>`;
-              if (keyData.iniOnly) {
-                histIniOnly.push(msg);
-                continue;
-              }
-              histGlobalSpec.push(msg);
+              hist.push(`<li>Move <span class="hist-old-name">[${sectionName}] ${previousKey}</span> to <span class="hist-new-name">[${newSection}] ${displayedKey}</span>${reason}</li>`);
+            }
+            else if (keyData.toIniOnly) {
+              histGlobalSpec.push(`<li>Remove <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${reason}</li>`);
             }
 
             const option = historyTransformations?.[newSection]?.[newKey];
@@ -281,11 +339,8 @@ const makeHtmlHistory = (migrate, spec, historyTransformations) => {
         const reason = formatReason(sectionData.reason);
         const oldDisplayName = sectionData.oldDisplayName || sectionName;
         const msg = `<li>Move <span class="hist-old-name">[${oldDisplayName}]</span> to <span class="hist-old-name">[${sectionData.newName}]</span>${reason}</li>`;
-        if (sectionData.iniOnly) {
-          histIniOnly.push(msg);
-          continue;
-        }
-        histGlobalSpec.push(msg);
+        const hist = sectionData.iniOnly ? histIniOnly : histGlobalSpec;
+        hist.push(msg);
         const currentSection = historyTransformations[sectionData.newName];
         if (!currentSection) continue;
         historyTransformations[sectionName] = currentSection;
@@ -310,31 +365,64 @@ const makeHtmlHistory = (migrate, spec, historyTransformations) => {
   return [histFragments.join(''), histIniOnyFragments.join('')];
 };
 
-const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy) => {
+const computeTagClasses = (tags) => {
+  let s = 'filter-tag-any';
+  if (tags) {
+    for (const tag of tags) {
+      s += ` filter-tag-${tag}`;
+    }
+  }
+  return s;
+};
+
+const makeTagList = (tags) => {
+  if (!tags) return '';
+  let s = '';
+  for (const tag of tags) {
+    s += ` <span class="tag tag-${tag}">${tag}</span>`;
+  }
+  return s;
+};
+
+const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPrefix) => {
+  const menuPrefix = prefixPrefix ? `<span class="menu-group-spec">(${titleMapping[prefix]})</span> ` : '';
+  const sectionPrefix = prefixPrefix ? `<span class="section-spec">(${titleMapping[prefix]})</span> ` : '';
+
+  if (prefixPrefix) {
+    prefix = `${prefixPrefix}-${prefix}`;
+  }
+  else {
+    prefixPrefix = prefix;
+  }
+
   const htmlMenuFragments = ['<nav id="menu-section">'];
   const htmlBodyFragments = [];
 
   for (const sectionName in spec) {
     const sectionData = spec[sectionName];
     const sectionId = `${prefix}-${sectionName}`;
-    const advancedClass = sectionData.advancedClass ? `${prefix}-${sectionData.advancedClass}` : '';
+    const advancedClass = sectionData.advancedClass ? `${prefixPrefix}-${sectionData.advancedClass}` : '';
+    const tagClasses = sectionData.tagClasses;
 
     const realSectionName = isConnpolicy && sections[sectionName]?.connpolicyName || sectionName;
     htmlMenuFragments.push(`
-      <p class="menu-group ${advancedClass}">
-        <a class="menu-item ${advancedClass}" href="#${sectionId}">[${realSectionName}]</a>
+      <p class="menu-group ${advancedClass} ${tagClasses}">
+        <a class="menu-item ${advancedClass} ${tagClasses}" href="#${sectionId}">${menuPrefix}[${realSectionName}]</a>
     `);
 
     htmlBodyFragments.push(`
-      <section class="option-group ${advancedClass}">
-        <h2 id="${sectionId}"><a href="#${sectionId}">Section: ${sectionData.displayName}</a></h2>
+      <section class="option-group ${advancedClass} ${tagClasses}">
+        <h2 id="${sectionId}"><a href="#${sectionId}">${sectionPrefix}Section: ${realSectionName}</a></h2>
     `);
 
     for (const option of sectionData.options) {
       const optId = `${sectionId}-${option.name}`;
-      const advancedClass = option.advancedClass ? `${prefix}-${option.advancedClass}` : '';
+      const advancedClass = option.advancedClass ? `${prefixPrefix}-${option.advancedClass}` : '';
+      const tagClasses = option.tagClasses;
+      const tags = makeTagList(option.tags);
+      const listChar = option.advanced ? '<span class="menu-item-advanced-marker">-</span>' : '-';
       htmlMenuFragments.push(
-        `<a class="menu-item ${advancedClass}" href="#${optId}">- ${option.displayName}</a>`
+        `<a class="menu-item ${advancedClass} ${tagClasses}" href="#${optId}">${listChar} ${option.displayName}${tags}</a>`
       );
 
       let extraDescription = '';
@@ -375,8 +463,8 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy) => {
       }
 
       htmlBodyFragments.push(`
-        <article class="option ${advancedClass}" id="${optId}">
-          <h3><a href="#${optId}"><span class="section-prefix">[${sectionData.displayName}]</span> ${option.displayName}</a></h3>
+        <article class="option ${advancedClass} ${tagClasses}" id="${optId}">
+          <h3><a href="#${optId}">${sectionPrefix}<span class="section-prefix">[${realSectionName}]</span> ${option.displayName}</a>${tags}</h3>
           <p class="type-info">type: ${type} | ${option.advanced ? 'advanced | ' : ''}default: ${defaultValue}</p>
           <p class="description">${description}</p>
           ${extraDescription}
@@ -394,6 +482,23 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy) => {
   return [htmlMenuFragments.join(''), htmlBodyFragments.join('')];
 };
 
+const makeHtmlAll = (enumDatas, sections, globalSpec, rdpSpec, vncSpec) => {
+  const [gMenu, gBody] = makeHtmlSpec(enumDatas, sections, globalSpec, 'g', false, 'all');
+  const [rdpMenu, rdpBody] = makeHtmlSpec(enumDatas, sections, rdpSpec, 'rdp', true, 'all');
+  const [vncMenu, vncBody] = makeHtmlSpec(enumDatas, sections, vncSpec, 'vnc', true, 'all');
+  return [
+    '<h1>', titleMapping.g, '</h1>',
+    gMenu,
+    '<h1>', titleMapping.rdp, '</h1>',
+    rdpMenu,
+    '<h1>', titleMapping.vnc, '</h1>',
+    vncMenu,
+    gBody,
+    rdpBody,
+    vncBody
+  ];
+};
+
 const makeHtmlAdvancedMod = (name) => {
   return `<p>Show options:
     <label><input type="radio" name="${name}-advanced-mode" onchange="setAdvanced('${name}', true, false)">Advanced</label>
@@ -406,15 +511,43 @@ const formatReason = (reason) => reason ? ` | ${reason}` : '';
 
 const htmlEscape = (s) => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;');
 
-let currentTab = '';
-const setTab = (newTab) => {
-  document.getElementById(`tab-${newTab}`).classList.add('tab-current');
-  document.getElementById(`tab-content-${newTab}`).style = 'display:block';
+const showTab = (tab) => {
+  document.getElementById(`tab-${tab}`).classList.add('tab-current')
+  document.getElementById(`tab-content-${tab}`).style = 'display:block';
+};
+
+const hideTab = (tab) => {
+  document.getElementById(`tab-${tab}`).classList.remove('tab-current')
+  document.getElementById(`tab-content-${tab}`).style = '';
+};
+
+let currentTab = 'g';
+const _setTab = (newTab) => {
+  showTab(newTab);
+  document.title = titleMapping[newTab];
   currentTab = newTab;
 };
-const tabSelect = (newTab) => {
-  document.getElementById(`tab-${currentTab}`).classList.remove('tab-current')
-  document.getElementById(`tab-content-${currentTab}`).style = '';
+
+let lastTab = 'g';
+window.addEventListener('popstate', (event) => {
+  const tab = event.state || lastTab;
+  if (tab !== currentTab) {
+    hideTab(currentTab);
+    _setTab(tab);
+  }
+});
+
+const setTab = (newTab) => {
+  history.replaceState(currentTab, '', `#${currentTab}`);
+  _setTab(newTab);
+  lastTab = newTab;
+};
+
+const tabSelect = (event) => {
+  event.stopImmediatePropagation();
+  const href = event.target.href;
+  const newTab = href.substr(href.indexOf('#') + 1)
+  hideTab(currentTab);
   setTab(newTab);
 };
 
@@ -513,6 +646,7 @@ const mappingHumanTime = {
     }
     optionNameMaxLen = Math.max(optionNameMaxLen, option.displayName.length);
     option.advancedClass = option.advanced ? 'advanced-true' : 'advanced-false';
+    option.tagClasses = computeTagClasses(option.tags);
     if (option.globalSpec) pushOption(globalSpec, option.section, option);
     if (option.iniOnly) pushOption(iniOnlySpec, option.section, option);
     if (option.rdp) pushOption(rdpSpec, option.connpolicySection || option.section, option);
@@ -542,18 +676,24 @@ const mappingHumanTime = {
   sheet.insertRule(`nav { column-width: ${cssColumnWith}em }`, sheet.cssRules.length);
   sheet.insertRule(`.menu-group { width: ${cssColumnWith}em }`, sheet.cssRules.length);
 
+  const htmlTabsMenu = [];
+  for (const name in titleMapping) {
+    htmlTabsMenu.push(`  <li class="tab-label" id="tab-${name}"><a href="#${name}">${titleMapping[name]}</a></li>`)
+  }
+
+  const htmlFilterTag = ['<label class="tag-filter"><input type="radio" name="tag-filter" onchange="tagFilter()" checked>None</label>'];
+  for (const tag of tagList) {
+    htmlFilterTag.push(` <label class="tag-filter tag-${tag}"><input type="radio" name="tag-filter" onchange="tagFilter('${tag}')">${tag}</label>`)
+  }
+
   const [htmlHistory, htmlIniHistory]
     = makeHtmlHistory(migrate, globalSpec, historyTransformations);
   const [htmlMenu, htmlBody] = makeHtmlSpec(enumDatas, sections, globalSpec, 'g', false);
   const [htmlIniMenu, htmlIniBody] = makeHtmlSpec(enumDatas, sections, iniOnlySpec, 'ini', false);
   const htmlFragments = [
-    '<ul role="nav" id="tabs">',
-    '  <li class="tab-label" id="tab-g"><a href="#g" onclick="tabSelect(\'g\')">Global Configuration</a></li>',
-    '  <li class="tab-label" id="tab-rdp"><a href="#rdp" onclick="tabSelect(\'rdp\')">RDP Policy</a></li>',
-    '  <li class="tab-label" id="tab-vnc"><a href="#vnc" onclick="tabSelect(\'vnc\')">VNC Policy</a></li>',
-    '  <li class="tab-label" id="tab-jh"><a href="#jh" onclick="tabSelect(\'jh\')">JH Policy</a></li>',
-    '  <li class="tab-label" id="tab-ini"><a href="#ini" onclick="tabSelect(\'ini\')">Ini Only</a></li>',
-    '</ul>',
+    '<ul role="nav" id="tabs">', ...htmlTabsMenu, '</ul>',
+
+    '<p id="tag-filter">Tag: ', ...htmlFilterTag, '</p>',
 
     '<div id="tab-content-g" class="tab-content">',
     makeHtmlAdvancedMod('g'),
@@ -578,15 +718,23 @@ const mappingHumanTime = {
     '<div id="tab-content-ini" class="tab-content">',
     htmlIniMenu, htmlIniHistory, htmlIniBody,
     '</div>',
+
+    '<div id="tab-content-all" class="tab-content">',
+    makeHtmlAdvancedMod('all'),
+    ...makeHtmlAll(enumDatas, sections, globalSpec, rdpSpec, vncSpec),
+    '</div>',
   ];
 
   document.body.insertAdjacentHTML('beforeend', htmlFragments.join(''));
 
-  let currentTab = 'g';
+  for (const k in titleMapping) {
+    document.getElementById(`tab-${k}`).firstChild.addEventListener("click", tabSelect, false);
+  }
+
   // move to anchor
   if (location.hash) {
     const id = location.hash.substr(1);
-    for (const name of ['g', 'rdp', 'vnc', 'jh', 'ini']) {
+    for (const name in titleMapping) {
       if (id.startsWith(name)) {
         currentTab = name;
         break;
@@ -599,22 +747,32 @@ const mappingHumanTime = {
     setTab(currentTab);
   }
 })();
-</script>
-<script>
+
+
 const head = document.head;
 const styles = {};
-const setAdvanced = function(name, a, b) {
+
+const getStyle = function(name) {
   let style = styles[name];
   if (!style) {
     style = document.createElement("style");
     head.appendChild(style);
     styles[name] = style;
   }
+  return style;
+};
 
+const setAdvanced = function(name, a, b) {
+  const style = getStyle(name);
   const style1 = a ? '' : `.${name}-advanced-true{ display: none }`;
   const style2 = b ? '' : `.${name}-advanced-false{ display: none }`;
   style.innerText = style1 + style2;
-}
+};
+
+const tagFilter = function(tag) {
+  const style = getStyle('tagFilter');
+  style.innerText = tag ? `.filter-tag-any:not(.filter-tag-${tag}){ display: none }` : '';
+};
 </script>
 
 </body>
