@@ -246,19 +246,13 @@ const makeHtmlHistory = (migrate, spec, historyTransformations) => {
             const newKey = keyData.newKey || keyName;
             const previousKey = keyData.oldDisplayName || computeDisplayName(keyName);
             const reason = formatReason(keyData.reason);
-            if (keyData.iniOnly || keyData.toIniOnly) {
+            if (keyData.iniOnly || !keyData.toIniOnly) {
               const hist = keyData.iniOnly ? histIniOnly : histGlobalSpec;
-              hist.push(`<li>Remove <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${reason}</li>`);
-              continue;
-            }
-            else {
               const displayedKey = spec[newSection]?.[newKey]?.displayName || computeDisplayName(newKey);
-              const msg = `<li>Move <span class="hist-old-name">[${sectionName}] ${previousKey}</span> to <span class="hist-new-name">[${newSection}] ${displayedKey}</span>${reason}</li>`;
-              if (keyData.iniOnly) {
-                histIniOnly.push(msg);
-                continue;
-              }
-              histGlobalSpec.push(msg);
+              hist.push(`<li>Move <span class="hist-old-name">[${sectionName}] ${previousKey}</span> to <span class="hist-new-name">[${newSection}] ${displayedKey}</span>${reason}</li>`);
+            }
+            else if (keyData.toIniOnly) {
+              histGlobalSpec.push(`<li>Remove <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${reason}</li>`);
             }
 
             const option = historyTransformations?.[newSection]?.[newKey];
@@ -281,11 +275,8 @@ const makeHtmlHistory = (migrate, spec, historyTransformations) => {
         const reason = formatReason(sectionData.reason);
         const oldDisplayName = sectionData.oldDisplayName || sectionName;
         const msg = `<li>Move <span class="hist-old-name">[${oldDisplayName}]</span> to <span class="hist-old-name">[${sectionData.newName}]</span>${reason}</li>`;
-        if (sectionData.iniOnly) {
-          histIniOnly.push(msg);
-          continue;
-        }
-        histGlobalSpec.push(msg);
+        const hist = sectionData.iniOnly ? histIniOnly : histGlobalSpec;
+        hist.push(msg);
         const currentSection = historyTransformations[sectionData.newName];
         if (!currentSection) continue;
         historyTransformations[sectionName] = currentSection;
