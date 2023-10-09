@@ -406,15 +406,51 @@ const formatReason = (reason) => reason ? ` | ${reason}` : '';
 
 const htmlEscape = (s) => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;');
 
-let currentTab = '';
-const setTab = (newTab) => {
-  document.getElementById(`tab-${newTab}`).classList.add('tab-current');
-  document.getElementById(`tab-content-${newTab}`).style = 'display:block';
+const titleMapping = {
+    g: 'Configuration Option',
+    rdp: 'RDP - Connection Policy',
+    vnc: 'VNC - Connection Policy',
+    jh: 'JH - Connection Policy',
+    ini: 'Ini',
+};
+
+const showTab = (tab) => {
+  document.getElementById(`tab-${tab}`).classList.add('tab-current')
+  document.getElementById(`tab-content-${tab}`).style = 'display:block';
+};
+
+const hideTab = (tab) => {
+  document.getElementById(`tab-${tab}`).classList.remove('tab-current')
+  document.getElementById(`tab-content-${tab}`).style = '';
+};
+
+let currentTab = 'g';
+const _setTab = (newTab) => {
+  showTab(newTab);
+  document.title = titleMapping[newTab];
   currentTab = newTab;
 };
-const tabSelect = (newTab) => {
-  document.getElementById(`tab-${currentTab}`).classList.remove('tab-current')
-  document.getElementById(`tab-content-${currentTab}`).style = '';
+
+let lastTab = 'g';
+window.addEventListener('popstate', (event) => {
+  const tab = event.state || lastTab;
+  if (tab !== currentTab) {
+    hideTab(currentTab);
+    _setTab(tab);
+  }
+});
+
+const setTab = (newTab) => {
+  history.replaceState(currentTab, '', `#${currentTab}`);
+  _setTab(newTab);
+  lastTab = newTab;
+};
+
+const tabSelect = (event) => {
+  event.stopImmediatePropagation();
+  const href = event.target.href;
+  const newTab = href.substr(href.indexOf('#') + 1)
+  hideTab(currentTab);
   setTab(newTab);
 };
 
@@ -548,11 +584,11 @@ const mappingHumanTime = {
   const [htmlIniMenu, htmlIniBody] = makeHtmlSpec(enumDatas, sections, iniOnlySpec, 'ini', false);
   const htmlFragments = [
     '<ul role="nav" id="tabs">',
-    '  <li class="tab-label" id="tab-g"><a href="#g" onclick="tabSelect(\'g\')">Global Configuration</a></li>',
-    '  <li class="tab-label" id="tab-rdp"><a href="#rdp" onclick="tabSelect(\'rdp\')">RDP Policy</a></li>',
-    '  <li class="tab-label" id="tab-vnc"><a href="#vnc" onclick="tabSelect(\'vnc\')">VNC Policy</a></li>',
-    '  <li class="tab-label" id="tab-jh"><a href="#jh" onclick="tabSelect(\'jh\')">JH Policy</a></li>',
-    '  <li class="tab-label" id="tab-ini"><a href="#ini" onclick="tabSelect(\'ini\')">Ini Only</a></li>',
+    '  <li class="tab-label" id="tab-g"><a href="#g">Global Configuration</a></li>',
+    '  <li class="tab-label" id="tab-rdp"><a href="#rdp">RDP Policy</a></li>',
+    '  <li class="tab-label" id="tab-vnc"><a href="#vnc">VNC Policy</a></li>',
+    '  <li class="tab-label" id="tab-jh"><a href="#jh">JH Policy</a></li>',
+    '  <li class="tab-label" id="tab-ini"><a href="#ini">Ini Only</a></li>',
     '</ul>',
 
     '<div id="tab-content-g" class="tab-content">',
@@ -582,11 +618,14 @@ const mappingHumanTime = {
 
   document.body.insertAdjacentHTML('beforeend', htmlFragments.join(''));
 
-  let currentTab = 'g';
+  for (const k in titleMapping) {
+    document.getElementById(`tab-${k}`).firstChild.addEventListener("click", tabSelect, false);
+  }
+
   // move to anchor
   if (location.hash) {
     const id = location.hash.substr(1);
-    for (const name of ['g', 'rdp', 'vnc', 'jh', 'ini']) {
+    for (const name in titleMapping) {
       if (id.startsWith(name)) {
         currentTab = name;
         break;
