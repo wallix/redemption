@@ -433,6 +433,7 @@ _.section("globals", [&]
         .name = "allow_using_multiple_monitors",
         .value = value(true),
         .spec = global_spec(no_acl),
+        .tags = Tag::Compatibility,
         .desc = "Sends the client screen count to the server. Not supported for VNC targets.\n"
         "Uncheck to disable multiple monitor.",
     });
@@ -443,6 +444,7 @@ _.section("globals", [&]
         .name = "allow_scale_factor",
         .value = value(false),
         .spec = global_spec(no_acl),
+        .tags = Tag::Compatibility,
         .desc =
             "Sends Scale & Layout configuration to the server.\n"
             "On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.\n"
@@ -455,6 +457,7 @@ _.section("globals", [&]
         .name = "bogus_refresh_rect",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Compatibility,
         .desc = "Workaround option to fix some drawing issues with Windows Server 2012.\n"
         "Can be disabled when none of the targets are Windows Server 2012.",
     });
@@ -565,6 +568,7 @@ _.section("client", [&]
         .name = "force_performance_flags",
         .value = value<types::performance_flags>("-mouse_cursor_shadows,-theme"),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Perf | Tag::Compatibility,
         .desc =
             "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n"
             "\n"
@@ -634,7 +638,7 @@ _.section("client", [&]
         .name = "show_common_cipher_list",
         .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
-        .tags = TagList::Debug,
+        .tags = Tag::Debug,
         .desc = "Show in the logs the common cipher list supported by client and server\n"
         "⚠ Only for debug purposes",
     });
@@ -658,6 +662,7 @@ _.section("client", [&]
         .name = "rdp_compression",
         .value = from_enum(RdpCompression::rdp6_1),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Perf,
         .desc = "Specifies the highest RDP compression support available on client connection session.",
         // RZH: This option can help debugging error during connection in specific cases.
     });
@@ -672,6 +677,7 @@ _.section("client", [&]
         .name = "persistent_disk_bitmap_cache",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Perf,
         .desc = "Persistent Disk Bitmap Cache on the primary connection side. If supported by the RDP client, the size of image caches will be increased",
     });
 
@@ -686,6 +692,7 @@ _.section("client", [&]
         .name = "persist_bitmap_cache_on_disk",
         .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Perf,
         .desc =
             "If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
     });
@@ -694,6 +701,7 @@ _.section("client", [&]
         .name = "bitmap_compression",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Compatibility,
         .desc = "Enable Bitmap Compression when supported by the RDP client.\n"
         "Disable this option will increase network bandwith usage.",
     });
@@ -710,6 +718,7 @@ _.section("client", [&]
         .name = "enable_suppress_output",
         .value = value(true),
         .spec = global_spec(no_acl),
+        .tags = Tag::Compatibility,
         .desc =
             "Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.\n"
             "⚠ If changes occur on the target, they will not be visible in the recordings either."
@@ -739,6 +748,7 @@ _.section("client", [&]
         .name = "bogus_ios_glyph_support_level",
         .value = value(true),
         .spec = global_spec(no_acl),
+        .tags = Tag::Compatibility,
         .desc = "Same effect as \"Transform glyph to bitmap\", but only for RDP client on iOS platform.",
     });
 
@@ -747,6 +757,7 @@ _.section("client", [&]
         .name = "transform_glyph_to_bitmap",
         .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Compatibility,
         .desc = "Some RDP clients advertise glyph support, but this does not work properly with the RDP proxy. This option replaces glyph orders with bitmap orders."
     });
 
@@ -768,6 +779,7 @@ _.section("client", [&]
         .name = "enable_remotefx",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Perf | Tag::Compatibility,
         .desc = "Enable RemoteFx on client connection.\n"
         "Needs - \"Max Color Depth\" option set to 32 (32-bit RGB mask + alpha)\n"
         "      - \"Enable RemoteFX\" option enabled in target connection policy",
@@ -777,7 +789,7 @@ _.section("client", [&]
         .name = "disabled_orders",
         .value = value<types::list<types::unsigned_>>("25"),
         .spec = global_spec(no_acl, spec::advanced),
-        .tags = TagList::Debug,
+        .tags = Tag::Debug | Tag::Compatibility,
         .desc = disabled_orders_desc,
     });
 });
@@ -817,6 +829,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "rdp_compression",
         .value = from_enum(RdpCompression::rdp6_1),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Perf,
         .desc = "Specifies the highest RDP compression support available on server connection.",
         // RZH: This option can help debugging error during connection in specific cases.
     });
@@ -840,7 +853,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         // disable glyph_index / glyph_cache
         .value = value<types::list<types::unsigned_>>("27"),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
-        .tags = TagList::Debug,
+        .tags = Tag::Debug | Tag::Compatibility,
         .desc = disabled_orders_desc,
     });
 
@@ -896,7 +909,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "show_common_cipher_list",
         .value = value(false),
         .spec = connpolicy(rdp_and_jh, L, spec::advanced),
-        .tags = TagList::Debug,
+        .tags = Tag::Debug,
         .desc = "Show in the logs the common cipher list supported by client and server\n"
         "⚠ Only for debug purposes",
     });
@@ -905,6 +918,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "persistent_disk_bitmap_cache",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Perf,
         .desc = "Persistent Disk Bitmap Cache on the secondary connection side. If supported by the RDP server, the size of image caches will be increased",
     });
 
@@ -919,6 +933,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "persist_bitmap_cache_on_disk",
         .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Perf,
         .desc = "If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
     });
 
@@ -1189,6 +1204,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "enable_remotefx",
         .value = value(false),
         .spec = connpolicy(rdp_without_jh, L),
+        .tags = Tag::Compatibility,
         .desc = "Enables support of the remoteFX codec on target connection.",
     });
 
@@ -1243,7 +1259,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "allow_session_reconnection_by_shortcut",
         .value = value(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
-        .tags = TagList::Workaround,
+        .tags = Tag::Workaround,
         .desc =
             "If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.\n"
             "This feature should not be used together with the End disconnected session option (section session_probe).\n"
@@ -1341,7 +1357,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "replace_null_pointer_by_default_pointer",
         .value = value(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
-        .tags = TagList::Workaround,
+        .tags = Tag::Workaround,
         .desc = "Replace an empty mouse pointer with normal pointer.",
     });
 });
@@ -1488,7 +1504,7 @@ _.section("session_probe", [&]
         .name = "log_level",
         .value = from_enum(SessionProbeLogLevel::Debug),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
-        .tags = TagList::Debug,
+        .tags = Tag::Debug,
         .desc = "Defines logging severity levels.",
     });
 
@@ -1589,7 +1605,7 @@ _.section("session_probe", [&]
         .name = "enable_crash_dump",
         .value = value(false),
         .spec = connpolicy(rdp_without_jh, L, spec::advanced),
-        .tags = TagList::Debug,
+        .tags = Tag::Debug,
         .desc =
             "This parameter enables or disables the crash dump generation when the Session Probe encounters a fatal error.\n"
             "The crash dump file is useful for post-modem debugging. It is not designed for normal use.\n"

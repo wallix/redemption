@@ -51,18 +51,15 @@ namespace cfg_desc
     constexpr T& operator &= (T& x, T y) { x = x & y; return x; }
 
 
-enum class TagList : unsigned
+enum class Tag : unsigned
 {
     None,
-    Debug,
-    Workaround,
+    Perf            = 1 << 0,
+    Debug           = 1 << 1,
+    Workaround      = 1 << 2,
+    Compatibility   = 1 << 3,
 };
-MK_ENUM_OP(TagList)
-
-struct Tags
-{
-    TagList value = TagList::None;
-};
+MK_ENUM_OP(Tag)
 
 enum class DestSpecFile : uint8_t
 {

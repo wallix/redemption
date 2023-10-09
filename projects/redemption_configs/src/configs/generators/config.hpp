@@ -426,7 +426,7 @@ struct MemberInfo
     std::string_view connpolicy_section {};
     ValueAsStrings value;
     SpecInfo spec;
-    cfg_desc::TagList tags {};
+    cfg_desc::Tag tags {};
     PrefixType prefix_type = PrefixType::Unspecified;
     std::string_view desc {};
 };
@@ -2187,7 +2187,7 @@ struct GeneratorConfig
         auto push_ini_or_spec_desc = [&](Appender appender, bool is_spec){
             auto marker = Marker{appender.str};
 
-            if (bool(mem_info.tags & cfg_desc::TagList::Workaround)) {
+            if (bool(mem_info.tags & cfg_desc::Tag::Workaround)) {
                 appender(workaround_message);
             }
 
@@ -2296,8 +2296,10 @@ struct GeneratorConfig
             json_values += '"';
             if (bool(mem_info.tags)) {
                 json_values += ",\n      \"tags\": ["sv;
-                if (bool(mem_info.tags & TagList::Debug)) json_values += "\"debug\","sv;
-                if (bool(mem_info.tags & TagList::Workaround)) json_values += "\"workaround\","sv;
+                if (bool(mem_info.tags & Tag::Perf)) json_values += "\"perf\","sv;
+                if (bool(mem_info.tags & Tag::Debug)) json_values += "\"debug\","sv;
+                if (bool(mem_info.tags & Tag::Workaround)) json_values += "\"workaround\","sv;
+                if (bool(mem_info.tags & Tag::Compatibility)) json_values += "\"compatibility\","sv;
                 json_values.back() = ']';
             }
             auto append_if_not_empty = [&](std::string_view json_key, std::string_view str) {

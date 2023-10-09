@@ -342,6 +342,7 @@
       "type": "bool",
       "value": true,
       "description": "Sends the client screen count to the server. Not supported for VNC targets.\nUncheck to disable multiple monitor.",
+      "tags": ["compatibility"],
       "globalSpec": true
     },
     {
@@ -350,6 +351,7 @@
       "type": "bool",
       "value": false,
       "description": "Sends Scale & Layout configuration to the server.\nOn Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.\n⚠ Title bar detection via OCR will no longer work.\n",
+      "tags": ["compatibility"],
       "globalSpec": true
     },
     {
@@ -358,6 +360,7 @@
       "type": "bool",
       "value": true,
       "description": "Workaround option to fix some drawing issues with Windows Server 2012.\nCan be disabled when none of the targets are Windows Server 2012.",
+      "tags": ["compatibility"],
       "globalSpec": true,
       "advanced": true
     },
@@ -442,6 +445,7 @@
       "type": "PerformanceFlags",
       "value": "-mouse_cursor_shadows,-theme",
       "description": "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n\nIf a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n\nAvailable features:\n  - wallpaper\n  - menu_animations\n  - theme\n  - mouse_cursor_shadows\n  - cursor_blinking\n  - font_smoothing\n  - desktop_composition\n",
+      "tags": ["perf","compatibility"],
       "globalSpec": true,
       "advanced": true
     },
@@ -528,6 +532,7 @@
       "type": "enum",
       "value": 4,
       "description": "Specifies the highest RDP compression support available on client connection session.",
+      "tags": ["perf"],
       "globalSpec": true,
       "advanced": true,
       "subtype": "RdpCompression"
@@ -548,6 +553,7 @@
       "type": "bool",
       "value": true,
       "description": "Persistent Disk Bitmap Cache on the primary connection side. If supported by the RDP client, the size of image caches will be increased",
+      "tags": ["perf"],
       "globalSpec": true,
       "advanced": true
     },
@@ -565,6 +571,7 @@
       "type": "bool",
       "value": false,
       "description": "If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
+      "tags": ["perf"],
       "globalSpec": true,
       "advanced": true
     },
@@ -574,6 +581,7 @@
       "type": "bool",
       "value": true,
       "description": "Enable Bitmap Compression when supported by the RDP client.\nDisable this option will increase network bandwith usage.",
+      "tags": ["compatibility"],
       "globalSpec": true,
       "advanced": true
     },
@@ -591,6 +599,7 @@
       "type": "bool",
       "value": true,
       "description": "Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.\n⚠ If changes occur on the target, they will not be visible in the recordings either.",
+      "tags": ["compatibility"],
       "globalSpec": true
     },
     {
@@ -615,6 +624,7 @@
       "type": "bool",
       "value": true,
       "description": "Same effect as \"Transform glyph to bitmap\", but only for RDP client on iOS platform.",
+      "tags": ["compatibility"],
       "globalSpec": true
     },
     {
@@ -623,6 +633,7 @@
       "type": "bool",
       "value": false,
       "description": "Some RDP clients advertise glyph support, but this does not work properly with the RDP proxy. This option replaces glyph orders with bitmap orders.",
+      "tags": ["compatibility"],
       "globalSpec": true,
       "advanced": true
     },
@@ -649,6 +660,7 @@
       "type": "bool",
       "value": true,
       "description": "Enable RemoteFx on client connection.\nNeeds - \"Max Color Depth\" option set to 32 (32-bit RGB mask + alpha)\n      - \"Enable RemoteFX\" option enabled in target connection policy",
+      "tags": ["perf","compatibility"],
       "globalSpec": true,
       "advanced": true
     },
@@ -658,7 +670,7 @@
       "type": "list",
       "value": "25",
       "description": "This option should only be used if the server or client is showing graphical issues.\nIn general, disabling RDP orders has a negative impact on performance.\n\nDrawing orders that can be disabled:\n   0: DstBlt\n   1: PatBlt\n   2: ScrBlt\n   3: MemBlt\n   4: Mem3Blt\n   9: LineTo\n  15: MultiDstBlt\n  16: MultiPatBlt\n  17: MultiScrBlt\n  18: MultiOpaqueRect\n  22: Polyline\n  25: EllipseSC\n  27: GlyphIndex",
-      "tags": ["debug"],
+      "tags": ["debug","compatibility"],
       "globalSpec": true,
       "advanced": true,
       "subtype": "uint"
@@ -700,6 +712,7 @@
       "type": "enum",
       "value": 4,
       "description": "Specifies the highest RDP compression support available on server connection.",
+      "tags": ["perf"],
       "globalSpec": true,
       "advanced": true,
       "subtype": "RdpCompression"
@@ -728,7 +741,7 @@
       "type": "list",
       "value": "27",
       "description": "This option should only be used if the server or client is showing graphical issues.\nIn general, disabling RDP orders has a negative impact on performance.\n\nDrawing orders that can be disabled:\n   0: DstBlt\n   1: PatBlt\n   2: ScrBlt\n   3: MemBlt\n   4: Mem3Blt\n   9: LineTo\n  15: MultiDstBlt\n  16: MultiPatBlt\n  17: MultiScrBlt\n  18: MultiOpaqueRect\n  22: Polyline\n  25: EllipseSC\n  27: GlyphIndex",
-      "tags": ["debug"],
+      "tags": ["debug","compatibility"],
       "rdp": true,
       "jh": true,
       "aclToProxy": true,
@@ -818,6 +831,7 @@
       "type": "bool",
       "value": true,
       "description": "Persistent Disk Bitmap Cache on the secondary connection side. If supported by the RDP server, the size of image caches will be increased",
+      "tags": ["perf"],
       "globalSpec": true,
       "advanced": true
     },
@@ -836,6 +850,7 @@
       "type": "bool",
       "value": false,
       "description": "If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
+      "tags": ["perf"],
       "globalSpec": true,
       "advanced": true
     },
@@ -1181,6 +1196,7 @@
       "type": "bool",
       "value": false,
       "description": "Enables support of the remoteFX codec on target connection.",
+      "tags": ["compatibility"],
       "rdp": true,
       "aclToProxy": true,
       "logStategy": "1"
