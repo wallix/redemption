@@ -327,7 +327,7 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy) => {
 
     htmlBodyFragments.push(`
       <section class="option-group ${advancedClass}">
-        <h2 id="${sectionId}"><a href="#${sectionId}">Section: ${sectionData.displayName}</a></h2>
+        <h2 id="${sectionId}"><a href="#${sectionId}">Section: ${realSectionName}</a></h2>
     `);
 
     for (const option of sectionData.options) {
@@ -376,7 +376,7 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy) => {
 
       htmlBodyFragments.push(`
         <article class="option ${advancedClass}" id="${optId}">
-          <h3><a href="#${optId}"><span class="section-prefix">[${sectionData.displayName}]</span> ${option.displayName}</a></h3>
+          <h3><a href="#${optId}"><span class="section-prefix">[${realSectionName}]</span> ${option.displayName}</a></h3>
           <p class="type-info">type: ${type} | ${option.advanced ? 'advanced | ' : ''}default: ${defaultValue}</p>
           <p class="description">${description}</p>
           ${extraDescription}
