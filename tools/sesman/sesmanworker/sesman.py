@@ -1740,6 +1740,12 @@ class Sesman():
             proto_info = self.engine.get_target_protocols(selected_target)
             kv['proto_dest'] = proto_info.protocol
             kv['target_str'] = target_login_info.get_target_str()
+            if proto_info.protocol == RDP:
+                # filtered proxy options with authorization
+                # are in selected_target even for application target
+                kv['proxy_opt'] = ",".join(
+                    proto_info.subprotocols
+                )
 
         if _status:
             kv['password'] = 'pass'
@@ -1878,11 +1884,8 @@ class Sesman():
                     physical_target
                 )
                 if physical_proto_info.protocol in (RDP, VNC):
-                    if physical_proto_info.protocol == RDP:
-                        kv['proxy_opt'] = ",".join(
-                            physical_proto_info.subprotocols
-                        )
-
+                    # Not sure if condition is necessary
+                    # Condition might have to be on proto_info
                     conn_type = self.engine.get_target_conn_type(physical_target)
                     conn_spec = cp_spec[conn_type.lower()]
 
