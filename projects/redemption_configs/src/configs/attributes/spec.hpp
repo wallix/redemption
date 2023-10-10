@@ -28,6 +28,7 @@
 #include <cassert>
 
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/flags.hpp"
 
 
 namespace cfg_desc
@@ -53,13 +54,37 @@ namespace cfg_desc
 
 enum class Tag : unsigned
 {
-    None,
-    Perf            = 1 << 0,
-    Debug           = 1 << 1,
-    Workaround      = 1 << 2,
-    Compatibility   = 1 << 3,
+    Perf,
+    Debug,
+    Workaround,
+    Compatibility,
+    MAX,
 };
-MK_ENUM_OP(Tag)
+
+inline std::string_view tag_to_sv(Tag tag)
+{
+    using namespace std::string_view_literals;
+    switch (tag) {
+        case Tag::Perf: return "perf"sv;
+        case Tag::Debug: return "debug"sv;
+        case Tag::Workaround: return "workaround"sv;
+        case Tag::Compatibility: return "compatibility"sv;
+        case Tag::MAX:;
+    }
+    return {};
+}
+
+}
+
+template<>
+struct utils::enum_as_flag<cfg_desc::Tag>
+{
+    static constexpr std::size_t max = std::size_t(cfg_desc::Tag::MAX);
+};
+
+namespace cfg_desc
+{
+using Tags = utils::flags_t<Tag>;
 
 enum class DestSpecFile : uint8_t
 {

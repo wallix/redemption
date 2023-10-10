@@ -426,7 +426,7 @@ struct MemberInfo
     std::string_view connpolicy_section {};
     ValueAsStrings value;
     SpecInfo spec;
-    cfg_desc::Tag tags {};
+    Tags tags {};
     PrefixType prefix_type = PrefixType::Unspecified;
     std::string_view desc {};
 };
@@ -1964,7 +1964,17 @@ struct GeneratorConfig
         }
 
 
-        json.out << "{\n\"sections\": [\n";
+        json.out << "{\n\"tags\": [";
+        std::string tag_list;
+        tag_list.reserve(128);
+        for (std::size_t i = 0; i < Tags::max; ++i) {
+            tag_list += '"';
+            tag_list += tag_to_sv(Tag(i));
+            tag_list += '"';
+            tag_list += ',';
+        }
+        tag_list.back() = ']';
+        json.out << tag_list << ",\n\"sections\": [\n";
         std::string_view json_sep = {};
         for (std::string_view section_name : ordered_section_names) {
             auto& section = sections.find(section_name)->second;
@@ -2187,7 +2197,7 @@ struct GeneratorConfig
         auto push_ini_or_spec_desc = [&](Appender appender, bool is_spec){
             auto marker = Marker{appender.str};
 
-            if (bool(mem_info.tags & cfg_desc::Tag::Workaround)) {
+            if (mem_info.tags.test(Tag::Workaround)) {
                 appender(workaround_message);
             }
 
@@ -2296,10 +2306,14 @@ struct GeneratorConfig
             json_values += '"';
             if (bool(mem_info.tags)) {
                 json_values += ",\n      \"tags\": ["sv;
-                if (bool(mem_info.tags & Tag::Perf)) json_values += "\"perf\","sv;
-                if (bool(mem_info.tags & Tag::Debug)) json_values += "\"debug\","sv;
-                if (bool(mem_info.tags & Tag::Workaround)) json_values += "\"workaround\","sv;
-                if (bool(mem_info.tags & Tag::Compatibility)) json_values += "\"compatibility\","sv;
+                for (std::size_t i = 0; i < mem_info.tags.max; ++i) {
+                    if (mem_info.tags.test(Tag(i))) {
+                        json_values += '"';
+                        json_values += tag_to_sv(Tag(i));
+                        json_values += '"';
+                        json_values += ',';
+                    }
+                }
                 json_values.back() = ']';
             }
             auto append_if_not_empty = [&](std::string_view json_key, std::string_view str) {

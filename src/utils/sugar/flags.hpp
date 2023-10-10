@@ -87,6 +87,7 @@ public:
     [[nodiscard]] constexpr flags_t normalized() const noexcept { return flags_t(this->value & mask); }
 
     [[nodiscard]] constexpr bitfield as_uint() const noexcept { return this->value & mask; }
+    [[nodiscard]] constexpr explicit operator bool () const noexcept { return this->value; }
 
     static constexpr std::size_t max_value() noexcept { return max; }
 
