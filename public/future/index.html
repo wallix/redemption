@@ -8,6 +8,7 @@
 <style>
 body {
   background: #fff;
+  margin-top: 0;
   margin-left: 0;
   margin-right: 0;
 }
@@ -123,10 +124,13 @@ nav {
   /* width: ${cssColumnWith}em; */
 }
 
+.menu-item, #button-advanced-mode-normal {
+  color: #53e;
+}
+
 .menu-item {
   display: block;
   padding: .25em .5em;
-  color: #53e;
   text-decoration: none;
 }
 
@@ -135,15 +139,22 @@ nav {
   font-weight: bold;
 }
 
-.menu-item-advanced-marker {
+.advanced-mode-advanced-marker, #button-advanced-mode-advanced {
   color: #e53;
-  font-weight: bold;
 }
 
 .menu-group-spec, .section-spec {
   font-size: .85em;
   opacity: 55%;
   font-weight: normal;
+}
+
+.notFound{
+  display: none;
+  margin: 0;
+  padding: 1em;
+  background: #eee;
+  font-size: 1.2em;
 }
 
 .name-info {
@@ -155,12 +166,20 @@ nav {
   opacity: 50%;
 }
 
+#tabs {
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  background: #333;
+}
 
 .tab-label > a {
   display: block;
-  padding: .5em 1em;
+  padding: .75rem 1.5rem;
+  /* border-left: .5em #000 solid; */
+  /* border-right: .5em #000 solid; */
   color: #efefef;
-  background: #111;
+  background: #000;
   cursor: pointer;
   border: none;
 }
@@ -176,9 +195,12 @@ nav {
 }
 
 .tab-current {
-  /* color: #caf3fe; */
-  border-left: .5em #f09d62 solid;
-  border-right: .5em #f09d62 solid;
+  border-left: .5rem #f09d62 solid;
+  border-right: .5rem #f09d62 solid;
+}
+.tab-current > a {
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .tab-content {
@@ -200,11 +222,14 @@ nav {
   font-weight: normal;
 }
 
+label {
+  padding: .2em .4em .2em .2em;
+  cursor: pointer;
+}
+
 .tag-filter {
   border-radius: 4px;
-  display: inline-block;
   text-transform: capitalize;
-  padding: 0 .2em;
   color: #333;
   background-color: #ddd;
 }
@@ -225,16 +250,66 @@ nav {
 <script>
 "strict";
 
-const tagList = ['perf', 'debug', 'workaround', 'compatibility'];
+const tagList = [];
 
 const titleMapping = {
     g: 'Configuration Option',
     rdp: 'RDP Policy',
     vnc: 'VNC Policy',
     jh: 'JH Policy',
-    ini: 'Ini',
+    ini: 'Ini (dev)',
     all: 'All without JH or Ini',
 };
+
+const [setAdvanced, tagFilter] = (() => {
+  const head = document.head;
+  let style = null;
+
+  let name = 'all';
+  let normal = true;
+  let advanced = true;
+  let tag = '';
+
+  const updateStyle = () => {
+    if (!style) {
+      style = document.createElement("style");
+      head.appendChild(style);
+    }
+    const style1 = normal ? '' : `.page-${name}.advanced-false { display: none }`;
+    const style2 = advanced ? '' : `.page-${name}.advanced-true { display: none }`;
+
+    let style3 = '';
+
+    // no data block
+    const suffix = tag ? `-tag-${tag}` : '';
+    if (normal && advanced) style3 += `.advanced-false-no-data${suffix}.advanced-true-no-data-tag-${tag}{ display: block; }`;
+    else if (normal) style3 += `.advanced-true-no-data${suffix}{ display: block; }`;
+    else if (advanced) style3 += `.advanced-false-no-data${suffix}{ display: block; }`;
+
+    if (tag) {
+      const selectors = [`.filter-tag-${tag}`];
+      if (normal) selectors.push(`.advanced-false-filter-tag-${tag}`);
+      if (advanced) selectors.push(`.advanced-true-filter-tag-${tag}`);
+      style3 += `.filter-tag-any:not(${selectors.join(',')}){ display: none }`;
+    }
+
+    style.innerText = `${style1}${style2}${style3}`;
+  };
+
+  const setAdvanced = function(name_, normal_, advanced_) {
+    name = name_;
+    normal = normal_;
+    advanced = advanced_;
+    updateStyle();
+  };
+
+  const tagFilter = (tag_) => {
+    tag = tag_;
+    updateStyle();
+  };
+
+  return [setAdvanced, tagFilter];
+})();
 
 async function getJSON(path)
 {
@@ -243,15 +318,11 @@ async function getJSON(path)
 }
 
 const pushOption = (spec, sectionName, option) => {
-  const section = spec[sectionName] || {options: []};
-  spec[sectionName] = section;
-  section.options.push(option);
+  (spec[sectionName] ??= {options: []}).options.push(option);
 };
 
 const default2k = (dict, k1, k2, value) => {
-  const d = dict[k1] || {};
-  dict[k1] = d;
-  d[k2] = value;
+  (dict[k1] ??= {})[k2] = value;
 }
 
 const computeDisplayName = (name) => {
@@ -263,35 +334,59 @@ const computeDisplayName = (name) => {
 };
 
 const computeSpecInfo = (spec) => {
+  let totalOption = 0;
+  let totalAdvancedCounter = 0;
+  let totalTags = {};
+
   for (const sectionName in spec) {
     const section = spec[sectionName];
     const tags = {};
-    let counter = 0;
+    let advancedCounter = 0;
     for (const option of section.options) {
-      counter += option.advanced | 0;
+      advancedCounter += option.advanced | 0;
       if (option.tags) {
         for (const tag of option.tags) {
-          tags[tag] = true;
+          const data = tags[tag] ??= {advancedCounter: 0, total: 0};
+          data.advancedCounter += option.advanced | 0;
+          data.total++;
         }
       }
     }
 
     let tagClasses = 'filter-tag-any';
     for (const tag in tags) {
-      tagClasses += ` filter-tag-${tag}`;
+      const data = tags[tag];
+      if (data.advancedCounter !== 0) tagClasses += ` advanced-true-filter-tag-${tag}`;
+      if (data.advancedCounter !== data.total) tagClasses += ` advanced-false-filter-tag-${tag}`;
+      const data2 = totalTags[tag] ??= {advancedCounter: 0, total: 0};
+      data2.advancedCounter += data.advancedCounter;
+      data2.total += data.total;
     }
 
     section.displayName ??= sectionName; //.replaceAll('_', ' ');
-    section.countAdvanced = counter;
     section.tagClasses = tagClasses;
     section.advancedClass
-      = (counter === 0) ? 'advanced-false'
-      : (counter === section.options.length) ? 'advanced-true'
+      = (advancedCounter === 0) ? 'advanced-false'
+      : (advancedCounter === section.options.length) ? 'advanced-true'
       : '';
+    totalAdvancedCounter += advancedCounter;
+    totalOption += section.options.length;
   }
+
+  let notFoundClass
+    = (totalAdvancedCounter === 0) ? 'advanced-false-no-data'
+    : (totalAdvancedCounter === totalOption) ? 'advanced-true-no-data'
+    : '';
+  for (const tag of tagList) {
+    const data = totalTags[tag] || {advancedCounter: 0, total: 0};
+    if (data.advancedCounter === 0) notFoundClass += ` advanced-false-no-data-tag-${tag}`;
+    if (data.advancedCounter === data.total) notFoundClass += ` advanced-true-no-data-tag-${tag}`;
+  }
+
+  return {notFoundClass, sections: spec};
 };
 
-const makeHtmlHistory = (migrate, spec, historyTransformations) => {
+const makeHtmlHistory = (migrate, sections, historyTransformations) => {
   const histFragments = ['<p>ReDemPtion versions:</p><ul>'];
   const histIniOnyFragments = ['<p>ReDemPtion versions:</p><ul>'];
   for (const {version, data} of migrate.reverse()) {
@@ -312,7 +407,7 @@ const makeHtmlHistory = (migrate, spec, historyTransformations) => {
             const reason = formatReason(keyData.reason);
             if (keyData.iniOnly || !keyData.toIniOnly) {
               const hist = keyData.iniOnly ? histIniOnly : histGlobalSpec;
-              const displayedKey = spec[newSection]?.[newKey]?.displayName || computeDisplayName(newKey);
+              const displayedKey = sections[newSection]?.[newKey]?.displayName || computeDisplayName(newKey);
               hist.push(`<li>Move <span class="hist-old-name">[${sectionName}] ${previousKey}</span> to <span class="hist-new-name">[${newSection}] ${displayedKey}</span>${reason}</li>`);
             }
             else if (keyData.toIniOnly) {
@@ -398,31 +493,29 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPre
   const htmlMenuFragments = ['<nav id="menu-section">'];
   const htmlBodyFragments = [];
 
-  for (const sectionName in spec) {
-    const sectionData = spec[sectionName];
+  for (const sectionName in spec.sections) {
+    const sectionData = spec.sections[sectionName];
     const sectionId = `${prefix}-${sectionName}`;
-    const advancedClass = sectionData.advancedClass ? `${prefixPrefix}-${sectionData.advancedClass}` : '';
-    const tagClasses = sectionData.tagClasses;
+    const classes = `page-${prefixPrefix} ${sectionData.advancedClass} ${sectionData.tagClasses}`;
 
     const realSectionName = isConnpolicy && sections[sectionName]?.connpolicyName || sectionName;
     htmlMenuFragments.push(`
-      <p class="menu-group ${advancedClass} ${tagClasses}">
-        <a class="menu-item ${advancedClass} ${tagClasses}" href="#${sectionId}">${menuPrefix}[${realSectionName}]</a>
+      <p class="menu-group ${classes}">
+        <a class="menu-item ${classes}" href="#${sectionId}">${menuPrefix}[${realSectionName}]</a>
     `);
 
     htmlBodyFragments.push(`
-      <section class="option-group ${advancedClass} ${tagClasses}">
+      <section class="option-group ${classes}">
         <h2 id="${sectionId}"><a href="#${sectionId}">${sectionPrefix}Section: ${realSectionName}</a></h2>
     `);
 
     for (const option of sectionData.options) {
       const optId = `${sectionId}-${option.name}`;
-      const advancedClass = option.advancedClass ? `${prefixPrefix}-${option.advancedClass}` : '';
-      const tagClasses = option.tagClasses;
+      const classes = `page-${prefixPrefix} ${option.advancedClass} ${option.tagClasses}`;
       const tags = makeTagList(option.tags);
-      const listChar = option.advanced ? '<span class="menu-item-advanced-marker">-</span>' : '-';
+      const listChar = `<span class="advanced-mode-${option.advanced ? 'advanced' : 'normal'}-marker">–</span>`;
       htmlMenuFragments.push(
-        `<a class="menu-item ${advancedClass} ${tagClasses}" href="#${optId}">${listChar} ${option.displayName}${tags}</a>`
+        `<a class="menu-item ${classes}" href="#${optId}">${listChar} ${option.displayName}${tags}</a>`
       );
 
       let extraDescription = '';
@@ -463,7 +556,7 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPre
       }
 
       htmlBodyFragments.push(`
-        <article class="option ${advancedClass} ${tagClasses}" id="${optId}">
+        <article class="option ${classes}" id="${optId}">
           <h3><a href="#${optId}">${sectionPrefix}<span class="section-prefix">[${realSectionName}]</span> ${option.displayName}</a>${tags}</h3>
           <p class="type-info">type: ${type} | ${option.advanced ? 'advanced | ' : ''}default: ${defaultValue}</p>
           <p class="description">${description}</p>
@@ -477,7 +570,7 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPre
     htmlBodyFragments.push('</section>');
   }
 
-  htmlMenuFragments.push('</nav>');
+  htmlMenuFragments.push(`<p class="notFound page-${prefixPrefix} ${spec.notFoundClass}">No data found</p></nav>`);
 
   return [htmlMenuFragments.join(''), htmlBodyFragments.join('')];
 };
@@ -501,9 +594,9 @@ const makeHtmlAll = (enumDatas, sections, globalSpec, rdpSpec, vncSpec) => {
 
 const makeHtmlAdvancedMod = (name) => {
   return `<p>Show options:
-    <label><input type="radio" name="${name}-advanced-mode" onchange="setAdvanced('${name}', true, false)">Advanced</label>
-    <label><input type="radio" name="${name}-advanced-mode" onclick="setAdvanced('${name}', false, true)">Normal</label>
-    <label><input type="radio" name="${name}-advanced-mode" onclick="setAdvanced('${name}', true, true)" checked>Both</label>
+    <label><input type="radio" name="${name}-advanced-mode" onclick="setAdvanced('${name}', true, true)" id="button-advanced-mode-both-${name}" checked>Both</label>
+    <label id="button-advanced-mode-advanced"><input type="radio" name="${name}-advanced-mode" onchange="setAdvanced('${name}', false, true)" id="button-advanced-mode-advanced-${name}">Advanced</label>
+    <label id="button-advanced-mode-normal"><input type="radio" name="${name}-advanced-mode" onclick="setAdvanced('${name}', true, false)" id="button-advanced-mode-normal-${name}">Normal</label>
   </p>`
 }
 
@@ -631,12 +724,13 @@ const mappingHumanTime = {
     };
   }
 
+  tagList.push(...config.tags);
 
-  const globalSpec = {};
-  const iniOnlySpec = {};
-  const rdpSpec = {};
-  const vncSpec = {};
-  const jhSpec = {};
+  let globalSpec = {};
+  let iniOnlySpec = {};
+  let rdpSpec = {};
+  let vncSpec = {};
+  let jhSpec = {};
   const historyTransformations = {};
 
   let optionNameMaxLen = 0;
@@ -660,11 +754,11 @@ const mappingHumanTime = {
       {displayName: option.displayName, history});
   }
 
-  computeSpecInfo(globalSpec);
-  computeSpecInfo(iniOnlySpec);
-  computeSpecInfo(rdpSpec);
-  computeSpecInfo(vncSpec);
-  computeSpecInfo(jhSpec);
+  globalSpec = computeSpecInfo(globalSpec);
+  iniOnlySpec = computeSpecInfo(iniOnlySpec);
+  rdpSpec = computeSpecInfo(rdpSpec);
+  vncSpec = computeSpecInfo(vncSpec);
+  jhSpec = computeSpecInfo(jhSpec);
 
   const sections = {}
   for (const section of config.sections) {
@@ -681,13 +775,13 @@ const mappingHumanTime = {
     htmlTabsMenu.push(`  <li class="tab-label" id="tab-${name}"><a href="#${name}">${titleMapping[name]}</a></li>`)
   }
 
-  const htmlFilterTag = ['<label class="tag-filter"><input type="radio" name="tag-filter" onchange="tagFilter()" checked>None</label>'];
+  const htmlFilterTag = ['<label class="tag-filter"><input type="radio" name="tag-filter" onchange="tagFilter()" checked>Any</label>'];
   for (const tag of tagList) {
-    htmlFilterTag.push(` <label class="tag-filter tag-${tag}"><input type="radio" name="tag-filter" onchange="tagFilter('${tag}')">${tag}</label>`)
+    htmlFilterTag.push(` <label class="tag-filter tag-${tag}"><input type="radio" name="tag-filter" onchange="tagFilter('${tag}')" id="tag-filter-${tag}">${tag}</label>`)
   }
 
   const [htmlHistory, htmlIniHistory]
-    = makeHtmlHistory(migrate, globalSpec, historyTransformations);
+    = makeHtmlHistory(migrate, globalSpec.sections, historyTransformations);
   const [htmlMenu, htmlBody] = makeHtmlSpec(enumDatas, sections, globalSpec, 'g', false);
   const [htmlIniMenu, htmlIniBody] = makeHtmlSpec(enumDatas, sections, iniOnlySpec, 'ini', false);
   const htmlFragments = [
@@ -746,33 +840,28 @@ const mappingHumanTime = {
   else {
     setTab(currentTab);
   }
-})();
 
+  // filter tag and advanced mode
+  if (location.search) {
+    const checked = (elem) => {
+      if (elem) {
+        elem.checked = true;
+        elem.onclick();
+      }
+    };
+    const params = new URLSearchParams(location.search);
 
-const head = document.head;
-const styles = {};
+    const advancedMode = params.get("mode");
+    if (advancedMode) {
+      checked(document.getElementById(`button-advanced-mode-${advancedMode}-${currentTab}`));
+    }
 
-const getStyle = function(name) {
-  let style = styles[name];
-  if (!style) {
-    style = document.createElement("style");
-    head.appendChild(style);
-    styles[name] = style;
+    const tag = params.get("tag");
+    if (tag) {
+      checked(document.getElementById(`tag-filter-${tag}`));
+    }
   }
-  return style;
-};
-
-const setAdvanced = function(name, a, b) {
-  const style = getStyle(name);
-  const style1 = a ? '' : `.${name}-advanced-true{ display: none }`;
-  const style2 = b ? '' : `.${name}-advanced-false{ display: none }`;
-  style.innerText = style1 + style2;
-};
-
-const tagFilter = function(tag) {
-  const style = getStyle('tagFilter');
-  style.innerText = tag ? `.filter-tag-any:not(.filter-tag-${tag}){ display: none }` : '';
-};
+})();
 </script>
 
 </body>

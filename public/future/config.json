@@ -1,4 +1,5 @@
 {
+"tags": ["perf","debug","workaround","compatibility"],
 "sections": [
   {"name": "general"},
   {"name": "globals"},
