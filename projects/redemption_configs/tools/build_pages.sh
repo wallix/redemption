@@ -13,7 +13,7 @@ d="$(realpath -m $1)"
 cd "$(dirname "$0")"
 ../../../tools/conf_migration_tool/conf_migrate.py --dump=json > "$d"/migrate.json
 root=$(realpath -m "$PWD"/..)
-ln -s "$root"/pages/config.html "$root"/autogen/doc/*.json "$d"
+ln -s "$root"/pages/config.html "$root"/autogen/doc/*.json "$root"/../../docs/theme/*.png "$d"
 
 cd "$d"
 python -m http.server

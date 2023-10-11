@@ -49,7 +49,7 @@ branch-pages:
   script:
     - mkdir "tmp"
     - tools/conf_migration_tool/conf_migrate.py --dump=json > tmp/migrate.json
-    - cp projects/redemption_configs/autogen/doc/*.json tmp
+    - cp projects/redemption_configs/autogen/doc/*.json docs/theme/*.png tmp
     - cp projects/redemption_configs/pages/config.html tmp/index.html
     - git config user.email "cipipeline@wallix.com"
     - git config user.name "CI Pipeline"
@@ -66,7 +66,9 @@ branch-pages:
     - fi
   only:
     - future
-    # - maintenance_bastion_11.0
+    - maintenance_bastion_11.0
+    - maintenance_bastion_12.0
+    - maintenance_bastion_13.0
 
 
 build-project:
