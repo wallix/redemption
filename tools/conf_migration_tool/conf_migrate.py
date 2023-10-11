@@ -378,6 +378,171 @@ def migrate(fragments: List[ConfigurationFragment],
     return (True, result_fragments)
 
 
+### --dump=json
+### @{
+
+def remove_ini_only_type(desc: MigrationDescType) -> MigrationDescType:
+    return {section: ({k: v for k, v in values_or_item.items() if type(v) != ToIniOnly}
+                      if isinstance(values_or_item, dict) else values_or_item)
+            for section, values_or_item in desc.items() if type(values_or_item) != ToIniOnly}
+
+
+def migrate_file(migration_defs: List[MigrationType],
+                 version: RedemptionVersion,
+                 ini_filename: str,
+                 temporary_ini_filename: str,
+                 saved_ini_filename: str,
+                 ) -> bool:
+    _, fragments = parse_configuration_from_file(ini_filename)
+
+    is_changed = False
+    for _, desc in migration_filter(migration_defs, version):
+        is_updated, fragments = migrate(fragments, remove_ini_only_type(desc))
+        is_changed = is_changed or is_updated
+
+    if is_changed:
+        with open(temporary_ini_filename, 'w', encoding='utf-8') as f:
+            f.write(''.join(fragment.text for fragment in fragments))
+
+        copyfile(ini_filename, saved_ini_filename)
+
+        os.rename(temporary_ini_filename, ini_filename)
+
+    return is_changed
+
+
+def dump_json(defs: List[MigrationType]) -> None:
+    """
+    format: [
+        {
+            "version": str,
+            "data": {
+                <section_name>: RemoveItem | MoveSection | Values
+            }
+        }
+    ]
+    RemoveItem = {
+        "kind": "remove",
+        "reason": optional[str],
+        "oldDisplayName": optional[str],
+    }
+    MoveSection = {
+        "kind": "move",
+        "reason": optional[str],
+        "oldDisplayName": optional[str],
+    }
+    Values = {
+        "kind": "values",
+        "values": {
+            <value_name>: RemoveItem | UpdateItem,
+        }
+    }
+    UpdateItem = {
+        "kind": "update",
+        "newSection": optional[str],
+        "newKey": optional[str],
+        "reason": optional[str],
+        "oldDisplayName": optional[str],
+        "iniOnly": optional[bool],
+        "toIniOnly": optional[bool],
+    }
+    """
+    def update_if(d, k, v):
+        if v:
+            d[k] = v
+
+    def remove_to_dict(item: RemoveItem):
+        d = {'kind': 'remove'}
+        update_if(d, 'reason', item.reason)
+        update_if(d, 'oldDisplayName', item.old_display_name)
+        update_if(d, 'iniOnly', item.ini_only)
+        return d
+
+    def ini_only_to_dict(item: ToIniOnly):
+        d = {'kind': 'update', 'toIniOnly': True}
+        update_if(d, 'reason', item.reason)
+        update_if(d, 'oldDisplayName', item.old_display_name)
+        return d
+
+    def move_to_dict(item: MoveSection):
+        d = {'kind': 'move', 'newName': item.name}
+        update_if(d, 'oldDisplayName', item.old_display_name)
+        return d
+
+    def update_to_dict(item: UpdateItem) -> Optional[Dict[str, str]]:
+        if not (item.section or item.key or item.to_ini_only):
+            return None
+        d = {'kind': 'update'}
+        update_if(d, 'newSection', item.section)
+        update_if(d, 'newKey', item.key)
+        update_if(d, 'reason', item.reason)
+        update_if(d, 'oldDisplayName', item.old_display_name)
+        update_if(d, 'iniOnly', item.ini_only)
+        update_if(d, 'toIniOnly', item.to_ini_only)
+        return d
+
+    def dict_to_dict(values: Dict[str, MigrationKeyOrderType]):
+        data = {}
+        for k, item in values.items():
+            obj = visitor[type(item)](item)
+            if obj:
+                data[k] = obj
+        return {'kind': 'values', 'values': data}
+
+    visitor = {
+        RemoveItem: remove_to_dict,
+        ToIniOnly: ini_only_to_dict,
+        MoveSection: move_to_dict,
+        UpdateItem: update_to_dict,
+        dict: dict_to_dict,
+    }
+
+    l = []
+    for version, desc in defs:
+        data = {}
+        for section, values_or_item in desc.items():
+            obj = visitor[type(values_or_item)](values_or_item)
+            if obj:
+                data[section] = obj
+        if data:
+            l.append({'version': str(version), 'data': data})
+
+    return l
+
+### @}
+
+
+def main(migration_defs: List[MigrationType], argv: List[str]) -> int:
+    if len(argv) != 4 or argv[1] not in ('-s', '-f'):
+        if len(argv) == 2 and argv[1] == '--dump=json':
+            import json
+            print(json.dumps(dump_json(migration_defs)))
+            return 0
+
+        print(f'{argv[0]} {{-s|-f}} old_version ini_filename\n'
+              '  -s   <version> is a output format of redemption --version\n'
+              '  -f   <version> is a version of redemption from file\n\n'
+              f'{argv[0]} --dump=json\n',
+              file=sys.stderr)
+        return 1
+
+    ini_filename = argv[3]
+    if argv[1] == '-f':
+        old_version = RedemptionVersion.from_file(argv[2])
+    else:
+        old_version = RedemptionVersion(argv[2])
+
+    print(f"PreviousRedemptionVersion={old_version}")
+
+    if migrate_file(migration_defs,
+                    old_version,
+                    ini_filename=ini_filename,
+                    temporary_ini_filename=f'{ini_filename}.work',
+                    saved_ini_filename=f'{ini_filename}.{old_version}'):
+        print("Configuration file updated")
+    return 0
+
+
 def _to_bool(value: str) -> bool:
     return value.strip().lower() in ('1', 'yes', 'true', 'on')
 
@@ -615,159 +780,5 @@ migration_defs: List[MigrationType] = [
     }),
 ]
 
-
-def remove_ini_only_type(desc: MigrationDescType) -> MigrationDescType:
-    return {section: ({k: v for k, v in values_or_item.items() if type(v) != ToIniOnly}
-                      if isinstance(values_or_item, dict) else values_or_item)
-            for section, values_or_item in desc.items() if type(values_or_item) != ToIniOnly}
-
-
-def migrate_file(version: RedemptionVersion,
-                 ini_filename: str,
-                 temporary_ini_filename: str,
-                 saved_ini_filename: str,
-                 ) -> bool:
-    _, fragments = parse_configuration_from_file(ini_filename)
-
-    is_changed = False
-    for _, desc in migration_filter(migration_defs, version):
-        is_updated, fragments = migrate(fragments, remove_ini_only_type(desc))
-        is_changed = is_changed or is_updated
-
-    if is_changed:
-        with open(temporary_ini_filename, 'w', encoding='utf-8') as f:
-            f.write(''.join(fragment.text for fragment in fragments))
-
-        copyfile(ini_filename, saved_ini_filename)
-
-        os.rename(temporary_ini_filename, ini_filename)
-
-    return is_changed
-
-
-def dump_json(defs: List[MigrationType]) -> None:
-    """
-    format: [
-        {
-            "version": str,
-            "data": {
-                <section_name>: RemoveItem | MoveSection | Values
-            }
-        }
-    ]
-    RemoveItem = {
-        "kind": "remove",
-        "reason": optional[str],
-        "oldDisplayName": optional[str],
-    }
-    MoveSection = {
-        "kind": "move",
-        "reason": optional[str],
-        "oldDisplayName": optional[str],
-    }
-    Values = {
-        "kind": "values",
-        "values": {
-            <value_name>: RemoveItem | UpdateItem,
-        }
-    }
-    UpdateItem = {
-        "kind": "update",
-        "newSection": optional[str],
-        "newKey": optional[str],
-        "reason": optional[str],
-        "oldDisplayName": optional[str],
-        "iniOnly": optional[bool],
-        "toIniOnly": optional[bool],
-    }
-    """
-    def update_if(d, k, v):
-        if v:
-            d[k] = v
-
-    def remove_to_dict(item: RemoveItem):
-        d = {'kind': 'remove'}
-        update_if(d, 'reason', item.reason)
-        update_if(d, 'oldDisplayName', item.old_display_name)
-        update_if(d, 'iniOnly', item.ini_only)
-        return d
-
-    def ini_only_to_dict(item: ToIniOnly):
-        d = {'kind': 'update', 'toIniOnly': True}
-        update_if(d, 'reason', item.reason)
-        update_if(d, 'oldDisplayName', item.old_display_name)
-        return d
-
-    def move_to_dict(item: MoveSection):
-        d = {'kind': 'move', 'newName': item.name}
-        update_if(d, 'oldDisplayName', item.old_display_name)
-        return d
-
-    def update_to_dict(item: UpdateItem) -> Optional[Dict[str, str]]:
-        if not (item.section or item.key or item.to_ini_only):
-            return None
-        d = {'kind': 'update'}
-        update_if(d, 'newSection', item.section)
-        update_if(d, 'newKey', item.key)
-        update_if(d, 'reason', item.reason)
-        update_if(d, 'oldDisplayName', item.old_display_name)
-        update_if(d, 'iniOnly', item.ini_only)
-        update_if(d, 'toIniOnly', item.to_ini_only)
-        return d
-
-    def dict_to_dict(values: Dict[str, MigrationKeyOrderType]):
-        data = {}
-        for k, item in values.items():
-            obj = visitor[type(item)](item)
-            if obj:
-                data[k] = obj
-        return {'kind': 'values', 'values': data}
-
-    visitor = {
-        RemoveItem: remove_to_dict,
-        ToIniOnly: ini_only_to_dict,
-        MoveSection: move_to_dict,
-        UpdateItem: update_to_dict,
-        dict: dict_to_dict,
-    }
-
-    l = []
-    for version, desc in defs:
-        data = {}
-        for section, values_or_item in desc.items():
-            obj = visitor[type(values_or_item)](values_or_item)
-            if obj:
-                data[section] = obj
-        if data:
-            l.append({'version': str(version), 'data': data})
-
-    return l
-
-
 if __name__ == '__main__':
-    if len(sys.argv) != 4 or sys.argv[1] not in ('-s', '-f'):
-        if len(sys.argv) == 2 and sys.argv[1] == '--dump=json':
-            import json
-            print(json.dumps(dump_json(migration_defs)))
-            exit(0)
-
-        print(f'{sys.argv[0]} {{-s|-f}} old_version ini_filename\n'
-              '  -s   <version> is a output format of redemption --version\n'
-              '  -f   <version> is a version of redemption from file\n\n'
-              f'{sys.argv[0]} --dump=json\n',
-              file=sys.stderr)
-        exit(1)
-
-    ini_filename = sys.argv[3]
-    if sys.argv[1] == '-f':
-        old_version = RedemptionVersion.from_file(sys.argv[2])
-    else:
-        old_version = RedemptionVersion(sys.argv[2])
-
-    print(f"PreviousRedemptionVersion={old_version}")
-
-    if migrate_file(old_version,
-                    ini_filename=ini_filename,
-                    temporary_ini_filename=f'{ini_filename}.work',
-                    saved_ini_filename=f'{ini_filename}.{old_version}'):
-        print("Configuration file updated")
+    exit(main(migration_defs, sys.argv))

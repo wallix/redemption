@@ -347,6 +347,7 @@ class TestMigration(unittest.TestCase):
         version = RedemptionVersion('9.1.38')
 
         self.assertEqual(True, migrate_file(
+            migration_defs,
             version,
             ini_filename=ini_filename,
             temporary_ini_filename=f'{ini_filename}.work',
