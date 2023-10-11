@@ -641,8 +641,8 @@ window.addEventListener('popstate', (event) => {
   }
 });
 
-const setTab = (newTab) => {
-  history.replaceState(currentTab, '', `#${currentTab}`);
+const setTab = (newTab, hash) => {
+  history.replaceState(currentTab, '', `#${hash || currentTab}`);
   _setTab(newTab);
   lastTab = newTab;
 };
@@ -845,7 +845,7 @@ const mappingHumanTime = {
         break;
       }
     }
-    setTab(currentTab);
+    setTab(currentTab, id);
     document.getElementById(id)?.scrollIntoView();
   }
   else {
