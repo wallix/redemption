@@ -508,6 +508,17 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPre
       <section class="option-group ${classes}">
         <h2 id="${sectionId}"><a href="#${sectionId}">${sectionPrefix}Section: ${realSectionName}</a></h2>
     `);
+    if (sectionName === 'theme') {
+      htmlBodyFragments.push(`
+      <div id="theme-image">
+        <img src="theme_selector_1.png"/>
+        <img src="theme_selector_2.png"/>
+        <img src="theme_tooltip.png"/>
+        <img src="theme_separator_and_focus_color.png"/>
+        <img src="theme_global.png"/>
+      </div>
+      `);
+    }
 
     for (const option of sectionData.options) {
       const optId = `${sectionId}-${option.name}`;
