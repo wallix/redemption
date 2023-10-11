@@ -8,7 +8,7 @@
 
 from shutil import copyfile
 from enum import IntEnum
-from typing import (List, Tuple, Dict, Optional, Union, Iterable,
+from typing import (List, Tuple, Dict, Optional, Union, Iterable, Any,
                     Sequence, NamedTuple, Generator, Callable, TypeVar)
 
 import os
@@ -411,7 +411,7 @@ def migrate_file(migration_defs: List[MigrationType],
     return is_changed
 
 
-def dump_json(defs: List[MigrationType]) -> None:
+def dump_json(defs: List[MigrationType]) -> List[Any]:
     """
     format: [
         {
@@ -556,14 +556,14 @@ def _to_int(value: str) -> int:
         return 0
 
 
-_IniValue = TypeVar("IniValue")
+_IniValue = TypeVar("_IniValue")
 
 def _get_values(fragments: Iterable[ConfigurationFragment],
                 desc: Sequence[Tuple[str, str, _IniValue, Callable[[str], _IniValue]]]
                 ) -> List[_IniValue]:
     values = [default_value for section, name, default_value, converter in desc]
 
-    tree = {}
+    tree: Dict[str, Dict[str, int]] = {}
     for i, t in enumerate(desc):
         tree.setdefault(t[0], {})[t[1]] = i
 
