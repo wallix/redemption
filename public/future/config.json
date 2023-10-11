@@ -294,24 +294,7 @@
     },
     {
       "section": "globals",
-      "name": "enable_close_box",
-      "type": "bool",
-      "value": true,
-      "description": "Show close screen.\nThis displays errors related to the secondary connection then closes automatically after a timeout specified by \"Close Timeout\" or on user request.",
-      "globalSpec": true
-    },
-    {
-      "section": "globals",
-      "name": "close_timeout",
-      "type": "seconds",
-      "value": 600,
-      "description": "Specifies the time to spend on the close box of proxy RDP before closing client window.\n⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects.",
-      "globalSpec": true,
-      "advanced": true
-    },
-    {
-      "section": "globals",
-      "name": "enable_osd",
+      "name": "enable_end_time_warning_osd",
       "type": "bool",
       "value": true,
       "description": "Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval).\nThe reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed.",
@@ -331,6 +314,14 @@
     },
     {
       "section": "globals",
+      "name": "show_target_user_in_f12_message",
+      "type": "bool",
+      "value": false,
+      "description": "Show in session the target username when F12 is pressed.\nThis option needs \"Enable Osd Display Remote Target\".",
+      "globalSpec": true
+    },
+    {
+      "section": "globals",
       "name": "enable_wab_integration",
       "type": "bool",
       "value": "REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION", "cppExpr": true,
@@ -339,46 +330,10 @@
     },
     {
       "section": "globals",
-      "name": "allow_using_multiple_monitors",
-      "type": "bool",
-      "value": true,
-      "description": "Sends the client screen count to the server. Not supported for VNC targets.\nUncheck to disable multiple monitor.",
-      "tags": ["compatibility"],
-      "globalSpec": true
-    },
-    {
-      "section": "globals",
-      "name": "allow_scale_factor",
-      "type": "bool",
-      "value": false,
-      "description": "Sends Scale & Layout configuration to the server.\nOn Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.\n⚠ Title bar detection via OCR will no longer work.\n",
-      "tags": ["compatibility"],
-      "globalSpec": true
-    },
-    {
-      "section": "globals",
-      "name": "bogus_refresh_rect",
-      "type": "bool",
-      "value": true,
-      "description": "Workaround option to fix some drawing issues with Windows Server 2012.\nCan be disabled when none of the targets are Windows Server 2012.",
-      "tags": ["compatibility"],
-      "globalSpec": true,
-      "advanced": true
-    },
-    {
-      "section": "globals",
       "name": "large_pointer_support",
       "type": "bool",
       "value": true,
       "description": "Enable support for pointers of size 96x96.\n⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.",
-      "iniOnly": true
-    },
-    {
-      "section": "globals",
-      "name": "unicode_keyboard_event_support",
-      "type": "bool",
-      "value": true,
-      "description": "Allows the client to use unicode characters.\nThis is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.",
       "iniOnly": true
     },
     {
@@ -442,22 +397,29 @@
     },
     {
       "section": "client",
-      "name": "force_performance_flags",
-      "type": "PerformanceFlags",
-      "value": "-mouse_cursor_shadows,-theme",
-      "description": "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n\nIf a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n\nAvailable features:\n  - wallpaper\n  - menu_animations\n  - theme\n  - mouse_cursor_shadows\n  - cursor_blinking\n  - font_smoothing\n  - desktop_composition\n",
-      "tags": ["perf","compatibility"],
-      "globalSpec": true,
-      "advanced": true
+      "name": "allow_using_multiple_monitors",
+      "type": "bool",
+      "value": true,
+      "description": "Sends the client screen count to the server. Not supported for VNC targets.\nUncheck to disable multiple monitor.",
+      "tags": ["compatibility"],
+      "globalSpec": true
     },
     {
       "section": "client",
-      "name": "auto_adjust_performance_flags",
+      "name": "allow_scale_factor",
+      "type": "bool",
+      "value": false,
+      "description": "Sends Scale & Layout configuration to the server.\nOn Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.\n⚠ Title bar detection via OCR will no longer work.\n",
+      "tags": ["compatibility"],
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "unicode_keyboard_event_support",
       "type": "bool",
       "value": true,
-      "description": "If enabled, avoid automatically font smoothing in recorded session.\nThis allows OCR (when session probe is disabled) to better detect window titles.\nIf disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.\nIn this case, windows titles will not be detected.",
-      "globalSpec": true,
-      "advanced": true
+      "description": "Allows the client to use unicode characters.\nThis is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.",
+      "iniOnly": true
     },
     {
       "section": "client",
@@ -509,6 +471,14 @@
       "tags": ["debug"],
       "globalSpec": true,
       "advanced": true
+    },
+    {
+      "section": "client",
+      "name": "ssl_cipher_list",
+      "type": "str",
+      "value": "HIGH:!ADH:!3DES:!SHA",
+      "description": "[Not configured]: Compatible with more RDP clients (less secure)\nHIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)\nHIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)",
+      "globalSpec": true
     },
     {
       "section": "client",
@@ -605,22 +575,6 @@
     },
     {
       "section": "client",
-      "name": "ssl_cipher_list",
-      "type": "str",
-      "value": "HIGH:!ADH:!3DES:!SHA",
-      "description": "[Not configured]: Compatible with more RDP clients (less secure)\nHIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)\nHIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)",
-      "globalSpec": true
-    },
-    {
-      "section": "client",
-      "name": "show_target_user_in_f12_message",
-      "type": "bool",
-      "value": false,
-      "description": "Show in session the target username when F12 is pressed.\nThis option needs \"Enable Osd Display Remote Target\".",
-      "globalSpec": true
-    },
-    {
-      "section": "client",
       "name": "bogus_ios_glyph_support_level",
       "type": "bool",
       "value": true,
@@ -706,6 +660,25 @@
       "value": true,
       "description": "Allows resizing of a desktop session opened in a RemoteApp window.\nThis happens when an RDP client opened in RemoteApp accesses a desktop target.",
       "globalSpec": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "force_performance_flags",
+      "type": "PerformanceFlags",
+      "value": "-mouse_cursor_shadows,-theme",
+      "description": "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n\nIf a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n\nAvailable features:\n  - wallpaper\n  - menu_animations\n  - theme\n  - mouse_cursor_shadows\n  - cursor_blinking\n  - font_smoothing\n  - desktop_composition\n",
+      "tags": ["perf","compatibility"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "auto_adjust_performance_flags",
+      "type": "bool",
+      "value": true,
+      "description": "If enabled, avoid automatically font smoothing in recorded session.\nThis allows OCR (when session probe is disabled) to better detect window titles.\nIf disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.\nIn this case, windows titles will not be detected.",
+      "globalSpec": true,
+      "advanced": true
     },
     {
       "section": "mod_rdp",
@@ -1120,6 +1093,16 @@
       "type": "bool",
       "value": true,
       "description": "Workaround option to disable shared disk for RDP client on iOS platform only.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "bogus_refresh_rect",
+      "type": "bool",
+      "value": true,
+      "description": "Workaround option to fix some drawing issues with Windows Server 2012.\nCan be disabled when none of the targets are Windows Server 2012.",
+      "tags": ["compatibility"],
       "globalSpec": true,
       "advanced": true
     },
@@ -2103,6 +2086,16 @@
     },
     {
       "section": "mod_vnc",
+      "name": "support_cursor_pseudo_encoding",
+      "type": "bool",
+      "value": true,
+      "description": "",
+      "vnc": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_vnc",
       "name": "server_clipboard_encoding_type",
       "type": "enumStr",
       "value": "latin1",
@@ -2143,16 +2136,6 @@
       "type": "bool",
       "value": false,
       "description": "When disabled, Ctrl + Alt becomes AltGr (Windows behavior)",
-      "vnc": true,
-      "aclToProxy": true,
-      "logStategy": "1"
-    },
-    {
-      "section": "mod_vnc",
-      "name": "support_cursor_pseudo_encoding",
-      "type": "bool",
-      "value": true,
-      "description": "",
       "vnc": true,
       "aclToProxy": true,
       "logStategy": "1"
@@ -3809,6 +3792,23 @@
       "globalSpec": true,
       "advanced": true,
       "subtype": "string"
+    },
+    {
+      "section": "internal_mod",
+      "name": "enable_close_box",
+      "type": "bool",
+      "value": true,
+      "description": "Show close screen.\nThis displays errors related to the secondary connection then closes automatically after a timeout specified by \"Close Timeout\" or on user request.",
+      "globalSpec": true
+    },
+    {
+      "section": "internal_mod",
+      "name": "close_box_timeout",
+      "type": "seconds",
+      "value": 600,
+      "description": "Specifies the time to spend on the close box of proxy RDP before closing client window.\n⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects.",
+      "globalSpec": true,
+      "advanced": true
     },
     {
       "section": "mod_replay",
