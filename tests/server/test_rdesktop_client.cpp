@@ -94,7 +94,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::client::encryption_level>(RdpSecurityEncryptionLevel::low);
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
     ini.set<cfg::globals::large_pointer_support>(false);
-    ini.set<cfg::globals::unicode_keyboard_event_support>(false);
+    ini.set<cfg::client::unicode_keyboard_event_support>(false);
     ini.set<cfg::client::disabled_orders>("4,15,16,17,18");
     ini.set<cfg::client::fast_path>(false);
 

@@ -152,7 +152,7 @@ void ModWrapper::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
             std::string msg;
             msg.reserve(64);
 
-            if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
+            if (ini.get<cfg::globals::show_target_user_in_f12_message>()) {
                 str_append(msg, ini.get<cfg::globals::target_user>(), '@');
             }
 
@@ -218,8 +218,8 @@ void ModWrapper::draw_osd_message(bool disable_by_input)
     // compute clip
 
     this->bogus_refresh_rect_ex
-      = (this->ini.get<cfg::globals::bogus_refresh_rect>()
-     && this->ini.get<cfg::globals::allow_using_multiple_monitors>()
+      = (this->ini.get<cfg::mod_rdp::bogus_refresh_rect>()
+     && this->ini.get<cfg::client::allow_using_multiple_monitors>()
      && (this->client_info.cs_monitor.monitorCount > 1));
 
     int16_t dx = 0;

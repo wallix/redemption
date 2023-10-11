@@ -32,12 +32,12 @@ inactivity_timeout = integer(min=0, default=0)
 
 [vnc]
 
+support_cursor_pseudo_encoding = boolean(default=True)
+
 server_is_macos = boolean(default=False)
 
 # When disabled, Ctrl + Alt becomes AltGr (Windows behavior)
 server_unix_alt = boolean(default=False)
-
-support_cursor_pseudo_encoding = boolean(default=True)
 
 # Enable target connection on ipv6
 enable_ipv6 = boolean(default=True)

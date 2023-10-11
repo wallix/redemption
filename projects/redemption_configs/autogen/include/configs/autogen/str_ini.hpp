@@ -67,22 +67,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #enable_bitmap_update = 1
 
-# Show close screen.
-# This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request.
-# (type: boolean (0/no/false or 1/yes/true))
-#enable_close_box = 1
-
-# Specifies the time to spend on the close box of proxy RDP before closing client window.
-# ⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects.
-# (in seconds)
-#_advanced
-#close_timeout = 600
-
 # Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval).
 # The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
-#enable_osd = 1
+#enable_end_time_warning_osd = 1
 
 # Allow to show target device name with F12 during the session
 # (type: boolean (0/no/false or 1/yes/true))
@@ -90,36 +79,18 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ enable_osd_display_remote_target)
 #enable_osd_display_remote_target = 1
 
+# Show in session the target username when F12 is pressed.
+# This option needs "Enable Osd Display Remote Target".
+# (type: boolean (0/no/false or 1/yes/true))
+#show_target_user_in_f12_message = 0
+
 # (type: boolean (0/no/false or 1/yes/true))
 #enable_wab_integration = )gen_config_ini" << (REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) << R"gen_config_ini(
-
-# Sends the client screen count to the server. Not supported for VNC targets.
-# Uncheck to disable multiple monitor.
-# (type: boolean (0/no/false or 1/yes/true))
-#allow_using_multiple_monitors = 1
-
-# Sends Scale & Layout configuration to the server.
-# On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.
-# ⚠ Title bar detection via OCR will no longer work.
-# 
-# (type: boolean (0/no/false or 1/yes/true))
-#allow_scale_factor = 0
-
-# Workaround option to fix some drawing issues with Windows Server 2012.
-# Can be disabled when none of the targets are Windows Server 2012.
-# (type: boolean (0/no/false or 1/yes/true))
-#_advanced
-#bogus_refresh_rect = 1
 
 # Enable support for pointers of size 96x96.
 # ⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.
 # (type: boolean (0/no/false or 1/yes/true))
 #large_pointer_support = 1
-
-# Allows the client to use unicode characters.
-# This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.
-# (type: boolean (0/no/false or 1/yes/true))
-#unicode_keyboard_event_support = 1
 
 # (in milliseconds | min = 100, max = 10000)
 #mod_recv_timeout = 1000
@@ -151,29 +122,22 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #ignore_logon_password = 0
 
-# It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).
-# 
-# If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.
-# 
-# Available features:
-#   - wallpaper
-#   - menu_animations
-#   - theme
-#   - mouse_cursor_shadows
-#   - cursor_blinking
-#   - font_smoothing
-#   - desktop_composition
-# 
-#_advanced
-#force_performance_flags = -mouse_cursor_shadows,-theme
-
-# If enabled, avoid automatically font smoothing in recorded session.
-# This allows OCR (when session probe is disabled) to better detect window titles.
-# If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.
-# In this case, windows titles will not be detected.
+# Sends the client screen count to the server. Not supported for VNC targets.
+# Uncheck to disable multiple monitor.
 # (type: boolean (0/no/false or 1/yes/true))
-#_advanced
-#auto_adjust_performance_flags = 1
+#allow_using_multiple_monitors = 1
+
+# Sends Scale & Layout configuration to the server.
+# On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.
+# ⚠ Title bar detection via OCR will no longer work.
+# 
+# (type: boolean (0/no/false or 1/yes/true))
+#allow_scale_factor = 0
+
+# Allows the client to use unicode characters.
+# This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.
+# (type: boolean (0/no/false or 1/yes/true))
+#unicode_keyboard_event_support = 1
 
 # Legacy encryption when External Security Protocol (TLS, CredSSP, etc) is disable
 # values: none, low, medium, high
@@ -204,6 +168,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #show_common_cipher_list = 0
+
+# [Not configured]: Compatible with more RDP clients (less secure)
+# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
+# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
+#ssl_cipher_list = HIGH:!ADH:!3DES:!SHA
 
 # Needed for primary NTLM or Kerberos connections over NLA.
 # (type: boolean (0/no/false or 1/yes/true))
@@ -255,16 +224,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # ⚠ If changes occur on the target, they will not be visible in the recordings either.
 # (type: boolean (0/no/false or 1/yes/true))
 #enable_suppress_output = 1
-
-# [Not configured]: Compatible with more RDP clients (less secure)
-# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
-# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
-#ssl_cipher_list = HIGH:!ADH:!3DES:!SHA
-
-# Show in session the target username when F12 is pressed.
-# This option needs "Enable Osd Display Remote Target".
-# (type: boolean (0/no/false or 1/yes/true))
-#show_target_user_in_f12_message = 0
 
 # Same effect as "Transform glyph to bitmap", but only for RDP client on iOS platform.
 # (type: boolean (0/no/false or 1/yes/true))
@@ -331,6 +290,30 @@ R"gen_config_ini(## Config file for RDP proxy.
 #allow_resize_hosted_desktop = 1
 
 [mod_rdp]
+
+# It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).
+# 
+# If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.
+# 
+# Available features:
+#   - wallpaper
+#   - menu_animations
+#   - theme
+#   - mouse_cursor_shadows
+#   - cursor_blinking
+#   - font_smoothing
+#   - desktop_composition
+# 
+#_advanced
+#force_performance_flags = -mouse_cursor_shadows,-theme
+
+# If enabled, avoid automatically font smoothing in recorded session.
+# This allows OCR (when session probe is disabled) to better detect window titles.
+# If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.
+# In this case, windows titles will not be detected.
+# (type: boolean (0/no/false or 1/yes/true))
+#_advanced
+#auto_adjust_performance_flags = 1
 
 # Specifies the highest RDP compression support available on server connection.
 #   0: The RDP bulk compression is disabled
@@ -547,6 +530,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #bogus_ios_rdpdr_virtual_channel = 1
+
+# Workaround option to fix some drawing issues with Windows Server 2012.
+# Can be disabled when none of the targets are Windows Server 2012.
+# (type: boolean (0/no/false or 1/yes/true))
+#_advanced
+#bogus_refresh_rect = 1
 
 # Adds RDPDR channel metadata to session logs. Disabling this option makes shared disks more responsive, but metadata will no longer be collected.if at least one authorization of RDPDR is missing (Printer, ComPort, SmartCard, Drive), then this option is considered enabled.
 # (type: boolean (0/no/false or 1/yes/true))
@@ -1166,6 +1155,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #encodings = 
 
+# (type: boolean (0/no/false or 1/yes/true))
+# (acl config: proxy ⇐ mod_vnc:support_cursor_pseudo_encoding)
+#support_cursor_pseudo_encoding = 1
+
 # VNC server clipboard text data encoding type.
 # values: utf-8, latin1
 #_advanced
@@ -1189,10 +1182,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 # (acl config: proxy ⇐ mod_vnc:server_unix_alt)
 #server_unix_alt = 0
-
-# (type: boolean (0/no/false or 1/yes/true))
-# (acl config: proxy ⇐ mod_vnc:support_cursor_pseudo_encoding)
-#support_cursor_pseudo_encoding = 1
 
 # Enable target connection on ipv6
 # (type: boolean (0/no/false or 1/yes/true))
@@ -1499,6 +1488,17 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (values are comma-separated)
 #_advanced
 #keyboard_layout_proposals = en-US, fr-FR, de-DE, ru-RU
+
+# Show close screen.
+# This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request.
+# (type: boolean (0/no/false or 1/yes/true))
+#enable_close_box = 1
+
+# Specifies the time to spend on the close box of proxy RDP before closing client window.
+# ⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects.
+# (in seconds)
+#_advanced
+#close_box_timeout = 600
 
 [mod_replay]
 

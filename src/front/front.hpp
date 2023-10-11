@@ -1791,7 +1791,7 @@ public:
                             client_monitors_rect.x, client_monitors_rect.y,
                             client_monitors_rect.cx, client_monitors_rect.cy);
 
-                        if (this->ini.get<cfg::globals::allow_using_multiple_monitors>()) {
+                        if (this->ini.get<cfg::client::allow_using_multiple_monitors>()) {
                             this->client_info.screen_info.width  = client_monitors_rect.cx + 1;
                             this->client_info.screen_info.height = client_monitors_rect.cy + 1;
                         }
@@ -2226,7 +2226,7 @@ public:
         this->client_info.process_logon_info(
             sec.payload
           , ini.get<cfg::client::ignore_logon_password>()
-          , ini.get<cfg::client::force_performance_flags>()
+          , ini.get<cfg::mod_rdp::force_performance_flags>()
           , ini.get<cfg::debug::password>()
           , bool(this->verbose & Verbose::basic_trace)
         );
@@ -3298,7 +3298,7 @@ private:
                 // Slow/Fast-path
                 input_caps.inputFlags          =
                     INPUT_FLAG_SCANCODES
-                    | (this->ini.get<cfg::globals::unicode_keyboard_event_support>() ? INPUT_FLAG_UNICODE : 0)
+                    | (this->ini.get<cfg::client::unicode_keyboard_event_support>() ? INPUT_FLAG_UNICODE : 0)
                     | (this->fastpath_support ? (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2) : 0);
                 input_caps.keyboardLayout      = 0;
                 input_caps.keyboardType        = 0;
@@ -4000,14 +4000,14 @@ public:
 private:
     void send_monitor_layout()
     {
-        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>()
+        if (!this->ini.get<cfg::client::allow_using_multiple_monitors>()
          && this->client_info.cs_monitor.monitorCount
          && this->client_info.remote_program
         ) {
             LOG(LOG_WARNING, "Front::send_monitor_layout: RemoteApp in multimon mode, but the use of multiple monitors is not allowed. You may experience display issues!");
         }
 
-        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>()
+        if (!this->ini.get<cfg::client::allow_using_multiple_monitors>()
          || !this->client_info.cs_monitor.monitorCount
          || !this->client_support_monitor_layout_pdu
         ) {

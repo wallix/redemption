@@ -175,9 +175,9 @@ cp_spec = {
         ('globals:inactivity_timeout', 'inactivity_timeout', 0),
     },
     'vnc': {
+        ('mod_vnc:support_cursor_pseudo_encoding', 'support_cursor_pseudo_encoding', True),
         ('mod_vnc:server_is_macos', 'server_is_macos', False),
         ('mod_vnc:server_unix_alt', 'server_unix_alt', False),
-        ('mod_vnc:support_cursor_pseudo_encoding', 'support_cursor_pseudo_encoding', True),
         ('mod_vnc:enable_ipv6', 'enable_ipv6', True),
     },
 }, {

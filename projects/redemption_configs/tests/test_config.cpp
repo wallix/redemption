@@ -106,25 +106,24 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
-    RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
-    RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
-    RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
+    RED_CHECK_EQUAL(10,  ini.get<cfg::globals::handshake_timeout>().count());
+    RED_CHECK_EQUAL(900, ini.get<cfg::globals::base_inactivity_timeout>().count());
+    RED_CHECK_EQUAL(30,  ini.get<cfg::globals::keepalive_grace_delay>().count());
+    RED_CHECK_EQUAL(120, ini.get<cfg::globals::authentication_timeout>().count());
+    RED_CHECK_EQUAL(600, ini.get<cfg::internal_mod::close_box_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
-    RED_CHECK_EQUAL(0440,                             ini.get<cfg::video::file_permissions>().permissions_as_uint());
+    RED_CHECK_EQUAL("/tmp/", ini.get<cfg::mod_replay::replay_path>());
+    RED_CHECK_EQUAL(0440,    ini.get<cfg::video::file_permissions>().permissions_as_uint());
 
-    RED_CHECK_EQUAL(TraceType::localfile_hashed,
-                                                      ini.get<cfg::globals::trace_type>());
-    RED_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
-    RED_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
+    RED_CHECK_EQUAL(TraceType::localfile_hashed, ini.get<cfg::globals::trace_type>());
+    RED_CHECK_EQUAL("0.0.0.0",                   ini.get<cfg::globals::listen_address>());
+    RED_CHECK_EQUAL(false,                       ini.get<cfg::globals::enable_transparent_mode>());
+    RED_CHECK_EQUAL("inquisition",               ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
+    RED_CHECK_EQUAL(true, ini.get<cfg::globals::enable_bitmap_update>());
+    RED_CHECK_EQUAL(true, ini.get<cfg::internal_mod::enable_close_box>());
+    RED_CHECK_EQUAL(true, ini.get<cfg::globals::enable_end_time_warning_osd>());
+    RED_CHECK_EQUAL(true, ini.get<cfg::globals::enable_osd_display_remote_target>());
 
     RED_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::crypto::encryption_key>().data(),
                                                                "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -137,123 +136,120 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
                                                                "\x10\x11\x12\x13\x14\x15\x16\x17"
                                                                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::capture>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::auth>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::session>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::front>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::mod_rdp>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::mod_vnc>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::mod_internal>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::password>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::compression>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::cache>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::force_performance_flags>().force_present);
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
-    RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
-    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::client::keyboard_layout>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::client::ignore_logon_password>());
+    RED_CHECK_EQUAL(0x28,  ini.get<cfg::mod_rdp::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,     ini.get<cfg::mod_rdp::force_performance_flags>().force_not_present);
+    RED_CHECK_EQUAL(true,  ini.get<cfg::client::tls_support>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::client::tls_fallback_legacy>());
+    RED_CHECK_EQUAL(RdpCompression::rdp6_1, ini.get<cfg::client::rdp_compression>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::client::disable_tsk_switch_shortcuts>());
+    RED_CHECK_EQUAL(ColorDepth::depth24, ini.get<cfg::client::max_color_depth>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::client::persistent_disk_bitmap_cache>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::client::cache_waiting_list>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::client::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::client::bitmap_compression>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::client::fast_path>());
 
-    RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::allowed_channels>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::denied_channels>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
+    RED_CHECK_EQUAL(RdpCompression::rdp6_1, ini.get<cfg::mod_rdp::rdp_compression>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::mod_rdp::enable_nla>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::mod_rdp::open_session_timeout>().count());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::mod_rdp::cache_waiting_list>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL("*",   ini.get<cfg::mod_rdp::allowed_channels>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::mod_rdp::denied_channels>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::mod_rdp::fast_path>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());
+    RED_CHECK_EQUAL("*",   ini.get<cfg::mod_rdp::auth_channel>());
 
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::alternate_shell>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::mod_rdp::alternate_shell>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::session_probe::enable_session_probe>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_launch_mask>());
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::session_probe::launch_timeout>().count());
-    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
-                                                        ini.get<cfg::session_probe::on_launch_failure>());
-    RED_CHECK_EQUAL(5000,                             ini.get<cfg::session_probe::keepalive_timeout>().count());
+    RED_CHECK_EQUAL(false, ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(40000, ini.get<cfg::session_probe::launch_timeout>().count());
+    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user, ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(5000,  ini.get<cfg::session_probe::keepalive_timeout>().count());
 
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_up>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
-    RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
-                                                        ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::mod_vnc::encodings>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::mod_vnc::clipboard_up>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::mod_vnc::clipboard_down>());
+    RED_CHECK_EQUAL(ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed, ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::mod_replay::on_end_of_data>());
 
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(600,   ini.get<cfg::context::opt_height>());
+    RED_CHECK_EQUAL(ColorDepth::depth24, ini.get<cfg::context::opt_bpp>());
 
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::auth_error_message>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::context::auth_error_message>());
 
-    RED_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::selector>());
-    RED_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::selector_current_page>());
-    RED_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::selector_lines_per_page>());
+    RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::selector>());
+    RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::selector_current_page>());
+    RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::selector_lines_per_page>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::context::selector>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::context::selector_current_page>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::selector_device_filter>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::selector_group_filter>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::context::selector_lines_per_page>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::context::selector_number_of_pages>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::context::selector>());
+    RED_CHECK_EQUAL(1,     ini.get<cfg::context::selector_current_page>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::context::selector_device_filter>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::context::selector_group_filter>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::context::selector_lines_per_page>());
+    RED_CHECK_EQUAL(1,     ini.get<cfg::context::selector_number_of_pages>());
 
-    RED_CHECK_EQUAL(true,                             ini.is_asked<cfg::globals::target_device>());
-    RED_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::target_password>());
-    RED_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::target_port>());
-    RED_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::target_protocol>());
-    RED_CHECK_EQUAL(true,                             ini.is_asked<cfg::globals::target_user>());
+    RED_CHECK_EQUAL(true,  ini.is_asked<cfg::globals::target_device>());
+    RED_CHECK_EQUAL(true,  ini.is_asked<cfg::context::target_password>());
+    RED_CHECK_EQUAL(true,  ini.is_asked<cfg::context::target_port>());
+    RED_CHECK_EQUAL(true,  ini.is_asked<cfg::context::target_protocol>());
+    RED_CHECK_EQUAL(true,  ini.is_asked<cfg::globals::target_user>());
 
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.is_asked<cfg::globals::host>());
+    RED_CHECK_EQUAL(false, ini.is_asked<cfg::globals::host>());
 
-    RED_CHECK_EQUAL(true,                             ini.is_asked<cfg::globals::auth_user>());
-    RED_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::password>());
+    RED_CHECK_EQUAL(true,  ini.is_asked<cfg::globals::auth_user>());
+    RED_CHECK_EQUAL(true,  ini.is_asked<cfg::context::password>());
 
+    RED_CHECK_EQUAL("",    ini.get<cfg::globals::auth_user>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::context::password>());
 
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::password>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::context::auth_channel_answer>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::context::auth_channel_target>());
 
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_answer>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_target>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::context::message>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::context::accept_message>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::context::display_message>());
 
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::message>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::context::accept_message>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::context::display_message>());
-
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::rejected>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::context::rejected>());
 
 
-    RED_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::keepalive>());
+    RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::keepalive>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::context::keepalive>());
-
-
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::session_id>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::context::keepalive>());
 
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::context::end_date_cnx>().count());
+    RED_CHECK_EQUAL("",    ini.get<cfg::context::session_id>());
 
-    RED_CHECK_EQUAL(RdpModeConsole::allow,            ini.get<cfg::mod_rdp::mode_console>());
 
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::real_target_device>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::context::end_date_cnx>().count());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::context::authentication_challenge>());
+    RED_CHECK_EQUAL(RdpModeConsole::allow, ini.get<cfg::mod_rdp::mode_console>());
+
+    RED_CHECK_EQUAL("",    ini.get<cfg::context::real_target_device>());
+
+    RED_CHECK_EQUAL(false, ini.get<cfg::context::authentication_challenge>());
 }
 
 
@@ -268,17 +264,18 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "enable_transparent_mode=yes\n"
         "certificate_password=redemption\n"
         "enable_bitmap_update=true\n"
-        "enable_close_box=false\n"
-        "enable_osd=false\n"
+        "enable_end_time_warning_osd=false\n"
         "enable_osd_display_remote_target=false\n"
         "authentication_timeout=150\n"
-        "close_timeout=900\n"
         "handshake_timeout=5\n"
+        "\n"
+        "[internal_mod]\n"
+        "enable_close_box=false\n"
+        "close_box_timeout=900\n"
         "\n"
         "[client]\n"
         "encryption_level=low\n"
         "ignore_logon_password=yes\n"
-        "force_performance_flags=-wallpaper,\n"
         "tls_fallback_legacy=yes\n"
         "tls_support=no\n"
         "rdp_compression=1\n"
@@ -290,6 +287,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "fast_path=true\n"
         "\n"
         "[mod_rdp]\n"
+        "force_performance_flags=-wallpaper,\n"
         "disconnect_on_logon_user_change=yes\n"
         "enable_nla=yes\n"
         "open_session_timeout=45\n"
@@ -358,31 +356,29 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>());
     RED_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,           ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::none,         ini.get<cfg::video::disable_file_system_log>());
+    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,   ini.get<cfg::video::disable_clipboard_log>());
+    RED_CHECK_EQUAL(FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
 
-    RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
-                                                        ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
-                                                        ini.get<cfg::video::wrm_compression_algorithm>());
+    RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16, ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+    RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip, ini.get<cfg::video::wrm_compression_algorithm>());
 
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::globals::handshake_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
-    RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
-    RED_CHECK_EQUAL(150,                              ini.get<cfg::globals::authentication_timeout>().count());
-    RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::close_timeout>().count());
+    RED_CHECK_EQUAL(5,     ini.get<cfg::globals::handshake_timeout>().count());
+    RED_CHECK_EQUAL(900,   ini.get<cfg::globals::base_inactivity_timeout>().count());
+    RED_CHECK_EQUAL(30,    ini.get<cfg::globals::keepalive_grace_delay>().count());
+    RED_CHECK_EQUAL(150,   ini.get<cfg::globals::authentication_timeout>().count());
+    RED_CHECK_EQUAL(900,   ini.get<cfg::internal_mod::close_box_timeout>().count());
 
-    RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
+    RED_CHECK_EQUAL("/tmp/",               ini.get<cfg::mod_replay::replay_path>());
 
-    RED_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
-    RED_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
-    RED_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
+    RED_CHECK_EQUAL(TraceType::cryptofile, ini.get<cfg::globals::trace_type>());
+    RED_CHECK_EQUAL("192.168.1.1",         ini.get<cfg::globals::listen_address>());
+    RED_CHECK_EQUAL(true,                  ini.get<cfg::globals::enable_transparent_mode>());
+    RED_CHECK_EQUAL("redemption",          ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_close_box>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_osd>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_osd_display_remote_target>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::globals::enable_bitmap_update>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::internal_mod::enable_close_box>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::globals::enable_end_time_warning_osd>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::globals::enable_osd_display_remote_target>());
 
     RED_CHECK(ini.get<cfg::crypto::encryption_key>() ==
         "\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"
@@ -391,67 +387,65 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88\x77\x66\x55\x44\x33\x22\x11\x00"
         "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88\x77\x66\x55\x44\x33\x22\x11\x00"_av);
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::debug::password>());
-    RED_CHECK_EQUAL(256,                              ini.get<cfg::debug::compression>());
-    RED_CHECK_EQUAL(128,                              ini.get<cfg::debug::cache>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::capture>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::auth>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::session>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::front>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::mod_rdp>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::mod_vnc>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::debug::mod_internal>());
+    RED_CHECK_EQUAL(1,     ini.get<cfg::debug::password>());
+    RED_CHECK_EQUAL(256,   ini.get<cfg::debug::compression>());
+    RED_CHECK_EQUAL(128,   ini.get<cfg::debug::cache>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::force_performance_flags>().force_present);
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_support>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
-    RED_CHECK_EQUAL(RdpCompression::rdp4,             ini.get<cfg::client::rdp_compression>());
-    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::client::keyboard_layout>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::client::ignore_logon_password>());
+    RED_CHECK_EQUAL(1,     ini.get<cfg::mod_rdp::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,     ini.get<cfg::mod_rdp::force_performance_flags>().force_not_present);
+    RED_CHECK_EQUAL(false, ini.get<cfg::client::tls_support>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::client::tls_fallback_legacy>());
+    RED_CHECK_EQUAL(RdpCompression::rdp4, ini.get<cfg::client::rdp_compression>());
+    RED_CHECK_EQUAL(ColorDepth::depth24, ini.get<cfg::client::max_color_depth>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::client::persistent_disk_bitmap_cache>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::client::cache_waiting_list>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::client::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::client::bitmap_compression>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::client::fast_path>());
 
-    RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
-    RED_CHECK_EQUAL(45,                               ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
-    RED_CHECK_EQUAL("audin",                          ini.get<cfg::mod_rdp::allowed_channels>());
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::denied_channels>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::fast_path>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::proxy_managed_drives>());
+    RED_CHECK_EQUAL(RdpCompression::rdp6_1, ini.get<cfg::mod_rdp::rdp_compression>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::mod_rdp::enable_nla>());
+    RED_CHECK_EQUAL(45,    ini.get<cfg::mod_rdp::open_session_timeout>().count());
+    RED_CHECK_EQUAL(false, ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::mod_rdp::cache_waiting_list>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
+    RED_CHECK_EQUAL("audin", ini.get<cfg::mod_rdp::allowed_channels>());
+    RED_CHECK_EQUAL("*",   ini.get<cfg::mod_rdp::denied_channels>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::mod_rdp::fast_path>());
+    RED_CHECK_EQUAL("",    ini.get<cfg::mod_rdp::proxy_managed_drives>());
 
-    RED_CHECK_EQUAL("*",                              ini.get<cfg::mod_rdp::auth_channel>());
+    RED_CHECK_EQUAL("*",   ini.get<cfg::mod_rdp::auth_channel>());
 
-    RED_CHECK_EQUAL("C:\\WINDOWS\\NOTEPAD.EXE",       ini.get<cfg::mod_rdp::alternate_shell>());
-    RED_CHECK_EQUAL("C:\\WINDOWS\\",                  ini.get<cfg::mod_rdp::shell_working_directory>());
+    RED_CHECK_EQUAL("C:\\WINDOWS\\NOTEPAD.EXE", ini.get<cfg::mod_rdp::alternate_shell>());
+    RED_CHECK_EQUAL("C:\\WINDOWS\\", ini.get<cfg::mod_rdp::shell_working_directory>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::session_probe::enable_session_probe>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::session_probe::enable_launch_mask>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::session_probe::launch_timeout>().count());
-    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
-                                                        ini.get<cfg::session_probe::on_launch_failure>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::session_probe::keepalive_timeout>().count());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::session_probe::enable_session_probe>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::session_probe::enable_launch_mask>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::session_probe::launch_timeout>().count());
+    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user, ini.get<cfg::session_probe::on_launch_failure>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::session_probe::keepalive_timeout>().count());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_vnc::clipboard_up>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
-    RED_CHECK_EQUAL("16,2,0,1,-239",                  ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
-                                                        ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
+    RED_CHECK_EQUAL(true,  ini.get<cfg::mod_vnc::clipboard_up>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::mod_vnc::clipboard_down>());
+    RED_CHECK_EQUAL("16,2,0,1,-239", ini.get<cfg::mod_vnc::encodings>());
+    RED_CHECK_EQUAL(ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed, ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
+    RED_CHECK_EQUAL(0,     ini.get<cfg::mod_replay::on_end_of_data>());
 
-    RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(800,   ini.get<cfg::context::opt_width>());
+    RED_CHECK_EQUAL(600,   ini.get<cfg::context::opt_height>());
+    RED_CHECK_EQUAL(ColorDepth::depth24, ini.get<cfg::context::opt_bpp>());
 }
 
 RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
@@ -468,7 +462,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "enable_bitmap_update=no\n"
         "[client]\n"
         "encryption_level=medium\n"
-        "force_performance_flags=1\n"
         "tls_support=yes\n"
         "rdp_compression=0\n"
         "max_color_depth=8\n"
@@ -478,6 +471,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "fast_path=yes\n"
         "[translation]\n"
         "[mod_rdp]\n"
+        "force_performance_flags=1\n"
         "rdp_compression=2\n"
         "disconnect_on_logon_user_change=no\n"
         "enable_nla=no\n"
@@ -549,7 +543,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::internal_mod::close_box_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
@@ -559,8 +553,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_bitmap_update>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::internal_mod::enable_close_box>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_end_time_warning_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
     RED_CHECK(ini.get<cfg::crypto::encryption_key>() ==
@@ -583,8 +577,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::force_performance_flags>().force_present);
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
+    RED_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::none,             ini.get<cfg::client::rdp_compression>());
@@ -643,13 +637,13 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
         "[client]\n"
         "encryption_level=low\n"
         "tls_support=yes\n"
-        "force_performance_flags=1\n"
         "max_color_depth=24\n"
         "persistent_disk_bitmap_cache=yes\n"
         "cache_waiting_list=no\n"
         "persist_bitmap_cache_on_disk=no\n"
         "bitmap_compression=false\n"
         "[mod_rdp]\n"
+        "force_performance_flags=1\n"
         "rdp_compression=0\n"
         "proxy_managed_drives=*\n"
         "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
@@ -696,7 +690,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::internal_mod::close_box_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
@@ -706,8 +700,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL("rdpproxy",                       ini.get<cfg::globals::certificate_password>());
 
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::internal_mod::enable_close_box>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_end_time_warning_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
@@ -723,8 +717,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::force_performance_flags>().force_present);
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
+    RED_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -783,18 +777,19 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
         "listen_address=127.0.0.1\n"
         "certificate_password=rdpproxy RDP\n"
         "enable_transparent_mode=true\n"
-        "close_timeout=300\n"
         "handshake_timeout=7\n"
+        "[internal_mod]\n"
+        "close_box_timeout=300\n"
         "[client]\t\n"
         "encryption_level=low\n"
         "tls_support=yes\n"
-        "force_performance_flags=1\n"
         "max_color_depth=24\n"
         "persistent_disk_bitmap_cache=yes\n"
         "cache_waiting_list=no\n"
         "persist_bitmap_cache_on_disk=no\n"
         "bitmap_compression=false\n"
         "\t[mod_rdp]\n"
+        "force_performance_flags=1\n"
         "rdp_compression=0\n"
         "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE   \n"
         "shell_working_directory=\n"
@@ -850,7 +845,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
-    RED_CHECK_EQUAL(300,                              ini.get<cfg::globals::close_timeout>().count());
+    RED_CHECK_EQUAL(300,                              ini.get<cfg::internal_mod::close_box_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
@@ -860,8 +855,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL("rdpproxy RDP",                   ini.get<cfg::globals::certificate_password>());
 
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::internal_mod::enable_close_box>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_end_time_warning_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
@@ -877,8 +872,8 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(1,                                ini.get<cfg::client::force_performance_flags>().force_present);
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
+    RED_CHECK_EQUAL(1,                                ini.get<cfg::mod_rdp::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -982,7 +977,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::internal_mod::close_box_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
@@ -992,8 +987,8 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
 
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::internal_mod::enable_close_box>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_end_time_warning_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
@@ -1009,8 +1004,8 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::force_performance_flags>().force_present);
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
+    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::mod_rdp::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -1113,7 +1108,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::internal_mod::close_box_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
@@ -1123,8 +1118,8 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
 
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::internal_mod::enable_close_box>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_end_time_warning_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
@@ -1140,8 +1135,8 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(0x28,                              ini.get<cfg::client::force_performance_flags>().force_present);
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
+    RED_CHECK_EQUAL(0x28,                              ini.get<cfg::mod_rdp::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -1230,7 +1225,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::internal_mod::close_box_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
@@ -1241,8 +1236,8 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::internal_mod::enable_close_box>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_end_time_warning_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
@@ -1258,8 +1253,8 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::force_performance_flags>().force_present);
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
+    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::mod_rdp::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
@@ -1350,7 +1345,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
     RED_CHECK_EQUAL(300,                              ini.get<cfg::globals::authentication_timeout>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::internal_mod::close_box_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
@@ -1360,8 +1355,8 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::internal_mod::enable_close_box>());
+    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_end_time_warning_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
@@ -1377,8 +1372,8 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
-    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::client::force_performance_flags>().force_present);
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::client::force_performance_flags>().force_not_present);
+    RED_CHECK_EQUAL(0x28,                             ini.get<cfg::mod_rdp::force_performance_flags>().force_present);
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::force_performance_flags>().force_not_present);
     RED_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     RED_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());

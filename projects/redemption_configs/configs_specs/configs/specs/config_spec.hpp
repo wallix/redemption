@@ -382,30 +382,8 @@ _.section("globals", [&]
         .desc = "Support of Bitmap Update.",
     });
 
-
-    // TODO move to [internal_mod]
     _.member(MemberInfo{
-        .name = "enable_close_box",
-        .value = value(true),
-        .spec = global_spec(no_acl),
-        .desc =
-            "Show close screen.\n"
-            "This displays errors related to the secondary connection then closes automatically after a timeout specified by \"Close Timeout\" or on user request.",
-    });
-
-    // TODO move to [internal_mod] and rename to close_box_timeout
-    _.member(MemberInfo{
-        .name = "close_timeout",
-        .value = value<std::chrono::seconds>(600),
-        .spec = global_spec(no_acl, spec::advanced),
-        .desc =
-            "Specifies the time to spend on the close box of proxy RDP before closing client window.\n"
-            "⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects."
-    });
-
-    // TODO rename to enable_end_time_warning_osd ?
-    _.member(MemberInfo{
-        .name = "enable_osd",
+        .name = "enable_end_time_warning_osd",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
@@ -420,46 +398,20 @@ _.section("globals", [&]
         .desc = "Allow to show target device name with F12 during the session",
     });
 
+    _.member(MemberInfo{
+        .name = "show_target_user_in_f12_message",
+        .value = value(false),
+        .spec = global_spec(no_acl),
+        .desc =
+            "Show in session the target username when F12 is pressed.\n"
+            "This option needs \"Enable Osd Display Remote Target\"."
+    });
+
 
     _.member(MemberInfo{
         .name = "enable_wab_integration",
         .value = value<bool>(CPP_EXPR(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION)),
         .spec = ini_only(no_acl),
-    });
-
-
-    // TODO move to [client]
-    _.member(MemberInfo{
-        .name = "allow_using_multiple_monitors",
-        .value = value(true),
-        .spec = global_spec(no_acl),
-        .tags = Tag::Compatibility,
-        .desc = "Sends the client screen count to the server. Not supported for VNC targets.\n"
-        "Uncheck to disable multiple monitor.",
-    });
-
-    // TODO move to [client] / [mod_rdp]
-    // TODO should be enabled by default ?
-    _.member(MemberInfo{
-        .name = "allow_scale_factor",
-        .value = value(false),
-        .spec = global_spec(no_acl),
-        .tags = Tag::Compatibility,
-        .desc =
-            "Sends Scale & Layout configuration to the server.\n"
-            "On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.\n"
-            "⚠ Title bar detection via OCR will no longer work.\n"
-    });
-
-
-    // TODO to move to connection policy
-    _.member(MemberInfo{
-        .name = "bogus_refresh_rect",
-        .value = value(true),
-        .spec = global_spec(no_acl, spec::advanced),
-        .tags = Tag::Compatibility,
-        .desc = "Workaround option to fix some drawing issues with Windows Server 2012.\n"
-        "Can be disabled when none of the targets are Windows Server 2012.",
     });
 
     _.member(MemberInfo{
@@ -469,16 +421,6 @@ _.section("globals", [&]
         .desc =
             "Enable support for pointers of size 96x96.\n"
             "⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.",
-    });
-
-    // TODO move to [client]
-    _.member(MemberInfo{
-        .name = "unicode_keyboard_event_support",
-        .value = value(true),
-        .spec = ini_only(no_acl),
-        .desc =
-            "Allows the client to use unicode characters.\n"
-            "This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis."
     });
 
     _.member(MemberInfo{
@@ -563,36 +505,35 @@ _.section("client", [&]
         .desc = "If true, ignore password provided by RDP client, user need do login manually.",
     });
 
-    // TODO move to [mod_rdp] ?
     _.member(MemberInfo{
-        .name = "force_performance_flags",
-        .value = value<types::performance_flags>("-mouse_cursor_shadows,-theme"),
-        .spec = global_spec(no_acl, spec::advanced),
-        .tags = Tag::Perf | Tag::Compatibility,
-        .desc =
-            "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n"
-            "\n"
-            "If a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n"
-            "\n"
-            "Available features:\n"
-            "  - wallpaper\n"
-            "  - menu_animations\n"
-            "  - theme\n"
-            "  - mouse_cursor_shadows\n"
-            "  - cursor_blinking\n"
-            "  - font_smoothing\n"
-            "  - desktop_composition\n"
+        .name = "allow_using_multiple_monitors",
+        .value = value(true),
+        .spec = global_spec(no_acl),
+        .tags = Tag::Compatibility,
+        .desc = "Sends the client screen count to the server. Not supported for VNC targets.\n"
+        "Uncheck to disable multiple monitor.",
     });
 
+    // TODO should be enabled by default ?
     _.member(MemberInfo{
-        .name = "auto_adjust_performance_flags",
-        .value = value(true),
-        .spec = global_spec(no_acl, spec::advanced),
+        .name = "allow_scale_factor",
+        .value = value(false),
+        .spec = global_spec(no_acl),
+        .tags = Tag::Compatibility,
         .desc =
-            "If enabled, avoid automatically font smoothing in recorded session.\n"
-            "This allows OCR (when session probe is disabled) to better detect window titles.\n"
-        "If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.\n"
-        "In this case, windows titles will not be detected.",
+            "Sends Scale & Layout configuration to the server.\n"
+            "On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.\n"
+            "⚠ Title bar detection via OCR will no longer work.\n"
+    });
+
+    // TODO remove ?
+    _.member(MemberInfo{
+        .name = "unicode_keyboard_event_support",
+        .value = value(true),
+        .spec = ini_only(no_acl),
+        .desc =
+            "Allows the client to use unicode characters.\n"
+            "This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis."
     });
 
 
@@ -643,6 +584,15 @@ _.section("client", [&]
         "⚠ Only for debug purposes",
     });
 
+    _.member(MemberInfo{
+        .name = "ssl_cipher_list",
+        .value = value<std::string>("HIGH:!ADH:!3DES:!SHA"),
+        .spec = global_spec(no_acl),
+        .desc =
+            "[Not configured]: Compatible with more RDP clients (less secure)\n"
+            "HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)\n"
+            "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)"
+    });
 
     _.member(MemberInfo{
         .name = "enable_nla",
@@ -722,26 +672,6 @@ _.section("client", [&]
         .desc =
             "Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.\n"
             "⚠ If changes occur on the target, they will not be visible in the recordings either."
-    });
-
-    _.member(MemberInfo{
-        .name = "ssl_cipher_list",
-        .value = value<std::string>("HIGH:!ADH:!3DES:!SHA"),
-        .spec = global_spec(no_acl),
-        .desc =
-            "[Not configured]: Compatible with more RDP clients (less secure)\n"
-            "HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)\n"
-            "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)"
-    });
-
-    // TODO: to move alongside Enable Osd Display Remote Target
-    _.member(MemberInfo{
-        .name = "show_target_user_in_f12_message",
-        .value = value(false),
-        .spec = global_spec(no_acl),
-        .desc =
-            "Show in session the target username when F12 is pressed.\n"
-            "This option needs \"Enable Osd Display Remote Target\"."
     });
 
     _.member(MemberInfo{
@@ -825,6 +755,37 @@ _.section("remote_program", [&]
 
 _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 {
+    _.member(MemberInfo{
+        .name = "force_performance_flags",
+        .value = value<types::performance_flags>("-mouse_cursor_shadows,-theme"),
+        .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Perf | Tag::Compatibility,
+        .desc =
+            "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n"
+            "\n"
+            "If a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n"
+            "\n"
+            "Available features:\n"
+            "  - wallpaper\n"
+            "  - menu_animations\n"
+            "  - theme\n"
+            "  - mouse_cursor_shadows\n"
+            "  - cursor_blinking\n"
+            "  - font_smoothing\n"
+            "  - desktop_composition\n"
+    });
+
+    _.member(MemberInfo{
+        .name = "auto_adjust_performance_flags",
+        .value = value(true),
+        .spec = global_spec(no_acl, spec::advanced),
+        .desc =
+            "If enabled, avoid automatically font smoothing in recorded session.\n"
+            "This allows OCR (when session probe is disabled) to better detect window titles.\n"
+        "If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.\n"
+        "In this case, windows titles will not be detected.",
+    });
+
     _.member(MemberInfo{
         .name = "rdp_compression",
         .value = from_enum(RdpCompression::rdp6_1),
@@ -1133,6 +1094,16 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Workaround option to disable shared disk for RDP client on iOS platform only.",
+    });
+
+    // TODO move to connection policy
+    _.member(MemberInfo{
+        .name = "bogus_refresh_rect",
+        .value = value(true),
+        .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Compatibility,
+        .desc = "Workaround option to fix some drawing issues with Windows Server 2012.\n"
+        "Can be disabled when none of the targets are Windows Server 2012.",
     });
 
     _.member(MemberInfo{
@@ -1959,6 +1930,13 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
             // "  -239 (0xFFFFFF11): Cursor pseudo-encoding"
     });
 
+    // TODO should be with encoding
+    _.member(MemberInfo{
+        .name = "support_cursor_pseudo_encoding",
+        .value = value(true),
+        .spec = connpolicy(vnc, L),
+    });
+
     _.member(MemberInfo{
         .name = names{
             .all = "server_clipboard_encoding_type",
@@ -1992,13 +1970,6 @@ _.section(names{.all="mod_vnc", .connpolicy="vnc"}, [&]
         .value = value(false),
         .spec = connpolicy(vnc, L),
         .desc = "When disabled, Ctrl + Alt becomes AltGr (Windows behavior)",
-    });
-
-    // TODO should be with encoding
-    _.member(MemberInfo{
-        .name = "support_cursor_pseudo_encoding",
-        .value = value(true),
-        .spec = connpolicy(vnc, L),
     });
 
     _.member(MemberInfo{
@@ -2757,6 +2728,24 @@ _.section("internal_mod", [&]
             "List of keyboard layouts available by the internal pages button located at bottom left of some internal pages (login, selector, etc).\n"
             "Possible values: " + keyboard_layout_proposals_desc
     });
+
+    _.member(MemberInfo{
+        .name = "enable_close_box",
+        .value = value(true),
+        .spec = global_spec(no_acl),
+        .desc =
+            "Show close screen.\n"
+            "This displays errors related to the secondary connection then closes automatically after a timeout specified by \"Close Timeout\" or on user request.",
+    });
+
+    _.member(MemberInfo{
+        .name = "close_box_timeout",
+        .value = value<std::chrono::seconds>(600),
+        .spec = global_spec(no_acl, spec::advanced),
+        .desc =
+            "Specifies the time to spend on the close box of proxy RDP before closing client window.\n"
+            "⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects."
+    });
 });
 
 _.section("context", [&]
@@ -3371,154 +3360,153 @@ _.section("theme", [&]
         .desc = "Logo displayed when theme is enabled",
     });
 
-    // TODO remove that
-    auto to_rgb = [](NamedBGRColor color){
-        return BGRColor(BGRasRGBColor(color)).as_u32();
+    auto rgb = [](NamedBGRColor color) {
+        return value<types::rgb>(BGRColor(BGRasRGBColor(color)).as_u32());
     };
 
     _.member(MemberInfo{
         .name = "bgcolor",
-        .value = value<types::rgb>(to_rgb(DARK_BLUE_BIS)),
+        .value = rgb(DARK_BLUE_BIS),
         .spec = global_spec(no_acl),
         .desc = "Background color for window, label and button",
     });
 
     _.member(MemberInfo{
         .name = "fgcolor",
-        .value = value<types::rgb>(to_rgb(WHITE)),
+        .value = rgb(WHITE),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for window, label and button",
     });
 
     _.member(MemberInfo{
         .name = "separator_color",
-        .value = value<types::rgb>(to_rgb(LIGHT_BLUE)),
+        .value = rgb(LIGHT_BLUE),
         .spec = global_spec(no_acl),
         .desc = "Separator line color used with some widgets",
     });
 
     _.member(MemberInfo{
         .name = "focus_color",
-        .value = value<types::rgb>(to_rgb(WINBLUE)),
+        .value = rgb(WINBLUE),
         .spec = global_spec(no_acl),
         .desc = "Background color used by buttons when they have focus",
     });
 
     _.member(MemberInfo{
         .name = "error_color",
-        .value = value<types::rgb>(to_rgb(YELLOW)),
+        .value = rgb(YELLOW),
         .spec = global_spec(no_acl),
         .desc = "Text color for error messages. For example, an authentication error in the login",
     });
 
     _.member(MemberInfo{
         .name = "edit_bgcolor",
-        .value = value<types::rgb>(to_rgb(WHITE)),
+        .value = rgb(WHITE),
         .spec = global_spec(no_acl),
         .desc = "Background color for editing field",
     });
 
     _.member(MemberInfo{
         .name = "edit_fgcolor",
-        .value = value<types::rgb>(to_rgb(BLACK)),
+        .value = rgb(BLACK),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for editing field",
     });
 
     _.member(MemberInfo{
         .name = "edit_focus_color",
-        .value = value<types::rgb>(to_rgb(WINBLUE)),
+        .value = rgb(WINBLUE),
         .spec = global_spec(no_acl),
         .desc = "Outline color for editing field that has focus",
     });
 
     _.member(MemberInfo{
         .name = "tooltip_bgcolor",
-        .value = value<types::rgb>(to_rgb(BLACK)),
+        .value = rgb(BLACK),
         .spec = global_spec(no_acl),
         .desc = "Background color for tooltip",
     });
 
     _.member(MemberInfo{
         .name = "tooltip_fgcolor",
-        .value = value<types::rgb>(to_rgb(LIGHT_YELLOW)),
+        .value = rgb(LIGHT_YELLOW),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for tooltip",
     });
 
     _.member(MemberInfo{
         .name = "tooltip_border_color",
-        .value = value<types::rgb>(to_rgb(BLACK)),
+        .value = rgb(BLACK),
         .spec = global_spec(no_acl),
         .desc = "Border color for tooltip",
     });
 
     _.member(MemberInfo{
         .name = "selector_line1_bgcolor",
-        .value = value<types::rgb>(to_rgb(PALE_BLUE)),
+        .value = rgb(PALE_BLUE),
         .spec = global_spec(no_acl),
         .desc = "Background color for even rows in the selector widget",
     });
 
     _.member(MemberInfo{
         .name = "selector_line1_fgcolor",
-        .value = value<types::rgb>(to_rgb(BLACK)),
+        .value = rgb(BLACK),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for even rows in the selector widget",
     });
 
     _.member(MemberInfo{
         .name = "selector_line2_bgcolor",
-        .value = value<types::rgb>(to_rgb(LIGHT_BLUE)),
+        .value = rgb(LIGHT_BLUE),
         .spec = global_spec(no_acl),
         .desc = "Background color for odd rows in the selector widget",
     });
 
     _.member(MemberInfo{
         .name = "selector_line2_fgcolor",
-        .value = value<types::rgb>(to_rgb(BLACK)),
+        .value = rgb(BLACK),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for odd rows in the selector widget",
     });
 
     _.member(MemberInfo{
         .name = "selector_focus_bgcolor",
-        .value = value<types::rgb>(to_rgb(WINBLUE)),
+        .value = rgb(WINBLUE),
         .spec = global_spec(no_acl),
         .desc = "Background color for the row that has focus in the selector widget",
     });
 
     _.member(MemberInfo{
         .name = "selector_focus_fgcolor",
-        .value = value<types::rgb>(to_rgb(WHITE)),
+        .value = rgb(WHITE),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for the row that has focus in the selector widget",
     });
 
     _.member(MemberInfo{
         .name = "selector_selected_bgcolor",
-        .value = value<types::rgb>(to_rgb(MEDIUM_BLUE)),
+        .value = rgb(MEDIUM_BLUE),
         .spec = global_spec(no_acl),
         .desc = "Background color for the row that is selected in the selector widget but does not have focus",
     });
 
     _.member(MemberInfo{
         .name = "selector_selected_fgcolor",
-        .value = value<types::rgb>(to_rgb(WHITE)),
+        .value = rgb(WHITE),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for the row that is selected in the selector widget but does not have focus",
     });
 
     _.member(MemberInfo{
         .name = "selector_label_bgcolor",
-        .value = value<types::rgb>(to_rgb(MEDIUM_BLUE)),
+        .value = rgb(MEDIUM_BLUE),
         .spec = global_spec(no_acl),
         .desc = "Background color for name of filter fields in the selector widget",
     });
 
     _.member(MemberInfo{
         .name = "selector_label_fgcolor",
-        .value = value<types::rgb>(to_rgb(WHITE)),
+        .value = rgb(WHITE),
         .spec = global_spec(no_acl),
         .desc = "Foreground color for name of filter fields in the selector widget",
     });

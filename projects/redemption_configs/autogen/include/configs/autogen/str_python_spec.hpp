@@ -34,38 +34,18 @@ authentication_timeout = integer(min=0, default=120)
 #_iptables
 enable_transparent_mode = boolean(default=False)
 
-# Show close screen.
-# This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request.
-enable_close_box = boolean(default=True)
-
-# Specifies the time to spend on the close box of proxy RDP before closing client window.
-# ⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects.<br/>
-# (in seconds)
-#_advanced
-close_timeout = integer(min=0, default=600)
-
 # Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval).
 # The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed.
 #_advanced
-enable_osd = boolean(default=True)
+enable_end_time_warning_osd = boolean(default=True)
 
 # Allow to show target device name with F12 during the session
 #_advanced
 enable_osd_display_remote_target = boolean(default=True)
 
-# Sends the client screen count to the server. Not supported for VNC targets.
-# Uncheck to disable multiple monitor.
-allow_using_multiple_monitors = boolean(default=True)
-
-# Sends Scale &amp; Layout configuration to the server.
-# On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.
-# ⚠ Title bar detection via OCR will no longer work.
-allow_scale_factor = boolean(default=False)
-
-# Workaround option to fix some drawing issues with Windows Server 2012.
-# Can be disabled when none of the targets are Windows Server 2012.
-#_advanced
-bogus_refresh_rect = boolean(default=True)
+# Show in session the target username when F12 is pressed.
+# This option needs "Enable Osd Display Remote Target".
+show_target_user_in_f12_message = boolean(default=False)
 
 # Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
@@ -84,25 +64,14 @@ enable_ipv6 = boolean(default=True)
 #_advanced
 ignore_logon_password = boolean(default=False)
 
-# It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).<br/>
-# If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.<br/>
-# Available features:
-# &nbsp; &nbsp;   - wallpaper
-# &nbsp; &nbsp;   - menu_animations
-# &nbsp; &nbsp;   - theme
-# &nbsp; &nbsp;   - mouse_cursor_shadows
-# &nbsp; &nbsp;   - cursor_blinking
-# &nbsp; &nbsp;   - font_smoothing
-# &nbsp; &nbsp;   - desktop_composition
-#_advanced
-force_performance_flags = string(default="-mouse_cursor_shadows,-theme")
+# Sends the client screen count to the server. Not supported for VNC targets.
+# Uncheck to disable multiple monitor.
+allow_using_multiple_monitors = boolean(default=True)
 
-# If enabled, avoid automatically font smoothing in recorded session.
-# This allows OCR (when session probe is disabled) to better detect window titles.
-# If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.
-# In this case, windows titles will not be detected.
-#_advanced
-auto_adjust_performance_flags = boolean(default=True)
+# Sends Scale &amp; Layout configuration to the server.
+# On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.
+# ⚠ Title bar detection via OCR will no longer work.
+allow_scale_factor = boolean(default=False)
 
 # Fallback to RDP Legacy Encryption if client does not support TLS.
 # ⚠ Enabling this option is a security risk.
@@ -120,6 +89,11 @@ tls_max_level = integer(min=0, default=0)
 # ⚠ Only for debug purposes
 #_advanced
 show_common_cipher_list = boolean(default=False)
+
+# [Not configured]: Compatible with more RDP clients (less secure)
+# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
+# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
+ssl_cipher_list = string(default="HIGH:!ADH:!3DES:!SHA")
 
 # Specifies the highest RDP compression support available on client connection session.
 # &nbsp; &nbsp;   0: The RDP bulk compression is disabled
@@ -155,15 +129,6 @@ bitmap_compression = boolean(default=True)
 # Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.
 # ⚠ If changes occur on the target, they will not be visible in the recordings either.
 enable_suppress_output = boolean(default=True)
-
-# [Not configured]: Compatible with more RDP clients (less secure)
-# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
-# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
-ssl_cipher_list = string(default="HIGH:!ADH:!3DES:!SHA")
-
-# Show in session the target username when F12 is pressed.
-# This option needs "Enable Osd Display Remote Target".
-show_target_user_in_f12_message = boolean(default=False)
 
 # Same effect as "Transform glyph to bitmap", but only for RDP client on iOS platform.
 bogus_ios_glyph_support_level = boolean(default=True)
@@ -215,6 +180,26 @@ connection_establishment_timeout = integer(min=1000, max=10000, default=3000)
 allow_resize_hosted_desktop = boolean(default=True)
 
 [mod_rdp]
+
+# It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).<br/>
+# If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.<br/>
+# Available features:
+# &nbsp; &nbsp;   - wallpaper
+# &nbsp; &nbsp;   - menu_animations
+# &nbsp; &nbsp;   - theme
+# &nbsp; &nbsp;   - mouse_cursor_shadows
+# &nbsp; &nbsp;   - cursor_blinking
+# &nbsp; &nbsp;   - font_smoothing
+# &nbsp; &nbsp;   - desktop_composition
+#_advanced
+force_performance_flags = string(default="-mouse_cursor_shadows,-theme")
+
+# If enabled, avoid automatically font smoothing in recorded session.
+# This allows OCR (when session probe is disabled) to better detect window titles.
+# If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.
+# In this case, windows titles will not be detected.
+#_advanced
+auto_adjust_performance_flags = boolean(default=True)
 
 # Specifies the highest RDP compression support available on server connection.
 # &nbsp; &nbsp;   0: The RDP bulk compression is disabled
@@ -270,6 +255,11 @@ use_license_store = boolean(default=True)
 # Workaround option to disable shared disk for RDP client on iOS platform only.
 #_advanced
 bogus_ios_rdpdr_virtual_channel = boolean(default=True)
+
+# Workaround option to fix some drawing issues with Windows Server 2012.
+# Can be disabled when none of the targets are Windows Server 2012.
+#_advanced
+bogus_refresh_rect = boolean(default=True)
 
 # Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.<br/>
@@ -505,6 +495,16 @@ enable_target_field = boolean(default=True)
 # (values are comma-separated)
 #_advanced
 keyboard_layout_proposals = string(default="en-US, fr-FR, de-DE, ru-RU")
+
+# Show close screen.
+# This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request.
+enable_close_box = boolean(default=True)
+
+# Specifies the time to spend on the close box of proxy RDP before closing client window.
+# ⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects.<br/>
+# (in seconds)
+#_advanced
+close_box_timeout = integer(min=0, default=600)
 
 [translation]
 

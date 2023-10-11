@@ -337,31 +337,11 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// Show close screen. <br/>
-    /// This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request. <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct globals::enable_close_box {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
-    /// Specifies the time to spend on the close box of proxy RDP before closing client window. <br/>
-    /// ⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects. <br/>
-    /// type: std::chrono::seconds <br/>
-    /// default: 600 <br/>
-    struct globals::close_timeout {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = std::chrono::seconds;
-        using mapped_type = std::chrono::seconds;
-        type value { 600 };
-    };
     /// Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval). <br/>
     /// The reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed. <br/>
     /// type: bool <br/>
     /// default: true <br/>
-    struct globals::enable_osd {
+    struct globals::enable_end_time_warning_osd {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = bool;
         using mapped_type = bool;
@@ -380,6 +360,16 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// Show in session the target username when F12 is pressed. <br/>
+    /// This option needs "Enable Osd Display Remote Target". <br/>
+    /// type: bool <br/>
+    /// default: false <br/>
+    struct globals::show_target_user_in_f12_message {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = bool;
+        using mapped_type = bool;
+        type value { false };
+    };
     /// type: bool <br/>
     /// default: REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION <br/>
     struct globals::enable_wab_integration {
@@ -388,52 +378,11 @@ namespace cfg
         using mapped_type = bool;
         type value { REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION };
     };
-    /// Sends the client screen count to the server. Not supported for VNC targets. <br/>
-    /// Uncheck to disable multiple monitor. <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct globals::allow_using_multiple_monitors {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
-    /// Sends Scale & Layout configuration to the server. <br/>
-    /// On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display. <br/>
-    /// ⚠ Title bar detection via OCR will no longer work. <br/>
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct globals::allow_scale_factor {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
-    };
-    /// Workaround option to fix some drawing issues with Windows Server 2012. <br/>
-    /// Can be disabled when none of the targets are Windows Server 2012. <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct globals::bogus_refresh_rect {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
     /// Enable support for pointers of size 96x96. <br/>
     /// ⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct globals::large_pointer_support {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { true };
-    };
-    /// Allows the client to use unicode characters. <br/>
-    /// This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis. <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct globals::unicode_keyboard_event_support {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = bool;
         using mapped_type = bool;
@@ -509,33 +458,32 @@ namespace cfg
         using mapped_type = bool;
         type value { false };
     };
-    /// It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage). <br/>
-    ///  <br/>
-    /// If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client. <br/>
-    ///  <br/>
-    /// Available features: <br/>
-    ///   - wallpaper <br/>
-    ///   - menu_animations <br/>
-    ///   - theme <br/>
-    ///   - mouse_cursor_shadows <br/>
-    ///   - cursor_blinking <br/>
-    ///   - font_smoothing <br/>
-    ///   - desktop_composition <br/>
-    /// type: RdpPerformanceFlags <br/>
-    /// default: 0x28, 0x0 <br/>
-    struct client::force_performance_flags {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = RdpPerformanceFlags;
-        using mapped_type = RdpPerformanceFlags;
-        type value { 0x28, 0x0 };
-    };
-    /// If enabled, avoid automatically font smoothing in recorded session. <br/>
-    /// This allows OCR (when session probe is disabled) to better detect window titles. <br/>
-    /// If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled. <br/>
-    /// In this case, windows titles will not be detected. <br/>
+    /// Sends the client screen count to the server. Not supported for VNC targets. <br/>
+    /// Uncheck to disable multiple monitor. <br/>
     /// type: bool <br/>
     /// default: true <br/>
-    struct client::auto_adjust_performance_flags {
+    struct client::allow_using_multiple_monitors {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = bool;
+        using mapped_type = bool;
+        type value { true };
+    };
+    /// Sends Scale & Layout configuration to the server. <br/>
+    /// On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display. <br/>
+    /// ⚠ Title bar detection via OCR will no longer work. <br/>
+    /// type: bool <br/>
+    /// default: false <br/>
+    struct client::allow_scale_factor {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = bool;
+        using mapped_type = bool;
+        type value { false };
+    };
+    /// Allows the client to use unicode characters. <br/>
+    /// This is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis. <br/>
+    /// type: bool <br/>
+    /// default: true <br/>
+    struct client::unicode_keyboard_event_support {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = bool;
         using mapped_type = bool;
@@ -598,6 +546,17 @@ namespace cfg
         using type = bool;
         using mapped_type = bool;
         type value { false };
+    };
+    /// [Not configured]: Compatible with more RDP clients (less secure) <br/>
+    /// HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure) <br/>
+    /// HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure) <br/>
+    /// type: std::string <br/>
+    /// default: "HIGH:!ADH:!3DES:!SHA" <br/>
+    struct client::ssl_cipher_list {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = std::string;
+        using mapped_type = std::string;
+        type value { "HIGH:!ADH:!3DES:!SHA" };
     };
     /// Needed for primary NTLM or Kerberos connections over NLA. <br/>
     /// type: bool <br/>
@@ -694,27 +653,6 @@ namespace cfg
         using type = bool;
         using mapped_type = bool;
         type value { true };
-    };
-    /// [Not configured]: Compatible with more RDP clients (less secure) <br/>
-    /// HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure) <br/>
-    /// HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure) <br/>
-    /// type: std::string <br/>
-    /// default: "HIGH:!ADH:!3DES:!SHA" <br/>
-    struct client::ssl_cipher_list {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = std::string;
-        using mapped_type = std::string;
-        type value { "HIGH:!ADH:!3DES:!SHA" };
-    };
-    /// Show in session the target username when F12 is pressed. <br/>
-    /// This option needs "Enable Osd Display Remote Target". <br/>
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct client::show_target_user_in_f12_message {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
     };
     /// Same effect as "Transform glyph to bitmap", but only for RDP client on iOS platform. <br/>
     /// type: bool <br/>
@@ -823,6 +761,38 @@ namespace cfg
         type value { true };
     };
 
+    /// It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage). <br/>
+    ///  <br/>
+    /// If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client. <br/>
+    ///  <br/>
+    /// Available features: <br/>
+    ///   - wallpaper <br/>
+    ///   - menu_animations <br/>
+    ///   - theme <br/>
+    ///   - mouse_cursor_shadows <br/>
+    ///   - cursor_blinking <br/>
+    ///   - font_smoothing <br/>
+    ///   - desktop_composition <br/>
+    /// type: RdpPerformanceFlags <br/>
+    /// default: 0x28, 0x0 <br/>
+    struct mod_rdp::force_performance_flags {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = RdpPerformanceFlags;
+        using mapped_type = RdpPerformanceFlags;
+        type value { 0x28, 0x0 };
+    };
+    /// If enabled, avoid automatically font smoothing in recorded session. <br/>
+    /// This allows OCR (when session probe is disabled) to better detect window titles. <br/>
+    /// If disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled. <br/>
+    /// In this case, windows titles will not be detected. <br/>
+    /// type: bool <br/>
+    /// default: true <br/>
+    struct mod_rdp::auto_adjust_performance_flags {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = bool;
+        using mapped_type = bool;
+        type value { true };
+    };
     /// Specifies the highest RDP compression support available on server connection. <br/>
     /// type: RdpCompression <br/>
     /// default: RdpCompression::rdp6_1 <br/>
@@ -1308,6 +1278,16 @@ namespace cfg
     /// type: bool <br/>
     /// default: true <br/>
     struct mod_rdp::bogus_ios_rdpdr_virtual_channel {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = bool;
+        using mapped_type = bool;
+        type value { true };
+    };
+    /// Workaround option to fix some drawing issues with Windows Server 2012. <br/>
+    /// Can be disabled when none of the targets are Windows Server 2012. <br/>
+    /// type: bool <br/>
+    /// default: true <br/>
+    struct mod_rdp::bogus_refresh_rect {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = bool;
         using mapped_type = bool;
@@ -2562,6 +2542,19 @@ namespace cfg
         using mapped_type = ::configs::spec_types::list<int>;
         type value {  };
     };
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// aclName: mod_vnc:support_cursor_pseudo_encoding <br/>
+    /// default: true <br/>
+    struct mod_vnc::support_cursor_pseudo_encoding {
+        static constexpr unsigned acl_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 2};
+        using type = bool;
+        using mapped_type = bool;
+        type value { true };
+    };
     /// VNC server clipboard text data encoding type. <br/>
     /// type: ClipboardEncodingType <br/>
     /// acl ⇒ proxy <br/>
@@ -2571,7 +2564,7 @@ namespace cfg
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 2};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 3};
         using type = ClipboardEncodingType;
         using mapped_type = std::string;
         type value { ClipboardEncodingType::latin1 };
@@ -2586,7 +2579,7 @@ namespace cfg
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 3};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 4};
         using type = VncBogusClipboardInfiniteLoop;
         using mapped_type = VncBogusClipboardInfiniteLoop;
         type value { VncBogusClipboardInfiniteLoop::delayed };
@@ -2599,7 +2592,7 @@ namespace cfg
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 4};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 5};
         using type = bool;
         using mapped_type = bool;
         type value { false };
@@ -2613,23 +2606,10 @@ namespace cfg
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 5};
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
-    };
-    /// type: bool <br/>
-    /// connpolicy -> proxy <br/>
-    /// aclName: mod_vnc:support_cursor_pseudo_encoding <br/>
-    /// default: true <br/>
-    struct mod_vnc::support_cursor_pseudo_encoding {
-        static constexpr unsigned acl_proxy_communication_flags = 0b10;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section9 + 6};
         using type = bool;
         using mapped_type = bool;
-        type value { true };
+        type value { false };
     };
     /// Enable target connection on ipv6 <br/>
     /// type: bool <br/>
@@ -4483,6 +4463,26 @@ namespace cfg
         using mapped_type = ::configs::spec_types::list<std::string>;
         type value { "en-US, fr-FR, de-DE, ru-RU" };
     };
+    /// Show close screen. <br/>
+    /// This displays errors related to the secondary connection then closes automatically after a timeout specified by "Close Timeout" or on user request. <br/>
+    /// type: bool <br/>
+    /// default: true <br/>
+    struct internal_mod::enable_close_box {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = bool;
+        using mapped_type = bool;
+        type value { true };
+    };
+    /// Specifies the time to spend on the close box of proxy RDP before closing client window. <br/>
+    /// ⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects. <br/>
+    /// type: std::chrono::seconds <br/>
+    /// default: 600 <br/>
+    struct internal_mod::close_box_timeout {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = std::chrono::seconds;
+        using mapped_type = std::chrono::seconds;
+        type value { 600 };
+    };
 
     /// type: ::configs::spec_types::directory_path <br/>
     /// acl ⇒ proxy <br/>
@@ -5029,7 +5029,6 @@ struct globals
 , cfg::globals::inactivity_timeout
 , cfg::globals::keepalive_grace_delay
 , cfg::globals::authentication_timeout
-, cfg::globals::close_timeout
 , cfg::globals::rdp_keepalive_connection_interval
 , cfg::globals::port
 , cfg::globals::trace_type
@@ -5038,15 +5037,11 @@ struct globals
 , cfg::globals::certificate_password
 , cfg::globals::is_rec
 , cfg::globals::enable_bitmap_update
-, cfg::globals::enable_close_box
-, cfg::globals::enable_osd
+, cfg::globals::enable_end_time_warning_osd
 , cfg::globals::enable_osd_display_remote_target
+, cfg::globals::show_target_user_in_f12_message
 , cfg::globals::enable_wab_integration
-, cfg::globals::allow_using_multiple_monitors
-, cfg::globals::allow_scale_factor
-, cfg::globals::bogus_refresh_rect
 , cfg::globals::large_pointer_support
-, cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
 , cfg::globals::experimental_enable_serializer_data_block_size_limit
 , cfg::globals::enable_ipv6
@@ -5057,8 +5052,9 @@ struct client
 : cfg::client::ssl_cipher_list
 , cfg::client::keyboard_layout
 , cfg::client::ignore_logon_password
-, cfg::client::force_performance_flags
-, cfg::client::auto_adjust_performance_flags
+, cfg::client::allow_using_multiple_monitors
+, cfg::client::allow_scale_factor
+, cfg::client::unicode_keyboard_event_support
 , cfg::client::encryption_level
 , cfg::client::tls_fallback_legacy
 , cfg::client::tls_support
@@ -5075,7 +5071,6 @@ struct client
 , cfg::client::bitmap_compression
 , cfg::client::fast_path
 , cfg::client::enable_suppress_output
-, cfg::client::show_target_user_in_f12_message
 , cfg::client::bogus_ios_glyph_support_level
 , cfg::client::transform_glyph_to_bitmap
 , cfg::client::recv_timeout
@@ -5106,6 +5101,8 @@ struct mod_rdp
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
 , cfg::mod_rdp::effective_krb_armoring_user
 , cfg::mod_rdp::effective_krb_armoring_password
+, cfg::mod_rdp::force_performance_flags
+, cfg::mod_rdp::auto_adjust_performance_flags
 , cfg::mod_rdp::rdp_compression
 , cfg::mod_rdp::disconnect_on_logon_user_change
 , cfg::mod_rdp::disabled_orders
@@ -5139,6 +5136,7 @@ struct mod_rdp
 , cfg::mod_rdp::hide_client_name
 , cfg::mod_rdp::use_license_store
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
+, cfg::mod_rdp::bogus_refresh_rect
 , cfg::mod_rdp::enable_rdpdr_data_analysis
 , cfg::mod_rdp::log_only_relevant_clipboard_activities
 , cfg::mod_rdp::split_domain
@@ -5234,11 +5232,11 @@ struct mod_vnc
 : cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::encodings
+, cfg::mod_vnc::support_cursor_pseudo_encoding
 , cfg::mod_vnc::server_clipboard_encoding_type
 , cfg::mod_vnc::bogus_clipboard_infinite_loop
 , cfg::mod_vnc::server_is_macos
 , cfg::mod_vnc::server_unix_alt
-, cfg::mod_vnc::support_cursor_pseudo_encoding
 , cfg::mod_vnc::enable_ipv6
 { static constexpr bool is_section = true; };
 
@@ -5429,8 +5427,10 @@ struct context
 { static constexpr bool is_section = true; };
 
 struct internal_mod
-: cfg::internal_mod::enable_target_field
+: cfg::internal_mod::close_box_timeout
+, cfg::internal_mod::enable_target_field
 , cfg::internal_mod::keyboard_layout_proposals
+, cfg::internal_mod::enable_close_box
 { static constexpr bool is_section = true; };
 
 struct mod_replay
@@ -5636,11 +5636,11 @@ using VariablesAclPack = Pack<
 , cfg::server_cert::external_response
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
+, cfg::mod_vnc::support_cursor_pseudo_encoding
 , cfg::mod_vnc::server_clipboard_encoding_type
 , cfg::mod_vnc::bogus_clipboard_infinite_loop
 , cfg::mod_vnc::server_is_macos
 , cfg::mod_vnc::server_unix_alt
-, cfg::mod_vnc::support_cursor_pseudo_encoding
 , cfg::mod_vnc::enable_ipv6
 , cfg::session_log::enable_session_log_file
 , cfg::session_log::keyboard_input_masking_level

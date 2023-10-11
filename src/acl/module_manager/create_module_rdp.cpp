@@ -625,20 +625,20 @@ ModPack create_mod_rdp(
         ini.get<cfg::mod_rdp::disabled_orders>().c_str(),
         bool(rdp_verbose & (RDPVerbose::basic_trace | RDPVerbose::capabilities)));
 
-    mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::globals::bogus_refresh_rect>();
+    mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::mod_rdp::bogus_refresh_rect>();
 
     mod_rdp_params.drive_params.proxy_managed_drives   = ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
     mod_rdp_params.drive_params.proxy_managed_prefix   = app_path(AppPath::DriveRedirection);
 
     mod_rdp_params.lang                                = language(ini);
 
-    mod_rdp_params.allow_using_multiple_monitors       = ini.get<cfg::globals::allow_using_multiple_monitors>();
+    mod_rdp_params.allow_using_multiple_monitors       = ini.get<cfg::client::allow_using_multiple_monitors>();
     mod_rdp_params.bogus_monitor_layout_treatment      = ini.get<cfg::mod_rdp::bogus_monitor_layout_treatment>();
-    mod_rdp_params.allow_scale_factor                  = ini.get<cfg::globals::allow_scale_factor>();
+    mod_rdp_params.allow_scale_factor                  = ini.get<cfg::client::allow_scale_factor>();
 
     mod_rdp_params.adjust_performance_flags_for_recording
             = (ini.get<cfg::globals::is_rec>()
-            && ini.get<cfg::client::auto_adjust_performance_flags>()
+            && ini.get<cfg::mod_rdp::auto_adjust_performance_flags>()
             && ((ini.get<cfg::video::capture_flags>()
                 & (CaptureFlags::wrm | CaptureFlags::ocr)) != CaptureFlags::none));
     {

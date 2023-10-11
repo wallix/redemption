@@ -597,6 +597,22 @@ migration_defs: List[MigrationType] = [
             'png_limit': ToIniOnly(reason='Old mechanism before Redis.'),
         }
     }),
+    (RedemptionVersion("10.5.35"), {
+        'globals': {
+            'enable_close_box': UpdateItem(section='internal_mod'),
+            'close_timeout': UpdateItem(section='internal_mod', key='close_box_timeout'),
+            'enable_osd': UpdateItem(key='enable_end_time_warning_osd'),
+            'allow_using_multiple_monitors': UpdateItem(section='client'),
+            'allow_scale_factor': UpdateItem(section='client'),
+            'unicode_keyboard_event_support': UpdateItem(section='client'),
+            'bogus_refresh_rect': UpdateItem(section='mod_rdp'),
+        },
+        'client': {
+            'force_performance_flags': UpdateItem(section='mod_rdp'),
+            'auto_adjust_performance_flags': UpdateItem(section='mod_rdp'),
+            'show_target_user_in_f12_message': UpdateItem(section='globals'),
+        },
+    }),
 ]
 
 

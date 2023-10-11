@@ -1250,7 +1250,7 @@ private:
 
                 if (REDEMPTION_UNLIKELY(next_module != ModuleName::UNKNOWN)) {
                     if (is_close_module(next_module)) {
-                        if (!ini.get<cfg::globals::enable_close_box>()) {
+                        if (!ini.get<cfg::internal_mod::enable_close_box>()) {
                             LOG(LOG_INFO, "Close Box disabled: ending session");
                             break;
                         }
@@ -1270,7 +1270,7 @@ private:
                     }
 
                     end_session_warning.update_warning([&](std::chrono::minutes minutes){
-                        if (ini.get<cfg::globals::enable_osd>()
+                        if (ini.get<cfg::globals::enable_end_time_warning_osd>()
                          && mod_factory.mod().is_up_and_running()
                         ) {
                             loop_state = LoopState::UpdateOsd;
@@ -1376,7 +1376,7 @@ private:
                     switch (end_session_exception(e, ini, mod_factory))
                     {
                     case EndSessionResult::close_box:
-                        if (ini.get<cfg::globals::enable_close_box>()) {
+                        if (ini.get<cfg::internal_mod::enable_close_box>()) {
                             if (!is_close_module(mod_factory.mod_name())) {
                                 if (mod_factory.is_connected()) {
                                     this->ini.set_acl<cfg::context::module>(ModuleName::close);
@@ -1567,7 +1567,7 @@ public:
         }
 
         if (auth_sck == INVALID_SOCKET
-         && (!front.is_up_and_running() || !ini.get<cfg::globals::enable_close_box>())
+         && (!front.is_up_and_running() || !ini.get<cfg::internal_mod::enable_close_box>())
         ) {
             // silent message for localhost or probe IPs for watchdog
             if (!prevent_early_log) {
@@ -1599,7 +1599,7 @@ public:
 
             if (end_loop == EndLoopState::ShowCloseBox
              && front.is_up_and_running()
-             && ini.get<cfg::globals::enable_close_box>()
+             && ini.get<cfg::internal_mod::enable_close_box>()
             ) {
                 if (mod_factory.mod_name() != ModuleName::close) {
                     mod_factory.create_close_mod();

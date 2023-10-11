@@ -31,16 +31,11 @@ namespace cfg
         struct certificate_password;
         struct is_rec;
         struct enable_bitmap_update;
-        struct enable_close_box;
-        struct close_timeout;
-        struct enable_osd;
+        struct enable_end_time_warning_osd;
         struct enable_osd_display_remote_target;
+        struct show_target_user_in_f12_message;
         struct enable_wab_integration;
-        struct allow_using_multiple_monitors;
-        struct allow_scale_factor;
-        struct bogus_refresh_rect;
         struct large_pointer_support;
-        struct unicode_keyboard_event_support;
         struct mod_recv_timeout;
         struct experimental_enable_serializer_data_block_size_limit;
         struct rdp_keepalive_connection_interval;
@@ -51,14 +46,16 @@ namespace cfg
     struct client {
         struct keyboard_layout;
         struct ignore_logon_password;
-        struct force_performance_flags;
-        struct auto_adjust_performance_flags;
+        struct allow_using_multiple_monitors;
+        struct allow_scale_factor;
+        struct unicode_keyboard_event_support;
         struct encryption_level;
         struct tls_fallback_legacy;
         struct tls_support;
         struct tls_min_level;
         struct tls_max_level;
         struct show_common_cipher_list;
+        struct ssl_cipher_list;
         struct enable_nla;
         struct disable_tsk_switch_shortcuts;
         struct rdp_compression;
@@ -69,8 +66,6 @@ namespace cfg
         struct bitmap_compression;
         struct fast_path;
         struct enable_suppress_output;
-        struct ssl_cipher_list;
-        struct show_target_user_in_f12_message;
         struct bogus_ios_glyph_support_level;
         struct transform_glyph_to_bitmap;
         struct recv_timeout;
@@ -89,6 +84,8 @@ namespace cfg
     };
 
     struct mod_rdp {
+        struct force_performance_flags;
+        struct auto_adjust_performance_flags;
         struct rdp_compression;
         struct disconnect_on_logon_user_change;
         struct open_session_timeout;
@@ -130,6 +127,7 @@ namespace cfg
         struct hide_client_name;
         struct use_license_store;
         struct bogus_ios_rdpdr_virtual_channel;
+        struct bogus_refresh_rect;
         struct enable_rdpdr_data_analysis;
         struct remoteapp_bypass_legal_notice_delay;
         struct remoteapp_bypass_legal_notice_timeout;
@@ -229,11 +227,11 @@ namespace cfg
         struct clipboard_up;
         struct clipboard_down;
         struct encodings;
+        struct support_cursor_pseudo_encoding;
         struct server_clipboard_encoding_type;
         struct bogus_clipboard_infinite_loop;
         struct server_is_macos;
         struct server_unix_alt;
-        struct support_cursor_pseudo_encoding;
         struct enable_ipv6;
     };
 
@@ -426,6 +424,8 @@ namespace cfg
     struct internal_mod {
         struct enable_target_field;
         struct keyboard_layout_proposals;
+        struct enable_close_box;
+        struct close_box_timeout;
     };
 
     struct mod_replay {

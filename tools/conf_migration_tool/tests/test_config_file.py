@@ -73,10 +73,13 @@ class TestMigration(unittest.TestCase):
             "metrics",
         }
         for _, d in migration_defs:
-            for k in d:
+            for k, v in d.items():
                 self.assertNotEqual(k, 'rdp', 'should be mod_rdp')
                 self.assertNotEqual(k, 'vnc', 'should be mod_vnc')
                 self.assertIn(k, sections)
+                if type(v) == UpdateItem and v.section:
+                    self.assertIn(v.section, sections)
+
 
     def test_parse_configuration(self):
         self.assertEqual(parse_configuration('[section]\n# bla bla\nkey = value'), [

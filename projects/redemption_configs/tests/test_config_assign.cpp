@@ -91,7 +91,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::internal_mod::keyboard_layout_proposals>(cslist);
     ini.set<cfg::internal_mod::keyboard_layout_proposals>(slist);
     ini.set<cfg::client::max_color_depth>(ColorDepth::depth16);
-    ini.set<cfg::client::force_performance_flags>(RdpPerformanceFlags{1, 1});
     ini.set<cfg::client::persist_bitmap_cache_on_disk>(true);
     ini.set<cfg::client::rdp_compression>(RdpCompression::rdp4);
     ini.set<cfg::client::tls_fallback_legacy>(true);
@@ -119,6 +118,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::context::message>(cs);
     ini.set<cfg::context::message>(s);
     ini.set<cfg::mod_rdp::mode_console>(RdpModeConsole::allow);
+    ini.set<cfg::mod_rdp::force_performance_flags>(RdpPerformanceFlags{1, 1});
     ini.set_acl<cfg::context::module>(ModuleName::selector);
     ini.set_acl<cfg::context::opt_bpp>(ColorDepth::depth15);
     ini.set_acl<cfg::context::opt_height>(1);
@@ -178,14 +178,14 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::authfile>(s);
     ini.set<cfg::globals::certificate_password>(cs);
     ini.set<cfg::globals::certificate_password>(s);
-    ini.set<cfg::globals::close_timeout>(std::chrono::seconds{1});
+    ini.set<cfg::internal_mod::close_box_timeout>(std::chrono::seconds{1});
+    ini.set<cfg::internal_mod::enable_close_box>(true);
     ini.set<cfg::globals::device_id>(cs);
     ini.set<cfg::globals::device_id>(s);
     ini.set<cfg::globals::enable_wab_integration>(true);
     ini.set<cfg::globals::enable_bitmap_update>(true);
-    ini.set<cfg::globals::enable_close_box>(true);
     ini.set<cfg::globals::enable_transparent_mode>(true);
-    ini.set<cfg::globals::enable_osd>(true);
+    ini.set<cfg::globals::enable_end_time_warning_osd>(true);
     ini.set<cfg::globals::enable_osd_display_remote_target>(true);
     ini.set<cfg::client::encryption_level>(RdpSecurityEncryptionLevel::high);
     ini.set_acl<cfg::globals::host>(cs);

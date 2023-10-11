@@ -430,6 +430,7 @@ cfg::mod_vnc::clipboard_up ⇐ clipboard_up   [bool]
     This only support text data clipboard (not files).
 cfg::mod_vnc::clipboard_down ⇐ clipboard_down   [bool]
     Check this option to enable the clipboard download (from server to client).This only support text data clipboard (not files).
+cfg::mod_vnc::support_cursor_pseudo_encoding ⇐ mod_vnc:support_cursor_pseudo_encoding   [bool]
 cfg::mod_vnc::server_clipboard_encoding_type ⇐ vnc_server_clipboard_encoding_type   [ClipboardEncodingType ⇐ std::string]
     VNC server clipboard text data encoding type.
 cfg::mod_vnc::bogus_clipboard_infinite_loop ⇐ vnc_bogus_clipboard_infinite_loop   [VncBogusClipboardInfiniteLoop]
@@ -441,7 +442,6 @@ cfg::mod_vnc::bogus_clipboard_infinite_loop ⇐ vnc_bogus_clipboard_infinite_loo
 cfg::mod_vnc::server_is_macos ⇐ mod_vnc:server_is_macos   [bool]
 cfg::mod_vnc::server_unix_alt ⇐ mod_vnc:server_unix_alt   [bool]
     When disabled, Ctrl + Alt becomes AltGr (Windows behavior)
-cfg::mod_vnc::support_cursor_pseudo_encoding ⇐ mod_vnc:support_cursor_pseudo_encoding   [bool]
 cfg::mod_vnc::enable_ipv6 ⇐ mod_vnc:enable_ipv6   [bool]
     Enable target connection on ipv6
 

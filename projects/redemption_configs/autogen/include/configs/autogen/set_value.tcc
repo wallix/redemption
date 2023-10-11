@@ -186,26 +186,10 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "enable_close_box"_zv) {
+        else if (key == "enable_end_time_warning_osd"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::globals::enable_close_box&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "close_timeout"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::globals::close_timeout&>(this->variables).value,
-                ::configs::spec_type<std::chrono::seconds>{},
-                value
-            );
-        }
-        else if (key == "enable_osd"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::globals::enable_osd&>(this->variables).value,
+                static_cast<cfg::globals::enable_end_time_warning_osd&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -218,6 +202,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "show_target_user_in_f12_message"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::globals::show_target_user_in_f12_message&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
         else if (key == "enable_wab_integration"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -226,42 +218,10 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "allow_using_multiple_monitors"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::globals::allow_using_multiple_monitors&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "allow_scale_factor"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::globals::allow_scale_factor&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "bogus_refresh_rect"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::globals::bogus_refresh_rect&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
         else if (key == "large_pointer_support"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::globals::large_pointer_support&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "unicode_keyboard_event_support"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::globals::unicode_keyboard_event_support&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -322,18 +282,26 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "force_performance_flags"_zv) {
+        else if (key == "allow_using_multiple_monitors"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::client::force_performance_flags&>(this->variables).value,
-                ::configs::spec_type<RdpPerformanceFlags>{},
+                static_cast<cfg::client::allow_using_multiple_monitors&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 value
             );
         }
-        else if (key == "auto_adjust_performance_flags"_zv) {
+        else if (key == "allow_scale_factor"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::client::auto_adjust_performance_flags&>(this->variables).value,
+                static_cast<cfg::client::allow_scale_factor&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "unicode_keyboard_event_support"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::client::unicode_keyboard_event_support&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -383,6 +351,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::client::show_common_cipher_list&>(this->variables).value,
                 ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "ssl_cipher_list"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::client::ssl_cipher_list&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
                 value
             );
         }
@@ -454,22 +430,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::client::enable_suppress_output&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "ssl_cipher_list"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::client::ssl_cipher_list&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                value
-            );
-        }
-        else if (key == "show_target_user_in_f12_message"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::client::show_target_user_in_f12_message&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -570,6 +530,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     }
     else if (this->section_id == 5) {
         if (0) {}
+        else if (key == "force_performance_flags"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::force_performance_flags&>(this->variables).value,
+                ::configs::spec_type<RdpPerformanceFlags>{},
+                value
+            );
+        }
+        else if (key == "auto_adjust_performance_flags"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::auto_adjust_performance_flags&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
         else if (key == "rdp_compression"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -894,6 +870,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "bogus_refresh_rect"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::bogus_refresh_rect&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -1586,6 +1570,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "support_cursor_pseudo_encoding"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_vnc::support_cursor_pseudo_encoding&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
         else if (key == "server_clipboard_encoding_type"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -1614,14 +1606,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_vnc::server_unix_alt&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "support_cursor_pseudo_encoding"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_vnc::support_cursor_pseudo_encoding&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -2125,6 +2109,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::internal_mod::keyboard_layout_proposals&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::list<std::string>>{},
+                value
+            );
+        }
+        else if (key == "enable_close_box"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::internal_mod::enable_close_box&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "close_box_timeout"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::internal_mod::close_box_timeout&>(this->variables).value,
+                ::configs::spec_type<std::chrono::seconds>{},
                 value
             );
         }

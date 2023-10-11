@@ -105,13 +105,14 @@ CloseMod::CloseMod(
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    if (vars.get<cfg::globals::close_timeout>().count()) {
+    const auto close_box_timeout = vars.get<cfg::internal_mod::close_box_timeout>();
+    if (close_box_timeout.count()) {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds",
-            static_cast<unsigned>(vars.get<cfg::globals::close_timeout>().count()));
+            static_cast<unsigned>(close_box_timeout.count()));
 
         this->events_guard.create_event_timeout(
             "Close Event",
-            this->vars.get<cfg::globals::close_timeout>(),
+            close_box_timeout,
             [this](Event&e)
             {
                 this->set_mod_signal(BACK_EVENT_STOP);
@@ -122,11 +123,11 @@ CloseMod::CloseMod(
         this->events_guard.create_event_timeout(
             "Close Refresh Message Event",
             start_time,
-            [this, start_time](Event& event)
+            [this, start_time, close_box_timeout](Event& event)
             {
                 auto now = this->events_guard.get_monotonic_time();
                 auto elapsed = now - start_time;
-                auto remaining = this->vars.get<cfg::globals::close_timeout>() - elapsed;
+                auto remaining = close_box_timeout - elapsed;
                 event.set_timeout(now + this->close_widget.refresh_timeleft(
                     std::chrono::duration_cast<std::chrono::seconds>(remaining)));
             });
