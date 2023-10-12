@@ -1089,6 +1089,15 @@
     },
     {
       "section": "mod_rdp",
+      "name": "bogus_freerdp_clipboard",
+      "type": "bool",
+      "value": false,
+      "description": "Workaround option to support partial clipboard initialization performed by some versions of FreeRDP.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
       "name": "bogus_ios_rdpdr_virtual_channel",
       "type": "bool",
       "value": true,
