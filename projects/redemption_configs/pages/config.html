@@ -94,7 +94,6 @@ h2 > a, h3 > a {
 }
 
 .hist-old-name, .hist-new-name {
-  background: #f3f3f3;
   font-family: monospace;
   font-size: 1em;
   /* line-height: 1.2rem; */
@@ -115,7 +114,7 @@ h2 > a, h3 > a {
 }
 
 .diff-marker {
-  background: #ffffe8;
+  background: #f0f0f0;
 }
 
 a:hover, a:active {
@@ -420,9 +419,10 @@ const makeHtmlHistory = (migrate, sections, historyTransformations) => {
             if (keyData.iniOnly || !keyData.toIniOnly) {
               const hist = keyData.iniOnly ? histIniOnly : histGlobalSpec;
               const displayedKey = sections[newSection]?.[newKey]?.displayName || computeDisplayName(newKey);
-              const diffSect = sectionName !== newSection && previousKey === displayedKey;
-              const diffKey = sectionName === newSection && previousKey !== displayedKey;
-              hist.push(`<li>Move <span class="hist-old-name">${diffMarker(`[${sectionName}]`, diffSect)} ${diffMarker(previousKey, diffKey)}</span> to <span class="hist-new-name">${diffMarker(`[${newSection}]`, diffSect)} ${diffMarker(displayedKey, diffKey)}</span>${reason}</li>`);
+              const diffSect = sectionName !== newSection;
+              const diffKey = previousKey !== displayedKey;
+              const sp = diffMarker(' ', diffSect && diffKey);
+              hist.push(`<li>Move <span class="hist-old-name">${diffMarker(`[${sectionName}]`, diffSect)}${sp}${diffMarker(previousKey, diffKey)}</span> to <span class="hist-new-name">${diffMarker(`[${newSection}]`, diffSect)}${sp}${diffMarker(displayedKey, diffKey)}</span>${reason}</li>`);
             }
             else if (keyData.toIniOnly) {
               histGlobalSpec.push(`<li>Remove <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${reason}</li>`);
