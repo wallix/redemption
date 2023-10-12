@@ -94,7 +94,6 @@ h2 > a, h3 > a {
 }
 
 .hist-old-name, .hist-new-name {
-  background: #f3f3f3;
   font-family: monospace;
   font-size: 1em;
   /* line-height: 1.2rem; */
@@ -115,7 +114,7 @@ h2 > a, h3 > a {
 }
 
 .diff-marker {
-  background: #ffffe8;
+  background: #f0f0f0;
 }
 
 a:hover, a:active {
@@ -420,9 +419,10 @@ const makeHtmlHistory = (migrate, sections, historyTransformations) => {
             if (keyData.iniOnly || !keyData.toIniOnly) {
               const hist = keyData.iniOnly ? histIniOnly : histGlobalSpec;
               const displayedKey = sections[newSection]?.[newKey]?.displayName || computeDisplayName(newKey);
-              const diffSect = sectionName !== newSection && previousKey === displayedKey;
-              const diffKey = sectionName === newSection && previousKey !== displayedKey;
-              hist.push(`<li>Move <span class="hist-old-name">${diffMarker(`[${sectionName}]`, diffSect)} ${diffMarker(previousKey, diffKey)}</span> to <span class="hist-new-name">${diffMarker(`[${newSection}]`, diffSect)} ${diffMarker(displayedKey, diffKey)}</span>${reason}</li>`);
+              const diffSect = sectionName !== newSection;
+              const diffKey = previousKey !== displayedKey;
+              const sp = diffMarker(' ', diffSect && diffKey);
+              hist.push(`<li>Move <span class="hist-old-name">${diffMarker(`[${sectionName}]`, diffSect)}${sp}${diffMarker(previousKey, diffKey)}</span> to <span class="hist-new-name">${diffMarker(`[${newSection}]`, diffSect)}${sp}${diffMarker(displayedKey, diffKey)}</span>${reason}</li>`);
             }
             else if (keyData.toIniOnly) {
               histGlobalSpec.push(`<li>Remove <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${reason}</li>`);
@@ -547,6 +547,7 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPre
       let type = option.type;
       let description = option.description;
       let preferHex = option.hex;
+      let humanValue = '';
       if (type === 'enumStr') {
         type = option.subtype;
         const e = enumDatas[type];
@@ -559,21 +560,30 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPre
         extraDescription = e.intValues;
         description ??= e.description;
         preferHex = e.category === 'flags';
+        const flags = [];
+        for (const info of e.values) {
+          if (info.value && (info.value & option.value) === info.value) {
+            flags.push(`<code>0x${info.value.toString(16)}</code>`);
+          }
+        }
+        if (flags.length > 1) {
+          humanValue = flags.join(' + ');
+        }
       }
       else if (type === 'list') {
         type = `list of ${mappingDisplayedType[option.subtype] || option.subtype}`;
       }
       else {
         type = mappingDisplayedType[type] || type;
+        humanValue = toHumanTime(option.value, mappingHumanTime[type]);
       }
 
       description = description
         ? htmlEscape(description).replaceAll('\n', '<br>')
         : 'No description';
 
-      const defaultValue = preferHex
-        ? `<code>0x${option.value.toString(16)}</code>`
-        : toHumanTime(option.value, mappingHumanTime[type]);
+      const defaultValue = preferHex ? `0x${option.value.toString(16)}` : option.value;
+      humanValue = humanValue && ` (= ${humanValue})`;
 
       let history = '';
       if (option.history.length) {
@@ -583,7 +593,7 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPre
       htmlBodyFragments.push(`
         <article class="option ${classes}" id="${optId}">
           <h3><a href="#${optId}">${sectionPrefix}<span class="section-prefix">[${realSectionName}]</span> ${option.displayName}</a>${tags}</h3>
-          <p class="type-info">type: ${type} | ${option.advanced ? 'advanced | ' : ''}default: ${defaultValue}</p>
+          <p class="type-info">type: ${type} | ${option.advanced ? 'advanced | ' : ''}default: <code>${defaultValue}</code>${humanValue}</p>
           <p class="description">${description}</p>
           ${extraDescription}
           ${history}
@@ -685,8 +695,16 @@ const mappingDisplayedType = {
   rgb: 'color',
 };
 
+const mappingHumanTime = {
+  milliseconds: 1,
+  centiseconds: 10,
+  deciseconds: 100,
+  seconds: 1000,
+  minutes: 1000 * 60,
+};
+
 const toHumanTime = (t, millisecondFactor) => {
-  if (!millisecondFactor || !t) return `<code>${t}</code>`;
+  if (!millisecondFactor || !t) return '';
 
   // to milliseconds
   let milliseconds = t * millisecondFactor;
@@ -702,15 +720,7 @@ const toHumanTime = (t, millisecondFactor) => {
   if (milliseconds) {
     s += `${milliseconds}ms`;
   }
-  return `<code>${t}</code> (= ${s})`;
-};
-
-const mappingHumanTime = {
-  milliseconds: 1,
-  centiseconds: 10,
-  deciseconds: 100,
-  seconds: 1000,
-  minutes: 1000 * 60,
+  return s;
 };
 
 (async() => {
