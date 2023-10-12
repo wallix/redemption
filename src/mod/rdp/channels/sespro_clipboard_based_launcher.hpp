@@ -133,6 +133,14 @@ private:
 
     bool clipboard_initialized            = false;
     bool clipboard_initialized_by_proxy   = false;
+
+    enum class CurClientClipboardInitStep
+    {
+        Invalid,
+        ClipboardCapabilities,
+        FormatList
+    } cur_client_clipboard_init_step = CurClientClipboardInitStep::Invalid;
+
     bool clipboard_initialization_started = false;
 
     bool clipboard_monitor_ready = false;

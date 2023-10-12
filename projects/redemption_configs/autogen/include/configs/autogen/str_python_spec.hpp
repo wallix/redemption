@@ -252,6 +252,10 @@ hide_client_name = boolean(default=True)
 #_advanced
 use_license_store = boolean(default=True)
 
+# Workaround option to support partial clipboard initialization performed by some versions of FreeRDP.
+#_advanced
+bogus_freerdp_clipboard = boolean(default=False)
+
 # Workaround option to disable shared disk for RDP client on iOS platform only.
 #_advanced
 bogus_ios_rdpdr_virtual_channel = boolean(default=True)

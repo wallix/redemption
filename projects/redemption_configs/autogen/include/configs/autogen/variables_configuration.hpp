@@ -1274,6 +1274,15 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
+    /// Workaround option to support partial clipboard initialization performed by some versions of FreeRDP. <br/>
+    /// type: bool <br/>
+    /// default: false <br/>
+    struct mod_rdp::bogus_freerdp_clipboard {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = bool;
+        using mapped_type = bool;
+        type value { false };
+    };
     /// Workaround option to disable shared disk for RDP client on iOS platform only. <br/>
     /// type: bool <br/>
     /// default: true <br/>
@@ -5135,6 +5144,7 @@ struct mod_rdp
 , cfg::mod_rdp::application_driver_ie_script
 , cfg::mod_rdp::hide_client_name
 , cfg::mod_rdp::use_license_store
+, cfg::mod_rdp::bogus_freerdp_clipboard
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
 , cfg::mod_rdp::bogus_refresh_rect
 , cfg::mod_rdp::enable_rdpdr_data_analysis

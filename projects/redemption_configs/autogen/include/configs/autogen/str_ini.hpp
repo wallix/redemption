@@ -526,6 +526,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #use_license_store = 1
 
+# Workaround option to support partial clipboard initialization performed by some versions of FreeRDP.
+# (type: boolean (0/no/false or 1/yes/true))
+#_advanced
+#bogus_freerdp_clipboard = 0
+
 # Workaround option to disable shared disk for RDP client on iOS platform only.
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced

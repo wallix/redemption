@@ -183,11 +183,13 @@ bool SessionProbeClipboardBasedLauncher::on_event()
         "SessionProbeClipboardBasedLauncher :=> on_event - %d", int(this->state));
 
     if (this->state == State::START) {
-        if (!this->clipboard_initialization_started) {
+        if (CurClientClipboardInitStep::Invalid ==
+            this->cur_client_clipboard_init_step)
+        {
+            this->clipboard_initialized_by_proxy = true;
+
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
-
-            this->clipboard_initialized_by_proxy = true;
 
             // Client Clipboard Capabilities PDU.
             {
@@ -218,6 +220,13 @@ bool SessionProbeClipboardBasedLauncher::on_event()
 
             this->client_supports_long_format_name = true;
 
+            this->cur_client_clipboard_init_step ==
+                CurClientClipboardInitStep::ClipboardCapabilities;
+        }
+
+        if (CurClientClipboardInitStep::ClipboardCapabilities ==
+            this->cur_client_clipboard_init_step)
+        {
             // Format List PDU.
             {
                 StaticOutStream<256> out_s;
@@ -673,7 +682,11 @@ bool SessionProbeClipboardBasedLauncher::process_client_cliprdr_message(InStream
 
         const uint16_t msgType = chunk.in_uint16_le();
         if (RDPECLIP::CB_CLIP_CAPS == msgType) {
-            this->clipboard_initialization_started = true;
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+                "SessionProbeClipboardBasedLauncher :=> process_client_cliprdr_message(CB_CLIP_CAPS)");
+
+            this->cur_client_clipboard_init_step =
+                CurClientClipboardInitStep::ClipboardCapabilities;
 
             chunk.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
 
@@ -689,6 +702,9 @@ bool SessionProbeClipboardBasedLauncher::process_client_cliprdr_message(InStream
         else if (RDPECLIP::CB_FORMAT_LIST == msgType) {
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> process_client_cliprdr_message(CB_FORMAT_LIST)");
+
+            this->cur_client_clipboard_init_step =
+                CurClientClipboardInitStep::FormatList;
 
             this->current_client_format_list_pdu_length = current_chunk_size;
             this->current_client_format_list_pdu        =

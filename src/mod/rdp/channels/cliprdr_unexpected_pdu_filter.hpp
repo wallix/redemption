@@ -31,9 +31,11 @@ class CliprdrUnexpectedPDUFilter :
     public RemovableVirtualChannelFilter<CliprdrVirtualChannelProcessor>
 {
     // bool verbose = false;
+    bool const bogus_freerdp_clipboard;
 
 public:
-    CliprdrUnexpectedPDUFilter(bool verbose)
+    CliprdrUnexpectedPDUFilter(bool bogus_freerdp_clipboard, bool verbose) :
+        bogus_freerdp_clipboard(bogus_freerdp_clipboard)
     {
         (void)verbose;
     }
@@ -104,7 +106,10 @@ public:
                     IGNORE_OUT_OF_SEQUENCE(InitializationState::WaitingClientClipboardCapabilitiesPDU);
 
                     this->initialization_state
-                        = InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU;
+                        =   this->bogus_freerdp_clipboard
+                          ? InitializationState::Ready
+                          : InitializationState::WaitingClientTemporaryDirectoryPDUOrFormatListPDUOrLockPDU
+                          ;
                 }
                 break;
 

@@ -128,6 +128,8 @@ struct ModRDPParams
 
     uint32_t password_printing_mode = 0;
 
+    bool bogus_freerdp_clipboard = false;
+
     bool bogus_refresh_rect = true;
 
     struct DriveParams
@@ -380,6 +382,7 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%u",     RDP_PARAMS_LOG_GET,    password_printing_mode);
 
+        RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_freerdp_clipboard);
         RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_refresh_rect);
 
         RDP_PARAMS_LOG("%s",     s_or_none,             drive_params.proxy_managed_drives);

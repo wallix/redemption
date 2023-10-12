@@ -625,6 +625,7 @@ ModPack create_mod_rdp(
         ini.get<cfg::mod_rdp::disabled_orders>().c_str(),
         bool(rdp_verbose & (RDPVerbose::basic_trace | RDPVerbose::capabilities)));
 
+    mod_rdp_params.bogus_freerdp_clipboard             = ini.get<cfg::mod_rdp::bogus_freerdp_clipboard>();
     mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::mod_rdp::bogus_refresh_rect>();
 
     mod_rdp_params.drive_params.proxy_managed_drives   = ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();

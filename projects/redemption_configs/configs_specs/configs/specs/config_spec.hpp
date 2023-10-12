@@ -1090,6 +1090,13 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
     });
 
     _.member(MemberInfo{
+        .name = "bogus_freerdp_clipboard",
+        .value = value(false),
+        .spec = global_spec(no_acl, spec::advanced),
+        .desc = "Workaround option to support partial clipboard initialization performed by some versions of FreeRDP.",
+    });
+
+    _.member(MemberInfo{
         .name = "bogus_ios_rdpdr_virtual_channel",
         .value = value(true),
         .spec = global_spec(no_acl, spec::advanced),

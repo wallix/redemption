@@ -375,6 +375,8 @@ private:
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
 
+    const bool bogus_freerdp_clipboard;
+
 public:
     mod_rdp_channels(
         const ChannelsAuthorizations & channels_authorizations,
@@ -409,6 +411,7 @@ public:
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
     , callbacks(callbacks)
+    , bogus_freerdp_clipboard(mod_rdp_params.bogus_freerdp_clipboard)
     {}
 
     void log6(LogId id, KVLogList kv_list)
@@ -565,6 +568,7 @@ private:
         if (this->clipboard_to_client_sender)
         {
             this->cliprdr_unexpected_pdu_filter = std::make_unique<CliprdrUnexpectedPDUFilter>(
+                    this->bogus_freerdp_clipboard,
                     bool(this->verbose & RDPVerbose::cliprdr)
                 );
 
