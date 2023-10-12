@@ -169,7 +169,7 @@ class Keyboard
                 case "ShiftRight":
                 case "ControlLeft":
                 case "ControlRight":
-                    this._driver.sendScancodes([codeToScancodes(evt.code, KeyRelease)])
+                    this._driver.sendScancodes(codeToScancodes(evt.code, KeyRelease))
             }
         }
 
