@@ -1916,6 +1916,8 @@ class mod_rdp : public mod_api, public rdp_api, public sespro_api
 
     RdpSaveSessionInfoPDU save_session_info_pdu;
 
+    TpduBuffer buf;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -3463,8 +3465,6 @@ public:
             }
         }
     }
-
-    TpduBuffer buf;
 
     void draw_event()
     {

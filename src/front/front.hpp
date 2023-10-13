@@ -735,6 +735,8 @@ private:
 
     Rect rail_window_rect;
 
+    TpduBuffer buf;
+
     struct FrontSharingCtx
     {
         // send pointer when graphics is disabled on guest
@@ -2927,106 +2929,113 @@ public:
         }
     }
 
-    void incoming(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb) /*NOLINT*/
+    void incoming(Callback & cb) /*NOLINT*/
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
 
-        switch (this->state) {
-        case CONNECTION_INITIATION:
+        this->buf.load_data(this->trans);
+        while (buf.next(TpduBuffer::PDU))
         {
-            bool enable_nla = this->ini.get<cfg::client::enable_nla>();
-            this->connection_initiation(tpdu, enable_nla);
-            if (enable_nla){
-                this->state = PRIMARY_AUTH_NLA;
+            bytes_view tpdu = this->buf.current_pdu_buffer();
+            uint8_t current_pdu_type = this->buf.current_pdu_get_type();
+
+            switch (this->state) {
+            case CONNECTION_INITIATION:
+            {
+                bool enable_nla = this->ini.get<cfg::client::enable_nla>();
+                this->connection_initiation(tpdu, enable_nla);
+                if (enable_nla){
+                    this->state = PRIMARY_AUTH_NLA;
+                }
+                else {
+                    this->state = BASIC_SETTINGS_EXCHANGE;
+                }
             }
-            else {
-                this->state = BASIC_SETTINGS_EXCHANGE;
-            }
-        }
-        break;
-        case PRIMARY_AUTH_NLA:
-            if (this->nego_server->credssp.ntlm_state != NTLM_STATE_WAIT_PASSWORD){
-                this->front_nla(this->trans, tpdu);
-            }
-            else {
-                this->front_nla_got_password(this->trans);
-            }
-        break;
-        case BASIC_SETTINGS_EXCHANGE:
-            this->basic_settings_exchange(tpdu);
-            this->state = CHANNEL_ATTACH_USER;
-        break;
-        case CHANNEL_ATTACH_USER:
-            assert(current_pdu_type == Extractors::DT_TPDU);
-            this->channel_attach_user(tpdu);
-            this->state = CHANNEL_JOIN_REQUEST;
-        break;
-        case CHANNEL_JOIN_REQUEST:
-            assert(current_pdu_type == Extractors::DT_TPDU);
-            this->channel_join_request(tpdu);
-            this->state = CHANNEL_JOIN_CONFIRM_USER_ID;
-        break;
-        case CHANNEL_JOIN_CONFIRM_USER_ID:
-            assert(current_pdu_type == Extractors::DT_TPDU);
-            this->channel_join_confirm_user_id(tpdu);
-            this->state = CHANNEL_JOIN_CONFIRM_CHECK_USER_ID;
-        break;
-        case CHANNEL_JOIN_CONFIRM_CHECK_USER_ID:
-            assert(current_pdu_type == Extractors::DT_TPDU);
-            this->channel_join_confirm_check_user_id(tpdu);
-            this->state = CHANNEL_JOIN_CONFIRM_LOOP;
-        break;
-        case CHANNEL_JOIN_CONFIRM_LOOP:
-            if (this->channel_list_index < this->channel_list.size()) {
-                this->channel_join_confirm(tpdu);
-            }
-            else if (!this->tls_client_active) {
-                this->rdp_security_commencement(tpdu);
-                this->state = WAITING_FOR_LOGON_INFO;
-            }
-            else {
+            break;
+            case PRIMARY_AUTH_NLA:
+                if (this->nego_server->credssp.ntlm_state != NTLM_STATE_WAIT_PASSWORD){
+                    this->front_nla(this->trans, tpdu);
+                }
+                else {
+                    this->front_nla_got_password(this->trans);
+                }
+            break;
+            case BASIC_SETTINGS_EXCHANGE:
+                this->basic_settings_exchange(tpdu);
+                this->state = CHANNEL_ATTACH_USER;
+            break;
+            case CHANNEL_ATTACH_USER:
+                assert(current_pdu_type == Extractors::DT_TPDU);
+                this->channel_attach_user(tpdu);
+                this->state = CHANNEL_JOIN_REQUEST;
+            break;
+            case CHANNEL_JOIN_REQUEST:
+                assert(current_pdu_type == Extractors::DT_TPDU);
+                this->channel_join_request(tpdu);
+                this->state = CHANNEL_JOIN_CONFIRM_USER_ID;
+            break;
+            case CHANNEL_JOIN_CONFIRM_USER_ID:
+                assert(current_pdu_type == Extractors::DT_TPDU);
+                this->channel_join_confirm_user_id(tpdu);
+                this->state = CHANNEL_JOIN_CONFIRM_CHECK_USER_ID;
+            break;
+            case CHANNEL_JOIN_CONFIRM_CHECK_USER_ID:
+                assert(current_pdu_type == Extractors::DT_TPDU);
+                this->channel_join_confirm_check_user_id(tpdu);
+                this->state = CHANNEL_JOIN_CONFIRM_LOOP;
+            break;
+            case CHANNEL_JOIN_CONFIRM_LOOP:
+                if (this->channel_list_index < this->channel_list.size()) {
+                    this->channel_join_confirm(tpdu);
+                }
+                else if (!this->tls_client_active) {
+                    this->rdp_security_commencement(tpdu);
+                    this->state = WAITING_FOR_LOGON_INFO;
+                }
+                else {
+                    this->secure_settings_exchange(tpdu);
+                    this->state = WAITING_FOR_ANSWER_TO_LICENSE;
+                }
+            break;
+
+            case WAITING_FOR_LOGON_INFO:
                 this->secure_settings_exchange(tpdu);
                 this->state = WAITING_FOR_ANSWER_TO_LICENSE;
+            break;
+
+            case WAITING_FOR_ANSWER_TO_LICENSE:
+                this->license_packet(tpdu);
+
+                // Capabilities Exchange
+                // ---------------------
+
+                // Capabilities Negotiation: The server sends the set of capabilities it
+                // supports to the client in a Demand Active PDU. The client responds with its
+                // capabilities by sending a Confirm Active PDU.
+
+                // Client                                                     Server
+                //    | <------- Demand Active PDU ---------------------------- |
+                //    |--------- Confirm Active PDU --------------------------> |
+                LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                    "Front::incoming: send_demand_active");
+
+                this->send_demand_active();
+                this->send_monitor_layout();
+
+                this->state = ACTIVATE_AND_PROCESS_DATA;
+            break;
+
+            case ACTIVATE_AND_PROCESS_DATA:
+                LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                    "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
+                this->activate_and_process_data(tpdu, current_pdu_type, cb);
+            break;
+            case FRONT_UP_AND_RUNNING:
+                LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                    "Front::incoming: FRONT_UP_AND_RUNNING");
+                this->up_and_running(tpdu, current_pdu_type, cb);
+            break;
             }
-        break;
-
-        case WAITING_FOR_LOGON_INFO:
-            this->secure_settings_exchange(tpdu);
-            this->state = WAITING_FOR_ANSWER_TO_LICENSE;
-        break;
-
-        case WAITING_FOR_ANSWER_TO_LICENSE:
-            this->license_packet(tpdu);
-
-            // Capabilities Exchange
-            // ---------------------
-
-            // Capabilities Negotiation: The server sends the set of capabilities it
-            // supports to the client in a Demand Active PDU. The client responds with its
-            // capabilities by sending a Confirm Active PDU.
-
-            // Client                                                     Server
-            //    | <------- Demand Active PDU ---------------------------- |
-            //    |--------- Confirm Active PDU --------------------------> |
-            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                "Front::incoming: send_demand_active");
-
-            this->send_demand_active();
-            this->send_monitor_layout();
-
-            this->state = ACTIVATE_AND_PROCESS_DATA;
-        break;
-
-        case ACTIVATE_AND_PROCESS_DATA:
-            LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
-            this->activate_and_process_data(tpdu, current_pdu_type, cb);
-        break;
-        case FRONT_UP_AND_RUNNING:
-            LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                "Front::incoming: FRONT_UP_AND_RUNNING");
-            this->up_and_running(tpdu, current_pdu_type, cb);
-        break;
         }
 
         if (this->capture) {

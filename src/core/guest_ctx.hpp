@@ -32,19 +32,6 @@ Author(s): Proxies Team
 #include <sys/socket.h>
 
 
-inline void front_process(
-    TpduBuffer& buffer, Front& front, InTransport front_trans,
-    Callback& callback)
-{
-    buffer.load_data(front_trans);
-    while (buffer.next(TpduBuffer::PDU)) // or TdpuBuffer::CredSSP in NLA
-    {
-        bytes_view tpdu = buffer.current_pdu_buffer();
-        uint8_t current_pdu_type = buffer.current_pdu_get_type();
-        front.incoming(tpdu, current_pdu_type, callback);
-    }
-}
-
 struct GuestCtx
 {
     bool is_started() const noexcept
@@ -286,7 +273,7 @@ private:
 
         void process(Callback& callback)
         {
-            front_process(rbuf, get_front(), get_transport(), callback);
+            get_front().incoming(callback);
         }
 
         template<class F>

@@ -20,7 +20,6 @@
 
 #include "acl/module_manager/mod_factory.hpp"
 #include "acl/module_manager/enums.hpp"
-#include "core/RDP/tpdu_buffer.hpp"
 #include "core/session.hpp"
 #include "core/session_events.hpp"
 #include "core/session_verbose.hpp"
@@ -767,24 +766,10 @@ private:
         timeval* r = nullptr;
     };
 
-    static inline void front_process(
-        TpduBuffer& buffer, SessionFront& front, InTransport front_trans,
-        Callback& callback)
-    {
-        buffer.load_data(front_trans);
-        while (buffer.next(TpduBuffer::PDU)) // or TdpuBuffer::CredSSP in NLA
-        {
-            bytes_view tpdu = buffer.current_pdu_buffer();
-            uint8_t current_pdu_type = buffer.current_pdu_get_type();
-            front.incoming(tpdu, current_pdu_type, callback);
-        }
-    }
-
     template<class Fn>
     bool internal_front_loop(
         SessionFront& front,
         SocketTransport& front_trans,
-        TpduBuffer& rbuf,
         EventManager& event_manager,
         Callback& callback,
         Fn&& stop_event)
@@ -826,11 +811,11 @@ private:
                     front_trans.send_waiting_data();
                 }
                 else {
-                    front_process(rbuf, front, front_trans, callback);
+                    front.incoming(callback);
                 }
             }
             else if (has_tls_pending_data) {
-                front_process(rbuf, front, front_trans, callback);
+                front.incoming(callback);
             }
 
             front.sync();
@@ -882,7 +867,7 @@ private:
     inline EndLoopState main_loop(
         int auth_sck, EventManager& event_manager,
         CryptoContext& cctx, UdevRandom& rnd,
-        TpduBuffer& rbuf, SocketTransport& front_trans,
+        SocketTransport& front_trans,
         SessionFront& front, GuestCtx& guest_ctx,
         ModFactory& mod_factory
     )
@@ -1057,7 +1042,7 @@ private:
                 }
                 else if (ioswitch.is_set_for_reading(front_trans.get_fd())) {
                     auto& callback = mod_factory.callback();
-                    front_process(rbuf, front, front_trans, callback);
+                    front.incoming(callback);
 
                     // TODO should be replaced by callback.rdp_gdi_up/down() when is_up_and_running changes
                     if (front.front_must_notify_resize) {
@@ -1512,7 +1497,6 @@ public:
         AclReport acl_report{ini};
         SessionFront front(event_manager.get_events(), acl_report, front_trans, rnd, ini, cctx);
 
-        TpduBuffer rbuf;
         int auth_sck = INVALID_SOCKET;
 
         LOG_IF(bool(this->verbose & SessionVerbose::Trace),
@@ -1521,7 +1505,7 @@ public:
         try {
             null_mod no_mod;
             bool is_connected = this->internal_front_loop(
-                front, front_trans, rbuf, event_manager, no_mod,
+                front, front_trans, event_manager, no_mod,
                 [&]{
                     return front.is_up_and_running();
                 });
@@ -1592,7 +1576,7 @@ public:
             if (auth_sck != INVALID_SOCKET) {
                 end_loop = this->main_loop(
                     auth_sck, event_manager, cctx, rnd,
-                    rbuf, front_trans, front, guest_ctx,
+                    front_trans, front, guest_ctx,
                     mod_factory
                 );
             }
@@ -1607,7 +1591,7 @@ public:
 
                 auto& mod = mod_factory.mod();
                 this->internal_front_loop(
-                    front, front_trans, rbuf, event_manager, mod,
+                    front, front_trans, event_manager, mod,
                     [&]{
                         return mod.get_mod_signal() != BACK_EVENT_NONE
                             || !front.is_up_and_running();

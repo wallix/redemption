@@ -19,7 +19,6 @@ Author(s): Jonathan Poelen
 */
 
 #include "test_only/front/front_wrapper.hpp"
-#include "core/RDP/tpdu_buffer.hpp"
 #include "front/front.hpp"
 #include "capture/cryptofile.hpp"
 
@@ -40,13 +39,10 @@ struct FrontWrapper::D
         Inifile & ini
     )
     : front(events, acl_report, trans, gen, ini, cctx)
-    , trans(trans)
     {}
 
     CryptoContext cctx;
     MyFront front;
-    Transport& trans;
-    TpduBuffer rbuf {};
 };
 
 CHANNELS::ChannelDefArrayView FrontWrapper::get_channel_list() const
@@ -128,13 +124,7 @@ bool FrontWrapper::is_up_and_running() const
 
 void FrontWrapper::incoming(Callback & cb)
 {
-    d->rbuf.load_data(d->trans);
-    while (d->rbuf.next(TpduBuffer::PDU))
-    {
-        bytes_view tpdu = d->rbuf.current_pdu_buffer();
-        uint8_t current_pdu_type = d->rbuf.current_pdu_get_type();
-        d->front.incoming(tpdu, current_pdu_type, cb);
-    }
+    d->front.incoming(cb);
 }
 
 ScreenInfo const& FrontWrapper::screen_info() const

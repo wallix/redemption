@@ -288,7 +288,7 @@ struct FrontCtx
     , front(events, mod.session_log, trans, gen1, ini, cctx, guest_params)
     {
         null_mod no_mod;
-        front_process(tpdu_buf, front, trans, no_mod);
+        front.incoming(no_mod);
     }
 };
 
