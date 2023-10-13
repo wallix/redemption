@@ -220,7 +220,7 @@ bool SessionProbeClipboardBasedLauncher::on_event()
 
             this->client_supports_long_format_name = true;
 
-            this->cur_client_clipboard_init_step ==
+            this->cur_client_clipboard_init_step =
                 CurClientClipboardInitStep::ClipboardCapabilities;
         }
 
