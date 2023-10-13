@@ -188,13 +188,16 @@ bool SessionProbeClipboardBasedLauncher::on_event()
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
 
-            if (this->cliprdr_channel) {
+            if (   this->cliprdr_channel
+                && CurClientClipboardInitStep::Invalid == this->cur_client_clipboard_init_step
+               ) {
                 this->cliprdr_channel->disable_to_client_sender();
+
+                this->clipboard_initialized_by_proxy = true;
             }
 
-            this->clipboard_initialized_by_proxy = true;
-
             // Client Clipboard Capabilities PDU.
+            if (CurClientClipboardInitStep::Invalid == this->cur_client_clipboard_init_step)
             {
                 RDPECLIP::GeneralCapabilitySet general_cap_set(
                     RDPECLIP::CB_CAPS_VERSION_1,
@@ -212,9 +215,14 @@ bool SessionProbeClipboardBasedLauncher::on_event()
                 general_cap_set.emit(out_s);
 
                 this->rdp.send_cliprdr_message(out_s.get_produced_bytes());
+
+                this->cur_client_clipboard_init_step =
+                    CurClientClipboardInitStep::ClipboardCapabilities;
             }
 
             // Format List PDU.
+            if (CurClientClipboardInitStep::ClipboardCapabilities ==
+                this->cur_client_clipboard_init_step)
             {
                 StaticOutStream<256> out_s;
                 Cliprdr::format_list_serialize_with_header(
@@ -225,6 +233,9 @@ bool SessionProbeClipboardBasedLauncher::on_event()
                     std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
                 this->rdp.send_cliprdr_message(out_s.get_produced_bytes());
+
+                this->cur_client_clipboard_init_step =
+                    CurClientClipboardInitStep::FormatList;
             }
         }
     }
@@ -642,6 +653,13 @@ bool SessionProbeClipboardBasedLauncher::process_client_cliprdr_message(InStream
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> process_client_cliprdr_message(CB_FORMAT_LIST)");
 
+            if (CurClientClipboardInitStep::ClipboardCapabilities ==
+                this->cur_client_clipboard_init_step)
+            {
+                this->cur_client_clipboard_init_step =
+                    CurClientClipboardInitStep::FormatList;
+            }
+
             ClipboardVirtualChannel::InitializationState const cliprdr_initialization_state =
                 this->cliprdr_channel->get_initialization_state();
 
@@ -702,6 +720,17 @@ bool SessionProbeClipboardBasedLauncher::process_client_cliprdr_message(InStream
             }
 
             ret = false;
+        }
+        else if (msgType == RDPECLIP::CB_CLIP_CAPS) {
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+                "SessionProbeClipboardBasedLauncher :=> process_client_cliprdr_message(CB_CLIP_CAPS)");
+
+            if (CurClientClipboardInitStep::Invalid ==
+                this->cur_client_clipboard_init_step)
+            {
+                this->cur_client_clipboard_init_step =
+                    CurClientClipboardInitStep::ClipboardCapabilities;
+            }
         }
     }
 
