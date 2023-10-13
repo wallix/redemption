@@ -652,6 +652,9 @@ public:
                         case SessionProbeProcessCommandLineRetrieveMethod::both:
                             options |= OPTION_GET_PROCESS_COMMAND_USING_INTERNAL_APIS_CALL;
                             break;
+
+                        case SessionProbeProcessCommandLineRetrieveMethod::windows_management_instrumentation:
+                            break;
                     }
 
                     options |= this->sespro_params.pause_if_session_is_disconnected
