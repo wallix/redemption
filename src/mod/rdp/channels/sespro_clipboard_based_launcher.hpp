@@ -57,6 +57,14 @@ public:
     bool image_readed = false;
     bool clipboard_initialized = false;
     bool clipboard_initialized_by_proxy = false;
+
+    enum class CurClientClipboardInitStep
+    {
+        Invalid,
+        ClipboardCapabilities,
+        FormatList
+    } cur_client_clipboard_init_step = CurClientClipboardInitStep::Invalid;
+
     bool clipboard_monitor_ready = false;
 
     bool format_data_requested = false;
@@ -227,13 +235,15 @@ public:
                 LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
                     "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
 
-                if (this->cliprdr_channel) {
+                if (   this->cliprdr_channel
+                    && CurClientClipboardInitStep::Invalid == this->cur_client_clipboard_init_step) {
                     this->cliprdr_channel->disable_to_client_sender();
+
+                    this->clipboard_initialized_by_proxy = true;
                 }
 
-                this->clipboard_initialized_by_proxy = true;
-
                 // Client Clipboard Capabilities PDU.
+                if (CurClientClipboardInitStep::Invalid == this->cur_client_clipboard_init_step)
                 {
                     RDPECLIP::GeneralCapabilitySet general_cap_set(
                         RDPECLIP::CB_CAPS_VERSION_1,
@@ -258,9 +268,12 @@ public:
                                                     CHANNELS::CHANNEL_FLAG_FIRST
                                                   | CHANNELS::CHANNEL_FLAG_LAST
                                                   | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+
+                    this->cur_client_clipboard_init_step = CurClientClipboardInitStep::ClipboardCapabilities;
                 }
 
                 // Format List PDU.
+                if (CurClientClipboardInitStep::ClipboardCapabilities == this->cur_client_clipboard_init_step)
                 {
                     StaticOutStream<256> out_s;
                     Cliprdr::format_list_serialize_with_header(
@@ -278,6 +291,8 @@ public:
                                                     CHANNELS::CHANNEL_FLAG_FIRST
                                                   | CHANNELS::CHANNEL_FLAG_LAST
                                                   | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+
+                    this->cur_client_clipboard_init_step = CurClientClipboardInitStep::FormatList;
                 }
             }
         }
@@ -711,6 +726,10 @@ public:
                 LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
                     "SessionProbeClipboardBasedLauncher :=> process_client_cliprdr_message(CB_FORMAT_LIST)");
 
+                if (CurClientClipboardInitStep::ClipboardCapabilities == this->cur_client_clipboard_init_step) {
+                    this->cur_client_clipboard_init_step = CurClientClipboardInitStep::FormatList;
+                }
+
                 ClipboardVirtualChannel::InitializationState const cliprdr_initialization_state =
                     this->cliprdr_channel->get_initialization_state();
 
@@ -771,6 +790,14 @@ public:
                 }
 
                 ret = false;
+            }
+            else if (msgType == RDPECLIP::CB_CLIP_CAPS) {
+                LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+                    "SessionProbeClipboardBasedLauncher :=> process_client_cliprdr_message(CB_CLIP_CAPS)");
+
+                if (CurClientClipboardInitStep::Invalid == this->cur_client_clipboard_init_step) {
+                    this->cur_client_clipboard_init_step = CurClientClipboardInitStep::ClipboardCapabilities;
+                }
             }
         }
 
