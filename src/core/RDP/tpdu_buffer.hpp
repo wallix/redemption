@@ -76,9 +76,9 @@ namespace Extractors
     {
         HeaderResult read_header(Buf64k & buf)
         {
-            // fast-path min length = 2
-            // slow-path min length = 4, but tpdu min length is 7
-            if (buf.remaining() < 2) {
+            // fast path header occupies 2 or 3 octets, but assume then data len at least 2 octets.
+            if (buf.remaining() < 4)
+            {
                 return HeaderResult::fail();
             }
 
@@ -93,9 +93,6 @@ namespace Extractors
                     uint16_t len = av[1];
                     uint16_t min_len = 2;
                     if (len & 0x80u) {
-                        if (av.size() < 3) {
-                            return HeaderResult::fail();
-                        }
                         ++min_len;
                         len = static_cast<uint16_t>((len & 0x7Fu) << 8) | av[2];
                     }

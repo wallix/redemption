@@ -225,19 +225,21 @@ RED_AUTO_TEST_CASE(TestFastPathRead0)
     BlockTransport t(data, 1000);
     TpduBuffer buf;
 
-    buf.load_data(t); RED_REQUIRE(buf.next(TpduBuffer::PDU));
-    RED_CHECK_EQ(t.remaining(), 0);
-
-    RED_CHECK(buf.current_pdu_get_type() == Extractors::FASTPATH);
-
-    RED_CHECK(buf.current_pdu_buffer() == data);
-
-    RED_CHECK(!buf.next(TpduBuffer::PDU));
+    buf.load_data(t); RED_REQUIRE(!buf.next(TpduBuffer::PDU));
 }
 
 RED_AUTO_TEST_CASE(TestFastPathRead1)
 {
     auto data = "\x00\x03\x42"_av;
+    BlockTransport t(data, 1000);
+    TpduBuffer buf;
+
+    buf.load_data(t); RED_REQUIRE(!buf.next(TpduBuffer::PDU));
+}
+
+RED_AUTO_TEST_CASE(TestFastPathRead2)
+{
+    auto data = "\x00\x04\x42\x42"_av;
     BlockTransport t(data, 1000);
     TpduBuffer buf;
 
@@ -276,7 +278,7 @@ RED_AUTO_TEST_CASE(Test2ReadTooShortLen)
 {
     // fast-path
     {
-        BlockTransport t("\x00\x00"_av, 1000);
+        BlockTransport t("\x00\x00\x00\x00"_av, 1000);
         TpduBuffer buf;
 
         buf.load_data(t);
