@@ -85,13 +85,9 @@ namespace
 
 
 SessionLogFile::SessionLogFile(
-    CryptoContext& cctx, Random& rnd,
-    SessionLogFormat syslog_format, SaveToFile save_to_file, Debug enable_debug,
+    CryptoContext& cctx, Random& rnd, Debug enable_debug,
     std::function<void(const Error &)> notify_error)
-: enable_file(safe_int(save_to_file))
-, enable_siem(bool(syslog_format & SessionLogFormat::SIEM))
-, enable_arcsight(bool(syslog_format & SessionLogFormat::ArcSight))
-, enable_debug(safe_int(enable_debug))
+: enable_debug(safe_int(enable_debug))
 , ct(cctx, rnd, std::move(notify_error))
 {
     buffer.grow_without_copy(512);
@@ -256,10 +252,15 @@ void SessionLogFile::log(
 }
 
 void SessionLogFile::open_session_log(
+    SessionLogFormat syslog_format, SaveToFile save_to_file,
     const char * const record_path, const char * const hash_path,
     FilePermissions file_permissions, bytes_view derivator)
 {
-    assert(!this->ct.is_open() || !enable_file);
+    assert(!this->ct.is_open() || !this->enable_file);
+
+    this->enable_file = safe_int(save_to_file);
+    this->enable_siem = bool(syslog_format & SessionLogFormat::SIEM);
+    this->enable_arcsight = bool(syslog_format & SessionLogFormat::ArcSight);
 
     if (this->enable_file) {
         this->ct.open(record_path, hash_path, file_permissions, derivator);

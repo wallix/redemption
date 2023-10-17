@@ -42,10 +42,7 @@ public:
     enum class Debug : bool { Disable, Enable, };
 
     SessionLogFile(
-        CryptoContext & cctx, Random & rnd,
-        SessionLogFormat syslog_format,
-        SaveToFile save_to_file,
-        Debug enable_debug,
+        CryptoContext & cctx, Random & rnd, Debug enable_debug,
         std::function<void(const Error & error)> notify_error);
 
     ~SessionLogFile();
@@ -56,6 +53,7 @@ public:
              chars_view session_type, LogId id, KVLogList kv_list);
 
     void open_session_log(
+        SessionLogFormat syslog_format, SaveToFile save_to_file,
         const char * const record_path, const char * const hash_path,
         FilePermissions file_permissions, bytes_view derivator);
 
@@ -68,9 +66,9 @@ private:
     UninitDynamicBuffer buffer;
     UninitDynamicBuffer control_owner_extra_log;
     std::size_t control_owner_extra_log_len = 0;
-    const bool enable_file;
-    const bool enable_siem;
-    const bool enable_arcsight;
+    bool enable_file = false;
+    bool enable_siem = false;
+    bool enable_arcsight = false;
     const bool enable_debug;
     OutCryptoTransport ct;
 };

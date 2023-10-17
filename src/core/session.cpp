@@ -102,8 +102,6 @@ class Session
         , cctx(cctx)
         , log_file(
             cctx, rnd,
-            ini.get<cfg::session_log::enable_syslog_format>(),
-            SessionLogFile::SaveToFile(ini.get<cfg::session_log::enable_session_log_file>()),
             SessionLogFile::Debug(use_debug_format),
             [&ini](Error const& error){
                 if (error.errnum == ENOSPC) {
@@ -154,6 +152,8 @@ class Session
             hash_path += basename;
 
             this->log_file.open_session_log(
+                ini.get<cfg::session_log::enable_syslog_format>(),
+                SessionLogFile::SaveToFile(ini.get<cfg::session_log::enable_session_log_file>()),
                 record_path.c_str(), hash_path.c_str(),
                 this->ini.get<cfg::video::file_permissions>(), /*derivator=*/basename);
 

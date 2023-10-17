@@ -271,13 +271,26 @@ class ACLPassthrough():
         # }
         # self.selector_target(selector_data)
 
+        now = datetime.now()
+        session_id = str(uuid.uuid4())
+
         kv = {}
+
         # kv['is_rec'] = '1'  # Enable recording
-        kv['record_filebase'] = datetime.now().strftime("%Y-%m-%d/%H:%M-") + str(uuid.uuid4())
+        kv['trace_type'] = '0'
+        # kv['encryption_key'] = '1E' * 32  # 32 bytes string in hexadecimal format
+        # kv['sign_key'] = '1E' * 32  # 32 bytes string in hexadecimal format
+
+        # kv['hash_path'] = '...'
+        # kv['record_path'] = '...'
+        kv['record_subdirectory'] = now.strftime("%Y-%m-%d")
+        kv['record_filebase'] = now.strftime("%H:%M-") + session_id
+        kv['session_log:enable_session_log_file'] = '0'
+
         kv['login'] = self.shared.get('target_login')
         kv['proto_dest'] = "RDP"
         kv['target_port'] = "3389"
-        kv['session_id'] = str(datetime.now())
+        kv['session_id'] = session_id
         kv['module'] = 'RDP' if self.shared.get('login') != 'internal' else host
         kv['target_password'] = self.shared.get('target_password')
         kv['target_login'] = self.shared.get('target_login')
