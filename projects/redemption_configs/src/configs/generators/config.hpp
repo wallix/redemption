@@ -481,35 +481,6 @@ void write_variables_configuration_fwd(std::ostream & out_varconf, CppConfigWrit
 void write_authid_hpp(std::ostream & out_authid, CppConfigWriterBase& writer);
 void write_str_authid_hpp(std::ostream & out_authid, CppConfigWriterBase& writer);
 
-struct FullNameMemberChecker
-{
-    void emplace_back(std::string const& name)
-    {
-        this->full_names.emplace_back(name);
-    }
-
-    std::string get_error()
-    {
-        std::string error;
-
-        if (!this->full_names.empty()) {
-            std::sort(this->full_names.begin(), this->full_names.end());
-
-            auto* previous_name = &this->full_names.front();
-            for (auto& name : writable_array_view{this->full_names}.from_offset(1)) {
-                if (name == *previous_name) {
-                    str_append(error, (error.empty() ? "duplicates member: " : ", "), name);
-                }
-                previous_name = &name;
-            }
-        }
-
-        return error;
-    }
-
-    std::vector<std::string> full_names;
-};
-
 struct CppConfigWriterBase
 {
     unsigned depth = 0;
@@ -542,7 +513,6 @@ struct CppConfigWriterBase
     };
 
     std::vector<SectionString> sections_parser;
-    std::vector<std::string> authstrs;
     std::vector<Section> sections;
     std::vector<Member> members;
     std::vector<std::string> variables_acl;
@@ -569,29 +539,43 @@ struct CppConfigWriterBase
 
     struct FullNames
     {
-        FullNameMemberChecker spec;
-        FullNameMemberChecker acl;
+        std::vector<std::string> spec;
+        std::vector<std::string> acl;
 
         void check()
         {
             std::string full_err;
 
-            struct P { char const* name; FullNameMemberChecker& checker; };
+            struct P { char const* name; std::vector<std::string> const& names; };
             for (P const& p : {
                 P{"Ini", this->spec},
                 P{"Sesman", this->acl},
             }) {
-                auto err = p.checker.get_error();
-                if (not err.empty()) {
+                std::string error;
+
+                if (!p.names.empty()) {
+                    std::vector<std::string_view> names{p.names.begin(), p.names.end()};
+                    std::sort(names.begin(), names.end());
+
+                    std::string_view previous_name;
+                    for (std::string_view name : names) {
+                        if (name == previous_name) {
+                            str_append(error, (error.empty() ? "duplicates member: " : ", "), name);
+                        }
+                        previous_name = name;
+                    }
+                }
+
+                if (not error.empty()) {
                     if (not full_err.empty()) {
                         full_err += " ; ";
                     }
-                    str_append(full_err, p.name, ": ", err);
+                    str_append(full_err, p.name, ": ", error);
                 }
             }
 
             if (not full_err.empty()) {
-                std::runtime_error(std::move(full_err));
+                throw std::runtime_error(full_err);
             }
         }
     };
@@ -665,7 +649,7 @@ inline void write_authid_hpp(std::ostream & out_authid, CppConfigWriterBase& wri
       "namespace configs\n"
       "{\n"
       "    enum class authid_t : unsigned;\n"
-      "    constexpr authid_t max_authid {" << writer.authstrs.size() << "};\n"
+      "    constexpr authid_t max_authid {" << writer.full_names.acl.size() << "};\n"
       "}\n"
     ;
 }
@@ -684,7 +668,7 @@ inline void write_str_authid_hpp(std::ostream & out_authid, CppConfigWriterBase&
       "{\n"
       "    constexpr zstring_view const authstr[] = {\n"
     ;
-    for (auto & authstr : writer.authstrs) {
+    for (auto & authstr : writer.full_names.acl) {
         out_authid << "        \"" << authstr << "\"_zv,\n";
     }
     out_authid <<
@@ -2468,7 +2452,6 @@ struct GeneratorConfig
             std::string acl_name;
             if (has_acl) {
                 acl_name = acl_network_name;
-                cpp.authstrs.emplace_back(acl_name);
                 cpp.full_names.acl.emplace_back(acl_name);
             }
             cpp.out_member_ << "    /// type: " << cpp.html_entitifier([&](std::ostream& out){
