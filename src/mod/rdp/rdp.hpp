@@ -1278,7 +1278,9 @@ public:
     {
         // Executable file name of SP.
         static_assert(std::is_signed_v<decltype(::getpid())>);
-        auto exe_var_str = int_to_decimal_chars(-::getpid());
+        auto exe_var_str = session_probe_params.customize_executable_name
+            ? int_to_decimal_chars(-::getpid())
+            : int_to_chars_result();
 
         // Target informations
         str_assign(this->session_probe.target_informations,
