@@ -230,7 +230,7 @@ class ACLPassthrough():
 
 
     def start(self):
-        _status, _error = self.shared.receive_data()
+        self.shared.receive_data()
 
         device = "<host>$<application path>$<working dir>$<args> for Application"
         login = self.shared.get('login', MAGICASK) or MAGICASK
@@ -253,7 +253,7 @@ class ACLPassthrough():
         kv = {}
 
         if MAGICASK in (device, login, host, password):
-            _status, _error = self.interactive_target(interactive_data)
+            self.interactive_target(interactive_data)
         else:
             self.shared.shared['login'] = login
             self.shared.shared['target_login'] = login
@@ -318,7 +318,7 @@ class ACLPassthrough():
                     Logger().info("Got Signal %s" % e)
                     got_signal = True
                 if self.proxy_conx in r:
-                    _status, _error = self.shared.receive_data();
+                    self.shared.receive_data();
 
                     if self.shared.is_asked('keepalive'):
                         self.shared.send_data({'keepalive': 'True'})
