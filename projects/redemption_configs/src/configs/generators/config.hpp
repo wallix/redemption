@@ -2132,7 +2132,9 @@ struct GeneratorConfig
         check_names(names, has_ini, has_acl, has_connpolicy);
 
         std::string acl_network_name_tmp;
-        std::string_view acl_network_name = has_connpolicy
+        std::string_view const acl_network_name
+            = (has_connpolicy
+               || (bool(mem_info.spec.dest & DestSpecFile::ini_only) && names.acl.empty()))
             ? (acl_network_name_tmp = str_concat(section_names.all, ':', names.all))
             : names.acl_name();
 
@@ -2261,7 +2263,7 @@ struct GeneratorConfig
                 : acl_map.values_sent;
 
             values.emplace_back(str_concat(
-                "    '"sv, names.acl_name(), "': "sv,
+                "    '"sv, acl_network_name, "': "sv,
                 mem_info.value.values.py, ",\n"sv
             ));
         }

@@ -344,7 +344,7 @@ _.section("globals", [&]
     _.member(MemberInfo{
         .name = "trace_type",
         .value = from_enum(TraceType::localfile_hashed),
-        .spec = ini_only(acl_to_proxy(reset_back_to_selector, L)),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
     });
 
     _.member(MemberInfo{
@@ -998,19 +998,19 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
     });
 
     _.member(MemberInfo{
-        .name = "alternate_shell",
+        .name = names::acl_shortname("alternate_shell"),
         .value = value<std::string>(),
         .spec = ini_only(acl_to_proxy(reset_back_to_selector, L)),
     });
 
     _.member(MemberInfo{
-        .name = "shell_arguments",
+        .name = names::acl_shortname("shell_arguments"),
         .value = value<std::string>(),
         .spec = ini_only(acl_to_proxy(reset_back_to_selector, L)),
     });
 
     _.member(MemberInfo{
-        .name = "shell_working_directory",
+        .name = names::acl_shortname("shell_working_directory"),
         .value = value<std::string>(),
         .spec = ini_only(acl_to_proxy(reset_back_to_selector, L)),
     });
@@ -2309,19 +2309,19 @@ _.section("video", [&]
     });
 
     _.member(MemberInfo{
-        .name = "hash_path",
+        .name = names::acl_shortname("hash_path"),
         .value = value<types::dirpath>(CPP_EXPR(app_path(AppPath::Hash))),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
 
     _.member(MemberInfo{
-        .name = "record_tmp_path",
+        .name = names::acl_shortname("record_tmp_path"),
         .value = value<types::dirpath>(CPP_EXPR(app_path(AppPath::RecordTmp))),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
 
     _.member(MemberInfo{
-        .name = "record_path",
+        .name = names::acl_shortname("record_path"),
         .value = value<types::dirpath>(CPP_EXPR(app_path(AppPath::Record))),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
@@ -2532,13 +2532,13 @@ _.section("crypto", [&]
     _.member(MemberInfo{
         .name = "encryption_key",
         .value = value<types::fixed_binary<32>>(default_key),
-        .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, NL)),
+        .spec = acl_to_proxy(no_reset_back_to_selector, NL),
     });
 
     _.member(MemberInfo{
         .name = "sign_key",
         .value = value<types::fixed_binary<32>>(default_key),
-        .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, NL)),
+        .spec = acl_to_proxy(no_reset_back_to_selector, NL),
     });
 });
 
@@ -2695,7 +2695,7 @@ _.section("debug", [&]
 _.section("translation", [&]
 {
     _.member(MemberInfo{
-        .name = "language",
+        .name = names::acl_shortname("language"),
         .value = enum_as_string(Language::en),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });

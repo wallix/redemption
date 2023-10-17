@@ -1131,6 +1131,7 @@ namespace cfg
     };
     /// type: std::string <br/>
     /// acl ⇒ proxy <br/>
+    /// acl::name: alternate_shell <br/>
     /// default: "" <br/>
     struct mod_rdp::alternate_shell {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
@@ -1143,6 +1144,7 @@ namespace cfg
     };
     /// type: std::string <br/>
     /// acl ⇒ proxy <br/>
+    /// acl::name: shell_arguments <br/>
     /// default: "" <br/>
     struct mod_rdp::shell_arguments {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
@@ -1155,6 +1157,7 @@ namespace cfg
     };
     /// type: std::string <br/>
     /// acl ⇒ proxy <br/>
+    /// acl::name: shell_working_directory <br/>
     /// default: "" <br/>
     struct mod_rdp::shell_working_directory {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
@@ -2816,6 +2819,7 @@ namespace cfg
     };
     /// type: ::configs::spec_types::directory_path <br/>
     /// acl ⇒ proxy <br/>
+    /// acl::name: hash_path <br/>
     /// default: app_path(AppPath::Hash) <br/>
     struct video::hash_path {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
@@ -2828,6 +2832,7 @@ namespace cfg
     };
     /// type: ::configs::spec_types::directory_path <br/>
     /// acl ⇒ proxy <br/>
+    /// acl::name: record_tmp_path <br/>
     /// default: app_path(AppPath::RecordTmp) <br/>
     struct video::record_tmp_path {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
@@ -2840,6 +2845,7 @@ namespace cfg
     };
     /// type: ::configs::spec_types::directory_path <br/>
     /// acl ⇒ proxy <br/>
+    /// acl::name: record_path <br/>
     /// default: app_path(AppPath::Record) <br/>
     struct video::record_path {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
@@ -4530,6 +4536,7 @@ namespace cfg
 
     /// type: Language <br/>
     /// acl ⇒ proxy <br/>
+    /// acl::name: language <br/>
     /// default: Language::en <br/>
     struct translation::language {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;

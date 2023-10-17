@@ -115,7 +115,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL("/tmp/", ini.get<cfg::mod_replay::replay_path>());
     RED_CHECK_EQUAL(0440,    ini.get<cfg::video::file_permissions>().permissions_as_uint());
 
-    RED_CHECK_EQUAL(TraceType::localfile_hashed, ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("0.0.0.0",                   ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(false,                       ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("inquisition",               ini.get<cfg::globals::certificate_password>());
@@ -259,7 +258,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     std::ofstream(wf.c_str()) <<
         "[globals]\n"
         "port=3390\n"
-        "trace_type=2\n"
         "listen_address=192.168.1.1\n"
         "enable_transparent_mode=yes\n"
         "certificate_password=redemption\n"
@@ -318,10 +316,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "record_tmp_path=/mnt/tmp/wab/recorded/rdp\n"
         "disable_clipboard_log=1\n"
         "\n"
-        "[crypto]\n"
-        "encryption_key=00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF\n"
-        "sign_key=FFEEDDCCBBAA99887766554433221100FFEEDDCCBBAA99887766554433221100\n"
-        "\n"
         "[debug]\n"
         "password=1\n"
         "compression=256\n"
@@ -370,7 +364,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
 
     RED_CHECK_EQUAL("/tmp/",               ini.get<cfg::mod_replay::replay_path>());
 
-    RED_CHECK_EQUAL(TraceType::cryptofile, ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("192.168.1.1",         ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(true,                  ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("redemption",          ini.get<cfg::globals::certificate_password>());
@@ -379,13 +372,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL(false, ini.get<cfg::internal_mod::enable_close_box>());
     RED_CHECK_EQUAL(false, ini.get<cfg::globals::enable_end_time_warning_osd>());
     RED_CHECK_EQUAL(false, ini.get<cfg::globals::enable_osd_display_remote_target>());
-
-    RED_CHECK(ini.get<cfg::crypto::encryption_key>() ==
-        "\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"
-        "\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"_av);
-    RED_CHECK(ini.get<cfg::crypto::sign_key>() ==
-        "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88\x77\x66\x55\x44\x33\x22\x11\x00"
-        "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88\x77\x66\x55\x44\x33\x22\x11\x00"_av);
 
     RED_CHECK_EQUAL(0,     ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,     ini.get<cfg::debug::auth>());
@@ -454,7 +440,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     // alternative ways to say yes in file, other values
     std::ofstream(wf.c_str()) <<
         "[globals]\n"
-        "trace_type=0\n"
         "listen_address=0.0.0.0\n"
         "enable_transparent_mode=no\n"
         "certificate_password=\n"
@@ -498,9 +483,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "[mod_vnc]\n"
         "server_clipboard_encoding_type=utf-8\n"
         "bogus_clipboard_infinite_loop=1\n"
-        "[crypto]\n"
-        "encryption_key=00112233445566778899AABBCCDDEEFF\n" /* bad length */
-        "sign_key=FFEEDDCCBBAA99887766554433221100\n" /* bad length */
         "\n"
     ;
 
@@ -547,7 +529,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
-    RED_CHECK_EQUAL(TraceType::localfile,             ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
@@ -629,7 +610,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     std::ofstream(wf.c_str()) <<
         "[globals]\n"
         "bitmap_cache=no\n"
-        "trace_type=2\n"
         "listen_address=127.0.0.1\n"
         "certificate_password=rdpproxy\n"
         "enable_transparent_mode=true\n"
@@ -694,7 +674,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
-    RED_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("rdpproxy",                       ini.get<cfg::globals::certificate_password>());
@@ -773,7 +752,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     std::ofstream(wf.c_str()) <<
         " [ globals ] \n"
         " bitmap_cache\t= no \n"
-        "trace_type=2\n"
         "listen_address=127.0.0.1\n"
         "certificate_password=rdpproxy RDP\n"
         "enable_transparent_mode=true\n"
@@ -849,7 +827,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
-    RED_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("rdpproxy RDP",                   ini.get<cfg::globals::certificate_password>());
@@ -928,7 +905,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     std::ofstream(wf.c_str()) <<
         "[globals]\n"
         "port=3390\n"
-        "trace_type=0\n"
         "listen_address=0.0.0.0\n"
         "certificate_password=redemption\n"
         "enable_transparent_mode=False\n"
@@ -981,7 +957,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
-    RED_CHECK_EQUAL(TraceType::localfile,             ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
@@ -1056,7 +1031,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     // see we can change configuration using parse without default setting of existing ini
     std::ofstream(wf.c_str(), std::ios::trunc) <<
         "[globals]\n"
-        "trace_type=2\n"
         "listen_address=192.168.1.1\n"
         "certificate_password=\n"
         "enable_transparent_mode=yes\n"
@@ -1112,7 +1086,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
-    RED_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
@@ -1229,8 +1202,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
-    RED_CHECK_EQUAL(TraceType::localfile_hashed,
-                                                        ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
@@ -1349,7 +1320,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::mod_replay::replay_path>());
 
-    RED_CHECK_EQUAL(TraceType::localfile_hashed,      ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());

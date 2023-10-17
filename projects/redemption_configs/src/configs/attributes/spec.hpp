@@ -111,6 +111,14 @@ struct names
     std::string_view connpolicy {};
     std::string_view display {};
 
+    static names acl_shortname(std::string_view all_and_acl)
+    {
+        return {
+            .all = all_and_acl,
+            .acl = all_and_acl,
+        };
+    }
+
     std::string_view cpp_name() const { assert(!all.empty()); return all; }
     std::string_view ini_name() const { return ini.empty() ? all : ini; }
     std::string_view acl_name() const { return acl.empty() ? all : acl; }

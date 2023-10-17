@@ -44,14 +44,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #authentication_timeout = 120
 
-# Session record options.
-#   0: No encryption (faster).
-#   1: No encryption, with checksum.
-#   2: Encryption enabled.
-# When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.
-# (acl config: proxy ⇐ trace_type)
-#trace_type = 1
-
 # Specify bind address
 #listen_address = 0.0.0.0
 
@@ -380,7 +372,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0
 # 
 # A negative value uses the default value configured in OpenSSL.
-# (acl config: proxy ⇐ tls_security_level)
+# (acl config: proxy ⇐ mod_rdp:tls_security_level)
 #tls_security_level = 1
 
 # TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
@@ -412,13 +404,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 # List of (comma-separated) enabled (static) virtual channel. If character '*' is used as a name then enables everything.
 # An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.
 # (values are comma-separated)
-# (acl config: proxy ⇐ allowed_channels)
+# (acl config: proxy ⇐ mod_rdp:allowed_channels)
 #allowed_channels = *
 
 # List of (comma-separated) disabled (static) virtual channel. If character '*' is used as a name then disables everything.
 # An explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.
 # (values are comma-separated)
-# (acl config: proxy ⇐ denied_channels)
+# (acl config: proxy ⇐ mod_rdp:denied_channels)
 #denied_channels = 
 
 # List of (comma-separated) enabled dynamic virtual channel. If character '*' is used as a name then enables everything.
@@ -459,11 +451,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Shared directory between proxy and secondary target.
 # Requires rdpdr support.
 # (values are comma-separated)
-# (acl config: proxy ⇐ proxy_managed_drives)
+# (acl config: proxy ⇐ mod_rdp:proxy_managed_drives)
 #proxy_managed_drives = 
 
 # (type: boolean (0/no/false or 1/yes/true))
-# (acl config: proxy ⇐ ignore_auth_channel)
+# (acl config: proxy ⇐ mod_rdp:ignore_auth_channel)
 #ignore_auth_channel = 0
 
 # Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.
@@ -1198,7 +1190,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Saves session logs to a .log file.
 # The format is a date followed by one or more key="value" separated by a space on the same line.
 # (type: boolean (0/no/false or 1/yes/true))
-# (acl config: proxy ⇐ enable_session_log_file)
+# (acl config: proxy ⇐ session_log:enable_session_log_file)
 #enable_session_log_file = 1
 
 # Writes session logs to syslog and define its format.
@@ -1458,16 +1450,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ file_storage:store_file)
 #store_file = never
 
-[crypto]
-
-# (hexadecimal string of length 32)
-# (acl config: proxy ⇐ encryption_key)
-#encryption_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
-
-# (hexadecimal string of length 32)
-# (acl config: proxy ⇐ sign_key)
-#sign_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
-
 [websocket]
 
 # Enable websocket protocol (ws or wss with use_tls=1)
@@ -1508,7 +1490,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 [mod_replay]
 
 # (maxlen = 4096)
-# (acl config: proxy ⇐ replay_path)
+# (acl config: proxy ⇐ mod_replay:replay_path)
 #replay_path = /tmp/
 
 # 0 - Wait for Escape, 1 - End session
@@ -1517,7 +1499,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # 0 - replay once, 1 - loop replay
 # (type: boolean (0/no/false or 1/yes/true))
-# (acl config: proxy ⇐ replay_on_loop)
+# (acl config: proxy ⇐ mod_replay:replay_on_loop)
 #replay_on_loop = 0
 
 [translation]
