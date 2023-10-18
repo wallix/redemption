@@ -916,7 +916,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
 #   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 #_hidden
-#session_probe_process_command_line_retrieve_method = 0
+#session_probe_process_command_line_retrieve_method = 2
 
 # (in milliseconds)
 #_hidden

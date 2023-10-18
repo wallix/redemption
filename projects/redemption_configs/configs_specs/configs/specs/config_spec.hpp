@@ -585,7 +585,7 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeProcessCommandLineRetrieveMethod>(),
                  names{.cpp="session_probe_process_command_line_retrieve_method", .connpolicy="process_command_line_retrieve_method"},
-                 set(SessionProbeProcessCommandLineRetrieveMethod::windows_management_instrumentation));
+                 set(SessionProbeProcessCommandLineRetrieveMethod::both));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), names{.cpp="session_probe_periodic_task_run_interval", .connpolicy="periodic_task_run_interval"}, set(500));
 

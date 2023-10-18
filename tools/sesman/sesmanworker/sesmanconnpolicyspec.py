@@ -219,7 +219,7 @@ cp_spec = {
             'public_session', False
         ),
         u'mod_rdp:session_probe_process_command_line_retrieve_method': (
-            'process_command_line_retrieve_method', 0
+            'process_command_line_retrieve_method', 2
         ),
         u'mod_rdp:session_probe_periodic_task_run_interval': (
             'periodic_task_run_interval', 500
