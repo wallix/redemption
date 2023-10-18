@@ -368,7 +368,7 @@ windows_of_these_applications_as_unidentified_input_field = string(default='')
 # &nbsp; &nbsp;   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
 # &nbsp; &nbsp;   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 #_advanced
-process_command_line_retrieve_method = option(0, 1, 2, default=0)
+process_command_line_retrieve_method = option(0, 1, 2, default=2)
 
 # (in milliseconds)
 #_advanced

@@ -87,7 +87,7 @@ cp_spec = {
         ('session_probe:process_monitoring_rules', 'process_monitoring_rules', ''),
         ('session_probe:extra_system_processes', 'extra_system_processes', ''),
         ('session_probe:windows_of_these_applications_as_unidentified_input_field', 'windows_of_these_applications_as_unidentified_input_field', ''),
-        ('session_probe:process_command_line_retrieve_method', 'process_command_line_retrieve_method', 0),
+        ('session_probe:process_command_line_retrieve_method', 'process_command_line_retrieve_method', 2),
         ('session_probe:periodic_task_run_interval', 'periodic_task_run_interval', 500),
         ('session_probe:pause_if_session_is_disconnected', 'pause_if_session_is_disconnected', False),
     },
