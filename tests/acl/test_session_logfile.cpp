@@ -73,14 +73,14 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
 
     SessionLogFile log_file(
         cctx, rnd,
-        SessionLogFormat::SIEM | SessionLogFormat::ArcSight,
-        SessionLogFile::SaveToFile(true),
         SessionLogFile::Debug(false),
         notify_error);
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 
     log_file.open_session_log(
+        SessionLogFormat::SIEM | SessionLogFormat::ArcSight,
+        SessionLogFile::SaveToFile(true),
         logfile.c_str(), hashlog.c_str(),
         FilePermissions(0664), "log5_6.log"_av);
 
@@ -191,12 +191,12 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileWithDebugOnly, wd)
 
     SessionLogFile log_file(
         cctx, rnd,
-        SessionLogFormat::disabled,
-        SessionLogFile::SaveToFile(false),
         SessionLogFile::Debug(true),
         notify_error);
 
     log_file.open_session_log(
+        SessionLogFormat::disabled,
+        SessionLogFile::SaveToFile(false),
         logfile.c_str(), hashlog.c_str(),
         FilePermissions(0664), "log5_6.log"_av);
 
