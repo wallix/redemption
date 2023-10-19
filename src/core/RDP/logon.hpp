@@ -813,9 +813,7 @@ public:
         cpy(this->AlternateShell, this->cbAlternateShell, program);
         cpy(this->WorkingDir, this->cbWorkingDir, directory);
 
-        if (performanceFlags) {
-            this->extendedInfoPacket.performanceFlags = performanceFlags;
-        }
+        this->extendedInfoPacket.performanceFlags = performanceFlags;
 
         if (clientAddr){
             cpy(this->extendedInfoPacket.clientAddress, this->extendedInfoPacket.cbClientAddress, clientAddr);
