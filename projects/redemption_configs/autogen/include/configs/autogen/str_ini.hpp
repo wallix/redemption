@@ -289,6 +289,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # 
 # Available features:
 #   - wallpaper
+#   - full_window_drag
 #   - menu_animations
 #   - theme
 #   - mouse_cursor_shadows

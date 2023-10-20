@@ -767,6 +767,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
             "\n"
             "Available features:\n"
             "  - wallpaper\n"
+            "  - full_window_drag\n"
             "  - menu_animations\n"
             "  - theme\n"
             "  - mouse_cursor_shadows\n"

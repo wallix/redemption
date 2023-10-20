@@ -185,6 +185,7 @@ allow_resize_hosted_desktop = boolean(default=True)
 # If a feature is preceded by a "-" sign, it is disabled; if it is preceded by a "+" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.<br/>
 # Available features:
 # &nbsp; &nbsp;   - wallpaper
+# &nbsp; &nbsp;   - full_window_drag
 # &nbsp; &nbsp;   - menu_animations
 # &nbsp; &nbsp;   - theme
 # &nbsp; &nbsp;   - mouse_cursor_shadows

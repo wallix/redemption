@@ -767,6 +767,7 @@ namespace cfg
     ///  <br/>
     /// Available features: <br/>
     ///   - wallpaper <br/>
+    ///   - full_window_drag <br/>
     ///   - menu_animations <br/>
     ///   - theme <br/>
     ///   - mouse_cursor_shadows <br/>

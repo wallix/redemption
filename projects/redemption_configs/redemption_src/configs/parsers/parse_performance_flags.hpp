@@ -19,6 +19,7 @@ inline char const* parse_performance_flags(RdpPerformanceFlags& x, chars_view fl
     struct P { uint32_t flag; bool enable; std::string_view name; };
     static constexpr P pairs[] {
         {0x001, true, "wallpaper"},
+        {0x002, true, "full_window_drag"},
         {0x004, true, "menu_animations"},
         {0x008, true, "theme"},
         {0x020, true, "mouse_cursor_shadows"},
@@ -80,7 +81,7 @@ inline char const* parse_performance_flags(RdpPerformanceFlags& x, chars_view fl
 
         return
             "Cannot parse performance flags because it's an invalid value."
-            " Expected are wallpaper, menu_animations, theme, mouse_cursor_shadows, cursor_blinking, font_smoothing and desktop_composition."
+            " Expected are wallpaper, full_window_drag, menu_animations, theme, mouse_cursor_shadows, cursor_blinking, font_smoothing and desktop_composition."
         ;
 
         next_elem:;
