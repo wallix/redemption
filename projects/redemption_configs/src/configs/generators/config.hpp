@@ -2103,6 +2103,10 @@ struct GeneratorConfig
 
         Names const& names = mem_info.name;
         std::string_view desc = mem_info.desc;
+        // trim right
+        while (!desc.empty() && (desc.back() == ' ' || desc.back() == '\n')) {
+            desc.remove_suffix(1);
+        }
 
         bool const has_spec = bool(mem_info.spec.dest);
         bool const has_ini = has_spec

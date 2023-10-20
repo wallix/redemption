@@ -318,7 +318,7 @@ clipboard_down = boolean(default=False)
 # Sets additional graphics encoding types that will be negotiated with the VNC server:
 # &nbsp; &nbsp;   2: RRE
 # &nbsp; &nbsp;   5: HEXTILE
-# &nbsp; &nbsp;   16: ZRLE<br/><br/>
+# &nbsp; &nbsp;   16: ZRLE<br/>
 # (values are comma-separated)
 #_advanced
 encodings = string(default="")

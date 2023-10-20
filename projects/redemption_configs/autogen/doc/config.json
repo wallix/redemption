@@ -48,7 +48,7 @@
       "name": "vault_transformation_rule",
       "type": "str",
       "value": "",
-      "description": "Account Mapping password retriever\nTransformation to apply to find the correct account.\n${USER} will be replaced by the user's login.\n${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).\n${USER_DOMAIN} will be replaced by the user's login + \"@\" + user's domain (or just user's login if there's no domain).\n${GROUP} will be replaced by the authorization's user group.\n${DEVICE} will be replaced by the device's name.\nA regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \\1, \\2, ...\nFor example to replace leading \"A\" by \"B\" in the username: ${USER:/^A/B}\nEmpty value means no transformation rule.\n",
+      "description": "Account Mapping password retriever\nTransformation to apply to find the correct account.\n${USER} will be replaced by the user's login.\n${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).\n${USER_DOMAIN} will be replaced by the user's login + \"@\" + user's domain (or just user's login if there's no domain).\n${GROUP} will be replaced by the authorization's user group.\n${DEVICE} will be replaced by the device's name.\nA regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \\1, \\2, ...\nFor example to replace leading \"A\" by \"B\" in the username: ${USER:/^A/B}\nEmpty value means no transformation rule.",
       "rdp": true,
       "vnc": true,
       "jh": true,
@@ -408,7 +408,7 @@
       "name": "allow_scale_factor",
       "type": "bool",
       "value": false,
-      "description": "Sends Scale & Layout configuration to the server.\nOn Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.\n⚠ Title bar detection via OCR will no longer work.\n",
+      "description": "Sends Scale & Layout configuration to the server.\nOn Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.\n⚠ Title bar detection via OCR will no longer work.",
       "tags": ["compatibility"],
       "globalSpec": true
     },
@@ -442,7 +442,7 @@
       "name": "tls_support",
       "type": "bool",
       "value": true,
-      "description": "Enable TLS between client and proxy.\n",
+      "description": "Enable TLS between client and proxy.",
       "iniOnly": true
     },
     {
@@ -665,7 +665,7 @@
       "name": "force_performance_flags",
       "type": "PerformanceFlags",
       "value": "-mouse_cursor_shadows,-theme",
-      "description": "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n\nIf a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n\nAvailable features:\n  - wallpaper\n  - full_window_drag\n  - menu_animations\n  - theme\n  - mouse_cursor_shadows\n  - cursor_blinking\n  - font_smoothing\n  - desktop_composition\n",
+      "description": "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n\nIf a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n\nAvailable features:\n  - wallpaper\n  - full_window_drag\n  - menu_animations\n  - theme\n  - mouse_cursor_shadows\n  - cursor_blinking\n  - font_smoothing\n  - desktop_composition",
       "tags": ["perf","compatibility"],
       "globalSpec": true,
       "advanced": true
@@ -1181,7 +1181,7 @@
       "name": "session_shadowing_support",
       "type": "bool",
       "value": true,
-      "description": "Enables Session Shadowing Support.\nSession probe must be enabled on target connection policy.\nTarget server must support \"Remote Desktop Shadowing\" feature.\nWhen enabled, users can share their RDP sessions with auditors who request it.\n",
+      "description": "Enables Session Shadowing Support.\nSession probe must be enabled on target connection policy.\nTarget server must support \"Remote Desktop Shadowing\" feature.\nWhen enabled, users can share their RDP sessions with auditors who request it.",
       "globalSpec": true,
       "advanced": true
     },
@@ -2090,7 +2090,7 @@
       "name": "encodings",
       "type": "list",
       "value": "",
-      "description": "Sets additional graphics encoding types that will be negotiated with the VNC server:\n  2: RRE\n  5: HEXTILE\n  16: ZRLE\n",
+      "description": "Sets additional graphics encoding types that will be negotiated with the VNC server:\n  2: RRE\n  5: HEXTILE\n  16: ZRLE",
       "globalSpec": true,
       "advanced": true,
       "subtype": "int"

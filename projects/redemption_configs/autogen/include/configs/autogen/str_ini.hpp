@@ -122,7 +122,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Sends Scale & Layout configuration to the server.
 # On Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.
 # ⚠ Title bar detection via OCR will no longer work.
-# 
 # (type: boolean (0/no/false or 1/yes/true))
 #allow_scale_factor = 0
 
@@ -141,7 +140,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #tls_fallback_legacy = 0
 
 # Enable TLS between client and proxy.
-# 
 # (type: boolean (0/no/false or 1/yes/true))
 #tls_support = 1
 
@@ -296,7 +294,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   - cursor_blinking
 #   - font_smoothing
 #   - desktop_composition
-# 
 #_advanced
 #force_performance_flags = -mouse_cursor_shadows,-theme
 
@@ -575,7 +572,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Session probe must be enabled on target connection policy.
 # Target server must support "Remote Desktop Shadowing" feature.
 # When enabled, users can share their RDP sessions with auditors who request it.
-# 
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #session_shadowing_support = 1
@@ -1148,7 +1144,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   2: RRE
 #   5: HEXTILE
 #   16: ZRLE
-# 
 # (values are comma-separated)
 #_advanced
 #encodings = 
