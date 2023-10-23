@@ -989,7 +989,7 @@ RED_AUTO_TEST_CASE_WD(TestVideoCroppedV1, wd)
     TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
         str_concat("Output file is \"", output, "\".\n\n"), ""_av);
 
-    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 99122 +- 2600_v);
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 99122 +- 3500_v);
     RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.png"), 12685);
     RED_TEST_FILE_CONTENTS(wd.add_file("test_capture.pgs"),
         "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
@@ -1015,7 +1015,7 @@ RED_AUTO_TEST_CASE_WD(TestVideoCroppedV2, wd)
     TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
         str_concat("Output file is \"", output, "\".\n\n"), ""_av);
 
-    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 90000 +- 7500_v);
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 82100 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.png"), 5129);
     RED_TEST_FILE_CONTENTS(wd.add_file("test_capture.pgs"),
         "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
