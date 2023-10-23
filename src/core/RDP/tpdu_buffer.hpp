@@ -74,7 +74,7 @@ namespace Extractors
 
     struct X224Extractor
     {
-        HeaderResult read_header(Buf64k & buf)
+        HeaderResult read_header(Buf64k const & buf)
         {
             // fast-path min length = 2
             // slow-path min length = 4, but tpdu min length is 7
@@ -178,7 +178,7 @@ namespace Extractors
 
     struct CreedsppExtractor
     {
-        static HeaderResult read_header(Buf64k & buf)
+        static HeaderResult read_header(Buf64k const & buf)
         {
             if (buf.remaining() < 4)
             {
@@ -279,6 +279,11 @@ struct TpduBuffer
         this->pdu_len = 0;
     }
 
+    void rewind_current_packet() noexcept
+    {
+        this->pdu_len = 0;
+    }
+
 private:
     enum class StateRead : bool
     {
@@ -288,7 +293,7 @@ private:
 
     struct Extractor // Extractor concept
     {
-        Extractors::HeaderResult read_header(Buf64k& buf);
+        Extractors::HeaderResult read_header(Buf64k const &);
         void check_data(Buf64k const &) const;
     };
 

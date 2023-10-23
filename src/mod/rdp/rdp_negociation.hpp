@@ -245,7 +245,7 @@ private:
     void send_connectInitialPDUwithGccConferenceCreateRequest();
     bool channel_connection_attach_user(InStream & stream);
     bool channel_join_confirm(InStream & x224_data);
-    bool get_license(InStream & stream);
+    bool get_license(InStream & stream, TpduBuffer& buf);
 
     template<class... WriterData>
     void send_data_request(uint16_t channelId, WriterData... writer_data);

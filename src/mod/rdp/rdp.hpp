@@ -3215,7 +3215,7 @@ public:
                         }
                         case WAITING_SYNCHRONIZE:
                             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
-                                LOG_WARNING, "WAITING_SYNCHRONIZE");
+                                LOG_INFO, "WAITING_SYNCHRONIZE");
 
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
@@ -3275,7 +3275,7 @@ public:
                             break;
                         case WAITING_CTL_COOPERATE:
                             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
-                                LOG_WARNING, "WAITING_CTL_COOPERATE");
+                                LOG_INFO, "WAITING_CTL_COOPERATE");
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
@@ -3285,7 +3285,7 @@ public:
                             break;
                         case WAITING_GRANT_CONTROL_COOPERATE:
                             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
-                                LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
+                                LOG_INFO, "WAITING_GRANT_CONTROL_COOPERATE");
                             this->connection_finalization_state = WAITING_FONT_MAP;
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
@@ -3295,7 +3295,7 @@ public:
                             break;
                         case WAITING_FONT_MAP:
                             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
-                                LOG_WARNING, "PDUTYPE2_FONTMAP");
+                                LOG_INFO, "PDUTYPE2_FONTMAP");
                             this->connection_finalization_state = UP_AND_RUNNING;
 
                             if (!this->deactivation_reactivation_in_progress) {

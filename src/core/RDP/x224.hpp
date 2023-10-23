@@ -1510,8 +1510,8 @@ namespace X224
             }
 
             uint8_t LI = stream.in_uint8();
-            uint8_t  code = stream.in_uint8();
-            if (!(code == X224::DT_TPDU)){
+            uint8_t code = stream.in_uint8();
+            if (code != X224::DT_TPDU){
                 LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u", code);
                 throw Error(ERR_X224);
             }
