@@ -80,24 +80,26 @@ rm_nofast() {
 }
 
 # jsclient (emscripten)
-pushd projects/jsclient
-source ~/emsdk/emsdk_env.sh
-rm_nofast bin
-#version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
-echo "using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
-if [[ ! -d system_include/boost ]]; then
-    mkdir -p system_include
-    ln -s /usr/include/boost/ system_include
+if [[ "$BUILD_EMSCRIPTEN" != '0' ]]; then
+    pushd projects/jsclient
+    source ~/emsdk/emsdk_env.sh
+    rm_nofast bin
+    #version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
+    echo "using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
+    if [[ ! -d system_include/boost ]]; then
+        mkdir -p system_include
+        ln -s /usr/include/boost/ system_include
+    fi
+    if [[ ! -d node_modules ]]; then
+        ln -s ~/node_jsclient/future/node_modules .
+    fi
+    set -o pipefail
+    toolset_emscripten=toolset=clang
+    bjam -qj2 $toolset_emscripten debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
+    set +o pipefail
+    rm_nofast bin/*
+    popd
 fi
-if [[ ! -d node_modules ]]; then
-    ln -s ~/node_jsclient/future/node_modules .
-fi
-set -o pipefail
-toolset_emscripten=toolset=clang
-bjam -qj2 $toolset_emscripten debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
-set +o pipefail
-rm_nofast bin/*
-popd
 
 show_duration jsclient
 
