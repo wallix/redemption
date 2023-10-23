@@ -445,7 +445,7 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
                 }
                 break;
             default:
-                if (this->get_license(x224_data)) {
+                if (this->get_license(x224_data, buf)) {
                     this->state = State::TERMINATED;
                     return true;
                 }
@@ -1143,7 +1143,7 @@ bool RdpNegociation::channel_join_confirm(InStream & x224_data)
     return true;
 }
 
-bool RdpNegociation::get_license(InStream & stream)
+bool RdpNegociation::get_license(InStream & stream, TpduBuffer& buf)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: Licensing");
 
@@ -1489,10 +1489,8 @@ bool RdpNegociation::get_license(InStream & stream)
     }
     else {
         LOG(LOG_WARNING, "RdpNegociation: Failed to get expected license negotiation PDU. sec.flags=0x%X", sec.flags);
-        hexdump(x224.payload.get_data(), x224.payload.get_capacity());
-        //throw Error(ERR_SEC);
+        buf.rewind_current_packet();
         r = true;
-        hexdump(sec.payload.get_data(), sec.payload.get_capacity());
     }
     return r;
 }
