@@ -44,6 +44,11 @@ struct BasicStaticBuffer
         return writable_bytes_view{this->buf + this->idx, this->remaining()};
     }
 
+    [[nodiscard]] bytes_view av() const noexcept
+    {
+        return {this->buf + this->idx, this->remaining()};
+    }
+
     writable_bytes_view av(std::size_t n) noexcept
     {
         assert(n <= this->remaining());
