@@ -584,15 +584,6 @@ struct ShareData_Recv : private CheckShareData_Recv
         LOG(LOG_INFO, "     * compressedLength = %d (2 bytes)", int(compressedLen));
         LOG(LOG_INFO, "     * payload (%zu byte(s))", payload.in_remain());
     }
-
-    ~ShareData_Recv() noexcept(false) {
-        if (!this->payload.check_end()) {
-            LOG( LOG_INFO
-               , "~ShareData_Recv: some payload data were not consumed len=%u compressedLen=%u remains=%zu"
-               , this->len, this->compressedLen, payload.in_remain());
-            throw Error(ERR_SEC);
-        }
-    }
 }; // END CLASS ShareData_Recv
 
 //##############################################################################
