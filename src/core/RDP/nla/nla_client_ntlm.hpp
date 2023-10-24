@@ -25,7 +25,7 @@
 #include "utils/hexdump.hpp"
 #include "system/ssl_sha256.hpp"
 #include "system/ssl_md4.hpp"
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
 #include "utils/timebase.hpp"
 #include "utils/utf.hpp"
 
@@ -176,7 +176,7 @@ public:
                 const uint32_t seconds = checked_int{dur_seconds.count()};
                 const uint32_t microseconds = checked_int{(dur_miroseconds - dur_seconds).count()};
                 array_challenge ClientChallenge; // Nonce(8)
-                this->rand.random(ClientChallenge.data(), 8);
+                this->rand.random(writable_array_view(ClientChallenge.data(), 8));
                 if (this->verbose) {
                     LOG(LOG_INFO, "Time Stamp (%u, %u)", seconds, microseconds);
                     LOG(LOG_INFO, "Client Random Challenge {0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x}",
@@ -211,7 +211,7 @@ public:
                 // generate NONCE(16) ExportedSessionKey
                 // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
                 array_md5 SessionBaseKey = ::HmacMd5(ResponseKeyNT, NtProofStr);
-                this->rand.random(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH);
+                this->rand.random(writable_array_view(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH));
                 if (this->verbose){
                     LOG(LOG_INFO, "Random ExportedSessionKey");
                     hexdump_d(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH);
@@ -288,7 +288,7 @@ public:
                 // send authentication token to server
                 std::vector<uint8_t> v;
                 if (version >= 5) {
-                    this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
+                    this->rand.random(writable_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH));
                     if (this->verbose){
                         LOG(LOG_INFO, "Random Client Nonce");
                         hexdump_d(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);

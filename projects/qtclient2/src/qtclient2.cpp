@@ -17,11 +17,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "system/scoped_ssl_init.hpp"
-#include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/theme.hpp"
+#include "system/urandom.hpp"
 
 #include "qtclient/socket.hpp"
 #include "qtclient/event_manager.hpp"
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
     Font glyph;
     Inifile ini;
     Theme theme;
-    UdevRandom rnd;
+    URandom rnd;
     gdi::NullOsd osd;
     qtclient::EventManager event_manager;
     NullSessionLog session_log;

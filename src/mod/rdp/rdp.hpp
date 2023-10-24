@@ -134,7 +134,7 @@ struct FileValidatorService;
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/server_transport_context.hpp"
 
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
 #include "utils/stream.hpp"
 #include "utils/strutils.hpp"

@@ -114,7 +114,7 @@
 #include "utils/colors.hpp"
 #include "utils/contiguous_sub_rect_f.hpp"
 #include "utils/crypto/ssl_lib.hpp"
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
 #include "utils/log.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
@@ -1930,7 +1930,7 @@ public:
                         sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
                         sc_sec1.encryptionLevel = this->encryptionLevel;
                         sc_sec1.serverRandomLen = 32;
-                        this->gen.random(this->server_random, 32);
+                        this->gen.random(writable_array_view(this->server_random, 32));
                         memcpy(sc_sec1.serverRandom, this->server_random, 32);
                         sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
                         sc_sec1.temporary = false;

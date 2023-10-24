@@ -80,6 +80,7 @@ private:
 
 public:
     ModVNCWithSocket(
+        Random & rand,
         gdi::GraphicApi & drawable,
         Inifile & ini, SocketTransport::Name name, unique_fd sck,
         SocketTransport::Verbose verbose,
@@ -105,7 +106,7 @@ public:
         VNCVerbose vnc_verbose)
     : VncData(events, ini, name, std::move(sck), verbose, error_message)
     , mod_vnc(
-          this->get_transport(), drawable,
+          this->get_transport(), rand, drawable,
           events, username, password, front, front_width, front_height,
           clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
@@ -133,7 +134,8 @@ ModPack create_mod_vnc(
     Ref<Font const> glyphs,
     Theme & theme,
     EventContainer& events,
-    SessionLogApi& session_log
+    SessionLogApi& session_log,
+    Random & rand
     )
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
@@ -163,6 +165,7 @@ ModPack create_mod_vnc(
     };
 
     auto new_mod = std::make_unique<ModVNCWithSocket>(
+        rand,
         host_mod ? host_mod->proxy_gd() : drawable,
         ini,
         "VNC Target"_sck_name,

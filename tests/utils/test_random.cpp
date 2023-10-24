@@ -27,18 +27,21 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
+#include "system/urandom.hpp"
 #include "test_only/lcg_random.hpp"
 
 
 RED_AUTO_TEST_CASE(TestUdevRandom)
 {
-    UdevRandom rnd;
+    URandom rnd;
     unsigned mem[128] = {};
-    rnd.random(mem, sizeof(mem));
+    rnd.random(writable_bytes_view::from_raw_object(mem));
     unsigned count_null = 0;
     for (unsigned int i : mem){
-        if (!i) { count_null++; }
+        if (!i) {
+            count_null++;
+        }
     }
     // well, theoratically as we are testing a random generator,
     // this test may possibly fail and even generator yield as many zeroes
@@ -49,12 +52,12 @@ RED_AUTO_TEST_CASE(TestUdevRandom)
 
     unsigned mem2[1024] = {};
 
-    rnd.random(mem2, sizeof(mem2));
+    rnd.random(writable_bytes_view::from_raw_object(mem2));
     RED_CHECK(memcmp(mem, mem2, sizeof(mem)) != 0);
 
     unsigned mem3[1024] = {};
 
-    rnd.random(mem3, sizeof(mem3));
+    rnd.random(writable_bytes_view::from_raw_object(mem3));
     RED_CHECK(memcmp(mem2, mem3, sizeof(mem)) != 0);
     RED_CHECK(memcmp(mem, mem3, sizeof(mem)) != 0);
 }
@@ -63,7 +66,7 @@ RED_AUTO_TEST_CASE(TestLCGRandom)
 {
     LCGRandom rnd;
     unsigned mem[128] = {};
-    rnd.random(mem, sizeof(mem));
+    rnd.random(writable_bytes_view::from_raw_object(mem));
     unsigned count_null = 0;
     for (unsigned int i : mem){
         if (!i) { count_null++; }
@@ -76,7 +79,7 @@ RED_AUTO_TEST_CASE(TestLCGRandom)
     RED_CHECK(count_null == 0);
 
     unsigned mem2[1024] = {};
-    rnd.random(mem2, sizeof(mem2));
+    rnd.random(writable_bytes_view::from_raw_object(mem2));
 
     RED_CHECK(memcmp(mem, mem2, sizeof(mem)) != 0);
 }

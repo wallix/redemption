@@ -42,6 +42,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/static_string.hpp"
 #include "utils/uninit_buffer.hpp"
 #include "utils/key_qvalue_pairs.hpp"
+#include "system/urandom.hpp"
 
 
 static void show_prompt()
@@ -153,8 +154,8 @@ int main(int argc, char const** argv)
     load_headless_config_from_file(ini, client_info, options.config_filename);
 
     FixedRandom fixed_random;
-    UdevRandom udev_random;
-    auto& random = options.use_fixed_random ? static_cast<Random&>(udev_random) : fixed_random;
+    URandom urandom;
+    auto& random = options.use_fixed_random ? static_cast<Random&>(urandom) : fixed_random;
     RedirectionInfo redir_info;
     std::array<unsigned char, 28> server_auto_reconnect_packet {};
     auto perform_automatic_reconnection = PerformAutomaticReconnection::No;
@@ -273,7 +274,7 @@ int main(int argc, char const** argv)
                 : create_mod_vnc(
                     gd, ini, front, client_info, rail_client_execute,
                     get_layout(client_info.keylayout), kbdtypes::KeyLocks(),
-                    glyph, theme, event_container, session_log
+                    glyph, theme, event_container, session_log, random
                 );
 
             mod.reset(mod_pack.mod);

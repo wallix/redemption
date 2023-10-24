@@ -22,13 +22,14 @@
 
 #pragma once
 
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 #include <cstdint>
 
-class DiffieHellman {
-    UdevRandom randgen;
-    Random * rand;
+class DiffieHellman : noncopyable
+{
+    Random& rand;
     uint64_t max;
     uint64_t gen;
     uint64_t mod;
@@ -43,8 +44,8 @@ public:
 
     bool error;
 
-    DiffieHellman(uint64_t generator, uint64_t modulus)
-        : rand(&this->randgen)
+    DiffieHellman(Random& rand, uint64_t generator, uint64_t modulus)
+        : rand(rand)
         , max((uint64_t(1) << DH_MAX_BITS) - 1)
         , gen(generator)
         , mod(modulus)
@@ -52,23 +53,17 @@ public:
     {
     }
 
-    ~DiffieHellman() = default;
-
-    //void set_random(Random * newrand) {
-    //    this->rand = newrand;
-    //}
-    //void unset_random() {
-    //    this->rand = &this->randgen;
-    //}
-
-    uint64_t createInterKey() {
+    uint64_t createInterKey()
+    {
         uint8_t privgen[8] = {};
-        this->rand->random(privgen, 8);
+        this->rand.random(make_writable_array_view(privgen));
         this->priv = this->uint8p_to_uint64(privgen) % this->max;
         this->pub = this->xpowymodn(this->gen, this->priv, this->mod);
         return this->pub;
     }
-    uint64_t createEncryptionKey(uint64_t interKey) {
+
+    uint64_t createEncryptionKey(uint64_t interKey)
+    {
         if (interKey >= this->max) {
             this->error = true;
         }
@@ -76,7 +71,8 @@ public:
         return this->key;
     }
 
-    static uint64_t xpowymodn(uint64_t x, uint64_t y, uint64_t n) {
+    static uint64_t xpowymodn(uint64_t x, uint64_t y, uint64_t n)
+    {
         uint64_t res = 1;
         const uint64_t oneshift63 = uint64_t(1) << 63;
         for (int i = 0; i < 64; i++) {
@@ -88,12 +84,16 @@ public:
         }
         return res;
     }
-    static void uint64_to_uint8p(uint64_t number, uint8_t* buffer) {
+
+    static void uint64_to_uint8p(uint64_t number, uint8_t* buffer)
+    {
         for (int i = 0; i < 8; i++) {
             buffer[i] = uint8_t(0xff & (number >> (8*(7-i))));
         }
     }
-    static uint64_t uint8p_to_uint64(uint8_t const* buffer) {
+
+    static uint64_t uint8p_to_uint64(uint8_t const* buffer)
+    {
         uint64_t res = 0;
         for (int i = 0; i < 8; i++) {
             res <<= 8;

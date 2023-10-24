@@ -20,23 +20,24 @@ Author(s): David Fort
 
 #pragma once
 
+#include "utils/random.hpp"
 
-#include "utils/genrandom.hpp"
+#include <cstring>
 
 /**
  * @brief a random generator that always returns the same value, useful when you
  *         want to be able to replay scenarios (and so you need random that is not
  *         so randomized).
  */
-class FixedRandom : public Random
+class FixedRandom final : public Random
 {
 public:
     explicit FixedRandom(uint8_t fixedByte = 0xff) : value(fixedByte)
     {}
 
-    void random(void * dest, size_t size) override
+    void random(writable_bytes_view buf) override
     {
-        memset(dest, value, size);
+        std::memset(buf.data(), value, buf.size());
     }
 
 private:

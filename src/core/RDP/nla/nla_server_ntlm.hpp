@@ -25,7 +25,7 @@
 #include "utils/hexdump.hpp"
 #include "system/ssl_sha256.hpp"
 
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
 #include "utils/utf.hpp"
 #include "utils/stream.hpp"
 #include "utils/timebase.hpp"
@@ -584,7 +584,7 @@ public:
         // TODO: mandatory flags expected for negotiate message
         // NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
 
-        rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
+        rand.random(writable_array_view(this->ServerChallenge.data(), this->ServerChallenge.size()));
 
 
         NTLMChallengeMessage challenge_message;

@@ -25,6 +25,7 @@
 #include "capture/mwrm3.hpp"
 #include "capture/fdx_capture.hpp"
 #include "test_only/lcg_random.hpp"
+#include "system/urandom.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/c_interface.hpp"
 #include "utils/sugar/int_to_chars.hpp"
@@ -114,7 +115,7 @@ namespace
         {
             switch (rnd_type) {
                 case LCG: rnd = new (&u.lcg) LCGRandom(); break;
-                case UDEV: rnd = new (&u.udev) UdevRandom(); break;
+                case UDEV: rnd = new (&u.udev) URandom(); break;
             }
         }
 
@@ -126,7 +127,7 @@ namespace
     private:
         union U {
             LCGRandom lcg; /* for reproductible tests */
-            UdevRandom udev;
+            URandom udev;
             char dummy;
             U() : dummy() {}
             ~U() {} /*NOLINT*/

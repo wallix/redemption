@@ -29,6 +29,7 @@
     fv(NO_ERROR, 0)                                          \
                                                              \
     f(ERR_STREAM_MEMORY_TOO_SMALL)                           \
+    f(ERR_RANDOM_SOURCE_FAILED)                              \
     fv(ERR_BUFFER_TOO_SMALL, 6)                              \
                                                              \
     fv(ERR_UNEXPECTED, 8)                                    \

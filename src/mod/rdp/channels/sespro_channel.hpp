@@ -37,7 +37,7 @@
 #include "mod/rdp/channels/sespro_channel_params.hpp"
 #include "mod/rdp/channels/sespro_api.hpp"
 #include "mod/rdp/rdp_api.hpp"
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
 #include "utils/parse_server_message.hpp"
 #include "utils/stream.hpp"
 #include "utils/strutils.hpp"

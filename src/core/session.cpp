@@ -34,7 +34,7 @@
 #include "front/front.hpp"
 #include "transport/socket_transport.hpp"
 #include "transport/ws_transport.hpp"
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/netutils.hpp"
 #include "utils/select.hpp"
@@ -43,6 +43,7 @@
 #include "utils/local_err_msg.hpp"
 #include "utils/monotonic_clock.hpp"
 #include "utils/to_timeval.hpp"
+#include "system/urandom.hpp"
 
 #include <cassert>
 #include <cerrno>
@@ -866,7 +867,7 @@ private:
 
     inline EndLoopState main_loop(
         int auth_sck, EventManager& event_manager,
-        CryptoContext& cctx, UdevRandom& rnd,
+        CryptoContext& cctx, URandom& rnd,
         SocketTransport& front_trans,
         SessionFront& front, GuestCtx& guest_ctx,
         ModFactory& mod_factory
@@ -1489,7 +1490,7 @@ public:
     , verbose(safe_cast<SessionVerbose>(ini.get<cfg::debug::session>()))
     {
         CryptoContext cctx;
-        UdevRandom rnd;
+        URandom rnd;
 
         EventManager event_manager;
         event_manager.set_time_base(TimeBase::now());

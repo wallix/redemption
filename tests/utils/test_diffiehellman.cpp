@@ -20,14 +20,16 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "utils/fixed_random.hpp"
 #include "utils/diffiehellman.hpp"
 
 RED_AUTO_TEST_CASE(TestDiffieHellman)
 {
+    FixedRandom rand;
     {
         uint64_t generator = 2534321354;
         uint64_t modulus = 1465213542;
-        DiffieHellman dh(generator, modulus);
+        DiffieHellman dh(rand, generator, modulus);
 
         uint64_t x = 431364;
         uint64_t y = 657313;
@@ -43,8 +45,8 @@ RED_AUTO_TEST_CASE(TestDiffieHellman)
     {
         uint64_t gen = 32431233;
         uint64_t mod = 676513231;
-        DiffieHellman dh_alice(gen, mod);
-        DiffieHellman dh_bob(gen, mod);
+        DiffieHellman dh_alice(rand, gen, mod);
+        DiffieHellman dh_bob(rand, gen, mod);
         uint64_t pub_alice = dh_alice.createInterKey();
         uint64_t pub_bob = dh_bob.createInterKey();
         uint64_t key_alice = dh_alice.createEncryptionKey(pub_bob);

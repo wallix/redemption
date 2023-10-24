@@ -93,6 +93,9 @@ RED_AUTO_TEST_CASE(TestBytesT)
     RED_CHECK(bool(byte_ptr(a)));
     RED_CHECK(!bool(byte_ptr{}));
 
+    uint32_t iraw = 0x12345678;
+    RED_CHECK(writable_bytes_view::from_raw_object(iraw) == writable_bytes_view(reinterpret_cast<uint8_t *>(&iraw), 4));
+
     bytes_view{uv};
 
     writable_byte_ptr bs{s};

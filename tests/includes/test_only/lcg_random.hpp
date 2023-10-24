@@ -23,10 +23,9 @@
 
 #pragma once
 
-#include "utils/genrandom.hpp"
-#include <vector>
+#include "utils/random.hpp"
 
-class LCGRandom : public Random
+class LCGRandom final : public Random
 {
     uint64_t seed = 0;
 
@@ -38,8 +37,10 @@ public:
     {
     }
 
-    void random(void * dest, size_t size) override
+    void random(writable_bytes_view buf) override
     {
+        uint8_t* dest = buf.data();
+        size_t size = buf.size();
         for (size_t x = 0; x < size/4 ; ++x) {
             // these 3 calls are a bug
             // ... but won't change because it would modify random sequence
@@ -48,19 +49,19 @@ public:
             this->rand32();
             uint32_t r{this->rand32()};
 
-            uint8_t * p = static_cast<uint8_t*>(dest) + x * 4;
-            p[0] = r >> 0;
-            p[1] = r >> 8;
-            p[2] = r >> 16;
-            p[3] = r >> 24;
+            uint8_t * p = dest + x * 4;
+            p[0] = static_cast<uint8_t>(r >> 0);
+            p[1] = static_cast<uint8_t>(r >> 8);
+            p[2] = static_cast<uint8_t>(r >> 16);
+            p[3] = static_cast<uint8_t>(r >> 24);
         }
         // fill last bytes if size % 4 > 0
         if (size % 4){
             uint32_t r{this->rand32()};
-            uint8_t * p = static_cast<uint8_t*>(dest) + size - (size % 4);
-            if (size % 4 > 2) { p[2] = r >> 16; }
-            if (size % 4 > 1) { p[1] = r >> 8; }
-            if (size % 4 > 0) { p[0] = r >> 0; }
+            uint8_t * p = dest + size - (size % 4);
+            if (size % 4 > 2) { p[2] = static_cast<uint8_t>(r >> 16); }
+            if (size % 4 > 1) { p[1] = static_cast<uint8_t>(r >> 8); }
+            if (size % 4 > 0) { p[0] = static_cast<uint8_t>(r >> 0); }
         }
     }
 
@@ -72,27 +73,7 @@ public:
 private:
     uint32_t rand32()
     {
-        return this->seed = 999331UL * this->seed + 200560490131ULL;
-    }
-};
-
-class ReplayRandom : public Random
-{
-    // caller responsibility to provide enough data
-    // or access to vector will throw an error
-    std::vector<uint8_t> seed;
-    uint32_t i = 0;
-public:
-    explicit ReplayRandom(std::vector<uint8_t> seed)
-    : seed(std::move(seed))
-    {
-    }
-
-    void random(void * dest, size_t size) override
-    {
-        uint8_t * p = static_cast<uint8_t*>(dest);
-        for (size_t x = 0; x < size ; ++x) {
-            p[x] = seed[this->i++];
-        }
+        this->seed = 999331UL * this->seed + 200560490131ULL;
+        return static_cast<uint32_t>(this->seed);
     }
 };

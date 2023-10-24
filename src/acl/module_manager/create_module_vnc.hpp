@@ -32,6 +32,7 @@ class FrontAPI;
 class ClientInfo;
 class ClientExecute;
 class Font;
+class Random;
 class Theme;
 class EventContainer;
 class SessionLogApi;
@@ -58,4 +59,5 @@ ModPack create_mod_vnc(
     Ref<Font const> glyphs,
     Theme & theme,
     EventContainer& events,
-    SessionLogApi& session_log);
+    SessionLogApi& session_log,
+    Random & rand);

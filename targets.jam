@@ -4691,10 +4691,6 @@ test-run tests/utils/test_fileutils :
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
 ;
-test-run tests/utils/test_genrandom :
-  $(REDEMPTION_TEST_PATH)/utils/test_genrandom.cpp
-:
-;
 test-run tests/utils/test_get_printable_password :
   $(REDEMPTION_TEST_PATH)/utils/test_get_printable_password.cpp
 :
@@ -4787,6 +4783,13 @@ test-run tests/utils/test_png :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
+test-run tests/utils/test_random :
+  $(REDEMPTION_TEST_PATH)/utils/test_random.cpp
+:
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run tests/utils/test_recording_progress :
@@ -5357,7 +5360,6 @@ alias test_drawable_pointer : tests/utils/test_drawable_pointer ;
 alias test_ellipse : tests/utils/test_ellipse ;
 alias test_file_permissions : tests/utils/test_file_permissions ;
 alias test_fileutils : tests/utils/test_fileutils ;
-alias test_genrandom : tests/utils/test_genrandom ;
 alias test_get_printable_password : tests/utils/test_get_printable_password ;
 alias test_hexadecimal_string_to_buffer : tests/utils/test_hexadecimal_string_to_buffer ;
 alias test_id_manager : tests/utils/test_id_manager ;
@@ -5374,6 +5376,7 @@ alias test_parse : tests/utils/test_parse ;
 alias test_parse_primary_drawing_orders : tests/utils/test_parse_primary_drawing_orders ;
 alias test_parse_server_message : tests/utils/test_parse_server_message ;
 alias test_png : tests/utils/test_png ;
+alias test_random : tests/utils/test_random ;
 alias test_recording_progress : tests/utils/test_recording_progress ;
 alias test_rect : tests/utils/test_rect ;
 alias test_redirection_info : tests/utils/test_redirection_info ;
@@ -5755,7 +5758,6 @@ alias tests/utils.norec :
   tests/utils/test_ellipse
   tests/utils/test_file_permissions
   tests/utils/test_fileutils
-  tests/utils/test_genrandom
   tests/utils/test_get_printable_password
   tests/utils/test_hexadecimal_string_to_buffer
   tests/utils/test_id_manager
@@ -5772,6 +5774,7 @@ alias tests/utils.norec :
   tests/utils/test_parse_primary_drawing_orders
   tests/utils/test_parse_server_message
   tests/utils/test_png
+  tests/utils/test_random
   tests/utils/test_recording_progress
   tests/utils/test_rect
   tests/utils/test_redirection_info
@@ -6458,7 +6461,6 @@ explicit
   test_ellipse
   test_file_permissions
   test_fileutils
-  test_genrandom
   test_get_printable_password
   test_hexadecimal_string_to_buffer
   test_id_manager
@@ -6475,6 +6477,7 @@ explicit
   test_parse_primary_drawing_orders
   test_parse_server_message
   test_png
+  test_random
   test_recording_progress
   test_rect
   test_redirection_info

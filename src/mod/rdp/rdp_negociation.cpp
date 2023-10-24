@@ -45,7 +45,7 @@
 #include "acl/auth_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "core/channels_authorizations.hpp"
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/multisz.hpp"
@@ -632,7 +632,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         }
 
                         /* Generate a client random, and determine encryption keys */
-                        this->gen.random(this->client_random, SEC_RANDOM_SIZE);
+                        this->gen.random(make_writable_array_view(this->client_random, SEC_RANDOM_SIZE));
                         LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO, "RdpNegociation: Generate client random");
 
                         // LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");

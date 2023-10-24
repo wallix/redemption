@@ -499,6 +499,7 @@ void ModFactory::create_vnc_mod(SessionLogApi& session_log)
         this->keymap.locks(),
         this->glyphs, this->theme,
         this->events,
-        session_log);
+        session_log,
+        this->gen);
     Impl::set_mod(*this, ModuleName::VNC, mod_pack, true);
 }

@@ -201,7 +201,7 @@ private:
         void init(Random& rnd)
         {
             char buffer[original_password_len];
-            rnd.random(buffer, original_password_len);
+            rnd.random(make_writable_array_view(buffer));
             base64_encode(
                 {buffer, original_password_len},
                 make_writable_array_view(text_buffer)

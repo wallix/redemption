@@ -70,6 +70,7 @@ mod_vnc::VncBuf64k::read_from(mod_vnc::VncTransport vncTrans)
 }
 
 mod_vnc::mod_vnc( Transport & t
+           , Random & rand
            , gdi::GraphicApi & gd
            , EventContainer & events
            , const char * username
@@ -110,6 +111,7 @@ mod_vnc::mod_vnc( Transport & t
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , session_time_start(events.get_monotonic_time().time_since_epoch())
     , rail_client_execute(rail_client_execute)
+    , rand(rand)
     , gd(gd)
     , events_guard(events)
 #ifndef __EMSCRIPTEN__
@@ -163,7 +165,7 @@ bool mod_vnc::ms_logon(Buf64k & buf)
         LOG(LOG_INFO, "Resp=0x%" PRIx64, this->ms_logon_ctx.resp);
     }
 
-    DiffieHellman dh(this->ms_logon_ctx.gen, this->ms_logon_ctx.mod);
+    DiffieHellman dh(this->rand, this->ms_logon_ctx.gen, this->ms_logon_ctx.mod);
     uint64_t pub = dh.createInterKey();
 
     StaticOutStream<32768> out_stream;

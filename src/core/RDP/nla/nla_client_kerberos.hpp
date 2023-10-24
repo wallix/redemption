@@ -26,13 +26,12 @@
 #include <string_view>
 
 #include "core/RDP/nla/credssp.hpp"
+#include "core/RDP/nla/kerberos.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/hexdump.hpp"
-#include "system/ssl_sha256.hpp"
-
-#include "core/RDP/nla/kerberos.hpp"
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
 #include "utils/translation.hpp"
+#include "system/ssl_sha256.hpp"
 
 #include "transport/transport.hpp"
 
@@ -525,7 +524,7 @@ private:
 
     void credssp_generate_client_nonce() {
         LOG(LOG_INFO, "rdpCredsspClientKerberos::credssp generate client nonce");
-        this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
+        this->rand.random(writable_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH));
         this->SavedClientNonce.initialized = true;
         this->credssp_set_client_nonce();
     }

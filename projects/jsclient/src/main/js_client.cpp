@@ -30,7 +30,7 @@ Author(s): Jonathan Poelen
 #include "client/common/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/theme.hpp"
 #include "gdi/osd_api.hpp"
@@ -217,10 +217,9 @@ class RdpClient
             : random)
         {}
 
-        void random(void* dest, std::size_t size) override
+        void random(writable_bytes_view buf) override
         {
-            redjs::emval_call(this->crypto, get_random_values,
-                array_view{static_cast<uint8_t*>(dest), size});
+            redjs::emval_call(this->crypto, get_random_values, buf);
         }
 
         emscripten::val crypto;

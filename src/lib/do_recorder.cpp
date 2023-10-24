@@ -43,7 +43,6 @@
 
 #include "utils/compression_transport_builder.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/genrandom.hpp"
 #include "utils/log.hpp"
 #include "utils/cli.hpp"
 #include "utils/cli_chrono.hpp"
@@ -52,6 +51,8 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/strutils.hpp"
 #include "utils/hexadecimal_string_to_buffer.hpp"
+
+#include "system/urandom.hpp"
 
 #include <string>
 #include <vector>
@@ -1737,7 +1738,7 @@ int do_main(int argc, char const ** argv,
         // default command is previous one;
     }
 
-    UdevRandom rnd;
+    URandom rnd;
     CryptoContext cctx;
     if (hmac_key) {
         cctx.set_hmac_key(CryptoContext::key_data::from_ptr(hmac_key));

@@ -22,7 +22,6 @@
 
 #include "utils/log.hpp"
 #include "utils/fixed_random.hpp"
-#include "utils/genrandom.hpp"
 #include "utils/netutils.hpp"
 #include "utils/monotonic_clock.hpp"
 #include "utils/strutils.hpp"
@@ -32,6 +31,7 @@
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
 
+#include "core/events.hpp"
 #include "core/channels_authorizations.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
@@ -59,8 +59,10 @@
 
 #include "utils/timebase.hpp"
 #include "utils/select.hpp"
+#include "utils/fixed_random.hpp"
 #include "utils/redirection_info.hpp"
-#include "core/events.hpp"
+
+#include "system/urandom.hpp"
 
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
@@ -464,6 +466,7 @@ public:
                   , *this
                   , this->config.modVNCParamsData.width
                   , this->config.modVNCParamsData.height
+                  , *this->gen
                   , true
                   , true
                   , this->config.modVNCParamsData.vnc_encodings.c_str()
@@ -573,7 +576,7 @@ public:
         if (this->config.is_full_capturing || this->config.is_full_replaying) {
             this->gen = std::make_unique<FixedRandom>();
         } else {
-            this->gen = std::make_unique<UdevRandom>();
+            this->gen = std::make_unique<URandom>();
         }
 
         this->clientRemoteAppChannel.clear();

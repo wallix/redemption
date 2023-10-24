@@ -36,6 +36,7 @@
 
 #include "keyboard/keymapsym.hpp"
 
+#include "utils/random.hpp"
 #include "utils/utf.hpp"
 #include "utils/zlib.hpp"
 #include "utils/monotonic_clock.hpp"
@@ -266,6 +267,7 @@ private:
     ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
 
+    Random & rand;
     gdi::GraphicApi & gd;
     EventsGuard events_guard;
     EventRef clipboard_timeout_timer;
@@ -299,6 +301,7 @@ private:
 
 public:
     mod_vnc( Transport & t
+           , Random & rand
            , gdi::GraphicApi & gd
            , EventContainer & events
            , const char * username

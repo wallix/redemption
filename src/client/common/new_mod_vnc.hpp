@@ -33,6 +33,7 @@ class Transport;
 class AuthApi;
 class SessionLogApi;
 class KeyLayout;
+class Random;
 
 namespace gdi
 {
@@ -54,6 +55,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     FrontAPI& front,
     uint16_t front_width,
     uint16_t front_height,
+    Random& random,
     bool clipboard_up,
     bool clipboard_down,
     const char * encodings,

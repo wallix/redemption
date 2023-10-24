@@ -24,7 +24,7 @@
 #include "transport/file_transport.hpp"
 #include "transport/transport.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/genrandom.hpp"
+#include "utils/random.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/byte_ptr.hpp"
 #include "utils/sugar/int_to_chars.hpp"
@@ -562,7 +562,7 @@ ocrypto::Result ocrypto::open(bytes_view derivator)
         uint8_t trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
         this->cctx.get_derived_key(trace_key, derivator);
         uint8_t iv[32];
-        this->rnd.random(iv, 32);
+        this->rnd.random(make_writable_array_view(iv));
 
         ::memset(this->buf, 0, sizeof(this->buf));
         this->pos = 0;

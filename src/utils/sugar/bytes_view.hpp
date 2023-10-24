@@ -35,6 +35,24 @@ struct writable_bytes_view : writable_array_view<uint8_t>
     writable_bytes_view & operator=(writable_bytes_view const &) = default;
 
 
+    template<class T>
+    static writable_bytes_view from_raw_object(T&& value) = delete;
+
+    template<class T>
+    static writable_bytes_view from_raw_object(T& value)
+    {
+        static_assert(std::is_trivially_copy_assignable_v<T>);
+        return writable_bytes_view(reinterpret_cast<uint8_t*>(&value), sizeof(value));
+    }
+
+    template<class T, std::size_t N>
+    static writable_bytes_view from_raw_object(T(&value)[N])
+    {
+        static_assert(std::is_trivially_copy_assignable_v<T>);
+        return writable_bytes_view(reinterpret_cast<uint8_t*>(&value[0]), sizeof(value));
+    }
+
+
     template<class T, std::size_t n>
     writable_bytes_view(T(&)[n]) = delete;
 
@@ -97,6 +115,24 @@ struct bytes_view : array_view<uint8_t>
     bytes_view(bytes_view const &) = default;
     bytes_view & operator=(bytes_view &&) = default;
     bytes_view & operator=(bytes_view const &) = default;
+
+
+    template<class T>
+    static bytes_view from_raw_object(T&& value) = delete;
+
+    template<class T>
+    static bytes_view from_raw_object(T& value)
+    {
+        static_assert(std::is_trivially_copy_assignable_v<T>);
+        return bytes_view(reinterpret_cast<uint8_t const*>(&value), sizeof(value));
+    }
+
+    template<class T, std::size_t N>
+    static bytes_view from_raw_object(T(&value)[N])
+    {
+        static_assert(std::is_trivially_copy_assignable_v<T>);
+        return bytes_view(reinterpret_cast<uint8_t*>(&value[0]), sizeof(value));
+    }
 
 
     template<class T, std::size_t n>
