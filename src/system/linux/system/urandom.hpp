@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/log.hpp"
 #include "utils/random.hpp"
 
+#include <limits>
 #include <sys/random.h>
 
 
@@ -25,7 +26,7 @@ public:
             /* On Solaris, getrandom() is limited to returning up to 1024 bytes. */
             size_t len_max = 1024;
 #else
-            size_t len_max = LONG_MAX;
+            size_t len_max = std::numeric_limits<ssize_t>::max();
 #endif
             // TODO This is basically a blocking read, we should provide timeout management and behaviour
             ssize_t n = getrandom(data, len < len_max ? len : len_max, 0);
