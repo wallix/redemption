@@ -486,7 +486,10 @@ class Sesman():
         for key, value in back_to_selector_default_reinit.items():
             self.shared[key] = value
         back_to_selector_default_sent[u"module"] = u'transitory'
-        self.send_data(back_to_selector_default_sent)
+        try:
+            self.send_data(back_to_selector_default_sent)
+        except OSError as e:
+            Logger().debug(f'reset_target_session_vars: {e}')
         self.engine.reset_proxy_rights()
         self.rtmanager.reset()
 
