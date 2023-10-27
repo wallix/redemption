@@ -757,7 +757,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 {
     _.member(MemberInfo{
         .name = "force_performance_flags",
-        .value = value<types::performance_flags>("-mouse_cursor_shadows,-theme"),
+        .value = value<types::performance_flags>("-mouse_cursor_shadows,-theme,-menu_animations"),
         .spec = global_spec(no_acl, spec::advanced),
         .tags = Tag::Perf | Tag::Compatibility,
         .desc =

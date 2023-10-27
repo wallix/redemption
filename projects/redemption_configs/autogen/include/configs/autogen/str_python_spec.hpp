@@ -193,7 +193,7 @@ allow_resize_hosted_desktop = boolean(default=True)
 # &nbsp; &nbsp;   - font_smoothing
 # &nbsp; &nbsp;   - desktop_composition
 #_advanced
-force_performance_flags = string(default="-mouse_cursor_shadows,-theme")
+force_performance_flags = string(default="-mouse_cursor_shadows,-theme,-menu_animations")
 
 # If enabled, avoid automatically font smoothing in recorded session.
 # This allows OCR (when session probe is disabled) to better detect window titles.

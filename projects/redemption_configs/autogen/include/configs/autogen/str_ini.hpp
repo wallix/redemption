@@ -295,7 +295,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   - font_smoothing
 #   - desktop_composition
 #_advanced
-#force_performance_flags = -mouse_cursor_shadows,-theme
+#force_performance_flags = -mouse_cursor_shadows,-theme,-menu_animations
 
 # If enabled, avoid automatically font smoothing in recorded session.
 # This allows OCR (when session probe is disabled) to better detect window titles.

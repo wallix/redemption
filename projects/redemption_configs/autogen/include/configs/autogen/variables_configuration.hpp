@@ -775,12 +775,12 @@ namespace cfg
     ///   - font_smoothing <br/>
     ///   - desktop_composition <br/>
     /// type: RdpPerformanceFlags <br/>
-    /// default: 0x28, 0x0 <br/>
+    /// default: 0x2c, 0x0 <br/>
     struct mod_rdp::force_performance_flags {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = RdpPerformanceFlags;
         using mapped_type = RdpPerformanceFlags;
-        type value { 0x28, 0x0 };
+        type value { 0x2c, 0x0 };
     };
     /// If enabled, avoid automatically font smoothing in recorded session. <br/>
     /// This allows OCR (when session probe is disabled) to better detect window titles. <br/>
