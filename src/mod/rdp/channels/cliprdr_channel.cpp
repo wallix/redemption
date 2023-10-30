@@ -2620,11 +2620,13 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     }
     else {
         LOG(LOG_INFO, "ClipboardVirtualChannel: enable file validator service:"
-            " up=%s  down=%s  block_invalid_file_up=%d block_invalid_file_down=%d",
+            " up=%s  down=%s  block_invalid_file_up=%d block_invalid_file_down=%d  block_invalid_text_up=%d block_invalid_text_down=%d",
             p.validator_params.up_target_name,
             p.validator_params.down_target_name,
             p.validator_params.block_invalid_file_up,
-            p.validator_params.block_invalid_file_down);
+            p.validator_params.block_invalid_file_down,
+            p.validator_params.block_invalid_text_up,
+            p.validator_params.block_invalid_text_down);
     }
     return p;
 }())
