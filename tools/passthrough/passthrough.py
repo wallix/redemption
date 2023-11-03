@@ -241,7 +241,8 @@ class ACLPassthrough():
             login = splitted[0]
             host = splitted[1]
             device = host
-            password = ''
+            if login == 'internal':
+                password = ''
 
         interactive_data = {
             'target_password': password,
