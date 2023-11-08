@@ -41,8 +41,7 @@ The project also contains 2 RDP clients:
     1. [Convert .mwrm/.wrm capture to video](#convert-mwrmwrm-capture-to-video)
 5. [Compile proxy_recorder](#compile-proxy_recorder)
 6. [Packaging](#packaging)
-7. [Tag and Version](#tag-and-version)
-8. [Test files](#test-files)
+7. [Test files](#test-files)
 <!-- /toc -->
 
 
@@ -396,17 +395,13 @@ Exemple call line for proxy_recorder:
 
 # Packaging
 
-    ./tools/packager.py --build-package
+With https://github.com/wallix/packager
 
-- `--force-target target`: target is a file in packaging/targets
-- `--force-build`
-
-
-# Tag and Version
-
-    ./tools/packager.py --update-version 1.2.7 --git-tag --git-push-tag --git-push
-
-- `--add-changelog`: if you want to add some specific changelogs
+    packager.py build \
+        --target-file packaging/targets/debian \
+        --version-file include/main/version.hpp \
+        --build-package \
+        --no-check
 
 
 # Test files

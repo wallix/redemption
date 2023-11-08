@@ -10,9 +10,7 @@ DRIVE_REDIRECTION_PATH=/var/rdpproxy/drive_redirection
 LIB_PREFIX=/usr/local/lib
 
 ARCHI=any
-BUILD_DEPENDS=debhelper (>=7), git, dpkg-dev, build-essential, g++, libboost-tools-dev, libssl-dev, libkrb5-dev, libsnappy-dev, libpng12-dev, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev, libx264-dev, libbz2-dev
+BUILD_DEPENDS=debhelper (>=7), dpkg-dev, g++, libboost-tools-dev, libssl-dev, libkrb5-dev, libsnappy-dev, libpng-dev, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev, libx264-dev, zlib1g-dev, libbz2-dev, libhyperscan-dev
 DEPENDS=${shlibs:Depends}
-
-#REDEMPTION_USER=
 
 BJAM_EXTRA=-j2

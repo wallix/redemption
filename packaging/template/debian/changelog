@@ -1,4 +1,4 @@
-redemption (%REDEMPTION_VERSION%%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (%PROJECT_VERSION%) %PKG_DISTRIBUTION%; urgency=low
 
   * Auto reconnection on losing target link
   * fix inactivity timers
@@ -6,7 +6,7 @@ redemption (%REDEMPTION_VERSION%%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 01 Sep 2020 17:01:56 +0200
 
-redemption (8.1.67%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.1.67) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix back to selector
   * Fix login page escape
@@ -14,77 +14,77 @@ redemption (8.1.67%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 29 May 2020 13:09:15 +0200
 
-redemption (8.1.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.1.7) %PKG_DISTRIBUTION%; urgency=low
 
   * fix record filenames
   * various fixes
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 26 May 2020 21:50:52 +0200
 
-redemption (8.1.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.1.5) %PKG_DISTRIBUTION%; urgency=low
 
   * target in login page
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 26 May 2020 16:37:03 +0200
 
-redemption (8.1.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.1.3) %PKG_DISTRIBUTION%; urgency=low
 
   * Update options
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 15 May 2020 17:13:14 +0200
 
-redemption (8.1.0%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.1.0) %PKG_DISTRIBUTION%; urgency=low
 
   * Session Loop Refactoring
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 15 May 2020 17:02:07 +0200
 
-redemption (8.0.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.0.19) %PKG_DISTRIBUTION%; urgency=low
 
   * Review Python3 for Sesman
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 26 Mar 2020 12:30:52 +0200
 
-redemption (8.0.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.0.17) %PKG_DISTRIBUTION%; urgency=low
 
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 25 Mar 2020 17:51:23 +0200
 
-redemption (8.0.15%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.0.15) %PKG_DISTRIBUTION%; urgency=low
 
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 25 Mar 2020 17:28:16 +0200
 
-redemption (8.0.13%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.0.13) %PKG_DISTRIBUTION%; urgency=low
 
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 24 Mar 2020 19:12:23 +0200
 
-redemption (8.0.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.0.9) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix #26432 Move disabled_orders from Configuration Options to Connection Policy
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 19 Mar 2020 16:36:43 +0200
 
-redemption (8.0.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.0.7) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix crash when generate metadate of session (BS).
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 17 Mar 2020 10:03:49 +0200
 
-redemption (8.0.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.0.5) %PKG_DISTRIBUTION%; urgency=low
 
   * BestSafe Integration: Forward event log
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 16 Mar 2020 15:28:46 +0200
 
-redemption (8.0.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (8.0.3) %PKG_DISTRIBUTION%; urgency=low
 
   * Improve Clipboard management
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 12 Mar 2020 15:33:40 +0200
 
-redemption (7.4.25%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.4.25) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix 'Starting SP launch timeout only after user logon'.
   * SmartCard passthrough.
@@ -95,7 +95,7 @@ redemption (7.4.25%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 07 Feb 2020 14:39:53 +0200
 
-redemption (7.4.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.4.5) %PKG_DISTRIBUTION%; urgency=low
 
   * [SP][BS] Detect and block user account manipulation.
   * Fix issue 'RDP session crashs with error (asked size (XXXXX) + HEADER_SIZE (106) = XXXXX) > image batch capacity (16384)'.
@@ -116,30 +116,30 @@ redemption (7.4.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 06 Jan 2020 16:36:49 +0200
 
-redemption (7.4.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.4.3) %PKG_DISTRIBUTION%; urgency=low
 
   * Scytale: fdx and tfl files support (writer only)
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 20 Nov 2019 14:15:07 +0200
 
-redemption (7.4.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.4.1) %PKG_DISTRIBUTION%; urgency=low
 
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 04 Nov 2019 18:25:01 +0200
 
-redemption (7.3.11%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.3.11) %PKG_DISTRIBUTION%; urgency=low
 
   * Do not disconnect the session due to screen layout change if recording is not started.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 08 Oct 2019 18:48:38 +0200
 
-redemption (7.3.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.3.7) %PKG_DISTRIBUTION%; urgency=low
 
   * Support RDP upgrade license flow.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 04 Oct 2019 18:02:10 +0200
 
-redemption (7.3.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.3.3) %PKG_DISTRIBUTION%; urgency=low
 
   * Increase the maximum delay before showing Remote Program disconnection message.
   * Don't stop recording in case of session redirection.
@@ -148,76 +148,76 @@ redemption (7.3.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 23 Sep 2019 16:10:22 +0200
 
-redemption (7.2.23%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.2.23) %PKG_DISTRIBUTION%; urgency=low
 
   * 22115: Add log in siem/session log if connection to validator server fail
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 06 Aug 2019 16:27:09 +0200
 
-redemption (7.2.21%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.2.21) %PKG_DISTRIBUTION%; urgency=low
 
   * (RemoteApp) Fix 'Unknown client window' issue.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 05 Aug 2019 15:33:22 +0200
 
-redemption (7.2.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.2.19) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix RDP_AUDIO_OUTPUT proxy option issue.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 01 Aug 2019 16:08:27 +0200
 
-redemption (7.2.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.2.17) %PKG_DISTRIBUTION%; urgency=low
 
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 30 Jul 2019 16:03:58 +0200
 
-redemption (7.2.11%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.2.11) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix compatibility issue with FreeRDP/Remmina. (Cache Color Table)
   * icap: disable protocol error exception
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Jul 2019 17:58:09 +0200
 
-redemption (7.2.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.2.9) %PKG_DISTRIBUTION%; urgency=low
 
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Jul 2019 14:43:32 +0200
 
-redemption (7.2.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.2.7) %PKG_DISTRIBUTION%; urgency=low
 
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 19 Jul 2019 15:30:15 +0200
 
-redemption (7.2.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.2.5) %PKG_DISTRIBUTION%; urgency=low
 
   * Export group membership of target account in metadata.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 18 Jul 2019 15:26:00 +0200
 
-redemption (7.2.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.2.1) %PKG_DISTRIBUTION%; urgency=low
 
   * Translate RemoteApp to Alternate Shell for WABAM.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 10 Jul 2019 15:38:01 +0200
 
-redemption (7.1.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.1.9) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix fully mask keyboard input in metadata of session.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 28 May 2019 10:35:07 +0200
 
-redemption (7.1.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.1.7) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix bitmap fragmentation.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 23 May 2019 18:27:44 +0200
 
-redemption (7.1.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.1.5) %PKG_DISTRIBUTION%; urgency=low
 
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 20 May 2019 11:00:53 +0200
 
-redemption (7.1.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.1.3) %PKG_DISTRIBUTION%; urgency=low
 
   * Feedback RDP target session ID.
   * Flush keyboard input buffer before mask state change.
@@ -225,12 +225,12 @@ redemption (7.1.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Apr 2019 15:40:27 +0200
 
-redemption (7.1.3.%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.1.3.) %PKG_DISTRIBUTION%; urgency=low
 
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Apr 2019 15:15:01 +0200
 
-redemption (7.1.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.1.1) %PKG_DISTRIBUTION%; urgency=low
 
   * Add mechanism to disable some features of Session Probe.
   * Fix text cursor issue.
@@ -242,7 +242,7 @@ redemption (7.1.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 03 Apr 2019 16:13:44 +0200
 
-redemption (7.0.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.0.9) %PKG_DISTRIBUTION%; urgency=low
 
   * RDP proxy log
   * Support of RDP KeepAlive
@@ -250,73 +250,73 @@ redemption (7.0.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Jan 2019 15:07:14 +0200
 
-redemption (7.0.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (7.0.1) %PKG_DISTRIBUTION%; urgency=low
 
   * Support of RDP keepalive (T.128 FlowPDU).
   * Add option to ignore keyboard input in applications specified by administrator.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 07 Jan 2019 11:29:37 +0200
 
-redemption (1.3.77%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.77) %PKG_DISTRIBUTION%; urgency=low
 
   * Allows logoff if the remaining process does not have a visible window.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 11 Dec 2018 10:39:00 +0200
 
-redemption (1.3.67%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.67) %PKG_DISTRIBUTION%; urgency=low
 
   * Add a feature to list Kerberos Tickets.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 14 Nov 2018 17:28:56 +0200
 
-redemption (1.3.65%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.65) %PKG_DISTRIBUTION%; urgency=low
 
   * Keyboard input masking per conn policy
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 13 Nov 2018 17:30:40 +0200
 
-redemption (1.3.63%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.63) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 12 Nov 2018 15:21:42 +0200
 
-redemption (1.3.59%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.59) %PKG_DISTRIBUTION%; urgency=low
 
   * Restore content of clipboard of session after SP startup.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 08 Nov 2018 14:55:01 +0200
 
-redemption (1.3.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.31) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 12 Oct 2018 17:39:23 +0200
 
-redemption (1.3.30%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.30) %PKG_DISTRIBUTION%; urgency=low
 
   * Restore clipboard of session after Session Probe startup.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 12 Oct 2018 17:36:03 +0200
 
-redemption (1.3.29%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.29) %PKG_DISTRIBUTION%; urgency=low
 
   * Support Windows Screenlocker in RemoteApp mode.
   * Fix waiting for already received network data.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 09 Oct 2018 18:00:40 +0200
 
-redemption (1.3.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.17) %PKG_DISTRIBUTION%; urgency=low
 
   * Log data exchanged over clipboard.
   * Fix logging hash of each file exchanged over clipboard.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 12 Sep 2018 12:16:16 +0200
 
-redemption (1.3.15%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.15) %PKG_DISTRIBUTION%; urgency=low
 
   * Log hash of each file exchanged over clipboard.
   * Log size and hash of each file exchanged over redirected drives.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 10 Sep 2018 16:50:54 +0200
 
-redemption (1.3.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.7) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix translation bug.
   * Support session resize during recording.
@@ -326,17 +326,17 @@ redemption (1.3.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 23 Aug 2018 15:45:44 +0200
 
-redemption (1.3.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.5) %PKG_DISTRIBUTION%; urgency=low
 
   * Enable/disable sign-of by Session Probe when primary user has changed.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 10 Aug 2018 16:27:08 +0200
 
-redemption (1.3.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.3) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 07 Aug 2018 16:05:03 +0200
 
-redemption (1.3.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.3.1) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix toggling Num Lock in VNC session.
   * Change password expiration message.
@@ -350,11 +350,11 @@ redemption (1.3.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 03 Aug 2018 11:37:40 +0200
 
-redemption (1.2.49%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.49) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 26 Jul 2018 16:00:22 +0200
 
-redemption (1.2.47%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.47) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix disabling keyboard input log in Session data of Recorded Session Viewer.
   * Fix buffer overflow in Selector.
@@ -363,287 +363,287 @@ redemption (1.2.47%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 10 Jul 2018 16:35:10 +0200
 
-redemption (1.2.45%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.45) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix mode of meta file.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 28 Jun 2018 12:30:25 +0200
 
-redemption (1.2.43%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.43) %PKG_DISTRIBUTION%; urgency=low
 
   * fix build
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 27 Jun 2018 18:36:44 +0200
 
-redemption (1.2.41%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.41) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Glyph drawing issue (16907)
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 27 Jun 2018 18:25:30 +0200
 
-redemption (1.2.39%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.39) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix proxy crash when using a long string as cookie of application session.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 27 Jun 2018 15:51:31 +0200
 
-redemption (1.2.37%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.37) %PKG_DISTRIBUTION%; urgency=low
 
   * Add comments to configuration interface.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 26 Jun 2018 15:00:50 +0200
 
-redemption (1.2.35%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.35) %PKG_DISTRIBUTION%; urgency=low
 
   * Remove green screen as beginning of video fragments.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 20 Jun 2018 12:12:40 +0200
 
-redemption (1.2.33%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.33) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix proxy crashs when connect to invalid target from Selector.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 18 Jun 2018 17:33:21 +0200
 
-redemption (1.2.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.31) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix trap divide error when using 256 colors without compression.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 15 Jun 2018 18:57:47 +0200
 
-redemption (1.2.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.31) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix trap divide error when using 256 colors without compression.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 15 Jun 2018 18:51:19 +0200
 
-redemption (1.2.29%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.29) %PKG_DISTRIBUTION%; urgency=low
 
   * (RemoteApp) Exclue Microsoft Input Method Editor icon from resulting video.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 12 Jun 2018 12:07:04 +0200
 
-redemption (1.2.27%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.27) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix RemoteApp windows detection.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 11 Jun 2018 18:32:21 +0200
 
-redemption (1.2.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.19) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 07 Jun 2018 18:29:27 +0200
 
-redemption (1.2.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.17) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 07 Jun 2018 14:57:23 +0200
 
-redemption (1.2.15%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.15) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix login message formatting issue.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 06 Jun 2018 15:50:56 +0200
 
-redemption (1.2.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.9) %PKG_DISTRIBUTION%; urgency=low
 
   * Add date "Year-Month-Day" subdirectory in record path
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 07 May 2018 17:02:50 +0200
 
-redemption (1.2.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (1.2.7) %PKG_DISTRIBUTION%; urgency=low
 
   * Add date "Year-Month-Day" subdirectory in record path
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 04 May 2018 11:59:52 +0200
 
-redemption (0.9.740b%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.740b) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Nov 2016 18:46:00 +0200
 
-redemption (0.9.740a%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.740a) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Nov 2016 18:29:17 +0200
 
-redemption (0.9.740%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.740) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Nov 2016 18:23:16 +0200
 
-redemption (0.9.734%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.734) %PKG_DISTRIBUTION%; urgency=low
 
   * Add option to set front-side SSL cipher list.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 27 May 2016 12:20:49 +0200
 
-redemption (0.9.732%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.732) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 25 May 2016 10:49:05 +0200
 
-redemption (0.9.730%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.730) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 25 May 2016 10:15:15 +0200
 
-redemption (0.9.728%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.728) %PKG_DISTRIBUTION%; urgency=low
 
   * Support of multiple monitors.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 23 May 2016 11:23:53 +0200
 
-redemption (0.9.726%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.726) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 13 May 2016 11:01:40 +0200
 
-redemption (0.9.724%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.724) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix copy/paste UTF-8 string to text fields of internal modules.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 08 Apr 2016 16:25:01 +0200
 
-redemption (0.9.722%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.722) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix handling TLS Certificate Changed and TLS Certificate Missed exceptions.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 30 Mar 2016 12:18:21 +0200
 
-redemption (0.9.720%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.720) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix packager for Debian Wheezy.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 29 Mar 2016 16:08:55 +0200
 
-redemption (0.9.718%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.718) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix compatibility issue between Debian Wheezy and ffmpeg.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 29 Mar 2016 15:40:59 +0200
 
-redemption (0.9.716%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.716) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix compiler error.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 29 Mar 2016 10:30:38 +0200
 
-redemption (0.9.714%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.714) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix using CIFS remote storage to hold recorded sessions.
   * Fix session disconnection when using redirected printer.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 25 Mar 2016 16:38:05 +0200
 
-redemption (0.9.712%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.712) %PKG_DISTRIBUTION%; urgency=low
 
   * Improve security of Session Probe Smart Launcher.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 18 Mar 2016 15:43:02 +0200
 
-redemption (0.9.710%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.710) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix compatibility issue between Session Probe Smart Launcher and rdesktop 1.8.3.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Mar 2016 16:17:46 +0200
 
-redemption (0.9.708%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.708) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 16 Mar 2016 16:58:32 +0200
 
-redemption (0.9.706%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.706) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 15 Mar 2016 18:02:30 +0200
 
-redemption (0.9.704%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.704) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Smart Launcher of Session Probe.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 15 Mar 2016 17:43:20 +0200
 
-redemption (0.9.702%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.702) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 11 Mar 2016 17:26:57 +0200
 
-redemption (0.9.700%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.700) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 10 Mar 2016 15:03:54 +0200
 
-redemption (0.9.698%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.698) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 10 Mar 2016 14:47:51 +0200
 
-redemption (0.9.696%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.696) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 10 Mar 2016 14:37:45 +0200
 
-redemption (0.9.694%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.694) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 07 Mar 2016 16:10:48 +0200
 
-redemption (0.9.692%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.692) %PKG_DISTRIBUTION%; urgency=low
 
   * fix: video key frame
   * fix: creating record_tmp_path
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 07 Mar 2016 15:57:51 +0200
 
-redemption (0.9.690%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.690) %PKG_DISTRIBUTION%; urgency=low
 
   * set tls_fallback_legacy to false as default value
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 02 Mar 2016 16:21:59 +0200
 
-redemption (0.9.688%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.688) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 26 Feb 2016 18:59:42 +0200
 
-redemption (0.9.686%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.686) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 26 Feb 2016 11:30:53 +0200
 
-redemption (0.9.684%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.684) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Feb 2016 15:26:13 +0200
 
-redemption (0.9.682%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.682) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Feb 2016 15:23:22 +0200
 
-redemption (0.9.680%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.680) %PKG_DISTRIBUTION%; urgency=low
 
   * Pattern search replace in SP AlternateShell
   * Change ETC path
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 10 Feb 2016 16:36:41 +0200
 
-redemption (0.9.678%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.678) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 03 Feb 2016 11:18:11 +0200
 
-redemption (0.9.676%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.676) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix issue of removing redirected drive of Session Probe.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 02 Feb 2016 19:12:29 +0200
 
-redemption (0.9.674%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.674) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 29 Jan 2016 18:50:13 +0200
 
-redemption (0.9.672%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.672) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 28 Jan 2016 18:12:51 +0200
 
-redemption (0.9.670%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.670) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 28 Jan 2016 17:54:33 +0200
 
-redemption (0.9.668%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.668) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 22 Jan 2016 17:13:11 +0200
 
-redemption (0.9.666%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.666) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 22 Jan 2016 17:00:16 +0200
 
-redemption (0.9.664%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.664) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 22 Jan 2016 14:53:29 +0200
 
-redemption (0.9.662%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.662) %PKG_DISTRIBUTION%; urgency=low
 
   * Add capability to use Alternate Shell provided by RDP client.
   * Prevent client information from being transmitted to RDP server.
@@ -651,315 +651,315 @@ redemption (0.9.662%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 21 Jan 2016 16:15:05 +0200
 
-redemption (0.9.660%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.660) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 13 Jan 2016 16:49:09 +0200
 
-redemption (0.9.658%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.658) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 13 Jan 2016 10:18:30 +0200
 
-redemption (0.9.656%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.656) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 13 Jan 2016 09:53:31 +0200
 
-redemption (0.9.654%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.654) %PKG_DISTRIBUTION%; urgency=low
 
   * New fallback mode for probeless targets.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 05 Jan 2016 16:10:59 +0200
 
-redemption (0.9.652%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.652) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 30 Dec 2015 12:16:43 +0200
 
-redemption (0.9.650%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.650) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 30 Dec 2015 12:09:05 +0200
 
-redemption (0.9.648%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.648) %PKG_DISTRIBUTION%; urgency=low
 
   * Improve exploitability of keyboard input data collected for session log.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 30 Dec 2015 11:13:11 +0200
 
-redemption (0.9.646%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.646) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 22 Dec 2015 16:26:57 +0200
 
-redemption (0.9.644%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.644) %PKG_DISTRIBUTION%; urgency=low
 
   * * Fix using Session Probe with Rdesktop client.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 16 Dec 2015 08:30:05 +0200
 
-redemption (0.9.642%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.642) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 09 Dec 2015 15:42:16 +0200
 
-redemption (0.9.640%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.640) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 09 Dec 2015 09:16:59 +0200
 
-redemption (0.9.638%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.638) %PKG_DISTRIBUTION%; urgency=low
 
   * Export to syslog of certificate event messages.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 07 Dec 2015 16:17:47 +0200
 
-redemption (0.9.636%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.636) %PKG_DISTRIBUTION%; urgency=low
 
   * PNG capture geometry.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 04 Dec 2015 13:37:07 +0200
 
-redemption (0.9.634%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.634) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Outbound Connection Blocker.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 03 Dec 2015 19:13:21 +0200
 
-redemption (0.9.632%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.632) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 03 Dec 2015 16:04:14 +0200
 
-redemption (0.9.630%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.630) %PKG_DISTRIBUTION%; urgency=low
 
   * Add capability to enable/disable storage of server certificates.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 03 Dec 2015 11:42:55 +0200
 
-redemption (0.9.628%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.628) %PKG_DISTRIBUTION%; urgency=low
 
   * Add support of checksumed recorded RDP session.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 03 Dec 2015 09:41:08 +0200
 
-redemption (0.9.626%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.626) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix issue of 'Invalid order' with MAC OS X client.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 02 Dec 2015 11:53:44 +0200
 
-redemption (0.9.624%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.624) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 20 Nov 2015 11:08:22 +0200
 
-redemption (0.9.622%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.622) %PKG_DISTRIBUTION%; urgency=low
 
   * Move file of UNIX socket of SesMan.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 20 Nov 2015 11:00:29 +0200
 
-redemption (0.9.620%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.620) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Langugage button in Login screen.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 20 Nov 2015 08:16:28 +0200
 
-redemption (0.9.618%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.618) %PKG_DISTRIBUTION%; urgency=low
 
   * Put all session metadata into the OCR list.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 18 Nov 2015 10:54:30 +0200
 
-redemption (0.9.616%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.616) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 13 Nov 2015 17:53:19 +0200
 
-redemption (0.9.614%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.614) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix post-installation script. (Permissions for '/etc/opt/wab/rdp/rdpproxy' file.)
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 12 Nov 2015 12:07:12 +0200
 
-redemption (0.9.612%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.612) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix post-installation script. (Permissions for '/etc/opt/wab/rdp' directory.)
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 10 Nov 2015 16:13:57 +0200
 
-redemption (0.9.610%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.610) %PKG_DISTRIBUTION%; urgency=low
 
   * Outbound Connection Monitor (Connection Policy).
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 10 Nov 2015 14:35:16 +0200
 
-redemption (0.9.608%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.608) %PKG_DISTRIBUTION%; urgency=low
 
   * Outbound Connection Monitor (Session Probe).
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 09 Nov 2015 14:53:35 +0200
 
-redemption (0.9.606%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.606) %PKG_DISTRIBUTION%; urgency=low
 
   * Session Probe updated.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 04 Nov 2015 10:50:38 +0200
 
-redemption (0.9.604%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.604) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 28 Oct 2015 14:50:45 +0200
 
-redemption (0.9.602%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.602) %PKG_DISTRIBUTION%; urgency=low
 
   * Capability to make multiple (NLA) login attempts with different passwords.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 28 Oct 2015 14:42:17 +0200
 
-redemption (0.9.600%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.600) %PKG_DISTRIBUTION%; urgency=low
 
   * Session Probe updated.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 26 Oct 2015 14:28:42 +0200
 
-redemption (0.9.598%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.598) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 22 Oct 2015 19:15:33 +0200
 
-redemption (0.9.596%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.596) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 22 Oct 2015 18:34:39 +0200
 
-redemption (0.9.594%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.594) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 22 Oct 2015 17:25:15 +0200
 
-redemption (0.9.592%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.592) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 21 Oct 2015 14:46:28 +0200
 
-redemption (0.9.590c%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.590c) %PKG_DISTRIBUTION%; urgency=low
 
   * Display a error message on login screen when the primary connection failed.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 16 Oct 2015 08:00:11 +0200
 
-redemption (0.9.590b%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.590b) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 14 Oct 2015 14:56:17 +0200
 
-redemption (0.9.590a%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.590a) %PKG_DISTRIBUTION%; urgency=low
 
   * Session Probe updated.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 14 Oct 2015 14:52:52 +0200
 
-redemption (0.9.590%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.590) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 13 Oct 2015 16:46:29 +0200
 
-redemption (0.9.588%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.588) %PKG_DISTRIBUTION%; urgency=low
 
   * Keyboard input logging are dissociated from OCR.
   * Fix issue of unable to send clipboard log that contains percent character to syslog.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 13 Oct 2015 16:10:21 +0200
 
-redemption (0.9.586%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.586) %PKG_DISTRIBUTION%; urgency=low
 
   * Version 0.9.586
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 08 Oct 2015 15:56:14 +0200
 
-redemption (0.9.584%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.584) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 05 Oct 2015 10:48:26 +0200
 
-redemption (0.9.582c%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.582c) %PKG_DISTRIBUTION%; urgency=low
 
   * Log important life-cycle events of session.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 30 Sep 2015 10:38:13 +0200
 
-redemption (0.9.582b%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.582b) %PKG_DISTRIBUTION%; urgency=low
 
   * Send formatted data to syslog.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 29 Sep 2015 10:37:55 +0200
 
-redemption (0.9.582a%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.582a) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 24 Sep 2015 18:49:36 +0200
 
-redemption (0.9.582%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.582) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 22 Sep 2015 17:44:21 +0200
 
-redemption (0.9.580h%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.580h) %PKG_DISTRIBUTION%; urgency=low
 
   * Fixed bug of reading Client Device List Announce Request.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 17 Aug 2015 17:31:10 +0200
 
-redemption (0.9.580g%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.580g) %PKG_DISTRIBUTION%; urgency=low
 
   * Set new default values with --print-spec option
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 14 Aug 2015 16:07:37 +0200
 
-redemption (0.9.580f%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.580f) %PKG_DISTRIBUTION%; urgency=low
 
   * The rdpproxy.ini file is remplaced by rdpproxy.ini.reference, but not used.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 11 Aug 2015 15:35:22 +0200
 
-redemption (0.9.578f%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.578f) %PKG_DISTRIBUTION%; urgency=low
 
   * Le nouvel OCR est utilisé par redrec s'il est activé dans le fichier de config (option capture_flags).
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 24 Jul 2015 15:55:50 +0200
 
-redemption (0.9.578e%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.578e) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix issue of unable to access target if not using the selector and if an intermediary screen is displayed.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 17 Jul 2015 09:33:04 +0200
 
-redemption (0.9.578d%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.578d) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix $ocr-kbd/$kbd-ocr pattern matching.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 16 Jul 2015 16:53:43 +0200
 
-redemption (0.9.578c%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.578c) %PKG_DISTRIBUTION%; urgency=low
 
   * Deploy Session Probe using Redemption package.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 10 Jul 2015 10:43:07 +0200
 
-redemption (0.9.578b%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.578b) %PKG_DISTRIBUTION%; urgency=low
 
   * Optimize OCR loading.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 08 Jul 2015 17:20:04 +0200
 
-redemption (0.9.578a%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.578a) %PKG_DISTRIBUTION%; urgency=low
 
   * New OCR.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 03 Jul 2015 16:55:05 +0200
 
-redemption (0.9.578%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.578) %PKG_DISTRIBUTION%; urgency=low
 
   * WAB Session Probe.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 01 Jul 2015 11:34:42 +0200
 
-redemption (0.9.576%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.576) %PKG_DISTRIBUTION%; urgency=low
 
   * target selection based on group (for authorization)
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 05 Jun 2015 16:35:46 +0200
 
-redemption (0.9.574%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.574) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix unexpected data in final recording progress file.
   * Improve compatibility (Glyph) when connecting to VirtualBox Remote Desktop.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 22 Apr 2015 14:28:17 +0200
 
-redemption (0.9.572%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.572) %PKG_DISTRIBUTION%; urgency=low
 
   * Support of Security Server Redirection PDU.
   * Fix issue when downloading full video of a large session.
@@ -967,151 +967,151 @@ redemption (0.9.572%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 16 Mar 2015 17:18:46 +0200
 
-redemption (0.9.570%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.570) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Linux RDP client to VNC server endless clipboard loop.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 04 Mar 2015 17:15:16 +0200
 
-redemption (0.9.568%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.568) %PKG_DISTRIBUTION%; urgency=low
 
   * Fixed clipboard virtual channel.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 27 Feb 2015 11:55:11 +0200
 
-redemption (0.9.566%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.566) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 24 Feb 2015 15:23:42 +0200
 
-redemption (0.9.564%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.564) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix disabling clipboard up channel.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 23 Feb 2015 19:03:01 +0200
 
-redemption (0.9.562%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.562) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix enable/disable clipboard virtual channel.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 23 Feb 2015 12:05:54 +0200
 
-redemption (0.9.560%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.560) %PKG_DISTRIBUTION%; urgency=low
 
   * Remove variables of translation from configuration specification.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 16 Feb 2015 18:28:44 +0200
 
-redemption (0.9.558%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.558) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix updating mouse pointers in Windows Server 2012 with option 'Pointer shadow' enabled.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 16 Feb 2015 18:15:56 +0200
 
-redemption (0.9.556%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.556) %PKG_DISTRIBUTION%; urgency=low
 
   * Remove PID from recording file name.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 10 Feb 2015 15:53:29 +0200
 
-redemption (0.9.554%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.554) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix using default recording path in redver.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 03 Feb 2015 09:50:34 +0200
 
-redemption (0.9.552%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.552) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix configuration file specification.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 29 Jan 2015 09:48:29 +0200
 
-redemption (0.9.550%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.550) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix redver.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 26 Jan 2015 10:49:34 +0200
 
-redemption (0.9.548%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.548) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 14 Jan 2015 16:52:08 +0200
 
-redemption (0.9.546%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.546) %PKG_DISTRIBUTION%; urgency=low
 
   * Remove watchdog message.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 14 Jan 2015 15:27:40 +0200
 
-redemption (0.9.544%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.544) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 09 Jan 2015 10:27:20 +0200
 
-redemption (0.9.542%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.542) %PKG_DISTRIBUTION%; urgency=low
 
   * OCR: Cyrillic characters on win7
 
 -- cgrosjean <cgrosjean at wallix.com>  Thu, 08 Jan 2015 18:53:55 +0200
 
-redemption (0.9.534%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.534) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix rendering Glyphs background rectangle.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 06 Jan 2015 17:36:24 +0200
 
-redemption (0.9.530%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.530) %PKG_DISTRIBUTION%; urgency=low
 
   * Support of GlyphIndex Primary Drawing Order.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 06 Jan 2015 10:04:51 +0200
 
-redemption (0.9.528%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.528) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix outputing of list of values in configuration specification file.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 23 Dec 2014 09:12:46 +0200
 
-redemption (0.9.526%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.526) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 22 Dec 2014 17:05:03 +0200
 
-redemption (0.9.524%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.524) %PKG_DISTRIBUTION%; urgency=low
 
   * Proxy configuration specifications.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 22 Dec 2014 16:27:26 +0200
 
-redemption (0.9.522%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.522) %PKG_DISTRIBUTION%; urgency=low
 
   * Hide application logon informations in log of RDP proxy.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 10 Dec 2014 16:04:15 +0200
 
-redemption (0.9.520%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.520) %PKG_DISTRIBUTION%; urgency=low
 
   * redrec logs video generation error in progression information file.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 10 Dec 2014 11:49:27 +0200
 
-redemption (0.9.518%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.518) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 25 Nov 2014 09:46:42 +0200
 
-redemption (0.9.516%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.516) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix estimation of remaining time needed to finish FLV generation.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 25 Nov 2014 09:25:44 +0200
 
-redemption (0.9.514%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.514) %PKG_DISTRIBUTION%; urgency=low
 
   * Add estimation of remaining time needed to finish FLV generation.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 24 Nov 2014 16:45:46 +0200
 
-redemption (0.9.512%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.512) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 21 Nov 2014 18:48:58 +0200
 
-redemption (0.9.510%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.510) %PKG_DISTRIBUTION%; urgency=low
 
   * (redrec) - Add extra .pgs file indicating the movie generation progression.
   * Fix buffer overflow in RLE compressor with long Foreground/Background Image Order run.
@@ -1122,112 +1122,112 @@ redemption (0.9.510%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 21 Nov 2014 18:08:52 +0200
 
-redemption (0.9.508%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.508) %PKG_DISTRIBUTION%; urgency=low
 
   * Fixed recorded session duration issue.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 23 Oct 2014 18:19:13 +0200
 
-redemption (0.9.506%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.506) %PKG_DISTRIBUTION%; urgency=low
 
   * recorded RDP session can be processed partially. (#7622)
   * shared libssl and libcrypto
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 20 Oct 2014 17:41:30 +0200
 
-redemption (0.9.504%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.504) %PKG_DISTRIBUTION%; urgency=low
 
   * recorded RDP session can be processed partially. (#7622)
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 20 Oct 2014 16:55:58 +0200
 
-redemption (0.9.502%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.502) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Redemption packager.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 08 Oct 2014 09:35:54 +0200
 
-redemption (0.9.500%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.500) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Redemption packager.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 08 Oct 2014 09:31:13 +0200
 
-redemption (0.9.498%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.498) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix VNC inactivity timeout issue.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 07 Oct 2014 18:56:56 +0200
 
-redemption (0.9.496%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.496) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 24 Sep 2014 11:56:16 +0200
 
-redemption (0.9.498%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.498) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 24 Sep 2014 11:56:16 +0200
 
-redemption (0.9.492%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.492) %PKG_DISTRIBUTION%; urgency=low
 
   * Add capability to disable MemBlt Primary Drawing Order in mod_rdp.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 26 Aug 2014 18:18:37 +0200
 
-redemption (0.9.490%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.490) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix PNG Capture
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 25 Aug 2014 18:06:33 +0200
 
-redemption (0.9.488%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.488) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Bug in NLA authentication (NTLM)
   * PNG capture start on demand
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 21 Aug 2014 14:38:27 +0200
 
-redemption (0.9.486%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.486) %PKG_DISTRIBUTION%; urgency=low
 
   * - OCR: better ligature support in Windows 2012
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 31 Jul 2014 18:17:48 +0200
 
-redemption (0.9.484%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.484) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 24 Sep 2014 10:34:19 +0200
 
-redemption (0.9.484%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.484) %PKG_DISTRIBUTION%; urgency=low
 
   * fix packager
   * ocr fonctionnel sur Windows 2012
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 30 Jul 2014 18:30:50 +0200
 
-redemption (0.9.482%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.482) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix initializing end of history buffer of RDP 4.0 Bulk Compressor.
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 28 Jul 2014 14:15:34 +0200
 
-redemption (0.9.480%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.480) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Windows 2000 Server interactive connection.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 24 Jul 2014 19:11:25 +0200
 
-redemption (0.9.478%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.478) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix VNC connection
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 23 Jul 2014 18:56:33 +0200
 
-redemption (0.9.476%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.476) %PKG_DISTRIBUTION%; urgency=low
 
   * Changed packager.py to add a new option
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 21 Jul 2014 10:59:58 +0200
 
-redemption (0.9.474%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.474) %PKG_DISTRIBUTION%; urgency=low
 
   * Enable OCR capture if pattern detection is requested.
   * Fix partial screen refresh issu with 'replay_mod'.
@@ -1235,78 +1235,78 @@ redemption (0.9.474%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 18 Jul 2014 17:26:22 +0200
 
-redemption (0.9.472%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.472) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Jul 2014 16:51:18 +0200
 
-redemption (0.9.470%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.470) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix partial screen refresh issu with 'replay_mod'.
   * Fix no PNG produced for very short recorded RDP sessions.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Jul 2014 16:42:55 +0200
 
-redemption (0.9.468%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.468) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix black square inplce of normal arrow-cursor with xrdp server.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 09 Jul 2014 14:14:42 +0200
 
-redemption (0.9.466%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.466) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix WAB application's target fail-overing.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 08 Jul 2014 16:52:15 +0200
 
-redemption (0.9.464%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.464) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix vnc frame update buffer overflow.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 04 Jul 2014 18:04:47 +0200
 
-redemption (0.9.462%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.462) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix rules of builder.
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 04 Jul 2014 12:32:19 +0200
 
-redemption (0.9.460%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.460) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix version number.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 03 Jul 2014 18:19:35 +0200
 
-redemption (0.9.458%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.458) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix using Bitmap Update in 8-bits recorded RDP session.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 03 Jul 2014 18:09:25 +0200
 
-redemption (0.9.456%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.456) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix using Persistent Disk Bitmap Cache on RDP session reconnection.
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 03 Jul 2014 10:01:24 +0200
 
-redemption (0.9.454%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.454) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix key combination in VNC server
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 19 Jun 2014 18:05:40 +0200
 
-redemption (0.9.452%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.452) %PKG_DISTRIBUTION%; urgency=low
 
   * Redemption updated to version 0.9.452.
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 17 Jun 2014 17:40:34 +0200
 
-redemption (0.9.450%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.450) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Transparent proxy bug (parsing ip_conntrack failed)
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 10 Jun 2014 16:32:16 +0200
 
-redemption (0.9.448%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.448) %PKG_DISTRIBUTION%; urgency=low
 
   * Update openssl 1.0.1h
   * Fix RDP 4.0 Compression buffer overflow
@@ -1314,7 +1314,7 @@ redemption (0.9.448%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 06 Jun 2014 18:33:46 +0200
 
-redemption (0.9.446%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.446) %PKG_DISTRIBUTION%; urgency=low
 
   * Support of Frame Marker Alternate Secondary Drawing Order.
   * Capability for redrec to produce full flv and chunked flv in same pass.
@@ -1322,25 +1322,25 @@ redemption (0.9.446%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 05 Jun 2014 17:58:29 +0200
 
-redemption (0.9.444%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.444) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix dependance for Wab squeeze package
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 20 May 2014 11:16:05 +0200
 
-redemption (0.9.442%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.442) %PKG_DISTRIBUTION%; urgency=low
 
   * New Packager fix architecture string in control file
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 16 May 2014 17:01:58 +0200
 
-redemption (0.9.440%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.440) %PKG_DISTRIBUTION%; urgency=low
 
   * New Packager, unified files
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 16 May 2014 16:03:22 +0200
 
-redemption (0.9.382%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (0.9.382) %PKG_DISTRIBUTION%; urgency=low
 
   * i18 for selector
   * trace encryption provided by authentifier
