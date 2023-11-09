@@ -25,6 +25,7 @@ Author(s): Proxies Team
 #include "utils/netutils.hpp"
 #include "core/listen.hpp"
 
+#include <vector>
 #include <chrono>
 
 using namespace std::chrono_literals;
