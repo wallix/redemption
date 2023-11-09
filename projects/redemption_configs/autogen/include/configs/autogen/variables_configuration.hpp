@@ -4502,6 +4502,7 @@ namespace cfg
 
     /// type: ::configs::spec_types::directory_path <br/>
     /// acl ⇒ proxy <br/>
+    /// acl::name: replay_path <br/>
     /// default: "/tmp/" <br/>
     struct mod_replay::replay_path {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
@@ -4524,6 +4525,7 @@ namespace cfg
     /// 0 - replay once, 1 - loop replay <br/>
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>
+    /// acl::name: replay_on_loop <br/>
     /// default: false <br/>
     struct mod_replay::replay_on_loop {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;

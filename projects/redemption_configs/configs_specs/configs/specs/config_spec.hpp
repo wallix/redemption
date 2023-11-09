@@ -2213,7 +2213,11 @@ for (char const* section_name : {"icap_server_down", "icap_server_up"}) {
 _.section("mod_replay", [&]
 {
     _.member(MemberInfo{
-        .name = "replay_path",
+        .name = names{
+            .all = "replay_path",
+            // normally prefixed
+            .acl = "replay_path",
+        },
         .value = value<types::dirpath>("/tmp/"),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
     });
@@ -2226,7 +2230,11 @@ _.section("mod_replay", [&]
     });
 
     _.member(MemberInfo{
-        .name = "replay_on_loop",
+        .name = names{
+            .all = "replay_on_loop",
+            // normally prefixed
+            .acl = "replay_on_loop",
+        },
         .value = value(false),
         .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
         .desc = "0 - replay once, 1 - loop replay",

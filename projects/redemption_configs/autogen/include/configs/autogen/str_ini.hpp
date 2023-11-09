@@ -1486,7 +1486,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 [mod_replay]
 
 # (maxlen = 4096)
-# (acl config: proxy ⇐ mod_replay:replay_path)
+# (acl config: proxy ⇐ replay_path)
 #replay_path = /tmp/
 
 # 0 - Wait for Escape, 1 - End session
@@ -1495,7 +1495,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # 0 - replay once, 1 - loop replay
 # (type: boolean (0/no/false or 1/yes/true))
-# (acl config: proxy ⇐ mod_replay:replay_on_loop)
+# (acl config: proxy ⇐ replay_on_loop)
 #replay_on_loop = 0
 
 [translation]

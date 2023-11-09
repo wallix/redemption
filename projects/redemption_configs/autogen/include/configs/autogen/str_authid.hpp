@@ -249,8 +249,8 @@ namespace configs
         "smartcard_login"_zv,
         "banner_message"_zv,
         "banner_type"_zv,
-        "mod_replay:replay_path"_zv,
-        "mod_replay:replay_on_loop"_zv,
+        "replay_path"_zv,
+        "replay_on_loop"_zv,
         "language"_zv,
         "login_language"_zv,
     };
