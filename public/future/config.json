@@ -3828,6 +3828,7 @@
       "type": "dirpath",
       "value": "/tmp/",
       "description": "",
+      "aclName": "replay_path",
       "iniOnly": true,
       "aclToProxy": true,
       "logStategy": "1"
@@ -3846,6 +3847,7 @@
       "type": "bool",
       "value": false,
       "description": "0 - replay once, 1 - loop replay",
+      "aclName": "replay_on_loop",
       "iniOnly": true,
       "aclToProxy": true,
       "logStategy": "1"
