@@ -1,4 +1,0 @@
-%ETC_PREFIX%/*
-%PREFIX%/bin/*
-%PREFIX%/share/rdpproxy/*
-%LIB_PREFIX%/libredrec.so

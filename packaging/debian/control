@@ -1,0 +1,15 @@
+Source: redemption
+Section: net
+Priority: extra
+Maintainer: Proxy Team <wab@wallix.com>
+Build-Depends: debhelper (>=7), dpkg-dev, g++, libboost-tools-dev, libssl-dev, libkrb5-dev, libsnappy-dev, libpng-dev, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev, libx264-dev, zlib1g-dev, libbz2-dev, libhyperscan-dev
+Standards-Version: %VERSION%
+Homepage: https://github.com/wallix/redemption
+
+Package: redemption
+Architecture: any
+Homepage: https://github.com/wallix/redemption
+Depends: ${shlibs:Depends}
+Description: A new generation RDP proxy for WAB
+    A new generation RDP proxy for WAB
+    wwww: https://github.com/wallix/redemption

@@ -395,13 +395,9 @@ Exemple call line for proxy_recorder:
 
 # Packaging
 
-With https://github.com/wallix/packager
+Create Debian package with
 
-    packager.py build \
-        --target-file packaging/targets/debian \
-        --version-file include/main/version.hpp \
-        --build-package \
-        --no-check
+    ./packaging/package.sh
 
 
 # Test files

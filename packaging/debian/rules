@@ -3,22 +3,22 @@
 export DH_VERBOSE=10
 export DESTDIR=debian/buildtmp
 
-export PREFIX=%PREFIX%
-export LIB_PREFIX=%LIB_PREFIX%
-export ETC_PREFIX=%ETC_PREFIX%
-export CERT_PREFIX=%CERT_PREFIX%
+export PREFIX=/usr/local
+export LIB_PREFIX=/usr/local/lib
+export ETC_PREFIX=/etc/rdpproxy
+export CERT_PREFIX=/etc/rdpproxy/cert
 export RDPLICENSE_PATH=$CERT_PREFIX/rdplicense
 export RDPCERT_PATH=$CERT_PREFIX
-export METRICS_PATH=%METRICS_PATH%
-export RECORD_PATH=%RECORD_PATH%
-export RECORD_TMP_PATH=%RECORD_TMP_PATH%
-export HASH_PATH=%HASH_PATH%
+export METRICS_PATH=/var/rdpproxy/recorded/metrics
+export RECORD_PATH=/var/rdpproxy/recorded/rdp
+export RECORD_TMP_PATH=/var/rdpproxy/tmp
+export HASH_PATH=/var/rdpproxy/hash
 export PERSISTENT_PATH=/var/lib/redemption/cache
-#export PERSISTENT_PATH=%PERSISTENT_PATH%
-export DRIVE_REDIRECTION_PATH=%DRIVE_REDIRECTION_PATH%
+#export PERSISTENT_PATH=
+export DRIVE_REDIRECTION_PATH=/var/rdpproxy/drive_redirection
 
 
-BJAM_EXTRA_INSTALL=%BJAM_EXTRA% %DEBUG_OPT%
+BJAM_EXTRA_INSTALL=-j2 cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING'
 
 clean:
 	# dh_testdir - test directory before building Debian package. It makes sure

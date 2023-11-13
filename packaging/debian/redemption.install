@@ -1,0 +1,4 @@
+/etc/rdpproxy/*
+/usr/local/bin/*
+/usr/local/share/rdpproxy/*
+/usr/local/lib/libredrec.so
