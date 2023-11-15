@@ -2925,6 +2925,7 @@ namespace cfg
     /// FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264 <br/>
     /// ⚠ Some browsers and video decoders don't support crf=0 <br/>
     /// type: std::string <br/>
+    /// displayName: FFmpeg options <br/>
     /// default: "crf=35 preset=superfast" <br/>
     struct video::ffmpeg_options {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
@@ -4992,6 +4993,7 @@ namespace cfg
     /// Value passed to function av_log_set_level() <br/>
     /// See https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html <br/>
     /// type: uint32_t <br/>
+    /// displayName: FFmpeg <br/>
     /// default: 0 <br/>
     struct debug::ffmpeg {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;

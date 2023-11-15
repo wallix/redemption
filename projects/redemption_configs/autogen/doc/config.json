@@ -2422,6 +2422,7 @@
       "type": "str",
       "value": "crf=35 preset=superfast",
       "description": "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n⚠ Some browsers and video decoders don't support crf=0",
+      "displayName": "FFmpeg options",
       "globalSpec": true,
       "advanced": true
     },
@@ -4204,6 +4205,7 @@
       "type": "u32",
       "value": 0,
       "description": "Value passed to function av_log_set_level()\nSee https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html",
+      "displayName": "FFmpeg",
       "globalSpec": true,
       "hex": true,
       "advanced": true

@@ -2389,7 +2389,10 @@ _.section("video", [&]
     });
 
     _.member(MemberInfo{
-        .name = "ffmpeg_options",
+        .name = names{
+            .all = "ffmpeg_options",
+            .display = "FFmpeg options",
+        },
         .value = value<std::string>("crf=35 preset=superfast"),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
@@ -2674,7 +2677,10 @@ _.section("debug", [&]
     });
 
     _.member(MemberInfo{
-        .name = "ffmpeg",
+        .name = names{
+            .all = "ffmpeg",
+            .display = "FFmpeg",
+        },
         .value = value<types::u32>(),
         .spec = global_spec(no_acl, spec::advanced | spec::hex),
         .desc = "Value passed to function av_log_set_level()\nSee https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html",

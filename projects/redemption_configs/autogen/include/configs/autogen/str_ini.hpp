@@ -1336,6 +1336,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
 # ⚠ Some browsers and video decoders don't support crf=0
 #_advanced
+#_display_name=FFmpeg options
 #ffmpeg_options = crf=35 preset=superfast
 
 # In the generated video of the session record traces, remove the top left banner with the timestamp.
@@ -1769,6 +1770,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # See https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html
 # (min = 0)
 #_advanced
+#_display_name=FFmpeg
 #ffmpeg = 0
 
 # Log unknown members or sections

@@ -426,6 +426,7 @@ framerate = integer(min=1, max=120, default=5)
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
 # ⚠ Some browsers and video decoders don't support crf=0
 #_advanced
+#_display_name=FFmpeg options
 ffmpeg_options = string(default="crf=35 preset=superfast")
 
 # In the generated video of the session record traces, remove the top left banner with the timestamp.
@@ -770,6 +771,7 @@ ocr = integer(min=0, default=0)
 # See https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html
 #_advanced
 #_hex
+#_display_name=FFmpeg
 ffmpeg = integer(min=0, default=0)
 
 # Log unknown members or sections
