@@ -41,7 +41,7 @@ enum class CaptureFlags : uint8_t
 {
     none = 0,
     png = 1,
-    // wrm: Session recording file.
+    // Session recording file.
     wrm = 2,
     video = 4,
     ocr = 8,
@@ -480,7 +480,7 @@ template<> struct is_valid_enum_value<SessionProbeOnKeepaliveTimeout>
 
 enum class SmartVideoCropping : uint8_t
 {
-    // Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
+    // When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
     disable = 0,
     // When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
     v1 = 1,
@@ -610,17 +610,17 @@ template<> struct is_valid_enum_value<ClientAddressSent>
 enum class SessionProbeLogLevel : uint8_t
 {
     Off = 0,
-    // The Fatal level designates very severe error events that will presumably lead the application to abort.
+    // Designates very severe error events that will presumably lead the application to abort.
     Fatal = 1,
-    // The Error level designates error events that might still allow the application to continue running.
+    // Designates error events that might still allow the application to continue running.
     Error = 2,
-    // The Info level designates informational messages that highlight the progress of the application at coarse-grained level.
+    // Designates informational messages that highlight the progress of the application at coarse-grained level.
     Info = 3,
-    // The Warning level designates potentially harmful situations.
+    // Designates potentially harmful situations.
     Warning = 4,
-    // The Debug level designates fine-grained informational events that are mostly useful to debug an application.
+    // Designates fine-grained informational events that are mostly useful to debug an application.
     Debug = 5,
-    // The Detail level designates finer-grained informational events than Debug.
+    // Designates finer-grained informational events than Debug.
     Detail = 6,
 };
 

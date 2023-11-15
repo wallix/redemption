@@ -8,7 +8,7 @@ if (( $# != 1 )); then
 fi
 
 d="$(realpath -m $1)"
-[[ -e $d ]] || mkdir -m "$d"
+[[ -e $d ]] || mkdir -p "$d"
 
 cd "$(dirname "$0")"
 ../../../tools/conf_migration_tool/conf_migrate.py --dump=json > "$d"/migrate.json

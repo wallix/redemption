@@ -701,9 +701,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_launch_mask = 1
 
 # It is recommended to use option 1 (disconnect user).
-#   0: The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
-#   1: This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of 'Launch timeout' to the performance of the target.
-#   2: We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
+#   0: ignore and continue: The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
+#   1: disconnect user: This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of 'Launch timeout' to the performance of the target.
+#   2: retry without session probe: We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
 # (acl config: proxy ⇐ session_probe:on_launch_failure)
 #on_launch_failure = 1
 
@@ -736,9 +736,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #keepalive_timeout = 5000
 
 # This parameter allows us to choose the behavior of the RDP Proxy in case of losing the connection with Session Probe.
-#   0: Designed to minimize the impact on the user experience if the Session Probe is unstable. It should not be used when Session Probe is working well. An attacker can take advantage of this setting by simulating a Session Probe crash in order to bypass the surveillance.
-#   1: Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the 'End disconnected session' parameter (or an equivalent setting at the RDS-level) is enabled.
-#   2: This is the recommended setting. User actions will be blocked until contact with the Session Probe (reply to KeepAlive message or something else) is resumed.
+#   0: ignore and continue: Designed to minimize the impact on the user experience if the Session Probe is unstable. It should not be used when Session Probe is working well. An attacker can take advantage of this setting by simulating a Session Probe crash in order to bypass the surveillance.
+#   1: disconnect user: Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the 'End disconnected session' parameter (or an equivalent setting at the RDS-level) is enabled.
+#   2: freeze connection and wait: This is the recommended setting. User actions will be blocked until contact with the Session Probe (reply to KeepAlive message or something else) is resumed.
 # (acl config: proxy ⇐ session_probe:on_keepalive_timeout)
 #on_keepalive_timeout = 2
 
@@ -771,12 +771,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_log_rotation = 0
 
 # Defines logging severity levels.
-#   1: The Fatal level designates very severe error events that will presumably lead the application to abort.
-#   2: The Error level designates error events that might still allow the application to continue running.
-#   3: The Info level designates informational messages that highlight the progress of the application at coarse-grained level.
-#   4: The Warning level designates potentially harmful situations.
-#   5: The Debug level designates fine-grained informational events that are mostly useful to debug an application.
-#   6: The Detail level designates finer-grained informational events than Debug.
+#   1: Fatal: Designates very severe error events that will presumably lead the application to abort.
+#   2: Error: Designates error events that might still allow the application to continue running.
+#   3: Info: Designates informational messages that highlight the progress of the application at coarse-grained level.
+#   4: Warning: Designates potentially harmful situations.
+#   5: Debug: Designates fine-grained informational events that are mostly useful to debug an application.
+#   6: Detail: Designates finer-grained informational events than Debug.
 #_advanced
 # (acl config: proxy ⇐ session_probe:log_level)
 #log_level = 5
@@ -974,9 +974,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 # BestSafe interaction must be enabled. Please refer to 'Enable bestsafe interaction' parameter.
 # This parameter allows you to choose the behavior of the RDP Proxy in case of detection of Windows account manipulation.
 # Detectable account manipulations are the creation, deletion of a Windows account, and the addition and deletion of an account from a Windows user group.
-#   0: User action will be accepted
-#   1: (Same thing as 'allow') 
-#   2: User action will be rejected
+#   0: allow: User action will be accepted
+#   1: notify: (Same thing as 'allow') 
+#   2: deny: User action will be rejected
 # (acl config: proxy ⇐ session_probe:on_account_manipulation)
 #on_account_manipulation = 0
 
@@ -1036,9 +1036,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (type: boolean (0/no/false or 1/yes/true))
 #clipboard_based_launcher_reset_keyboard_status = 1
 
-#   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
-#   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
-#   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
+#   0: windows management instrumentation: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
+#   1: windows internals: Calling internal system APIs to get the process command line. (More efficient but less stable)
+#   2: both: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 #_advanced
 # (acl config: proxy ⇐ session_probe:process_command_line_retrieve_method)
 #process_command_line_retrieve_method = 2
@@ -1076,9 +1076,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Warn if check allow connexion to server.
 #   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (Bastion notification)
+#   0x1: syslog: message sent to syslog
+#   0x2: user: User notified (through proxy interface)
+#   0x4: admin: admin notified (Bastion notification)
 # 
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
@@ -1087,9 +1087,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Warn that new server certificate file was created.
 #   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (Bastion notification)
+#   0x1: syslog: message sent to syslog
+#   0x2: user: User notified (through proxy interface)
+#   0x4: admin: admin notified (Bastion notification)
 # 
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
@@ -1098,9 +1098,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Warn that server certificate file was successfully checked.
 #   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (Bastion notification)
+#   0x1: syslog: message sent to syslog
+#   0x2: user: User notified (through proxy interface)
+#   0x4: admin: admin notified (Bastion notification)
 # 
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
@@ -1109,9 +1109,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Warn that server certificate file checking failed.
 #   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (Bastion notification)
+#   0x1: syslog: message sent to syslog
+#   0x2: user: User notified (through proxy interface)
+#   0x4: admin: admin notified (Bastion notification)
 # 
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
@@ -1120,9 +1120,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Warn that server certificate check raised some internal error.
 #   0x0: nobody
-#   0x1: message sent to syslog
-#   0x2: User notified (through proxy interface)
-#   0x4: admin notified (Bastion notification)
+#   0x1: syslog: message sent to syslog
+#   0x2: user: User notified (through proxy interface)
+#   0x4: admin: admin notified (Bastion notification)
 # 
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #error_message = 1
@@ -1160,9 +1160,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # The RDP clipboard is based on a token that indicates who owns data between server and client. However, some RDP clients, such as Freerpd, always appropriate this token. This conflicts with VNC, which also appropriates this token, causing clipboard data to be sent in loops.
 # This option indicates the strategy to adopt in such situations.
-#   0: Clipboard processing is deferred and, if necessary, the token is left with the client.
-#   1: When 2 identical requests are received, the second is ignored. This can block clipboard data reception until a clipboard event is triggered on the server when the client clipboard is blocked, and vice versa.
-#   2: No special processing is done, the proxy always responds immediately.
+#   0: delayed: Clipboard processing is deferred and, if necessary, the token is left with the client.
+#   1: duplicated: When 2 identical requests are received, the second is ignored. This can block clipboard data reception until a clipboard event is triggered on the server when the client clipboard is blocked, and vice versa.
+#   2: continued: No special processing is done, the proxy always responds immediately.
 #_advanced
 # (acl config: proxy ⇐ vnc_bogus_clipboard_infinite_loop)
 #bogus_clipboard_infinite_loop = 0
@@ -1344,9 +1344,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #notimestamp = 0
 
-#   0: Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
-#   1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
-#   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
+#   0: disable: When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
+#   1: v1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
+#   2: v2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
 #smart_video_cropping = 2
 
 # Check this option will allow to play a video with corrupted Bitmap Update.

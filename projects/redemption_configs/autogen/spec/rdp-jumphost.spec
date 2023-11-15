@@ -105,9 +105,9 @@ forward_client_build_number = boolean(default=True)
 
 # Warn if check allow connexion to server.
 # &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
+# &nbsp; &nbsp;   0x1: syslog: message sent to syslog
+# &nbsp; &nbsp;   0x2: user: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -115,9 +115,9 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 
 # Warn that new server certificate file was created.
 # &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
+# &nbsp; &nbsp;   0x1: syslog: message sent to syslog
+# &nbsp; &nbsp;   0x2: user: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -125,9 +125,9 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file was successfully checked.
 # &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
+# &nbsp; &nbsp;   0x1: syslog: message sent to syslog
+# &nbsp; &nbsp;   0x2: user: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -135,9 +135,9 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file checking failed.
 # &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
+# &nbsp; &nbsp;   0x1: syslog: message sent to syslog
+# &nbsp; &nbsp;   0x2: user: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex

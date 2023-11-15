@@ -220,9 +220,9 @@ use_smart_launcher = boolean(default=True)
 enable_launch_mask = boolean(default=True)
 
 # It is recommended to use option 1 (disconnect user).
-# &nbsp; &nbsp;   0: The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
-# &nbsp; &nbsp;   1: This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of 'Launch timeout' to the performance of the target.
-# &nbsp; &nbsp;   2: We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
+# &nbsp; &nbsp;   0: ignore and continue: The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
+# &nbsp; &nbsp;   1: disconnect user: This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of 'Launch timeout' to the performance of the target.
+# &nbsp; &nbsp;   2: retry without session probe: We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'.
 on_launch_failure = option(0, 1, 2, default=1)
 
 # This parameter is used if 'On launch failure' is 1 (disconnect user).
@@ -249,9 +249,9 @@ start_launch_timeout_timer_only_after_logon = boolean(default=True)
 keepalive_timeout = integer(min=0, max=60000, default=5000)
 
 # This parameter allows us to choose the behavior of the RDP Proxy in case of losing the connection with Session Probe.
-# &nbsp; &nbsp;   0: Designed to minimize the impact on the user experience if the Session Probe is unstable. It should not be used when Session Probe is working well. An attacker can take advantage of this setting by simulating a Session Probe crash in order to bypass the surveillance.
-# &nbsp; &nbsp;   1: Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the 'End disconnected session' parameter (or an equivalent setting at the RDS-level) is enabled.
-# &nbsp; &nbsp;   2: This is the recommended setting. User actions will be blocked until contact with the Session Probe (reply to KeepAlive message or something else) is resumed.
+# &nbsp; &nbsp;   0: ignore and continue: Designed to minimize the impact on the user experience if the Session Probe is unstable. It should not be used when Session Probe is working well. An attacker can take advantage of this setting by simulating a Session Probe crash in order to bypass the surveillance.
+# &nbsp; &nbsp;   1: disconnect user: Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the 'End disconnected session' parameter (or an equivalent setting at the RDS-level) is enabled.
+# &nbsp; &nbsp;   2: freeze connection and wait: This is the recommended setting. User actions will be blocked until contact with the Session Probe (reply to KeepAlive message or something else) is resumed.
 on_keepalive_timeout = option(0, 1, 2, default=2)
 
 # The behavior of this parameter is different between the Desktop session and the RemoteApp session (RDS meaning). But in each case, the purpose of enabling this parameter is to not leave disconnected sessions in a state unusable by the RDP proxy.
@@ -275,12 +275,12 @@ enable_log = boolean(default=False)
 enable_log_rotation = boolean(default=False)
 
 # Defines logging severity levels.
-# &nbsp; &nbsp;   1: The Fatal level designates very severe error events that will presumably lead the application to abort.
-# &nbsp; &nbsp;   2: The Error level designates error events that might still allow the application to continue running.
-# &nbsp; &nbsp;   3: The Info level designates informational messages that highlight the progress of the application at coarse-grained level.
-# &nbsp; &nbsp;   4: The Warning level designates potentially harmful situations.
-# &nbsp; &nbsp;   5: The Debug level designates fine-grained informational events that are mostly useful to debug an application.
-# &nbsp; &nbsp;   6: The Detail level designates finer-grained informational events than Debug.
+# &nbsp; &nbsp;   1: Fatal: Designates very severe error events that will presumably lead the application to abort.
+# &nbsp; &nbsp;   2: Error: Designates error events that might still allow the application to continue running.
+# &nbsp; &nbsp;   3: Info: Designates informational messages that highlight the progress of the application at coarse-grained level.
+# &nbsp; &nbsp;   4: Warning: Designates potentially harmful situations.
+# &nbsp; &nbsp;   5: Debug: Designates fine-grained informational events that are mostly useful to debug an application.
+# &nbsp; &nbsp;   6: Detail: Designates finer-grained informational events than Debug.
 #_advanced
 log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
@@ -446,9 +446,9 @@ enable_bestsafe_interaction = boolean(default=False)
 # BestSafe interaction must be enabled. Please refer to 'Enable bestsafe interaction' parameter.
 # This parameter allows you to choose the behavior of the RDP Proxy in case of detection of Windows account manipulation.
 # Detectable account manipulations are the creation, deletion of a Windows account, and the addition and deletion of an account from a Windows user group.
-# &nbsp; &nbsp;   0: User action will be accepted
-# &nbsp; &nbsp;   1: (Same thing as 'allow') 
-# &nbsp; &nbsp;   2: User action will be rejected
+# &nbsp; &nbsp;   0: allow: User action will be accepted
+# &nbsp; &nbsp;   1: notify: (Same thing as 'allow') 
+# &nbsp; &nbsp;   2: deny: User action will be rejected
 on_account_manipulation = option(0, 1, 2, default=0)
 
 # This parameter is used to indicate the name of an environment variable, to be set on the Windows device, and pointed to a directory (on the device) that can be used to store and start the Session Probe. The environment variable must be available in the Windows user session.
@@ -477,9 +477,9 @@ outbound_connection_monitoring_rules = string(default="")
 # BestSafe can be used to perform detection of process launched in the session. Please refer to 'Enable bestsafe interaction' parameter.
 process_monitoring_rules = string(default="")
 
-# &nbsp; &nbsp;   0: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
-# &nbsp; &nbsp;   1: Calling internal system APIs to get the process command line. (More efficient but less stable)
-# &nbsp; &nbsp;   2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
+# &nbsp; &nbsp;   0: windows management instrumentation: Get command-line of processes via Windows Management Instrumentation. (Legacy method)
+# &nbsp; &nbsp;   1: windows internals: Calling internal system APIs to get the process command line. (More efficient but less stable)
+# &nbsp; &nbsp;   2: both: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 #_advanced
 process_command_line_retrieve_method = option(0, 1, 2, default=2)
 
@@ -510,9 +510,9 @@ server_cert_check = option(0, 1, 2, 3, default=1)
 
 # Warn if check allow connexion to server.
 # &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
+# &nbsp; &nbsp;   0x1: syslog: message sent to syslog
+# &nbsp; &nbsp;   0x2: user: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -520,9 +520,9 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 
 # Warn that new server certificate file was created.
 # &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
+# &nbsp; &nbsp;   0x1: syslog: message sent to syslog
+# &nbsp; &nbsp;   0x2: user: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -530,9 +530,9 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file was successfully checked.
 # &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
+# &nbsp; &nbsp;   0x1: syslog: message sent to syslog
+# &nbsp; &nbsp;   0x2: user: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
@@ -540,9 +540,9 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file checking failed.
 # &nbsp; &nbsp;   0x0: nobody
-# &nbsp; &nbsp;   0x1: message sent to syslog
-# &nbsp; &nbsp;   0x2: User notified (through proxy interface)
-# &nbsp; &nbsp;   0x4: admin notified (Bastion notification)<br/>
+# &nbsp; &nbsp;   0x1: syslog: message sent to syslog
+# &nbsp; &nbsp;   0x2: user: User notified (through proxy interface)
+# &nbsp; &nbsp;   0x4: admin: admin notified (Bastion notification)<br/>
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex

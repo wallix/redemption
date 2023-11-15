@@ -1388,6 +1388,8 @@ inline std::string numeric_enum_desc(type_enumeration const& e, bool use_disable
     std::size_t ndigit16 = (e.cat == type_enumeration::Category::flags)
       ? static_cast<std::size_t>(64 - __builtin_clzll(e.max()) + 4 - 1) / 4
       : 0;
+    bool show_name_when_description
+      = (e.display_name_option == type_enumeration::DisplayNameOption::WithNameWhenDdescription);
 
     auto show_values = [&](bool hexa)
     {
@@ -1403,20 +1405,21 @@ inline std::string numeric_enum_desc(type_enumeration const& e, bool use_disable
                     str += int_to_decimal_chars(v.val).sv();
                 }
 
-                str += ": ";
-
                 // skip "disable none" text
-                if (use_disable_prefix && (!v.desc.empty() || v.val)) {
-                    str += "disable ";
-                }
+                auto prefix = (use_disable_prefix && (!v.desc.empty() || v.val))
+                    ? ": disable "sv
+                    : ": "sv;
 
-                if (!v.desc.empty()) {
-                    str += v.desc;
-                }
-                else {
+                if (v.desc.empty() || show_name_when_description) {
+                    str += prefix;
                     for (char c : v.get_name()) {
                         str += ('_' == c ? ' ' : c);
                     }
+                }
+
+                if (!v.desc.empty()) {
+                    str += prefix;
+                    str += v.desc;
                 }
 
                 str += '\n';

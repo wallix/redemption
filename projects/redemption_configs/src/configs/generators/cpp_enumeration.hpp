@@ -363,7 +363,9 @@ namespace cpp_enumeration_writer
         for (auto const& e : enums.enumerations_) {
             str_append(json, json_sep1,
                 "{\n  \"name\": \""_av, e.name, "\""
-                ",\n  \"category\": \""_av, cat_s[int(e.cat)], '"'
+                ",\n  \"category\": \""_av, cat_s[int(e.cat)], "\""
+                ",\n  \"nameWhenDescription\": "_av,
+                    (e.display_name_option == type_enumeration::DisplayNameOption::WithNameWhenDdescription) ? "true"_av : "false"_av
             );
             append_quoted_if_not_empty("description"_av, e.desc);
             append_quoted_if_not_empty("info"_av, e.info);

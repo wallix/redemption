@@ -33,6 +33,7 @@
 struct type_enumeration
 {
     enum class Category { autoincrement, flags, set };
+    enum class DisplayNameOption : bool { WithoutNameWhenDescription, WithNameWhenDdescription };
 
     struct value_type
     {
@@ -51,15 +52,9 @@ struct type_enumeration
     std::string_view info;
 
     Category cat;
+    DisplayNameOption display_name_option;
 
-    std::vector<value_type> values;
-
-    type_enumeration(std::string_view name, std::string_view desc, std::string_view info, Category cat)
-    : name(name)
-    , desc(desc)
-    , info(info)
-    , cat(cat)
-    {}
+    std::vector<value_type> values {};
 
     uint64_t min() const
     {
@@ -155,26 +150,32 @@ struct type_enumeration_set : type_enumeration
 
 struct type_enumerations
 {
+    using DisplayNameOption = type_enumeration::DisplayNameOption;
+    using Category = type_enumeration::Category;
+
     std::vector<type_enumeration> enumerations_;
 
     type_enumeration_inc & enumeration_flags(
-        std::string_view name, std::string_view desc = {}, std::string_view info = {})
+        std::string_view name, DisplayNameOption display_opt,
+        std::string_view desc = {}, std::string_view info = {})
     {
-        this->enumerations_.push_back({name, desc, info, type_enumeration::Category::flags});
+        this->enumerations_.push_back({name, desc, info, Category::flags, display_opt});
         return static_cast<type_enumeration_inc&>(this->enumerations_.back());
     }
 
     type_enumeration_inc & enumeration_list(
-        std::string_view name, std::string_view desc = {}, std::string_view info = {})
+        std::string_view name, DisplayNameOption display_opt,
+        std::string_view desc = {}, std::string_view info = {})
     {
-        this->enumerations_.push_back({name, desc, info, type_enumeration::Category::autoincrement});
+        this->enumerations_.push_back({name, desc, info, Category::autoincrement, display_opt});
         return static_cast<type_enumeration_inc&>(this->enumerations_.back());
     }
 
     type_enumeration_set & enumeration_set(
-        std::string_view name, std::string_view desc = {}, std::string_view info = {})
+        std::string_view name, DisplayNameOption display_opt,
+        std::string_view desc = {}, std::string_view info = {})
     {
-        this->enumerations_.push_back({name, desc, info, type_enumeration::Category::set});
+        this->enumerations_.push_back({name, desc, info, Category::set, display_opt});
         return static_cast<type_enumeration_set&>(this->enumerations_.back());
     }
 

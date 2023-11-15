@@ -329,9 +329,9 @@ server_clipboard_encoding_type = option('utf-8', 'latin1', default="latin1")
 
 # The RDP clipboard is based on a token that indicates who owns data between server and client. However, some RDP clients, such as Freerpd, always appropriate this token. This conflicts with VNC, which also appropriates this token, causing clipboard data to be sent in loops.
 # This option indicates the strategy to adopt in such situations.
-# &nbsp; &nbsp;   0: Clipboard processing is deferred and, if necessary, the token is left with the client.
-# &nbsp; &nbsp;   1: When 2 identical requests are received, the second is ignored. This can block clipboard data reception until a clipboard event is triggered on the server when the client clipboard is blocked, and vice versa.
-# &nbsp; &nbsp;   2: No special processing is done, the proxy always responds immediately.
+# &nbsp; &nbsp;   0: delayed: Clipboard processing is deferred and, if necessary, the token is left with the client.
+# &nbsp; &nbsp;   1: duplicated: When 2 identical requests are received, the second is ignored. This can block clipboard data reception until a clipboard event is triggered on the server when the client clipboard is blocked, and vice versa.
+# &nbsp; &nbsp;   2: continued: No special processing is done, the proxy always responds immediately.
 #_advanced
 bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)
 
@@ -433,9 +433,9 @@ ffmpeg_options = string(default="crf=35 preset=superfast")
 #_advanced
 notimestamp = boolean(default=False)
 
-# &nbsp; &nbsp;   0: Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
-# &nbsp; &nbsp;   1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
-# &nbsp; &nbsp;   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
+# &nbsp; &nbsp;   0: disable: When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
+# &nbsp; &nbsp;   1: v1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
+# &nbsp; &nbsp;   2: v2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
 smart_video_cropping = option(0, 1, 2, default=2)
 
 # Check this option will allow to play a video with corrupted Bitmap Update.
