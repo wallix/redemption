@@ -743,10 +743,11 @@ const toHumanTime = (t, millisecondFactor) => {
       strDesc.push('</table>');
     }
 
-    intDesc.push('<table class="enumInt"><th>Value</th><th>Description</th>');
+    intDesc.push('<table class="enumInt"><th>Value</th><th>Name</th><th>Description</th>');
     for (const info of e.values) {
       const value = (e.category === 'flags') ? `0x${info.value.toString(16)}` : info.value;
-      intDesc.push(`<tr><td>${value}</td><td>${info.description || info.name}</td></tr>`);
+      const name = info.name.replaceAll('_', ' ');
+      intDesc.push(`<tr><td>${value}</td><td>${name}</td><td>${info.description || info.name}</td></tr>`);
     }
     intDesc.push('</table>');
 

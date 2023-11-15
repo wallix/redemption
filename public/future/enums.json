@@ -1,6 +1,7 @@
 [{
   "name": "ModuleName",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "UNKNOWN",
@@ -64,6 +65,7 @@
 }, {
   "name": "CaptureFlags",
   "category": "flags",
+  "nameWhenDescription": true,
   "description": "Specifies the type of data to be captured:",
   "values": [
     {
@@ -75,7 +77,7 @@
     }, {
       "name": "wrm",
       "value": 2,
-      "description": "wrm: Session recording file."
+      "description": "Session recording file."
     }, {
       "name": "ocr",
       "value": 8
@@ -84,6 +86,7 @@
 }, {
   "name": "RdpSecurityEncryptionLevel",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "none",
@@ -102,6 +105,7 @@
 }, {
   "name": "Language",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "en",
@@ -114,6 +118,7 @@
 }, {
   "name": "ClipboardEncodingType",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "utf8",
@@ -127,6 +132,7 @@
 }, {
   "name": "KeyboardLogFlags",
   "category": "flags",
+  "nameWhenDescription": false,
   "values": [
     {
       "name": "none",
@@ -144,6 +150,7 @@
 }, {
   "name": "ClipboardLogFlags",
   "category": "flags",
+  "nameWhenDescription": false,
   "values": [
     {
       "name": "none",
@@ -161,6 +168,7 @@
 }, {
   "name": "FileSystemLogFlags",
   "category": "flags",
+  "nameWhenDescription": false,
   "values": [
     {
       "name": "none",
@@ -178,6 +186,7 @@
 }, {
   "name": "ColorDepth",
   "category": "set",
+  "nameWhenDescription": false,
   "description": "Specifies the maximum color resolution (color depth) for client connection session:",
   "values": [
     {
@@ -205,6 +214,7 @@
 }, {
   "name": "ServerNotification",
   "category": "flags",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "nobody",
@@ -226,6 +236,7 @@
 }, {
   "name": "ServerCertCheck",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "description": "Behavior of certificates check.",
   "info": "System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.",
   "values": [
@@ -250,6 +261,7 @@
 }, {
   "name": "TraceType",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "description": "Session record options.",
   "info": "When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.",
   "values": [
@@ -270,6 +282,7 @@
 }, {
   "name": "KeyboardInputMaskingLevel",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "values": [
     {
       "name": "unmasked",
@@ -292,6 +305,7 @@
 }, {
   "name": "SessionProbeOnLaunchFailure",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "description": "Behavior on failure to launch Session Probe.",
   "values": [
     {
@@ -311,6 +325,7 @@
 }, {
   "name": "VncBogusClipboardInfiniteLoop",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "delayed",
@@ -329,6 +344,7 @@
 }, {
   "name": "ColorDepthSelectionStrategy",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "description": "The method by which the proxy RDP establishes criteria on which to chosse a color depth for Session recording file (wrm):",
   "values": [
     {
@@ -344,6 +360,7 @@
 }, {
   "name": "WrmCompressionAlgorithm",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "description": "The compression method of Session recording file (wrm):",
   "values": [
     {
@@ -362,6 +379,7 @@
 }, {
   "name": "RdpCompression",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "description": "Specifies the highest RDP compression support available",
   "values": [
     {
@@ -389,6 +407,7 @@
 }, {
   "name": "OcrVersion",
   "category": "set",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "v1",
@@ -401,6 +420,7 @@
 }, {
   "name": "OcrLocale",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "values": [
     {
       "name": "latin",
@@ -415,6 +435,7 @@
 }, {
   "name": "SessionProbeOnKeepaliveTimeout",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "ignore_and_continue",
@@ -433,11 +454,12 @@
 }, {
   "name": "SmartVideoCropping",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "disable",
       "value": 0,
-      "description": "Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop"
+      "description": "When replaying the session video, the content of the RDP viewer matches the size of the client's desktop"
     }, {
       "name": "v1",
       "value": 1,
@@ -451,6 +473,7 @@
 }, {
   "name": "RdpModeConsole",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "values": [
     {
       "name": "allow",
@@ -469,6 +492,7 @@
 }, {
   "name": "SessionProbeDisabledFeature",
   "category": "flags",
+  "nameWhenDescription": false,
   "values": [
     {
       "name": "none",
@@ -510,6 +534,7 @@
 }, {
   "name": "RdpStoreFile",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "never",
@@ -528,6 +553,7 @@
 }, {
   "name": "SessionProbeOnAccountManipulation",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "description": "For targets running WALLIX BestSafe only.",
   "values": [
     {
@@ -547,6 +573,7 @@
 }, {
   "name": "ClientAddressSent",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "description": "Client Address to send to target(in InfoPacket)",
   "values": [
     {
@@ -566,36 +593,38 @@
 }, {
   "name": "SessionProbeLogLevel",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "Fatal",
       "value": 1,
-      "description": "The Fatal level designates very severe error events that will presumably lead the application to abort."
+      "description": "Designates very severe error events that will presumably lead the application to abort."
     }, {
       "name": "Error",
       "value": 2,
-      "description": "The Error level designates error events that might still allow the application to continue running."
+      "description": "Designates error events that might still allow the application to continue running."
     }, {
       "name": "Info",
       "value": 3,
-      "description": "The Info level designates informational messages that highlight the progress of the application at coarse-grained level."
+      "description": "Designates informational messages that highlight the progress of the application at coarse-grained level."
     }, {
       "name": "Warning",
       "value": 4,
-      "description": "The Warning level designates potentially harmful situations."
+      "description": "Designates potentially harmful situations."
     }, {
       "name": "Debug",
       "value": 5,
-      "description": "The Debug level designates fine-grained informational events that are mostly useful to debug an application."
+      "description": "Designates fine-grained informational events that are mostly useful to debug an application."
     }, {
       "name": "Detail",
       "value": 6,
-      "description": "The Detail level designates finer-grained informational events than Debug."
+      "description": "Designates finer-grained informational events than Debug."
     }
   ]
 }, {
   "name": "ModRdpUseFailureSimulationSocketTransport",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "Off",
@@ -611,6 +640,7 @@
 }, {
   "name": "LoginLanguage",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "Auto",
@@ -627,6 +657,7 @@
 }, {
   "name": "VncTunnelingType",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "pxssh",
@@ -642,6 +673,7 @@
 }, {
   "name": "VncTunnelingCredentialSource",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "static_login",
@@ -654,6 +686,7 @@
 }, {
   "name": "BannerType",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "info",
@@ -669,6 +702,7 @@
 }, {
   "name": "SessionProbeCPUUsageAlarmAction",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "values": [
     {
       "name": "Restart",
@@ -683,6 +717,7 @@
 }, {
   "name": "SessionProbeProcessCommandLineRetrieveMethod",
   "category": "autoincrement",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "windows_management_instrumentation",
@@ -701,6 +736,7 @@
 }, {
   "name": "RdpSaveSessionInfoPDU",
   "category": "autoincrement",
+  "nameWhenDescription": false,
   "values": [
     {
       "name": "Supported",
@@ -715,6 +751,7 @@
 }, {
   "name": "SessionLogFormat",
   "category": "flags",
+  "nameWhenDescription": true,
   "values": [
     {
       "name": "disabled",
