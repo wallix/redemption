@@ -335,11 +335,9 @@ const default2k = (dict, k1, k2, value) => {
 }
 
 const computeDisplayName = (name) => {
-  // aaa_bbb_ccc -> Aaa Bbb Ccc
-  return name.replace(
-    /([a-zA-Z0-9]+)(_?)/g,
-    (_, s, sep) => `${s[0].toUpperCase()}${s.substr(1)}${sep ? ' ' : ''}`
-  );
+  // aaa_bbb_ccc -> Aaa bbb ccc
+  name = name.replaceAll('_', ' ');
+  return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
 const computeSpecInfo = (spec) => {
