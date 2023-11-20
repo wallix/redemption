@@ -1,0 +1,4242 @@
+{
+"tags": ["perf","debug","workaround","compatibility"],
+"sections": [
+  {"name": "general"},
+  {"name": "globals"},
+  {"name": "client"},
+  {"name": "all_target_mod"},
+  {"name": "remote_program"},
+  {"name": "mod_rdp", "connpolicyName": "rdp"},
+  {"name": "protocol"},
+  {"name": "session_probe"},
+  {"name": "server_cert"},
+  {"name": "mod_vnc", "connpolicyName": "vnc"},
+  {"name": "session_log"},
+  {"name": "ocr"},
+  {"name": "capture"},
+  {"name": "video"},
+  {"name": "audit"},
+  {"name": "file_verification"},
+  {"name": "file_storage"},
+  {"name": "icap_server_down"},
+  {"name": "icap_server_up"},
+  {"name": "crypto"},
+  {"name": "websocket"},
+  {"name": "vnc_over_ssh"},
+  {"name": "context"},
+  {"name": "internal_mod"},
+  {"name": "mod_replay"},
+  {"name": "translation"},
+  {"name": "theme"},
+  {"name": "debug"}
+],
+  "values": [
+
+    {
+      "section": "general",
+      "name": "transformation_rule",
+      "type": "str",
+      "value": "",
+      "description": "Secondary login Transformation rule\n${LOGIN} will be replaced by login\n${DOMAIN} (optional) will be replaced by domain if it exists.\nEmpty value means no transformation rule.",
+      "rdp": true,
+      "vnc": true,
+      "jh": true,
+      "external": true
+    },
+    {
+      "section": "general",
+      "name": "vault_transformation_rule",
+      "type": "str",
+      "value": "",
+      "description": "Account Mapping password retriever\nTransformation to apply to find the correct account.\n${USER} will be replaced by the user's login.\n${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).\n${USER_DOMAIN} will be replaced by the user's login + \"@\" + user's domain (or just user's login if there's no domain).\n${GROUP} will be replaced by the authorization's user group.\n${DEVICE} will be replaced by the device's name.\nA regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \\1, \\2, ...\nFor example to replace leading \"A\" by \"B\" in the username: ${USER:/^A/B}\nEmpty value means no transformation rule.",
+      "rdp": true,
+      "vnc": true,
+      "jh": true,
+      "external": true
+    },
+    {
+      "section": "globals",
+      "name": "front_connection_time",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "from incoming connection to \"up_and_running\" state",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "globals",
+      "name": "target_connection_time",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "from Module rdp creation to \"up_and_running\" state",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "globals",
+      "name": "auth_user",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclName": "login",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "host",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclName": "ip_client",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "target",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclName": "ip_target",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "globals",
+      "name": "target_device",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "device_id",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "primary_user_id",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "target_user",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclName": "target_login",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "target_application",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "target_application_account",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "target_application_password",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "globals",
+      "name": "port",
+      "type": "uint",
+      "value": 3389,
+      "description": "Port of RDP Proxy service.\n\nService will be automatically restarted and active sessions will be disconnected.\nThe port set in this field must not be already used, otherwise the service will not run.\nChanging the port number will prevent WALLIX Access Manager from working properly.",
+      "globalSpec": true,
+      "logged": true,
+      "advanced": true,
+      "iptables": true
+    },
+    {
+      "section": "globals",
+      "name": "authfile",
+      "type": "str",
+      "value": "REDEMPTION_CONFIG_AUTHFILE", "cppExpr": true,
+      "description": "Socket path or socket address of passthrough / acl",
+      "iniOnly": true
+    },
+    {
+      "section": "globals",
+      "name": "handshake_timeout",
+      "type": "seconds",
+      "value": 10,
+      "description": "Time out during RDP connection initialization.\nIncrease the value if connection between workstations and Bastion can be slow.",
+      "globalSpec": true
+    },
+    {
+      "section": "globals",
+      "name": "base_inactivity_timeout",
+      "type": "seconds",
+      "value": 900,
+      "description": "No automatic disconnection due to inactivity, timer is set on primary authentication.\nIf value is between 1 and 30, then 30 is used.\nIf value is set to 0, then inactivity timeout value is unlimited.",
+      "globalSpec": true
+    },
+    {
+      "section": "globals",
+      "name": "inactivity_timeout",
+      "type": "seconds",
+      "value": 0,
+      "description": "No automatic disconnection due to inactivity, timer is set on target session.\nIf value is between 1 and 30, then 30 is used.\nIf value is set to 0, then value set in \"Base inactivity timeout\" (in \"RDP Proxy\" configuration option) is used.",
+      "connpolicySection": "session",
+      "rdp": true,
+      "vnc": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "keepalive_grace_delay",
+      "type": "seconds",
+      "value": 30,
+      "description": "Internal keepalive between acl and rdp proxy",
+      "iniOnly": true
+    },
+    {
+      "section": "globals",
+      "name": "authentication_timeout",
+      "type": "seconds",
+      "value": 120,
+      "description": "Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "globals",
+      "name": "trace_type",
+      "type": "enum",
+      "value": 1,
+      "description": "Session record options.",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1",
+      "subtype": "TraceType"
+    },
+    {
+      "section": "globals",
+      "name": "listen_address",
+      "type": "ipaddr",
+      "value": "0.0.0.0",
+      "description": "Specify bind address",
+      "iniOnly": true
+    },
+    {
+      "section": "globals",
+      "name": "enable_transparent_mode",
+      "type": "bool",
+      "value": false,
+      "description": "The transparent mode allows to intercept network traffic for a target even when the user specifies the target's address directly, instead of using the proxy address.",
+      "globalSpec": true,
+      "iptables": true
+    },
+    {
+      "section": "globals",
+      "name": "certificate_password",
+      "type": "str",
+      "value": "inquisition",
+      "description": "Proxy certificate password.",
+      "iniOnly": true,
+      "minlen": 254, "maxlen": 254
+    },
+    {
+      "section": "globals",
+      "name": "is_rec",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "enable_bitmap_update",
+      "type": "bool",
+      "value": true,
+      "description": "Support of Bitmap Update.",
+      "iniOnly": true
+    },
+    {
+      "section": "globals",
+      "name": "enable_end_time_warning_osd",
+      "type": "bool",
+      "value": true,
+      "description": "Displays a reminder box at the top of the session when a session is limited in time (timeframe or approval).\nThe reminder is displayed successively 30min, 10min, 5min and 1min before the session is closed.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "globals",
+      "name": "enable_osd_display_remote_target",
+      "type": "bool",
+      "value": true,
+      "description": "Allow to show target device name with F12 during the session",
+      "globalSpec": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "globals",
+      "name": "show_target_user_in_f12_message",
+      "type": "bool",
+      "value": false,
+      "description": "Show in session the target username when F12 is pressed.\nThis option needs \"Enable Osd Display Remote Target\".",
+      "globalSpec": true
+    },
+    {
+      "section": "globals",
+      "name": "enable_wab_integration",
+      "type": "bool",
+      "value": "REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION", "cppExpr": true,
+      "description": "",
+      "iniOnly": true
+    },
+    {
+      "section": "globals",
+      "name": "large_pointer_support",
+      "type": "bool",
+      "value": true,
+      "description": "Enable support for pointers of size 96x96.\n⚠ If this option is disabled and the application doesn't support smaller pointers, the pointer may not change and remain on the last active pointer. For example, the resize window pointer would remain visible rather than change to a 'normal' pointer.",
+      "iniOnly": true
+    },
+    {
+      "section": "globals",
+      "name": "mod_recv_timeout",
+      "type": "milliseconds",
+      "value": 1000,
+      "description": "",
+      "iniOnly": true,
+      "min": 100, "max": 10000
+    },
+    {
+      "section": "globals",
+      "name": "experimental_enable_serializer_data_block_size_limit",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "iniOnly": true
+    },
+    {
+      "section": "globals",
+      "name": "rdp_keepalive_connection_interval",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "Prevent Remote Desktop session timeouts due to idle TCP sessions by sending periodically keep alive packet to client.\n!!!May cause FreeRDP-based client to CRASH!!!\nSet to 0 to disable this feature.",
+      "globalSpec": true
+    },
+    {
+      "section": "globals",
+      "name": "enable_ipv6",
+      "type": "bool",
+      "value": true,
+      "description": "⚠ Service need to be manually restarted to take changes into account\n\nEnable primary connection on ipv6.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "globals",
+      "name": "minimal_memory_available_before_connection_silently_closed",
+      "type": "mebibytes",
+      "value": 100,
+      "description": "0 for disabled.",
+      "iniOnly": true
+    },
+    {
+      "section": "client",
+      "name": "keyboard_layout",
+      "type": "uint",
+      "value": 0,
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "client",
+      "name": "ignore_logon_password",
+      "type": "bool",
+      "value": false,
+      "description": "If true, ignore password provided by RDP client, user need do login manually.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "client",
+      "name": "allow_using_multiple_monitors",
+      "type": "bool",
+      "value": true,
+      "description": "Sends the client screen count to the server. Not supported for VNC targets.\nUncheck to disable multiple monitor.",
+      "tags": ["compatibility"],
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "allow_scale_factor",
+      "type": "bool",
+      "value": false,
+      "description": "Sends Scale & Layout configuration to the server.\nOn Windows 11, this corresponds to options Sclale, Display Resolution and Display Orientation of Settings > System > Display.\n⚠ Title bar detection via OCR will no longer work.",
+      "tags": ["compatibility"],
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "unicode_keyboard_event_support",
+      "type": "bool",
+      "value": true,
+      "description": "Allows the client to use unicode characters.\nThis is useful for displaying characters that are not available on the keyboard layout used, such as some special characters or emojis.",
+      "iniOnly": true
+    },
+    {
+      "section": "client",
+      "name": "encryption_level",
+      "type": "enumStr",
+      "value": "high",
+      "description": "Legacy encryption when External Security Protocol (TLS, CredSSP, etc) is disable",
+      "iniOnly": true,
+      "subtype": "RdpSecurityEncryptionLevel"
+    },
+    {
+      "section": "client",
+      "name": "tls_fallback_legacy",
+      "type": "bool",
+      "value": false,
+      "description": "Fallback to RDP Legacy Encryption if client does not support TLS.\n⚠ Enabling this option is a security risk.",
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "tls_support",
+      "type": "bool",
+      "value": true,
+      "description": "Enable TLS between client and proxy.",
+      "iniOnly": true
+    },
+    {
+      "section": "client",
+      "name": "tls_min_level",
+      "type": "u32",
+      "value": 2,
+      "description": "Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3\n⚠ Lower this value only for compatibility reasons.",
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "tls_max_level",
+      "type": "u32",
+      "value": 0,
+      "description": "Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3\n⚠ Change this value only for compatibility reasons.",
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "show_common_cipher_list",
+      "type": "bool",
+      "value": false,
+      "description": "Show in the logs the common cipher list supported by client and server\n⚠ Only for debug purposes",
+      "tags": ["debug"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "client",
+      "name": "ssl_cipher_list",
+      "type": "str",
+      "value": "HIGH:!ADH:!3DES:!SHA",
+      "description": "[Not configured]: Compatible with more RDP clients (less secure)\nHIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)\nHIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)",
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "enable_nla",
+      "type": "bool",
+      "value": false,
+      "description": "Needed for primary NTLM or Kerberos connections over NLA.",
+      "iniOnly": true
+    },
+    {
+      "section": "client",
+      "name": "disable_tsk_switch_shortcuts",
+      "type": "bool",
+      "value": false,
+      "description": "If enabled, ignore Ctrl+Alt+Del, Ctrl+Shift+Esc and Windows+Tab keyboard sequences.",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "client",
+      "name": "rdp_compression",
+      "type": "enum",
+      "value": 4,
+      "description": "Specifies the highest RDP compression support available on client connection session.",
+      "tags": ["perf"],
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "RdpCompression"
+    },
+    {
+      "section": "client",
+      "name": "max_color_depth",
+      "type": "enum",
+      "value": 24,
+      "description": "Specifies the maximum color resolution (color depth) for client connection session:",
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "ColorDepth"
+    },
+    {
+      "section": "client",
+      "name": "persistent_disk_bitmap_cache",
+      "type": "bool",
+      "value": true,
+      "description": "Persistent Disk Bitmap Cache on the primary connection side. If supported by the RDP client, the size of image caches will be increased",
+      "tags": ["perf"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "client",
+      "name": "cache_waiting_list",
+      "type": "bool",
+      "value": false,
+      "description": "Support of Cache Waiting List: Experimental cache strategy (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
+      "iniOnly": true
+    },
+    {
+      "section": "client",
+      "name": "persist_bitmap_cache_on_disk",
+      "type": "bool",
+      "value": false,
+      "description": "If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
+      "tags": ["perf"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "client",
+      "name": "bitmap_compression",
+      "type": "bool",
+      "value": true,
+      "description": "Enable Bitmap Compression when supported by the RDP client.\nDisable this option will increase network bandwith usage.",
+      "tags": ["compatibility"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "client",
+      "name": "fast_path",
+      "type": "bool",
+      "value": true,
+      "description": "Enables support of Client Fast-Path Input Event PDUs.",
+      "iniOnly": true
+    },
+    {
+      "section": "client",
+      "name": "enable_suppress_output",
+      "type": "bool",
+      "value": true,
+      "description": "Allows the client to request the server to stop graphical updates. This can occur when the RDP client window is minimized to reduce bandwidth.\n⚠ If changes occur on the target, they will not be visible in the recordings either.",
+      "tags": ["compatibility"],
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "bogus_ios_glyph_support_level",
+      "type": "bool",
+      "value": true,
+      "description": "Same effect as \"Transform glyph to bitmap\", but only for RDP client on iOS platform.",
+      "tags": ["compatibility"],
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "transform_glyph_to_bitmap",
+      "type": "bool",
+      "value": false,
+      "description": "Some RDP clients advertise glyph support, but this does not work properly with the RDP proxy. This option replaces glyph orders with bitmap orders.",
+      "tags": ["compatibility"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "client",
+      "name": "recv_timeout",
+      "type": "milliseconds",
+      "value": 1000,
+      "description": "",
+      "iniOnly": true,
+      "min": 100, "max": 10000
+    },
+    {
+      "section": "client",
+      "name": "enable_osd_4_eyes",
+      "type": "bool",
+      "value": true,
+      "description": "Enables display of message informing user that his/her session is being audited.",
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "enable_remotefx",
+      "type": "bool",
+      "value": true,
+      "description": "Enable RemoteFx on client connection.\nNeeds - \"Max Color Depth\" option set to 32 (32-bit RGB mask + alpha)\n      - \"Enable RemoteFX\" option enabled in target connection policy",
+      "tags": ["perf","compatibility"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "client",
+      "name": "disabled_orders",
+      "type": "list",
+      "value": "25",
+      "description": "This option should only be used if the server or client is showing graphical issues.\nIn general, disabling RDP orders has a negative impact on performance.\n\nDrawing orders that can be disabled:\n   0: DstBlt\n   1: PatBlt\n   2: ScrBlt\n   3: MemBlt\n   4: Mem3Blt\n   9: LineTo\n  15: MultiDstBlt\n  16: MultiPatBlt\n  17: MultiScrBlt\n  18: MultiOpaqueRect\n  22: Polyline\n  25: EllipseSC\n  27: GlyphIndex",
+      "tags": ["debug","compatibility"],
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "uint"
+    },
+    {
+      "section": "all_target_mod",
+      "name": "connection_establishment_timeout",
+      "type": "milliseconds",
+      "value": 3000,
+      "description": "The maximum time that the proxy will wait while attempting to connect to an target.",
+      "globalSpec": true,
+      "advanced": true,
+      "min": 1000, "max": 10000
+    },
+    {
+      "section": "all_target_mod",
+      "name": "tcp_user_timeout",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "This parameter allows you to specify max timeout before a TCP connection is aborted. If the option value is specified as 0, TCP will use the system default.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 3600000
+    },
+    {
+      "section": "remote_program",
+      "name": "allow_resize_hosted_desktop",
+      "type": "bool",
+      "value": true,
+      "description": "Allows resizing of a desktop session opened in a RemoteApp window.\nThis happens when an RDP client opened in RemoteApp accesses a desktop target.",
+      "globalSpec": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "force_performance_flags",
+      "type": "PerformanceFlags",
+      "value": "-mouse_cursor_shadows,-theme,-menu_animations",
+      "description": "It specifies a list of (comma-separated) RDP server desktop features to enable or disable in the session (with the goal of optimizing bandwidth usage).\n\nIf a feature is preceded by a \"-\" sign, it is disabled; if it is preceded by a \"+\" sign or no sign, it is enabled. Unconfigured features can be controlled by the RPD client.\n\nAvailable features:\n  - wallpaper\n  - full_window_drag\n  - menu_animations\n  - theme\n  - mouse_cursor_shadows\n  - cursor_blinking\n  - font_smoothing\n  - desktop_composition",
+      "tags": ["perf","compatibility"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "auto_adjust_performance_flags",
+      "type": "bool",
+      "value": true,
+      "description": "If enabled, avoid automatically font smoothing in recorded session.\nThis allows OCR (when session probe is disabled) to better detect window titles.\nIf disabled, allows font smoothing in recorded session, but OCR will not work when Session is disabled.\nIn this case, windows titles will not be detected.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "rdp_compression",
+      "type": "enum",
+      "value": 4,
+      "description": "Specifies the highest RDP compression support available on server connection.",
+      "tags": ["perf"],
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "RdpCompression"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "disconnect_on_logon_user_change",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "open_session_timeout",
+      "type": "seconds",
+      "value": 0,
+      "description": "The maximum time that the proxy will wait while attempting to logon to an RDP session.\nValue 0 is equivalent to 15 seconds.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "disabled_orders",
+      "type": "list",
+      "value": "27",
+      "description": "This option should only be used if the server or client is showing graphical issues.\nIn general, disabling RDP orders has a negative impact on performance.\n\nDrawing orders that can be disabled:\n   0: DstBlt\n   1: PatBlt\n   2: ScrBlt\n   3: MemBlt\n   4: Mem3Blt\n   9: LineTo\n  15: MultiDstBlt\n  16: MultiPatBlt\n  17: MultiScrBlt\n  18: MultiOpaqueRect\n  22: Polyline\n  25: EllipseSC\n  27: GlyphIndex",
+      "tags": ["debug","compatibility"],
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "uint"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "enable_nla",
+      "type": "bool",
+      "value": true,
+      "description": "Enable NLA authentication in secondary target.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "enable_kerberos",
+      "type": "bool",
+      "value": false,
+      "description": "If enabled, NLA authentication will try Kerberos before NTLM.\n(if enable_nla is disabled, this value is ignored).",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "tls_min_level",
+      "type": "u32",
+      "value": 0,
+      "description": "Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "tls_max_level",
+      "type": "u32",
+      "value": 0,
+      "description": "Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "tls_security_level",
+      "type": "int",
+      "value": 1,
+      "description": "Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0\n\nA negative value uses the default value configured in OpenSSL.",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "cipher_string",
+      "type": "str",
+      "value": "ALL",
+      "description": "TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "show_common_cipher_list",
+      "type": "bool",
+      "value": false,
+      "description": "Show in the logs the common cipher list supported by client and server\n⚠ Only for debug purposes",
+      "tags": ["debug"],
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "persistent_disk_bitmap_cache",
+      "type": "bool",
+      "value": true,
+      "description": "Persistent Disk Bitmap Cache on the secondary connection side. If supported by the RDP server, the size of image caches will be increased",
+      "tags": ["perf"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "cache_waiting_list",
+      "type": "bool",
+      "value": true,
+      "description": "Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "persist_bitmap_cache_on_disk",
+      "type": "bool",
+      "value": false,
+      "description": "If enabled, the contents of Persistent Bitmap Caches are stored on disk for reusing them later (this value is ignored if Persistent Disk Bitmap Cache is disabled).",
+      "tags": ["perf"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "allowed_channels",
+      "type": "list",
+      "value": "*",
+      "description": "List of (comma-separated) enabled (static) virtual channel. If character '*' is used as a name then enables everything.\nAn explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "string"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "denied_channels",
+      "type": "list",
+      "value": "",
+      "description": "List of (comma-separated) disabled (static) virtual channel. If character '*' is used as a name then disables everything.\nAn explicit name in 'Allowed channels' and 'Denied channels' will have higher priority than '*'.",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "string"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "allowed_dynamic_channels",
+      "type": "str",
+      "value": "*",
+      "description": "List of (comma-separated) enabled dynamic virtual channel. If character '*' is used as a name then enables everything.\nAn explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "denied_dynamic_channels",
+      "type": "str",
+      "value": "",
+      "description": "List of (comma-separated) disabled dynamic virtual channel. If character '*' is used as a name then disables everything.\nAn explicit name in 'Allowed dynamic channels' and 'Denied dynamic channels' will have higher priority than '*'.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "fast_path",
+      "type": "bool",
+      "value": true,
+      "description": "Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!",
+      "iniOnly": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "server_redirection_support",
+      "type": "bool",
+      "value": false,
+      "description": "The secondary target connection can be redirected to a specific session on another RDP server.",
+      "connpolicyName": "server_redirection",
+      "displayName": "Enable Server Redirection Support",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "load_balance_info",
+      "type": "str",
+      "value": "",
+      "description": "Load balancing information.\nFor example 'tsv://MS Terminal Services Plugin.1.Sessions' where 'Sessions' is the name of the targeted RD Collection which works fine.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "client_address_sent",
+      "type": "enum",
+      "value": 0,
+      "description": "Client Address to send to target (in InfoPacket)",
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "ClientAddressSent"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "proxy_managed_drives",
+      "type": "list",
+      "value": "",
+      "description": "Shared directory between proxy and secondary target.\nRequires rdpdr support.",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "string"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "ignore_auth_channel",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "auth_channel",
+      "type": "str",
+      "value": "*",
+      "description": "Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.",
+      "globalSpec": true,
+      "minlen": 7, "maxlen": 7
+    },
+    {
+      "section": "mod_rdp",
+      "name": "checkout_channel",
+      "type": "str",
+      "value": "",
+      "description": "Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel.",
+      "globalSpec": true,
+      "minlen": 7, "maxlen": 7
+    },
+    {
+      "section": "mod_rdp",
+      "name": "alternate_shell",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclName": "alternate_shell",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "shell_arguments",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclName": "shell_arguments",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "shell_working_directory",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclName": "shell_working_directory",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "use_client_provided_alternate_shell",
+      "type": "bool",
+      "value": false,
+      "description": "As far as possible, use client-provided initial program (Alternate Shell)",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "use_client_provided_remoteapp",
+      "type": "bool",
+      "value": false,
+      "description": "As far as possible, use client-provided remote program (RemoteApp)",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "use_native_remoteapp_capability",
+      "type": "bool",
+      "value": true,
+      "description": "As far as possible, use native RemoteApp capability",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "application_driver_exe_or_file",
+      "type": "str",
+      "value": "REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE", "cppExpr": true,
+      "description": "",
+      "iniOnly": true,
+      "minlen": 256, "maxlen": 256
+    },
+    {
+      "section": "mod_rdp",
+      "name": "application_driver_script_argument",
+      "type": "str",
+      "value": "REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT", "cppExpr": true,
+      "description": "",
+      "iniOnly": true,
+      "minlen": 256, "maxlen": 256
+    },
+    {
+      "section": "mod_rdp",
+      "name": "application_driver_chrome_dt_script",
+      "type": "str",
+      "value": "REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT", "cppExpr": true,
+      "description": "",
+      "iniOnly": true,
+      "minlen": 256, "maxlen": 256
+    },
+    {
+      "section": "mod_rdp",
+      "name": "application_driver_chrome_uia_script",
+      "type": "str",
+      "value": "REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT", "cppExpr": true,
+      "description": "",
+      "iniOnly": true,
+      "minlen": 256, "maxlen": 256
+    },
+    {
+      "section": "mod_rdp",
+      "name": "application_driver_firefox_uia_script",
+      "type": "str",
+      "value": "REDEMPTION_CONFIG_APPLICATION_DRIVER_FIREFOX_UIA_SCRIPT", "cppExpr": true,
+      "description": "",
+      "iniOnly": true,
+      "minlen": 256, "maxlen": 256
+    },
+    {
+      "section": "mod_rdp",
+      "name": "application_driver_ie_script",
+      "type": "str",
+      "value": "REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT", "cppExpr": true,
+      "description": "",
+      "iniOnly": true,
+      "minlen": 256, "maxlen": 256
+    },
+    {
+      "section": "mod_rdp",
+      "name": "hide_client_name",
+      "type": "bool",
+      "value": true,
+      "description": "Do not transmit client machine name to RDP server.\nIf Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host.",
+      "globalSpec": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "use_license_store",
+      "type": "bool",
+      "value": true,
+      "description": "Stores CALs issued by the terminal servers.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "bogus_freerdp_clipboard",
+      "type": "bool",
+      "value": false,
+      "description": "Workaround option to support partial clipboard initialization performed by some versions of FreeRDP.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "bogus_ios_rdpdr_virtual_channel",
+      "type": "bool",
+      "value": true,
+      "description": "Workaround option to disable shared disk for RDP client on iOS platform only.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "bogus_refresh_rect",
+      "type": "bool",
+      "value": true,
+      "description": "Workaround option to fix some drawing issues with Windows Server 2012.\nCan be disabled when none of the targets are Windows Server 2012.",
+      "tags": ["compatibility"],
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "enable_rdpdr_data_analysis",
+      "type": "bool",
+      "value": true,
+      "description": "Adds RDPDR channel metadata to session logs. Disabling this option makes shared disks more responsive, but metadata will no longer be collected.if at least one authorization of RDPDR is missing (Printer, ComPort, SmartCard, Drive), then this option is considered enabled.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "remoteapp_bypass_legal_notice_delay",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\nSet to 0 to disable this feature.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "remoteapp_bypass_legal_notice_timeout",
+      "type": "milliseconds",
+      "value": 20000,
+      "description": "Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.\nSet to 0 to disable this feature.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "log_only_relevant_clipboard_activities",
+      "type": "bool",
+      "value": true,
+      "description": "Some events such as 'Preferred DropEffect' have no particular meaning. This option allows you to exclude these types of events from the logs.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "split_domain",
+      "type": "bool",
+      "value": false,
+      "description": "Force to split target domain and username with '@' separator.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "wabam_uses_translated_remoteapp",
+      "type": "bool",
+      "value": false,
+      "description": "Actives conversion of RemoteApp target session to desktop session.\nOtherwise, Alternate Shell will be used.\nSome Windows Shell features may be unavailable in one or both cases, and applications using them may behave differently.",
+      "displayName": "Enable translated RemoteApp with AM",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "session_shadowing_support",
+      "type": "bool",
+      "value": true,
+      "description": "Enables Session Shadowing Support.\nSession probe must be enabled on target connection policy.\nTarget server must support \"Remote Desktop Shadowing\" feature.\nWhen enabled, users can share their RDP sessions with auditors who request it.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "enable_remotefx",
+      "type": "bool",
+      "value": false,
+      "description": "Enables support of the remoteFX codec on target connection.",
+      "tags": ["compatibility"],
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "enable_restricted_admin_mode",
+      "type": "bool",
+      "value": false,
+      "description": "Connect to the server in Restricted Admin mode.\nThis mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.\nNLA must be enabled.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "force_smartcard_authentication",
+      "type": "bool",
+      "value": false,
+      "description": "NLA will be disabled.\nTarget must be set for interactive login, otherwise server connection may not be guaranteed.\nSmartcard device must be available on client desktop.\nSmartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "enable_ipv6",
+      "type": "bool",
+      "value": true,
+      "description": "Enable target connection on ipv6",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "mode_console",
+      "type": "enumStr",
+      "value": "allow",
+      "description": "Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)",
+      "displayName": "Console mode",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "RdpModeConsole"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "auto_reconnection_on_losing_target_link",
+      "type": "bool",
+      "value": false,
+      "description": "Allows the proxy to automatically reconnect to secondary target when a network error occurs.\nThe server must support reconnection cookie.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "allow_session_reconnection_by_shortcut",
+      "type": "bool",
+      "value": false,
+      "description": "If the feature is enabled, the end user can trigger a session disconnection/reconnection with the shortcut Ctrl+F12.\nThis feature should not be used together with the End disconnected session option (section session_probe).\nThe keyboard shortcut is fixed and cannot be changed.",
+      "tags": ["workaround"],
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "session_reconnection_delay",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "The delay between a session disconnection and the automatic reconnection that follows.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 15000
+    },
+    {
+      "section": "mod_rdp",
+      "name": "forward_client_build_number",
+      "type": "bool",
+      "value": true,
+      "description": "Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "bogus_monitor_layout_treatment",
+      "type": "bool",
+      "value": false,
+      "description": "To resolve the session freeze issue with Windows 7/Windows Server 2008 target.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "krb_armoring_account",
+      "type": "str",
+      "value": "",
+      "description": "Account to be used for armoring Kerberos tickets. Must be in the form 'account_name@domain_name[@device_name]'. If account resolution succeeds the username and password associated with this account will be used; otherwise the below fallback username and password will be used instead.",
+      "rdp": true,
+      "advanced": true,
+      "external": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "krb_armoring_realm",
+      "type": "str",
+      "value": "",
+      "description": "Realm to be used for armoring Kerberos tickets.",
+      "rdp": true,
+      "advanced": true,
+      "external": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "krb_armoring_fallback_user",
+      "type": "str",
+      "value": "",
+      "description": "Fallback username to be used for armoring Kerberos tickets.",
+      "rdp": true,
+      "advanced": true,
+      "external": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "krb_armoring_fallback_password",
+      "type": "str",
+      "value": "",
+      "description": "Fallback password to be used for armoring Kerberos tickets.",
+      "rdp": true,
+      "advanced": true,
+      "external": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "effective_krb_armoring_user",
+      "type": "str",
+      "value": "",
+      "description": "Effective username to be used for armoring Kerberos tickets.",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "effective_krb_armoring_password",
+      "type": "str",
+      "value": "",
+      "description": "Effective password to be used for armoring Kerberos tickets.",
+      "aclToProxy": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "mod_rdp",
+      "name": "remote_programs_disconnect_message_delay",
+      "type": "milliseconds",
+      "value": 3000,
+      "description": "Delay before showing disconnect message after the last RemoteApp window is closed.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 3000, "max": 120000
+    },
+    {
+      "section": "mod_rdp",
+      "name": "use_session_probe_to_launch_remote_program",
+      "type": "bool",
+      "value": true,
+      "description": "This option only has an effect in RemoteApp sessions (RDS meaning).\nIf enabled, the RDP Proxy relies on the Session Probe to launch the remote programs.\nOtherwise, remote programs will be launched according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol. This latter is the native method.\nThe difference is that Session Probe does not start a new application when its host session is resumed. Conversely, launching applications according to Remote Programs Virtual Channel Extension of Remote Desktop Protocol is not affected by this behavior. However, launching applications via the native method requires them to be published in Remote Desktop Services, which is unnecessary if launched by the Session Probe.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "replace_null_pointer_by_default_pointer",
+      "type": "bool",
+      "value": false,
+      "description": "Replace an empty mouse pointer with normal pointer.",
+      "tags": ["workaround"],
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "protocol",
+      "name": "save_session_info_pdu",
+      "type": "enum",
+      "value": 1,
+      "description": "",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "RdpSaveSessionInfoPDU"
+    },
+    {
+      "section": "session_probe",
+      "name": "enable_session_probe",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "exe_or_file",
+      "type": "str",
+      "value": "||CMD",
+      "description": "",
+      "iniOnly": true,
+      "minlen": 511, "maxlen": 511
+    },
+    {
+      "section": "session_probe",
+      "name": "arguments",
+      "type": "str",
+      "value": "REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS", "cppExpr": true,
+      "description": "",
+      "iniOnly": true,
+      "minlen": 511, "maxlen": 511
+    },
+    {
+      "section": "session_probe",
+      "name": "use_smart_launcher",
+      "type": "bool",
+      "value": true,
+      "description": "This parameter only has an effect in Desktop sessions.\nIt allows you to choose between Smart launcher and Legacy launcher to launch the Session Probe.\nThe Smart launcher and the Legacy launcher do not have the same technical prerequisites. Detailed information can be found in the Administration guide.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "enable_launch_mask",
+      "type": "bool",
+      "value": true,
+      "description": "This parameter enables or disables the Session Probe’s launch mask.\nThe Launch mask hides the Session Probe launch steps from the end-users.\nDisabling the mask makes it easier to diagnose Session Probe launch issues. It is recommended to enable the mask for normal operation.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "on_launch_failure",
+      "type": "enum",
+      "value": 1,
+      "description": "It is recommended to use option 1 (disconnect user).",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "SessionProbeOnLaunchFailure"
+    },
+    {
+      "section": "session_probe",
+      "name": "launch_timeout",
+      "type": "milliseconds",
+      "value": 40000,
+      "description": "This parameter is used if 'On launch failure' is 1 (disconnect user).\n0 to disable timeout.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 300000
+    },
+    {
+      "section": "session_probe",
+      "name": "launch_fallback_timeout",
+      "type": "milliseconds",
+      "value": 40000,
+      "description": "This parameter is used if 'On launch failure' is 0 (ignore failure and continue) or 2 (retry without Session Probe).\n0 to disable timeout.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 300000
+    },
+    {
+      "section": "session_probe",
+      "name": "start_launch_timeout_timer_only_after_logon",
+      "type": "bool",
+      "value": true,
+      "description": "If enabled, the Launch timeout countdown timer will be started only after user logged in Windows. Otherwise, the countdown timer will be started immediately after RDP protocol connexion.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "keepalive_timeout",
+      "type": "milliseconds",
+      "value": 5000,
+      "description": "The amount of time that RDP Proxy waits for a reply from the Session Probe to the KeepAlive message before adopting the behavior defined by 'On keepalive timeout'.\nIf our local network is subject to congestion, or if the Windows lacks responsiveness, it is possible to increase the value of the timeout to minimize disturbances related to the behavior defined by 'On keepalive timeout'.\nThe KeepAlive message is used to detect Session Probe unavailability. Without Session Probe, session monitoring will be minimal. No metadata will be collected.\nDuring the delay between sending a KeepAlive request and receiving the corresponding reply, Session Probe availability is indeterminate.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 60000
+    },
+    {
+      "section": "session_probe",
+      "name": "on_keepalive_timeout",
+      "type": "enum",
+      "value": 2,
+      "description": "This parameter allows us to choose the behavior of the RDP Proxy in case of losing the connection with Session Probe.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "SessionProbeOnKeepaliveTimeout"
+    },
+    {
+      "section": "session_probe",
+      "name": "end_disconnected_session",
+      "type": "bool",
+      "value": false,
+      "description": "The behavior of this parameter is different between the Desktop session and the RemoteApp session (RDS meaning). But in each case, the purpose of enabling this parameter is to not leave disconnected sessions in a state unusable by the RDP proxy.\nIf enabled, Session Probe will automatically end the disconnected Desktop session. Otherwise, the RDP session and the applications it contains will remain active after user disconnection (unless a parameter defined at the RDS-level decides otherwise).\nThe parameter in RemoteApp session (RDS meaning) does not cause the latter to be closed but a simple cleanup. However, this makes the session suitable for reuse.\nThis parameter must be enabled for Web applications because an existing session with a running browser cannot be reused.\nIt is also recommended to enable this parameter for connections in RemoteApp mode (RDS meaning) when 'Use session probe to launch remote program' parameter is enabled. Because an existing Session Probe does not launch a startup program (a new Bastion application) when the RemoteApp session resumes.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "enable_autodeployed_appdriver_affinity",
+      "type": "bool",
+      "value": true,
+      "description": "If enabled, disconnected auto-deployed Application Driver session will automatically terminate by Session Probe.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "enable_log",
+      "type": "bool",
+      "value": false,
+      "description": "This parameter allows you to enable the Windows-side logging of Session Probe.\nThe generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "enable_log_rotation",
+      "type": "bool",
+      "value": false,
+      "description": "This parameter enables or disables the Log files rotation for Windows-side logging of Session Probe.\nThe Log files rotation helps reduce disk space consumption caused by logging. But the interesting information may be lost if the corresponding file is not retrieved in time.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "log_level",
+      "type": "enum",
+      "value": 5,
+      "description": "Defines logging severity levels.",
+      "tags": ["debug"],
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "SessionProbeLogLevel"
+    },
+    {
+      "section": "session_probe",
+      "name": "disconnected_application_limit",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "(Deprecated!)\nThe period above which the disconnected Application session will be automatically closed by the Session Probe.\n0 to disable timeout.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 172800000
+    },
+    {
+      "section": "session_probe",
+      "name": "disconnected_session_limit",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "The period above which the disconnected Desktop session will be automatically closed by the Session Probe.\n0 to disable timeout.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 172800000
+    },
+    {
+      "section": "session_probe",
+      "name": "idle_session_limit",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "The period of user inactivity above which the session will be locked by the Session Probe.\n0 to disable timeout.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 172800000
+    },
+    {
+      "section": "session_probe",
+      "name": "smart_launcher_clipboard_initialization_delay",
+      "type": "milliseconds",
+      "value": 2000,
+      "description": "The additional period given to the device to make Clipboard redirection available.\nThis parameter is effective only if the Smart launcher is used.\nIf we see the message \"Clipboard Virtual Channel is unavailable\" in the Bastion’s syslog and we are sure that this virtual channel is allowed on the device (confirmed by a direct connection test for example), we probably need to use this parameter.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "smart_launcher_start_delay",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "For under-performing devices.\nThe extra time given to the device before starting the Session Probe launch sequence.\nThis parameter is effective only if the Smart launcher is used.\nThis parameter can be useful when (with Launch mask disabled) Windows Explorer is not immediately visible when the RDP session is opened.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "smart_launcher_long_delay",
+      "type": "milliseconds",
+      "value": 500,
+      "description": "The delay between two simulated keystrokes during the Session Probe launch sequence execution.\nThis parameter is effective only if the Smart launcher is used.\nThis parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.\nThis parameter is usually used together with the 'Smart launcher short delay' parameter.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "smart_launcher_short_delay",
+      "type": "milliseconds",
+      "value": 50,
+      "description": "The delay between two steps of the same simulated keystrokes during the Session Probe launch sequence execution.\nThis parameter is effective only if the Smart launcher is used.\nThis parameter may help if the Session Probe launch failure is caused by network slowness or device under-performance.\nThis parameter is usually used together with the 'Smart launcher long delay' parameter.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "smart_launcher_enable_wabam_affinity",
+      "type": "bool",
+      "value": true,
+      "description": "Allow sufficient time for the RDP client (Access Manager) to respond to the Clipboard virtual channel initialization message. Otherwise, the time granted to the RDP client (Access Manager or another) for Clipboard virtual channel initialization will be defined by the 'Smart launcher clipboard initialization delay' parameter.\nThis parameter is effective only if the Smart launcher is used and the RDP client is Access Manager.",
+      "displayName": "Enable Smart launcher with AM affinity",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "launcher_abort_delay",
+      "type": "milliseconds",
+      "value": 2000,
+      "description": "The time interval between the detection of an error (example: a refusal by the target of the redirected drive) and the actual abandonment of the Session Probe launch.\nThe purpose of this parameter is to give the target time to gracefully stop some ongoing processing.\nIt is strongly recommended to keep the default value of this parameter.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 300000
+    },
+    {
+      "section": "session_probe",
+      "name": "enable_crash_dump",
+      "type": "bool",
+      "value": false,
+      "description": "This parameter enables or disables the crash dump generation when the Session Probe encounters a fatal error.\nThe crash dump file is useful for post-modem debugging. It is not designed for normal use.\nThe generated files are located in the Windows user's temporary directory. These files can only be analyzed by the WALLIX team.\nThere is no rotation mechanism to limit the number of dump files produced. Extended activation of this parameter can quickly exhaust disk space.",
+      "tags": ["debug"],
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "handle_usage_limit",
+      "type": "u32",
+      "value": 0,
+      "description": "Use only if you see unusually high consumption of system object handles by the Session Probe.\nThe Session Probe will sabotage and then restart it-self if it consumes more handles than what is defined by this parameter.\nA value of 0 disables this feature.\nThis feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).\nIf 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 1000
+    },
+    {
+      "section": "session_probe",
+      "name": "memory_usage_limit",
+      "type": "u32",
+      "value": 0,
+      "description": "Use only if you see unusually high consumption of memory by the Session Probe.\nThe Session Probe will sabotage and then restart it-self if it consumes more memory than what is defined by this parameter.\nA value of 0 disables this feature.\nThis feature can cause the session to be disconnected if the value of the 'On KeepAlive timeout' parameter is set to 1 (Disconnect user).\nIf 'Allow multiple handshakes' parameter ('session_probe' section of 'Configuration options') is disabled, restarting the Session Probe will cause the session to disconnect.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 200000000
+    },
+    {
+      "section": "session_probe",
+      "name": "cpu_usage_alarm_threshold",
+      "type": "u32",
+      "value": 0,
+      "description": "This debugging feature was created to determine the cause of high CPU consumption by Session Probe in certain environments.\nAs a percentage, the effective alarm threshold is calculated in relation to the reference consumption determined at the start of the program execution. The alarm is deactivated if this value of parameter is less than 200 (200%% of reference consumption).\nWhen CPU consumption exceeds the allowed limit, debugging information can be collected (if the Windows-side logging is enabled), then Session Probe will sabotage. Additional behavior is defined by 'Cpu usage alarm action' parameter.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 10000
+    },
+    {
+      "section": "session_probe",
+      "name": "cpu_usage_alarm_action",
+      "type": "enum",
+      "value": 0,
+      "description": "Additional behavior when CPU consumption exceeds what is allowed. Please refer to the 'Cpu usage alarm threshold' parameter.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "SessionProbeCPUUsageAlarmAction"
+    },
+    {
+      "section": "session_probe",
+      "name": "end_of_session_check_delay_time",
+      "type": "milliseconds",
+      "value": 0,
+      "description": "For application session only.\nThe delay between the launch of the application and the start of End of session check.\nSometimes an application takes a long time to create its window. If the End of session check is start too early, the Session Probe may mistakenly conclude that there is no longer any active process in the session. And without active processes, the application session will be logged off by the Session Probe.\n'End of session check delay time' allow you to delay the start of End of session check in order to give the application the time to create its window.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 0, "max": 60000
+    },
+    {
+      "section": "session_probe",
+      "name": "ignore_ui_less_processes_during_end_of_session_check",
+      "type": "bool",
+      "value": true,
+      "description": "For application session only.\nIf enabled, during the End of session check, the processes that do not have a visible window will not be counted as active processes of the session. Without active processes, the application session will be logged off by the Session Probe.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "extra_system_processes",
+      "type": "str",
+      "value": "",
+      "description": "This parameter is used to provide the list of (comma-separated) system processes that can be run in the session.\nEx.: dllhos.exe,TSTheme.exe\nUnlike user processes, system processes do not keep the session open. A session with no user process will be automatically closed by Session Probe after starting the End of session check.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "childless_window_as_unidentified_input_field",
+      "type": "bool",
+      "value": true,
+      "description": "This parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log).\nUnfortunately, the detection does not work with applications developed in Java, Flash, etc. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata.\nOne of the specifics of these applications is that their main windows do not have any child window from point of view of WIN32 API. Activating this parameter allows this property to be used to detect applications developed in Java or Flash.\nPlease refer to the 'Keyboard input masking level' parameter of 'session_log' section.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "windows_of_these_applications_as_unidentified_input_field",
+      "type": "str",
+      "value": "",
+      "description": "Comma-separated process names. (Ex.: chrome.exe,ngf.exe)\nThis parameter concerns the functionality of the Password field detection performed by the Session Probe. This detection is necessary to avoid logging the text entered in the password fields as metadata of session (also known as Session log).\nUnfortunately, the detection is not infallible. In order to work around the problem, we will treat the windows of these applications as input fields of unknown type. Therefore, the text entered in these will not be included in the session’s metadata.\nThis parameter is used to provide the list of processes whose windows are considered as input fields of unknown type.\nPlease refer to the 'Keyboard input masking level' parameter of 'session_log' section.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "update_disabled_features",
+      "type": "bool",
+      "value": true,
+      "description": "This parameter is used when resuming a session hosting a existing Session Probe.\nIf enabled, the Session Probe will activate or deactivate features according to the value of 'Disabled features' parameter received when resuming its host session. Otherwise, the Session Probe will keep the same set of features that were used during the previous connection.\nIt is recommended to keep the default value of this parameter.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "disabled_features",
+      "type": "enum",
+      "value": 352,
+      "description": "This parameter was created to work around some compatibility issues and to limit the CPU load that the Session Probe process causes.\nIf 'Java Acccess Bridge' feature is disabled, data entered in the password field of Java applications may be visible in the metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section. For more information please also refer to 'Childless window as unidentified input field and Windows of these applications as unidentified input field oIt is not recommended to deactivate 'MS Active Accessibility' and 'MS UI Automation' at the same time. This configuration will lead to the loss of detection of password input fields. Entries in these fields will be visible as plain text in the session metadata. For more information please refer to 'Keyboard input masking level' parameter of 'session_log' section of 'Connection Policy'.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "SessionProbeDisabledFeature"
+    },
+    {
+      "section": "session_probe",
+      "name": "enable_bestsafe_interaction",
+      "type": "bool",
+      "value": false,
+      "description": "This parameter has no effect on the device without BestSafe.\nIs enabled, Session Probe relies on BestSafe to perform the detection of application launches and the detection of outgoing connections.\nBestSafe has more efficient mechanisms in these tasks than Session Probe.\nFor more information please refer to 'Outbound connection monitoring rules' parameter and 'Process monitoring rules' parameter.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "on_account_manipulation",
+      "type": "enum",
+      "value": 0,
+      "description": "This parameter has no effect on the device without BestSafe.\nBestSafe interaction must be enabled. Please refer to 'Enable bestsafe interaction' parameter.\nThis parameter allows you to choose the behavior of the RDP Proxy in case of detection of Windows account manipulation.\nDetectable account manipulations are the creation, deletion of a Windows account, and the addition and deletion of an account from a Windows user group.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "SessionProbeOnAccountManipulation"
+    },
+    {
+      "section": "session_probe",
+      "name": "alternate_directory_environment_variable",
+      "type": "str",
+      "value": "",
+      "description": "This parameter is used to indicate the name of an environment variable, to be set on the Windows device, and pointed to a directory (on the device) that can be used to store and start the Session Probe. The environment variable must be available in the Windows user session.\nThe environment variable name is limited to 3 characters or less.\nBy default, the Session Probe will be stored and started from the temporary directory of Windows user.\nThis parameter is useful if a GPO prevents Session Probe from starting from the Windows user's temporary directory.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "minlen": 3, "maxlen": 3
+    },
+    {
+      "section": "session_probe",
+      "name": "public_session",
+      "type": "bool",
+      "value": false,
+      "description": "If enabled, the session, once disconnected, can be resumed by another Bastion user.\nExcept in special cases, this is usually a security problem.\nBy default, a session can only be resumed by the Bastion user who created it.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "outbound_connection_monitoring_rules",
+      "type": "str",
+      "value": "",
+      "description": "This parameter is used to provide the list of (comma-separated) rules used to monitor outgoing connections created in the session.\n(Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)\n(Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)\n(Ex. hostname can be used to resolve to both IPv4 and IPv6 addresses: $allow:host.domain.net:3389)\n(Ex. for backwards compatibility only: 10.1.0.0/16:22)\nBestSafe can be used to perform detection of outgoing connections created in the session. Please refer to 'Enable bestsafe interaction' parameter.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "process_monitoring_rules",
+      "type": "str",
+      "value": "",
+      "description": "This parameter is used to provide the list of (comma-separated) rules used to monitor the execution of processes in the session.\n(Ex.: $deny:taskmgr.exe)\n@ = All child processes of (Bastion) application (Ex.: $deny:@)\nBestSafe can be used to perform detection of process launched in the session. Please refer to 'Enable bestsafe interaction' parameter.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_probe",
+      "name": "customize_executable_name",
+      "type": "bool",
+      "value": false,
+      "description": "If enabled, a string of random characters will be added to the name of the executable of Session Probe.\nThe result could be: SesProbe-5420.exe\nSome other features automatically enable customization of the Session Probe executable name. Application Driver auto-deployment for example.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "session_probe",
+      "name": "allow_multiple_handshake",
+      "type": "bool",
+      "value": false,
+      "description": "If enabled, the RDP Proxy accepts to perform the handshake several times during the same RDP session. Otherwise, any new handshake attempt will interrupt the current session with the display of an alert message.",
+      "displayName": "Allow multiple handshakes",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "session_probe",
+      "name": "at_end_of_session_freeze_connection_and_wait",
+      "type": "bool",
+      "value": true,
+      "description": "If disabled, the RDP proxy disconnects from the session when the Session Probe reports that the session is about to close (old behavior).\nThe new session end procedure (freeze and wait) prevents another connection from resuming a session that is close to end-of-life.",
+      "iniOnly": true
+    },
+    {
+      "section": "session_probe",
+      "name": "enable_cleaner",
+      "type": "bool",
+      "value": true,
+      "description": "",
+      "iniOnly": true
+    },
+    {
+      "section": "session_probe",
+      "name": "clipboard_based_launcher_reset_keyboard_status",
+      "type": "bool",
+      "value": true,
+      "description": "",
+      "iniOnly": true
+    },
+    {
+      "section": "session_probe",
+      "name": "process_command_line_retrieve_method",
+      "type": "enum",
+      "value": 2,
+      "description": "",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "SessionProbeProcessCommandLineRetrieveMethod"
+    },
+    {
+      "section": "session_probe",
+      "name": "periodic_task_run_interval",
+      "type": "milliseconds",
+      "value": 500,
+      "description": "Time between two polling performed by Session Probe.\nThe parameter is created to adapt the CPU consumption to the performance of the Windows device.\nThe longer this interval, the less detailed the session metadata collection and the lower the CPU consumption.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "min": 300, "max": 2000
+    },
+    {
+      "section": "session_probe",
+      "name": "pause_if_session_is_disconnected",
+      "type": "bool",
+      "value": false,
+      "description": "If enabled, Session Probe activity will be minimized when the user is disconnected from the session. No metadata will be collected during this time.\nThe purpose of this behavior is to optimize CPU consumption.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "server_cert",
+      "name": "server_cert_store",
+      "type": "bool",
+      "value": true,
+      "description": "Keep known server certificates on Bastion",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "server_cert",
+      "name": "server_cert_check",
+      "type": "enum",
+      "value": 1,
+      "description": "Behavior of certificates check.",
+      "rdp": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "ServerCertCheck"
+    },
+    {
+      "section": "server_cert",
+      "name": "server_access_allowed_message",
+      "type": "enum",
+      "value": 1,
+      "description": "Warn if check allow connexion to server.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "ServerNotification"
+    },
+    {
+      "section": "server_cert",
+      "name": "server_cert_create_message",
+      "type": "enum",
+      "value": 1,
+      "description": "Warn that new server certificate file was created.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "ServerNotification"
+    },
+    {
+      "section": "server_cert",
+      "name": "server_cert_success_message",
+      "type": "enum",
+      "value": 1,
+      "description": "Warn that server certificate file was successfully checked.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "ServerNotification"
+    },
+    {
+      "section": "server_cert",
+      "name": "server_cert_failure_message",
+      "type": "enum",
+      "value": 1,
+      "description": "Warn that server certificate file checking failed.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "ServerNotification"
+    },
+    {
+      "section": "server_cert",
+      "name": "error_message",
+      "type": "enum",
+      "value": 1,
+      "description": "Warn that server certificate check raised some internal error.",
+      "iniOnly": true,
+      "subtype": "ServerNotification"
+    },
+    {
+      "section": "server_cert",
+      "name": "enable_external_validation",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "server_cert",
+      "name": "external_cert",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "server_cert",
+      "name": "external_response",
+      "type": "str",
+      "value": "",
+      "description": "empty string for wait, 'Ok' or error message",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_vnc",
+      "name": "clipboard_up",
+      "type": "bool",
+      "value": false,
+      "description": "Check this option to enable the upload clipboard (from client to server).\nThis only support text data clipboard (not files).",
+      "globalSpec": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_vnc",
+      "name": "clipboard_down",
+      "type": "bool",
+      "value": false,
+      "description": "Check this option to enable the clipboard download (from server to client).This only support text data clipboard (not files).",
+      "globalSpec": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_vnc",
+      "name": "encodings",
+      "type": "list",
+      "value": "",
+      "description": "Sets additional graphics encoding types that will be negotiated with the VNC server:\n  2: RRE\n  5: HEXTILE\n  16: ZRLE",
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "int"
+    },
+    {
+      "section": "mod_vnc",
+      "name": "support_cursor_pseudo_encoding",
+      "type": "bool",
+      "value": true,
+      "description": "",
+      "vnc": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_vnc",
+      "name": "server_clipboard_encoding_type",
+      "type": "enumStr",
+      "value": "latin1",
+      "description": "VNC server clipboard text data encoding type.",
+      "aclName": "vnc_server_clipboard_encoding_type",
+      "globalSpec": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "ClipboardEncodingType"
+    },
+    {
+      "section": "mod_vnc",
+      "name": "bogus_clipboard_infinite_loop",
+      "type": "enum",
+      "value": 0,
+      "description": "The RDP clipboard is based on a token that indicates who owns data between server and client. However, some RDP clients, such as Freerpd, always appropriate this token. This conflicts with VNC, which also appropriates this token, causing clipboard data to be sent in loops.\nThis option indicates the strategy to adopt in such situations.",
+      "aclName": "vnc_bogus_clipboard_infinite_loop",
+      "globalSpec": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "VncBogusClipboardInfiniteLoop"
+    },
+    {
+      "section": "mod_vnc",
+      "name": "server_is_macos",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "vnc": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_vnc",
+      "name": "server_unix_alt",
+      "type": "bool",
+      "value": false,
+      "description": "When disabled, Ctrl + Alt becomes AltGr (Windows behavior)",
+      "vnc": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_vnc",
+      "name": "enable_ipv6",
+      "type": "bool",
+      "value": true,
+      "description": "Enable target connection on ipv6",
+      "vnc": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_log",
+      "name": "enable_session_log_file",
+      "type": "bool",
+      "value": true,
+      "description": "Saves session logs to a .log file.\nThe format is a date followed by one or more key=\"value\" separated by a space on the same line.",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "session_log",
+      "name": "enable_syslog_format",
+      "type": "enum",
+      "value": 1,
+      "description": "Writes session logs to syslog and define its format.",
+      "iniOnly": true,
+      "subtype": "SessionLogFormat"
+    },
+    {
+      "section": "session_log",
+      "name": "keyboard_input_masking_level",
+      "type": "enum",
+      "value": 2,
+      "description": "Classification of input data is performed using Session Probe.\nWithout Session Probe, all the texts entered are considered unidentified.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "KeyboardInputMaskingLevel"
+    },
+    {
+      "section": "ocr",
+      "name": "version",
+      "type": "enum",
+      "value": 2,
+      "description": "Selects the OCR (Optical Character Recognition) version used to detect title bars when Session Probe is not running.\nVersion 1 is a bit faster, but has a higher failure rate in character recognition.",
+      "globalSpec": true,
+      "subtype": "OcrVersion"
+    },
+    {
+      "section": "ocr",
+      "name": "locale",
+      "type": "enumStr",
+      "value": "latin",
+      "description": "",
+      "globalSpec": true,
+      "subtype": "OcrLocale"
+    },
+    {
+      "section": "ocr",
+      "name": "interval",
+      "type": "centiseconds",
+      "value": 100,
+      "description": "Time interval between 2 analyzes.\nToo low a value will affect session reactivity.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "ocr",
+      "name": "on_title_bar_only",
+      "type": "bool",
+      "value": true,
+      "description": "Checks shape and color to determine if the text is on a title bar",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "ocr",
+      "name": "max_unrecog_char_rate",
+      "type": "uint",
+      "value": 40,
+      "description": "Expressed in percentage,\n  0   - all of characters need be recognized\n  100 - accept all results",
+      "globalSpec": true,
+      "advanced": true,
+      "min": 0, "max": 100
+    },
+    {
+      "section": "capture",
+      "name": "record_filebase",
+      "type": "str",
+      "value": "",
+      "description": "basename without extension",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "capture",
+      "name": "record_subdirectory",
+      "type": "str",
+      "value": "",
+      "description": "subdirectory of record_path (video section)",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "capture",
+      "name": "fdx_path",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "capture",
+      "name": "disable_keyboard_log",
+      "type": "enum",
+      "value": 0,
+      "description": "Disable keyboard log:\n(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)",
+      "connpolicySection": "video",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "KeyboardLogFlags"
+    },
+    {
+      "section": "video",
+      "name": "capture_flags",
+      "type": "enum",
+      "value": 11,
+      "description": "Specifies the type of data to be captured:",
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "CaptureFlags"
+    },
+    {
+      "section": "video",
+      "name": "png_interval",
+      "type": "milliseconds",
+      "value": 1000,
+      "description": "Frame interval for 4eyes. A value lower than 6 will have no visible effect.",
+      "iniOnly": true
+    },
+    {
+      "section": "video",
+      "name": "break_interval",
+      "type": "seconds",
+      "value": 600,
+      "description": "Time between 2 wrm recording file.\n⚠ A value that is too small increases the disk space required for recordings.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "video",
+      "name": "png_limit",
+      "type": "uint",
+      "value": 5,
+      "description": "Number of png captures to keep.",
+      "iniOnly": true
+    },
+    {
+      "section": "video",
+      "name": "hash_path",
+      "type": "dirpath",
+      "value": "app_path(AppPath::Hash)", "cppExpr": true,
+      "description": "",
+      "aclName": "hash_path",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "video",
+      "name": "record_tmp_path",
+      "type": "dirpath",
+      "value": "app_path(AppPath::RecordTmp)", "cppExpr": true,
+      "description": "",
+      "aclName": "record_tmp_path",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "video",
+      "name": "record_path",
+      "type": "dirpath",
+      "value": "app_path(AppPath::Record)", "cppExpr": true,
+      "description": "",
+      "aclName": "record_path",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "video",
+      "name": "enable_keyboard_log",
+      "type": "bool",
+      "value": true,
+      "description": "Show keyboard input event in meta file\n(Please see also \"Keyboard input masking level\" in \"session_log\".)",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "video",
+      "name": "disable_clipboard_log",
+      "type": "enum",
+      "value": 0,
+      "description": "Disable clipboard log:",
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "ClipboardLogFlags"
+    },
+    {
+      "section": "video",
+      "name": "disable_file_system_log",
+      "type": "enum",
+      "value": 0,
+      "description": "Disable (redirected) file system log:",
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "FileSystemLogFlags"
+    },
+    {
+      "section": "video",
+      "name": "wrm_color_depth_selection_strategy",
+      "type": "enum",
+      "value": 1,
+      "description": "The method by which the proxy RDP establishes criteria on which to chosse a color depth for Session recording file (wrm):",
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "ColorDepthSelectionStrategy"
+    },
+    {
+      "section": "video",
+      "name": "wrm_compression_algorithm",
+      "type": "enum",
+      "value": 1,
+      "description": "The compression method of Session recording file (wrm):",
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "WrmCompressionAlgorithm"
+    },
+    {
+      "section": "video",
+      "name": "codec_id",
+      "type": "str",
+      "value": "mp4",
+      "description": "",
+      "iniOnly": true
+    },
+    {
+      "section": "video",
+      "name": "framerate",
+      "type": "uint",
+      "value": 5,
+      "description": "Maximum number of images per second for video generation.\nA higher value will produce smoother videos, but the file weight is higher and the generation time longer.",
+      "displayName": "Frame rate",
+      "globalSpec": true,
+      "advanced": true,
+      "min": 1, "max": 120
+    },
+    {
+      "section": "video",
+      "name": "ffmpeg_options",
+      "type": "str",
+      "value": "crf=35 preset=superfast",
+      "description": "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n⚠ Some browsers and video decoders don't support crf=0",
+      "displayName": "FFmpeg options",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "video",
+      "name": "notimestamp",
+      "type": "bool",
+      "value": false,
+      "description": "In the generated video of the session record traces, remove the top left banner with the timestamp.\nCan slightly speed up the video generation.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "video",
+      "name": "smart_video_cropping",
+      "type": "enum",
+      "value": 2,
+      "description": "",
+      "globalSpec": true,
+      "subtype": "SmartVideoCropping"
+    },
+    {
+      "section": "video",
+      "name": "play_video_with_corrupted_bitmap",
+      "type": "bool",
+      "value": false,
+      "description": "Check this option will allow to play a video with corrupted Bitmap Update.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "video",
+      "name": "allow_rt_without_recording",
+      "type": "bool",
+      "value": false,
+      "description": "Allow real-time view (4 eyes) without session recording enabled in the authorization",
+      "globalSpec": true
+    },
+    {
+      "section": "video",
+      "name": "file_permissions",
+      "type": "FilePermissions",
+      "value": "440",
+      "description": "Allow to control permissions on recorded files",
+      "iniOnly": true
+    },
+    {
+      "section": "audit",
+      "name": "rt_display",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "audit",
+      "name": "use_redis",
+      "type": "bool",
+      "value": true,
+      "description": "",
+      "iniOnly": true
+    },
+    {
+      "section": "audit",
+      "name": "redis_timeout",
+      "type": "milliseconds",
+      "value": 500,
+      "description": "",
+      "iniOnly": true
+    },
+    {
+      "section": "audit",
+      "name": "redis_address",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "audit",
+      "name": "redis_port",
+      "type": "uint",
+      "value": 0,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "audit",
+      "name": "redis_password",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true
+    },
+    {
+      "section": "audit",
+      "name": "redis_db",
+      "type": "uint",
+      "value": 0,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "audit",
+      "name": "redis_use_tls",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "audit",
+      "name": "redis_tls_cacert",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "audit",
+      "name": "redis_tls_cert",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "audit",
+      "name": "redis_tls_key",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "file_verification",
+      "name": "socket_path",
+      "type": "str",
+      "value": "REDEMPTION_CONFIG_VALIDATOR_PATH", "cppExpr": true,
+      "description": "",
+      "iniOnly": true
+    },
+    {
+      "section": "file_verification",
+      "name": "enable_up",
+      "type": "bool",
+      "value": false,
+      "description": "Enable use of ICAP service for file verification on upload.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "file_verification",
+      "name": "enable_down",
+      "type": "bool",
+      "value": false,
+      "description": "Enable use of ICAP service for file verification on download.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "file_verification",
+      "name": "clipboard_text_up",
+      "type": "bool",
+      "value": false,
+      "description": "Verify text data via clipboard from client to server.\nFile verification on upload must be enabled via option Enable up.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "file_verification",
+      "name": "clipboard_text_down",
+      "type": "bool",
+      "value": false,
+      "description": "Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "file_verification",
+      "name": "block_invalid_file_up",
+      "type": "bool",
+      "value": false,
+      "description": "Block file transfer from client to server on invalid file verification.\nFile verification on upload must be enabled via option Enable up.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "file_verification",
+      "name": "block_invalid_file_down",
+      "type": "bool",
+      "value": false,
+      "description": "Block file transfer from server to client on invalid file verification.\nFile verification on download must be enabled via option Enable down.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "file_verification",
+      "name": "block_invalid_clipboard_text_up",
+      "type": "bool",
+      "value": false,
+      "description": "Block text transfer from client to server on invalid text verification.\nText verification on upload must be enabled via option Clipboard text up.",
+      "iniOnly": true
+    },
+    {
+      "section": "file_verification",
+      "name": "block_invalid_clipboard_text_down",
+      "type": "bool",
+      "value": false,
+      "description": "Block text transfer from server to client on invalid text verification.\nText verification on download must be enabled via option Clipboard text down.",
+      "iniOnly": true
+    },
+    {
+      "section": "file_verification",
+      "name": "log_if_accepted",
+      "type": "bool",
+      "value": true,
+      "description": "Log the files and clipboard texts that are verified and accepted. By default, only those rejected are logged.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "file_verification",
+      "name": "max_file_size_rejected",
+      "type": "mebibytes",
+      "value": 256,
+      "description": "⚠ This value affects the RAM used by the session.\n\nIf option Block invalid file (up or down) is enabled, automatically reject file with greater filesize.",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "file_verification",
+      "name": "tmpdir",
+      "type": "dirpath",
+      "value": "/tmp/",
+      "description": "Temporary path used when files take up too much memory.",
+      "iniOnly": true
+    },
+    {
+      "section": "file_storage",
+      "name": "store_file",
+      "type": "enumStr",
+      "value": "never",
+      "description": "Enable storage of transferred files (via RDP Clipboard).\n⚠ Saving files can take up a lot of disk space",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "RdpStoreFile"
+    },
+    {
+      "section": "icap_server_down",
+      "name": "host",
+      "type": "str",
+      "value": "",
+      "description": "Ip or fqdn of ICAP server",
+      "globalSpec": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_down",
+      "name": "port",
+      "type": "uint",
+      "value": 1344,
+      "description": "Port of ICAP server",
+      "globalSpec": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_down",
+      "name": "service_name",
+      "type": "str",
+      "value": "avscan",
+      "description": "Service name on ICAP server",
+      "globalSpec": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_down",
+      "name": "tls",
+      "type": "bool",
+      "value": false,
+      "description": "Activate TLS on ICAP server connection",
+      "globalSpec": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_down",
+      "name": "enable_x_context",
+      "type": "bool",
+      "value": true,
+      "description": "Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server",
+      "globalSpec": true,
+      "advanced": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_down",
+      "name": "filename_percent_encoding",
+      "type": "bool",
+      "value": false,
+      "description": "Filename sent to ICAP as percent encoding",
+      "globalSpec": true,
+      "advanced": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_up",
+      "name": "host",
+      "type": "str",
+      "value": "",
+      "description": "Ip or fqdn of ICAP server",
+      "globalSpec": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_up",
+      "name": "port",
+      "type": "uint",
+      "value": 1344,
+      "description": "Port of ICAP server",
+      "globalSpec": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_up",
+      "name": "service_name",
+      "type": "str",
+      "value": "avscan",
+      "description": "Service name on ICAP server",
+      "globalSpec": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_up",
+      "name": "tls",
+      "type": "bool",
+      "value": false,
+      "description": "Activate TLS on ICAP server connection",
+      "globalSpec": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_up",
+      "name": "enable_x_context",
+      "type": "bool",
+      "value": true,
+      "description": "Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server",
+      "globalSpec": true,
+      "advanced": true,
+      "external": true
+    },
+    {
+      "section": "icap_server_up",
+      "name": "filename_percent_encoding",
+      "type": "bool",
+      "value": false,
+      "description": "Filename sent to ICAP as percent encoding",
+      "globalSpec": true,
+      "advanced": true,
+      "external": true
+    },
+    {
+      "section": "crypto",
+      "name": "encryption_key",
+      "type": "bytes",
+      "value": "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F",
+      "description": "",
+      "aclToProxy": true,
+      "minlen": 32, "maxlen": 32
+    },
+    {
+      "section": "crypto",
+      "name": "sign_key",
+      "type": "bytes",
+      "value": "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F",
+      "description": "",
+      "aclToProxy": true,
+      "minlen": 32, "maxlen": 32
+    },
+    {
+      "section": "websocket",
+      "name": "enable_websocket",
+      "type": "bool",
+      "value": false,
+      "description": "Enable websocket protocol (ws or wss with use_tls=1)",
+      "iniOnly": true
+    },
+    {
+      "section": "websocket",
+      "name": "use_tls",
+      "type": "bool",
+      "value": true,
+      "description": "Use TLS with websocket (wss)",
+      "iniOnly": true
+    },
+    {
+      "section": "websocket",
+      "name": "listen_address",
+      "type": "str",
+      "value": ":3390",
+      "description": "${addr}:${port} or ${port} or ${unix_socket_path}",
+      "iniOnly": true
+    },
+    {
+      "section": "vnc_over_ssh",
+      "name": "enable",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "vnc": true,
+      "external": true
+    },
+    {
+      "section": "vnc_over_ssh",
+      "name": "ssh_port",
+      "type": "uint",
+      "value": 22,
+      "description": "Port to be used for SSH tunneling",
+      "vnc": true,
+      "external": true
+    },
+    {
+      "section": "vnc_over_ssh",
+      "name": "tunneling_credential_source",
+      "type": "enumStr",
+      "value": "scenario_account",
+      "description": "static_login: Static values provided in \"Ssh login\" & \"Ssh password\" fields will be used to establish the SSH tunnel.\nscenario_account: Scenario account provided in \"Scenario account name\" field will be used to establish the SSH tunnel. (Recommended)",
+      "vnc": true,
+      "external": true,
+      "subtype": "VncTunnelingCredentialSource"
+    },
+    {
+      "section": "vnc_over_ssh",
+      "name": "ssh_login",
+      "type": "str",
+      "value": "",
+      "description": "Login to be used for SSH tunneling.",
+      "vnc": true,
+      "external": true
+    },
+    {
+      "section": "vnc_over_ssh",
+      "name": "ssh_password",
+      "type": "str",
+      "value": "",
+      "description": "Password to be used for SSH tunneling.",
+      "vnc": true,
+      "external": true
+    },
+    {
+      "section": "vnc_over_ssh",
+      "name": "scenario_account_name",
+      "type": "str",
+      "value": "",
+      "description": "With the following syntax: \"account_name@domain_name[@[device_name]]\".\n\nSyntax for using global domain scenario account:\n  \"account_name@global_domain_name\"\n\nSyntax for using local domain scenario account (with automatic device name deduction):\n  \"account_name@local_domain_name@\"",
+      "vnc": true,
+      "external": true
+    },
+    {
+      "section": "vnc_over_ssh",
+      "name": "tunneling_type",
+      "type": "enumStr",
+      "value": "pxssh",
+      "description": "Only for debugging purposes.",
+      "vnc": true,
+      "advanced": true,
+      "external": true,
+      "subtype": "VncTunnelingType"
+    },
+    {
+      "section": "context",
+      "name": "psid",
+      "type": "str",
+      "value": "",
+      "description": "Proxy session log id",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "opt_bpp",
+      "type": "enum",
+      "value": 24,
+      "description": "Specifies the maximum color resolution (color depth) for client connection session:",
+      "aclName": "bpp",
+      "ProxyToAcl": true,
+      "subtype": "ColorDepth"
+    },
+    {
+      "section": "context",
+      "name": "opt_height",
+      "type": "u16",
+      "value": 600,
+      "description": "",
+      "aclName": "height",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "opt_width",
+      "type": "u16",
+      "value": 800,
+      "description": "",
+      "aclName": "width",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "auth_error_message",
+      "type": "str",
+      "value": "",
+      "description": ""
+    },
+    {
+      "section": "context",
+      "name": "selector",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "selector_current_page",
+      "type": "uint",
+      "value": 1,
+      "description": "",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "selector_device_filter",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "selector_group_filter",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "selector_proto_filter",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "selector_lines_per_page",
+      "type": "uint",
+      "value": 0,
+      "description": "",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "selector_number_of_pages",
+      "type": "uint",
+      "value": 1,
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "target_password",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "target_host",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "tunneling_target_host",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "target_str",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "target_service",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "target_port",
+      "type": "uint",
+      "value": 3389,
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "target_protocol",
+      "type": "str",
+      "value": "RDP",
+      "description": "",
+      "aclName": "proto_dest",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "password",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "reporting",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "auth_channel_answer",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "2"
+    },
+    {
+      "section": "context",
+      "name": "auth_channel_target",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "message",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "display_link",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "mod_timeout",
+      "type": "seconds",
+      "value": 0,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "accept_message",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "display_message",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "rejected",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "keepalive",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "session_id",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "end_date_cnx",
+      "type": "seconds",
+      "value": 0,
+      "description": "",
+      "aclName": "timeclose",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "real_target_device",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "authentication_challenge",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "ticket",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "comment",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "duration",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "duration_max",
+      "type": "minutes",
+      "value": 0,
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "waitinforeturn",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "showform",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "formflag",
+      "type": "uint",
+      "value": 0,
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "module",
+      "type": "enumStr",
+      "value": "login",
+      "description": "",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "logStategy": "1",
+      "subtype": "ModuleName"
+    },
+    {
+      "section": "context",
+      "name": "try_alternate_target",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "has_more_target",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "proxy_opt",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "pattern_kill",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "pattern_notify",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "opt_message",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "login_message",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "disconnect_reason",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "disconnect_reason_ack",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "ip_target",
+      "type": "str",
+      "value": "",
+      "description": ""
+    },
+    {
+      "section": "context",
+      "name": "recording_started",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "rt_ready",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "sharing_ready",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "auth_command",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "auth_notify",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "auth_notify_rail_exec_flags",
+      "type": "uint",
+      "value": 0,
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "auth_notify_rail_exec_exe_or_file",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "auth_command_rail_exec_exec_result",
+      "type": "u16",
+      "value": 0,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "auth_command_rail_exec_flags",
+      "type": "u16",
+      "value": 0,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "auth_command_rail_exec_original_exe_or_file",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "auth_command_rail_exec_exe_or_file",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "auth_command_rail_exec_working_dir",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "auth_command_rail_exec_arguments",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "auth_command_rail_exec_account",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "auth_command_rail_exec_password",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true
+    },
+    {
+      "section": "context",
+      "name": "session_probe_launch_error_message",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "close_box_extra_message",
+      "type": "str",
+      "value": "",
+      "description": ""
+    },
+    {
+      "section": "context",
+      "name": "is_wabam",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "pm_response",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "pm_request",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "native_session_id",
+      "type": "u32",
+      "value": 0,
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "rd_shadow_available",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "rd_shadow_userdata",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "rd_shadow_type",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "rd_shadow_invitation_error_code",
+      "type": "u32",
+      "value": 0,
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "rd_shadow_invitation_error_message",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "rd_shadow_invitation_id",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "rd_shadow_invitation_addr",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "rd_shadow_invitation_port",
+      "type": "u16",
+      "value": 0,
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "session_sharing_userdata",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "ProxyToAcl": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "session_sharing_enable_control",
+      "type": "bool",
+      "value": false,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "session_sharing_ttl",
+      "type": "seconds",
+      "value": 600,
+      "description": "",
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "session_sharing_invitation_error_code",
+      "type": "u32",
+      "value": 0,
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "session_sharing_invitation_error_message",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "session_sharing_invitation_id",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "session_sharing_invitation_addr",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "session_sharing_target_ip",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "session_sharing_target_login",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true
+    },
+    {
+      "section": "context",
+      "name": "rail_module_host_mod_is_active",
+      "type": "bool",
+      "value": false,
+      "description": ""
+    },
+    {
+      "section": "context",
+      "name": "smartcard_login",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "ProxyToAcl": true,
+      "resetBackToSelector": true
+    },
+    {
+      "section": "context",
+      "name": "banner_message",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "context",
+      "name": "banner_type",
+      "type": "enum",
+      "value": 0,
+      "description": "",
+      "aclToProxy": true,
+      "resetBackToSelector": true,
+      "logStategy": "1",
+      "subtype": "BannerType"
+    },
+    {
+      "section": "context",
+      "name": "redirection_password_or_cookie",
+      "type": "list",
+      "value": "",
+      "description": "",
+      "subtype": "u8"
+    },
+    {
+      "section": "internal_mod",
+      "name": "enable_target_field",
+      "type": "bool",
+      "value": true,
+      "description": "Enable target edit field in login page. This target edit field allows to enter the target and the login separately.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "internal_mod",
+      "name": "keyboard_layout_proposals",
+      "type": "list",
+      "value": "en-US, fr-FR, de-DE, ru-RU",
+      "description": "List of keyboard layouts available by the internal pages button located at bottom left of some internal pages (login, selector, etc).\nPossible values: bg-BG, bg-BG.latin, bs-Cy, bépo, cs-CZ, cs-CZ.programmers, cs-CZ.qwerty, cy-GB, da-DK, de-CH, de-DE, de-DE.ibm, el-GR, el-GR.220, el-GR.220_latin, el-GR.319, el-GR.319_latin, el-GR.latin, el-GR.polytonic, en-CA.fr, en-CA.multilingual, en-GB, en-IE, en-IE.irish, en-US, en-US.dvorak, en-US.dvorak_left, en-US.dvorak_right, en-US.international, es-ES, es-ES.variation, es-MX, et-EE, fi-FI.finnish, fo-FO, fr-BE, fr-BE.fr, fr-CA, fr-CH, fr-FR, fr-FR.standard, hr-HR, hu-HU, is-IS, it-IT, it-IT.142, iu-La, kk-KZ, ky-KG, lb-LU, lt-LT, lt-LT.ibm, lv-LV, lv-LV.qwerty, mi-NZ, mk-MK, mn-MN, mt-MT.47, mt-MT.48, nb-NO, nl-BE, nl-NL, pl-PL, pl-PL.programmers, pt-BR.abnt, pt-BR.abnt2, pt-PT, ro-RO, ru-RU, ru-RU.typewriter, se-NO, se-NO.ext_norway, se-SE, se-SE, se-SE.ext_finland_sweden, sk-SK, sk-SK.qwerty, sl-SI, sr-Cy, sr-La, sv-SE, tr-TR.f, tr-TR.q, tt-RU, uk-UA, uz-Cy",
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "string"
+    },
+    {
+      "section": "internal_mod",
+      "name": "enable_close_box",
+      "type": "bool",
+      "value": true,
+      "description": "Show close screen.\nThis displays errors related to the secondary connection then closes automatically after a timeout specified by \"Close Timeout\" or on user request.",
+      "globalSpec": true
+    },
+    {
+      "section": "internal_mod",
+      "name": "close_box_timeout",
+      "type": "seconds",
+      "value": 600,
+      "description": "Specifies the time to spend on the close box of proxy RDP before closing client window.\n⚠ Value 0 deactivates the timer and the connection remains open until the client disconnects.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "mod_replay",
+      "name": "replay_path",
+      "type": "dirpath",
+      "value": "/tmp/",
+      "description": "",
+      "aclName": "replay_path",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_replay",
+      "name": "on_end_of_data",
+      "type": "bool",
+      "value": false,
+      "description": "0 - Wait for Escape, 1 - End session",
+      "iniOnly": true
+    },
+    {
+      "section": "mod_replay",
+      "name": "replay_on_loop",
+      "type": "bool",
+      "value": false,
+      "description": "0 - replay once, 1 - loop replay",
+      "aclName": "replay_on_loop",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "translation",
+      "name": "language",
+      "type": "enumStr",
+      "value": "en",
+      "description": "",
+      "aclName": "language",
+      "iniOnly": true,
+      "aclToProxy": true,
+      "logStategy": "1",
+      "subtype": "Language"
+    },
+    {
+      "section": "translation",
+      "name": "login_language",
+      "type": "enumStr",
+      "value": "Auto",
+      "description": "Language used on the login page. When the user logs in, their user preference language is used.",
+      "globalSpec": true,
+      "ProxyToAcl": true,
+      "advanced": true,
+      "subtype": "LoginLanguage"
+    },
+    {
+      "section": "theme",
+      "name": "enable_theme",
+      "type": "bool",
+      "value": false,
+      "description": "Enable custom theme color configuration",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "logo_path",
+      "type": "str",
+      "value": "REDEMPTION_CONFIG_THEME_LOGO", "cppExpr": true,
+      "description": "Logo displayed when theme is enabled",
+      "iniName": "logo",
+      "imagePath": "/var/wab/images/rdp-oem-logo.png",
+      "globalSpec": true,
+      "image": true
+    },
+    {
+      "section": "theme",
+      "name": "bgcolor",
+      "type": "rgb",
+      "value": "#081F60",
+      "description": "Background color for window, label and button",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "fgcolor",
+      "type": "rgb",
+      "value": "#FFFFFF",
+      "description": "Foreground color for window, label and button",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "separator_color",
+      "type": "rgb",
+      "value": "#CFD5EB",
+      "description": "Separator line color used with some widgets",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "focus_color",
+      "type": "rgb",
+      "value": "#004D9C",
+      "description": "Background color used by buttons when they have focus",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "error_color",
+      "type": "rgb",
+      "value": "#FFFF00",
+      "description": "Text color for error messages. For example, an authentication error in the login",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "edit_bgcolor",
+      "type": "rgb",
+      "value": "#FFFFFF",
+      "description": "Background color for editing field",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "edit_fgcolor",
+      "type": "rgb",
+      "value": "#000000",
+      "description": "Foreground color for editing field",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "edit_focus_color",
+      "type": "rgb",
+      "value": "#004D9C",
+      "description": "Outline color for editing field that has focus",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "tooltip_bgcolor",
+      "type": "rgb",
+      "value": "#000000",
+      "description": "Background color for tooltip",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "tooltip_fgcolor",
+      "type": "rgb",
+      "value": "#FFFF9F",
+      "description": "Foreground color for tooltip",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "tooltip_border_color",
+      "type": "rgb",
+      "value": "#000000",
+      "description": "Border color for tooltip",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "selector_line1_bgcolor",
+      "type": "rgb",
+      "value": "#E9ECF6",
+      "description": "Background color for even rows in the selector widget",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "selector_line1_fgcolor",
+      "type": "rgb",
+      "value": "#000000",
+      "description": "Foreground color for even rows in the selector widget",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "selector_line2_bgcolor",
+      "type": "rgb",
+      "value": "#CFD5EB",
+      "description": "Background color for odd rows in the selector widget",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "selector_line2_fgcolor",
+      "type": "rgb",
+      "value": "#000000",
+      "description": "Foreground color for odd rows in the selector widget",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "selector_focus_bgcolor",
+      "type": "rgb",
+      "value": "#004D9C",
+      "description": "Background color for the row that has focus in the selector widget",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "selector_focus_fgcolor",
+      "type": "rgb",
+      "value": "#FFFFFF",
+      "description": "Foreground color for the row that has focus in the selector widget",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "selector_selected_bgcolor",
+      "type": "rgb",
+      "value": "#4472C4",
+      "description": "Background color for the row that is selected in the selector widget but does not have focus",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "selector_selected_fgcolor",
+      "type": "rgb",
+      "value": "#FFFFFF",
+      "description": "Foreground color for the row that is selected in the selector widget but does not have focus",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "selector_label_bgcolor",
+      "type": "rgb",
+      "value": "#4472C4",
+      "description": "Background color for name of filter fields in the selector widget",
+      "globalSpec": true
+    },
+    {
+      "section": "theme",
+      "name": "selector_label_fgcolor",
+      "type": "rgb",
+      "value": "#FFFFFF",
+      "description": "Foreground color for name of filter fields in the selector widget",
+      "globalSpec": true
+    },
+    {
+      "section": "debug",
+      "name": "fake_target_ip",
+      "type": "str",
+      "value": "",
+      "description": "",
+      "iniOnly": true
+    },
+    {
+      "section": "debug",
+      "name": "capture",
+      "type": "u32",
+      "value": 0,
+      "description": "- kbd / ocr when != 0\n\n(Wrm)\n- pointer             = 0x0004\n- primary_orders      = 0x0020\n- secondary_orders    = 0x0040\n- bitmap_update       = 0x0080\n- surface_commands    = 0x0100\n- bmp_cache           = 0x0200\n- internal_buffer     = 0x0400\n- sec_decrypted       = 0x1000",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "auth",
+      "type": "u32",
+      "value": 0,
+      "description": "- variable = 0x0002\n- buffer   = 0x0040\n- dump     = 0x1000",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "session",
+      "type": "u32",
+      "value": 0,
+      "description": "- Log   = 0x01\n- Event = 0x02\n- Acl   = 0x04\n- Trace = 0x08",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "front",
+      "type": "u32",
+      "value": 0,
+      "description": "- basic_trace     = 0x00000001\n- basic_trace2    = 0x00000002\n- basic_trace3    = 0x00000004\n- basic_trace4    = 0x00000008\n- basic_trace5    = 0x00000020\n- graphic         = 0x00000040\n- channel         = 0x00000080\n- cache_from_disk = 0x00000400\n- bmp_info        = 0x00000800\n- global_channel  = 0x00002000\n- sec_decrypted   = 0x00004000\n- keymap          = 0x00008000\n\n(Serializer)\n- pointer             = 0x00040000\n- primary_orders      = 0x00200000\n- secondary_orders    = 0x00400000\n- bitmap_update       = 0x00800000\n- surface_commands    = 0x01000000\n- bmp_cache           = 0x02000000\n- internal_buffer     = 0x04000000\n- sec_decrypted       = 0x10000000",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "mod_rdp",
+      "type": "u32",
+      "value": 0,
+      "description": "- basic_trace         = 0x00000001\n- connection          = 0x00000002\n- security            = 0x00000004\n- capabilities        = 0x00000008\n- license             = 0x00000010\n- asynchronous_task   = 0x00000020\n- graphics_pointer    = 0x00000040\n- graphics            = 0x00000080\n- input               = 0x00000100\n- rail_order          = 0x00000200\n- credssp             = 0x00000400\n- negotiation         = 0x00000800\n- cache_persister     = 0x00001000\n- fsdrvmgr            = 0x00002000\n- sesprobe_launcher   = 0x00004000\n- sesprobe_repetitive = 0x00008000\n- drdynvc             = 0x00010000\n- surfaceCmd          = 0x00020000\n- cache_from_disk     = 0x00040000\n- bmp_info            = 0x00080000\n- drdynvc_dump        = 0x00100000\n- printer             = 0x00200000\n- rdpsnd              = 0x00400000\n- channels            = 0x00800000\n- rail                = 0x01000000\n- sesprobe            = 0x02000000\n- cliprdr             = 0x04000000\n- rdpdr               = 0x08000000\n- rail_dump           = 0x10000000\n- sesprobe_dump       = 0x20000000\n- cliprdr_dump        = 0x40000000\n- rdpdr_dump          = 0x80000000",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "mod_vnc",
+      "type": "u32",
+      "value": 0,
+      "description": "- basic_trace     = 0x00000001\n- keymap_stack    = 0x00000002\n- draw_event      = 0x00000004\n- input           = 0x00000008\n- connection      = 0x00000010\n- hextile_encoder = 0x00000020\n- cursor_encoder  = 0x00000040\n- clipboard       = 0x00000080\n- zrle_encoder    = 0x00000100\n- zrle_trace      = 0x00000200\n- hextile_trace   = 0x00000400\n- cursor_trace    = 0x00001000\n- rre_encoder     = 0x00002000\n- rre_trace       = 0x00004000\n- raw_encoder     = 0x00008000\n- raw_trace       = 0x00010000\n- copyrect_encoder= 0x00020000\n- copyrect_trace  = 0x00040000\n- keymap          = 0x00080000",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "mod_internal",
+      "type": "u32",
+      "value": 0,
+      "description": "- copy_paste != 0\n- client_execute = 0x01",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "sck_mod",
+      "type": "u32",
+      "value": 0,
+      "description": "- basic    = 0x0001\n- dump     = 0x0002\n- watchdog = 0x0004\n- meta     = 0x0008",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "sck_front",
+      "type": "u32",
+      "value": 0,
+      "description": "- basic    = 0x0001\n- dump     = 0x0002\n- watchdog = 0x0004\n- meta     = 0x0008",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "password",
+      "type": "u32",
+      "value": 0,
+      "description": "",
+      "iniOnly": true
+    },
+    {
+      "section": "debug",
+      "name": "compression",
+      "type": "u32",
+      "value": 0,
+      "description": "- when != 0",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "cache",
+      "type": "u32",
+      "value": 0,
+      "description": "- life       = 0x0001\n- persistent = 0x0200",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "ocr",
+      "type": "u32",
+      "value": 0,
+      "description": "- when != 0",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "ffmpeg",
+      "type": "u32",
+      "value": 0,
+      "description": "Value passed to function av_log_set_level()\nSee https://www.ffmpeg.org/doxygen/2.3/group__lavu__log__constants.html",
+      "displayName": "FFmpeg",
+      "globalSpec": true,
+      "hex": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "config",
+      "type": "bool",
+      "value": true,
+      "description": "Log unknown members or sections",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "debug",
+      "name": "mod_rdp_use_failure_simulation_socket_transport",
+      "type": "enum",
+      "value": 0,
+      "description": "",
+      "iniOnly": true,
+      "subtype": "ModRdpUseFailureSimulationSocketTransport"
+    },
+    {
+      "section": "debug",
+      "name": "probe_client_addresses",
+      "type": "list",
+      "value": "",
+      "description": "List of client probe IP addresses (ex: ip1,ip2,etc) to prevent some continuous logs",
+      "globalSpec": true,
+      "advanced": true,
+      "subtype": "string"
+    }
+]
+}

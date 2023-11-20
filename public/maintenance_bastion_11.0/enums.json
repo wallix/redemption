@@ -1,0 +1,767 @@
+[{
+  "name": "ModuleName",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "UNKNOWN",
+      "value": 0
+    }, {
+      "name": "login",
+      "value": 1
+    }, {
+      "name": "selector",
+      "value": 2
+    }, {
+      "name": "confirm",
+      "value": 3
+    }, {
+      "name": "link_confirm",
+      "value": 4
+    }, {
+      "name": "challenge",
+      "value": 5
+    }, {
+      "name": "valid",
+      "value": 6
+    }, {
+      "name": "transitory",
+      "value": 7
+    }, {
+      "name": "close",
+      "value": 8
+    }, {
+      "name": "close_back",
+      "value": 9
+    }, {
+      "name": "interactive_target",
+      "value": 10
+    }, {
+      "name": "RDP",
+      "value": 11
+    }, {
+      "name": "VNC",
+      "value": 12
+    }, {
+      "name": "INTERNAL",
+      "value": 13
+    }, {
+      "name": "waitinfo",
+      "value": 14
+    }, {
+      "name": "bouncer2",
+      "value": 15
+    }, {
+      "name": "autotest",
+      "value": 16
+    }, {
+      "name": "widgettest",
+      "value": 17
+    }, {
+      "name": "card",
+      "value": 18
+    }
+  ]
+}, {
+  "name": "CaptureFlags",
+  "category": "flags",
+  "nameWhenDescription": true,
+  "description": "Specifies the type of data to be captured:",
+  "values": [
+    {
+      "name": "none",
+      "value": 0
+    }, {
+      "name": "png",
+      "value": 1
+    }, {
+      "name": "wrm",
+      "value": 2,
+      "description": "Session recording file."
+    }, {
+      "name": "ocr",
+      "value": 8
+    }
+  ]
+}, {
+  "name": "RdpSecurityEncryptionLevel",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "none",
+      "value": 0
+    }, {
+      "name": "low",
+      "value": 1
+    }, {
+      "name": "medium",
+      "value": 2
+    }, {
+      "name": "high",
+      "value": 3
+    }
+  ]
+}, {
+  "name": "Language",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "en",
+      "value": 0
+    }, {
+      "name": "fr",
+      "value": 1
+    }
+  ]
+}, {
+  "name": "ClipboardEncodingType",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "utf8",
+      "value": 0,
+      "alias": "utf-8"
+    }, {
+      "name": "latin1",
+      "value": 1
+    }
+  ]
+}, {
+  "name": "KeyboardLogFlags",
+  "category": "flags",
+  "nameWhenDescription": false,
+  "values": [
+    {
+      "name": "none",
+      "value": 0
+    }, {
+      "name": "session_log",
+      "value": 1,
+      "description": "keyboard log in session log"
+    }, {
+      "name": "wrm",
+      "value": 2,
+      "description": "keyboard log in recorded sessions"
+    }
+  ]
+}, {
+  "name": "ClipboardLogFlags",
+  "category": "flags",
+  "nameWhenDescription": false,
+  "values": [
+    {
+      "name": "none",
+      "value": 0
+    }, {
+      "name": "wrm",
+      "value": 1,
+      "description": "clipboard log in recorded sessions"
+    }, {
+      "name": "meta",
+      "value": 2,
+      "description": "clipboard log in recorded meta"
+    }
+  ]
+}, {
+  "name": "FileSystemLogFlags",
+  "category": "flags",
+  "nameWhenDescription": false,
+  "values": [
+    {
+      "name": "none",
+      "value": 0
+    }, {
+      "name": "wrm",
+      "value": 1,
+      "description": "(redirected) file system log in recorded sessions"
+    }, {
+      "name": "meta",
+      "value": 2,
+      "description": "(redirected) file system log in recorded meta"
+    }
+  ]
+}, {
+  "name": "ColorDepth",
+  "category": "set",
+  "nameWhenDescription": false,
+  "description": "Specifies the maximum color resolution (color depth) for client connection session:",
+  "values": [
+    {
+      "name": "depth8",
+      "value": 8,
+      "description": "8-bit"
+    }, {
+      "name": "depth15",
+      "value": 15,
+      "description": "15-bit 555 RGB mask"
+    }, {
+      "name": "depth16",
+      "value": 16,
+      "description": "16-bit 565 RGB mask"
+    }, {
+      "name": "depth24",
+      "value": 24,
+      "description": "24-bit RGB mask"
+    }, {
+      "name": "depth32",
+      "value": 32,
+      "description": "32-bit RGB mask + alpha"
+    }
+  ]
+}, {
+  "name": "ServerNotification",
+  "category": "flags",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "nobody",
+      "value": 0
+    }, {
+      "name": "syslog",
+      "value": 1,
+      "description": "message sent to syslog"
+    }, {
+      "name": "user",
+      "value": 2,
+      "description": "User notified (through proxy interface)"
+    }, {
+      "name": "admin",
+      "value": 4,
+      "description": "admin notified (Bastion notification)"
+    }
+  ]
+}, {
+  "name": "ServerCertCheck",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "description": "Behavior of certificates check.",
+  "info": "System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.",
+  "values": [
+    {
+      "name": "fails_if_no_match_or_missing",
+      "value": 0,
+      "description": "fails if certificates doesn't match or miss."
+    }, {
+      "name": "fails_if_no_match_and_succeed_if_no_know",
+      "value": 1,
+      "description": "fails if certificate doesn't match, succeed if no known certificate."
+    }, {
+      "name": "succeed_if_exists_and_fails_if_missing",
+      "value": 2,
+      "description": "succeed if certificates exists (not checked), fails if missing."
+    }, {
+      "name": "always_succeed",
+      "value": 3,
+      "description": "always succeed."
+    }
+  ]
+}, {
+  "name": "TraceType",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "description": "Session record options.",
+  "info": "When session records are encrypted, they can be read only by the WALLIX Bastion where they have been generated.",
+  "values": [
+    {
+      "name": "localfile",
+      "value": 0,
+      "description": "No encryption (faster)."
+    }, {
+      "name": "localfile_hashed",
+      "value": 1,
+      "description": "No encryption, with checksum."
+    }, {
+      "name": "cryptofile",
+      "value": 2,
+      "description": "Encryption enabled."
+    }
+  ]
+}, {
+  "name": "KeyboardInputMaskingLevel",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "values": [
+    {
+      "name": "unmasked",
+      "value": 0,
+      "description": "keyboard input are not masked"
+    }, {
+      "name": "password_only",
+      "value": 1,
+      "description": "only passwords are masked"
+    }, {
+      "name": "password_and_unidentified",
+      "value": 2,
+      "description": "passwords and unidentified texts are masked"
+    }, {
+      "name": "fully_masked",
+      "value": 3,
+      "description": "keyboard inputs are not logged"
+    }
+  ]
+}, {
+  "name": "SessionProbeOnLaunchFailure",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "description": "Behavior on failure to launch Session Probe.",
+  "values": [
+    {
+      "name": "ignore_and_continue",
+      "value": 0,
+      "description": "The metadata collected is not essential for us. Instead, we prefer to minimize the impact on the user experience. The Session Probe launch will be in best-effort mode. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'."
+    }, {
+      "name": "disconnect_user",
+      "value": 1,
+      "description": "This is the recommended setting. If the target meets all the technical prerequisites, there is no reason for the Session Probe not to launch. All that remains is to adapt the value of 'Launch timeout' to the performance of the target."
+    }, {
+      "name": "retry_without_session_probe",
+      "value": 2,
+      "description": "We wish to be able to recover the behavior of Bastion 5 when the Session Probe does not launch. The prevailing duration is defined by the 'Launch fallback timeout' instead of the 'Launch timeout'."
+    }
+  ]
+}, {
+  "name": "VncBogusClipboardInfiniteLoop",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "delayed",
+      "value": 0,
+      "description": "Clipboard processing is deferred and, if necessary, the token is left with the client."
+    }, {
+      "name": "duplicated",
+      "value": 1,
+      "description": "When 2 identical requests are received, the second is ignored. This can block clipboard data reception until a clipboard event is triggered on the server when the client clipboard is blocked, and vice versa."
+    }, {
+      "name": "continued",
+      "value": 2,
+      "description": "No special processing is done, the proxy always responds immediately."
+    }
+  ]
+}, {
+  "name": "ColorDepthSelectionStrategy",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "description": "The method by which the proxy RDP establishes criteria on which to chosse a color depth for Session recording file (wrm):",
+  "values": [
+    {
+      "name": "depth24",
+      "value": 0,
+      "description": "24-bit"
+    }, {
+      "name": "depth16",
+      "value": 1,
+      "description": "16-bit"
+    }
+  ]
+}, {
+  "name": "WrmCompressionAlgorithm",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "description": "The compression method of Session recording file (wrm):",
+  "values": [
+    {
+      "name": "no_compression",
+      "value": 0
+    }, {
+      "name": "gzip",
+      "value": 1,
+      "description": "GZip: Files are better compressed, but this takes more time and CPU load"
+    }, {
+      "name": "snappy",
+      "value": 2,
+      "description": "Snappy: Faster than GZip, but files are less compressed"
+    }
+  ]
+}, {
+  "name": "RdpCompression",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "description": "Specifies the highest RDP compression support available",
+  "values": [
+    {
+      "name": "none",
+      "value": 0,
+      "description": "The RDP bulk compression is disabled"
+    }, {
+      "name": "rdp4",
+      "value": 1,
+      "description": "RDP 4.0 bulk compression"
+    }, {
+      "name": "rdp5",
+      "value": 2,
+      "description": "RDP 5.0 bulk compression"
+    }, {
+      "name": "rdp6",
+      "value": 3,
+      "description": "RDP 6.0 bulk compression"
+    }, {
+      "name": "rdp6_1",
+      "value": 4,
+      "description": "RDP 6.1 bulk compression"
+    }
+  ]
+}, {
+  "name": "OcrVersion",
+  "category": "set",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "v1",
+      "value": 1
+    }, {
+      "name": "v2",
+      "value": 2
+    }
+  ]
+}, {
+  "name": "OcrLocale",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "values": [
+    {
+      "name": "latin",
+      "value": 0,
+      "description": "Recognizes Latin characters"
+    }, {
+      "name": "cyrillic",
+      "value": 1,
+      "description": "Recognizes Latin and Cyrillic characters"
+    }
+  ]
+}, {
+  "name": "SessionProbeOnKeepaliveTimeout",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "ignore_and_continue",
+      "value": 0,
+      "description": "Designed to minimize the impact on the user experience if the Session Probe is unstable. It should not be used when Session Probe is working well. An attacker can take advantage of this setting by simulating a Session Probe crash in order to bypass the surveillance."
+    }, {
+      "name": "disconnect_user",
+      "value": 1,
+      "description": "Legacy behavior. It’s a choice that gives more security, but the impact on the user experience seems disproportionate. The RDP session can be closed (resulting in the permanent loss of all its unsaved elements) if the 'End disconnected session' parameter (or an equivalent setting at the RDS-level) is enabled."
+    }, {
+      "name": "freeze_connection_and_wait",
+      "value": 2,
+      "description": "This is the recommended setting. User actions will be blocked until contact with the Session Probe (reply to KeepAlive message or something else) is resumed."
+    }
+  ]
+}, {
+  "name": "SmartVideoCropping",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "disable",
+      "value": 0,
+      "description": "When replaying the session video, the content of the RDP viewer matches the size of the client's desktop"
+    }, {
+      "name": "v1",
+      "value": 1,
+      "description": "When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session"
+    }, {
+      "name": "v2",
+      "value": 2,
+      "description": "When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session"
+    }
+  ]
+}, {
+  "name": "RdpModeConsole",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "values": [
+    {
+      "name": "allow",
+      "value": 0,
+      "description": "Forward Console mode request from client to the target."
+    }, {
+      "name": "force",
+      "value": 1,
+      "description": "Force Console mode on target regardless of client request."
+    }, {
+      "name": "forbid",
+      "value": 2,
+      "description": "Block Console mode request from client."
+    }
+  ]
+}, {
+  "name": "SessionProbeDisabledFeature",
+  "category": "flags",
+  "nameWhenDescription": false,
+  "values": [
+    {
+      "name": "none",
+      "value": 0
+    }, {
+      "name": "jab",
+      "value": 1,
+      "description": "Java Access Bridge. General user activity monitoring in the Java applications (including detection of password fields)."
+    }, {
+      "name": "msaa",
+      "value": 2,
+      "description": "MS Active Accessbility. General user activity monitoring (including detection of password fields). (legacy API)"
+    }, {
+      "name": "msuia",
+      "value": 4,
+      "description": "MS UI Automation. General user activity monitoring (including detection of password fields). (new API)"
+    }, {
+      "name": "edge_inspection",
+      "value": 16,
+      "description": "Inspect Edge location URL. Basic web navigation monitoring."
+    }, {
+      "name": "chrome_inspection",
+      "value": 32,
+      "description": "Inspect Chrome Address/Search bar. Basic web navigation monitoring."
+    }, {
+      "name": "firefox_inspection",
+      "value": 64,
+      "description": "Inspect Firefox Address/Search bar. Basic web navigation monitoring."
+    }, {
+      "name": "ie_monitoring",
+      "value": 128,
+      "description": "Monitor Internet Explorer event. Advanced web navigation monitoring."
+    }, {
+      "name": "group_membership",
+      "value": 256,
+      "description": "Inspect group membership of user. User identity monitoring."
+    }
+  ]
+}, {
+  "name": "RdpStoreFile",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "never",
+      "value": 0,
+      "description": "Never store transferred files."
+    }, {
+      "name": "always",
+      "value": 1,
+      "description": "Always store transferred files."
+    }, {
+      "name": "on_invalid_verification",
+      "value": 2,
+      "description": "Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification)."
+    }
+  ]
+}, {
+  "name": "SessionProbeOnAccountManipulation",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "description": "For targets running WALLIX BestSafe only.",
+  "values": [
+    {
+      "name": "allow",
+      "value": 0,
+      "description": "User action will be accepted"
+    }, {
+      "name": "notify",
+      "value": 1,
+      "description": "(Same thing as 'allow') "
+    }, {
+      "name": "deny",
+      "value": 2,
+      "description": "User action will be rejected"
+    }
+  ]
+}, {
+  "name": "ClientAddressSent",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "description": "Client Address to send to target(in InfoPacket)",
+  "values": [
+    {
+      "name": "no_address",
+      "value": 0,
+      "description": "Send 0.0.0.0"
+    }, {
+      "name": "proxy",
+      "value": 1,
+      "description": "Send proxy client address or target connexion"
+    }, {
+      "name": "front",
+      "value": 2,
+      "description": "Send user client address of front connexion"
+    }
+  ]
+}, {
+  "name": "SessionProbeLogLevel",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "Fatal",
+      "value": 1,
+      "description": "Designates very severe error events that will presumably lead the application to abort."
+    }, {
+      "name": "Error",
+      "value": 2,
+      "description": "Designates error events that might still allow the application to continue running."
+    }, {
+      "name": "Info",
+      "value": 3,
+      "description": "Designates informational messages that highlight the progress of the application at coarse-grained level."
+    }, {
+      "name": "Warning",
+      "value": 4,
+      "description": "Designates potentially harmful situations."
+    }, {
+      "name": "Debug",
+      "value": 5,
+      "description": "Designates fine-grained informational events that are mostly useful to debug an application."
+    }, {
+      "name": "Detail",
+      "value": 6,
+      "description": "Designates finer-grained informational events than Debug."
+    }
+  ]
+}, {
+  "name": "ModRdpUseFailureSimulationSocketTransport",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "Off",
+      "value": 0
+    }, {
+      "name": "SimulateErrorRead",
+      "value": 1
+    }, {
+      "name": "SimulateErrorWrite",
+      "value": 2
+    }
+  ]
+}, {
+  "name": "LoginLanguage",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "Auto",
+      "value": 0,
+      "description": "The language will be deduced according to the keyboard layout announced by the client"
+    }, {
+      "name": "EN",
+      "value": 1
+    }, {
+      "name": "FR",
+      "value": 2
+    }
+  ]
+}, {
+  "name": "VncTunnelingType",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "pxssh",
+      "value": 0
+    }, {
+      "name": "pexpect",
+      "value": 1
+    }, {
+      "name": "popen",
+      "value": 2
+    }
+  ]
+}, {
+  "name": "VncTunnelingCredentialSource",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "static_login",
+      "value": 0
+    }, {
+      "name": "scenario_account",
+      "value": 1
+    }
+  ]
+}, {
+  "name": "BannerType",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "info",
+      "value": 0
+    }, {
+      "name": "warn",
+      "value": 1
+    }, {
+      "name": "alert",
+      "value": 2
+    }
+  ]
+}, {
+  "name": "SessionProbeCPUUsageAlarmAction",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "values": [
+    {
+      "name": "Restart",
+      "value": 0,
+      "description": "Restart the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section and 'Allow multiple handshakes' parameter of 'Configuration options'."
+    }, {
+      "name": "Stop",
+      "value": 1,
+      "description": "Stop the Session Probe. May result in session disconnection due to loss of KeepAlive messages! Please refer to 'On keepalive timeout' parameter of current section."
+    }
+  ]
+}, {
+  "name": "SessionProbeProcessCommandLineRetrieveMethod",
+  "category": "autoincrement",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "windows_management_instrumentation",
+      "value": 0,
+      "description": "Get command-line of processes via Windows Management Instrumentation. (Legacy method)"
+    }, {
+      "name": "windows_internals",
+      "value": 1,
+      "description": "Calling internal system APIs to get the process command line. (More efficient but less stable)"
+    }, {
+      "name": "both",
+      "value": 2,
+      "description": "First use internal system APIs call, if that fails, use Windows Management Instrumentation method."
+    }
+  ]
+}, {
+  "name": "RdpSaveSessionInfoPDU",
+  "category": "autoincrement",
+  "nameWhenDescription": false,
+  "values": [
+    {
+      "name": "Supported",
+      "value": 0,
+      "description": "Windows"
+    }, {
+      "name": "UnsupportedOrUnknown",
+      "value": 1,
+      "description": "Bastion, xrdp or others"
+    }
+  ]
+}, {
+  "name": "SessionLogFormat",
+  "category": "flags",
+  "nameWhenDescription": true,
+  "values": [
+    {
+      "name": "disabled",
+      "value": 0
+    }, {
+      "name": "SIEM",
+      "value": 1
+    }, {
+      "name": "ArcSight",
+      "value": 2
+    }
+  ]
+}]

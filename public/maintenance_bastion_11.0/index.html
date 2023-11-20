@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<title>Config</title>
+
+<style>
+body {
+  background: #fff;
+  margin-top: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+code {
+  background: #eee;
+  font-size: 1rem;
+}
+
+table {
+  border-collapse: collapse;
+}
+td, th {
+  border: 1px #333 solid;
+  padding: .2em .5em;
+}
+
+.enumInt > tbody > tr > td:first-child {
+  text-align: right;
+}
+
+h1, nav {
+  margin-left: .5em;
+  margin-right: .5em;
+}
+
+h2 {
+  background: #ddd;
+  padding-left: .3rem;
+  padding-right: .3rem;
+}
+
+h2 > a, h3 > a {
+  color: #e06d02;
+  text-decoration: none;
+}
+
+.option-group {
+  padding: 0;
+  border-top: 1px dashed black;
+}
+
+.option-group > h2 {
+  margin-bottom: 0;
+}
+
+.option {
+  padding: .4rem  1rem;
+}
+
+.option > * {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.option > h3 {
+  margin-left: 0rem;
+  margin-right: 0rem;
+}
+
+.option > table {
+  margin-left: 2rem;
+  margin-bottom: 1rem;
+}
+
+.option:nth-child(odd) {
+  background: #f6f6f6;
+}
+
+/*.option:hover {
+  outline: 2px solid #30AA64;
+  background: #2f22;
+}*/
+
+.description {
+  white-space: pre-wrap;
+  /* font-family: monospace; */
+  /* font-size: 1rem; */
+}
+
+.type-info {
+  color: #5f5f5f;
+}
+
+.hist-old-name, .hist-new-name {
+  font-family: monospace;
+  font-size: 1em;
+  /* line-height: 1.2rem; */
+}
+.hist-old-name {
+  color: #009;
+}
+.hist-new-name {
+  color: #060;
+}
+
+.history {
+  font-size: .85rem;
+  opacity: 60%;
+}
+.history .hist-old-name, .hist-new-name {
+  font-size: .80rem;
+}
+
+.diff-marker {
+  background: #f0f0f0;
+}
+
+a:hover, a:active {
+  outline: 2px solid #30AA64;
+}
+
+nav {
+  column-count: auto;
+  /* column-width: ${cssColumnWith}em; */
+}
+
+.menu-group {
+  display: inline-grid;
+  border: 1px solid black;
+  padding: 0;
+  /* width: ${cssColumnWith}em; */
+}
+
+.menu-item, #button-advanced-mode-normal {
+  color: #53e;
+}
+
+.menu-item {
+  display: block;
+  padding: .25em .5em;
+  text-decoration: none;
+}
+
+.menu-item:first-child {
+  background: #e3e3e3;
+  font-weight: bold;
+}
+
+.advanced-mode-advanced-marker, #button-advanced-mode-advanced {
+  color: #e53;
+}
+
+.menu-group-spec, .section-spec {
+  font-size: .85em;
+  opacity: 55%;
+  font-weight: normal;
+}
+
+.notFound{
+  display: none;
+  margin: 0;
+  padding: 1em;
+  background: #eee;
+  font-size: 1.2em;
+}
+
+.name-info {
+  color: #666;
+  font-weight: normal;
+}
+
+.section-prefix {
+  opacity: 50%;
+}
+
+#tabs {
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  background: #333;
+}
+
+.tab-label > a {
+  display: block;
+  padding: .75rem 1.5rem;
+  /* border-left: .5em #000 solid; */
+  /* border-right: .5em #000 solid; */
+  color: #efefef;
+  background: #000;
+  cursor: pointer;
+  border: none;
+}
+
+.tab-label {
+  /* font-size: 1.2em; */
+  font-weight: bold;
+  display: inline-block;
+}
+
+.tab-label:hover {
+  background: #222;
+}
+
+.tab-current {
+  border-left: .5rem #f09d62 solid;
+  border-right: .5rem #f09d62 solid;
+}
+.tab-current > a {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content > p {
+  margin: 1em;
+}
+
+.tag {
+  border-radius: 4px;
+  display: inline-block;
+  text-transform: capitalize;
+  padding: 0 .2em;
+  font-size: .8rem;
+  color: #555;
+  background-color: #ddd;
+  font-weight: normal;
+}
+
+label {
+  padding: .2em .4em .2em .2em;
+  cursor: pointer;
+}
+
+.tag-filter {
+  border-radius: 4px;
+  text-transform: capitalize;
+  color: #333;
+  background-color: #ddd;
+}
+
+#tag-filter {
+  margin: 1em;
+}
+
+.tag-perf { background-color: #fee; }
+.tag-debug { background-color: #eef; }
+.tag-workaround { background-color: #eff; }
+.tag-compatibility { background-color: #efe; }
+</style>
+
+</head>
+<body>
+
+<script>
+"strict";
+
+const tagList = [];
+
+const titleMapping = {
+    g: 'Configuration Option',
+    rdp: 'RDP Policy',
+    vnc: 'VNC Policy',
+    jh: 'JH Policy',
+    ini: 'Ini (dev)',
+    all: 'All without JH or Ini',
+};
+
+const [setAdvanced, tagFilter] = (() => {
+  const head = document.head;
+  let style = null;
+
+  let name = 'all';
+  let normal = true;
+  let advanced = true;
+  let tag = '';
+
+  const updateStyle = () => {
+    if (!style) {
+      style = document.createElement("style");
+      head.appendChild(style);
+    }
+    const style1 = normal ? '' : `.page-${name}.advanced-false { display: none }`;
+    const style2 = advanced ? '' : `.page-${name}.advanced-true { display: none }`;
+
+    let style3 = '';
+
+    // no data block
+    const suffix = tag ? `-tag-${tag}` : '';
+    if (normal && advanced) style3 += `.advanced-false-no-data${suffix}.advanced-true-no-data-tag-${tag}{ display: block; }`;
+    else if (normal) style3 += `.advanced-true-no-data${suffix}{ display: block; }`;
+    else if (advanced) style3 += `.advanced-false-no-data${suffix}{ display: block; }`;
+
+    if (tag) {
+      const selectors = [`.filter-tag-${tag}`];
+      if (normal) selectors.push(`.advanced-false-filter-tag-${tag}`);
+      if (advanced) selectors.push(`.advanced-true-filter-tag-${tag}`);
+      style3 += `.filter-tag-any:not(${selectors.join(',')}){ display: none }`;
+    }
+
+    style.innerText = `${style1}${style2}${style3}`;
+  };
+
+  const setAdvanced = function(name_, normal_, advanced_) {
+    name = name_;
+    normal = normal_;
+    advanced = advanced_;
+    updateStyle();
+  };
+
+  const tagFilter = (tag_) => {
+    tag = tag_;
+    updateStyle();
+  };
+
+  return [setAdvanced, tagFilter];
+})();
+
+async function getJSON(path)
+{
+  const response = await fetch(path);
+  return await response.json();
+}
+
+const pushOption = (spec, sectionName, option) => {
+  (spec[sectionName] ??= {options: []}).options.push(option);
+};
+
+const default2k = (dict, k1, k2, value) => {
+  (dict[k1] ??= {})[k2] = value;
+}
+
+const computeDisplayName = (name) => {
+  // aaa_bbb_ccc -> Aaa bbb ccc
+  name = name.replaceAll('_', ' ');
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
+
+const computeSpecInfo = (spec) => {
+  let totalOption = 0;
+  let totalAdvancedCounter = 0;
+  let totalTags = {};
+
+  for (const sectionName in spec) {
+    const section = spec[sectionName];
+    const tags = {};
+    let advancedCounter = 0;
+    for (const option of section.options) {
+      advancedCounter += option.advanced | 0;
+      if (option.tags) {
+        for (const tag of option.tags) {
+          const data = tags[tag] ??= {advancedCounter: 0, total: 0};
+          data.advancedCounter += option.advanced | 0;
+          data.total++;
+        }
+      }
+    }
+
+    let tagClasses = 'filter-tag-any';
+    for (const tag in tags) {
+      const data = tags[tag];
+      if (data.advancedCounter !== 0) tagClasses += ` advanced-true-filter-tag-${tag}`;
+      if (data.advancedCounter !== data.total) tagClasses += ` advanced-false-filter-tag-${tag}`;
+      const data2 = totalTags[tag] ??= {advancedCounter: 0, total: 0};
+      data2.advancedCounter += data.advancedCounter;
+      data2.total += data.total;
+    }
+
+    section.displayName ??= sectionName; //.replaceAll('_', ' ');
+    section.tagClasses = tagClasses;
+    section.advancedClass
+      = (advancedCounter === 0) ? 'advanced-false'
+      : (advancedCounter === section.options.length) ? 'advanced-true'
+      : '';
+    totalAdvancedCounter += advancedCounter;
+    totalOption += section.options.length;
+  }
+
+  let notFoundClass
+    = (totalAdvancedCounter === 0) ? 'advanced-false-no-data'
+    : (totalAdvancedCounter === totalOption) ? 'advanced-true-no-data'
+    : '';
+  for (const tag of tagList) {
+    const data = totalTags[tag] || {advancedCounter: 0, total: 0};
+    if (data.advancedCounter === 0) notFoundClass += ` advanced-false-no-data-tag-${tag}`;
+    if (data.advancedCounter === data.total) notFoundClass += ` advanced-true-no-data-tag-${tag}`;
+  }
+
+  return {notFoundClass, sections: spec};
+};
+
+const diffMarker = (s, marker) => marker ? `<span class="diff-marker">${s}</span>` : s;
+
+const makeHtmlHistory = (migrate, sections, historyTransformations) => {
+  const histFragments = ['<p>ReDemPtion versions:</p><ul>'];
+  const histIniOnyFragments = ['<p>ReDemPtion versions:</p><ul>'];
+  for (const {version, data} of migrate.reverse()) {
+    const histGlobalSpec = [];
+    const histIniOnly = [];
+    for (const sectionName in data) {
+      const sectionData = data[sectionName];
+      const kind = sectionData.kind;
+      if (kind === 'values') {
+        const keys = sectionData.values;
+        for (const keyName in keys) {
+          const keyData = keys[keyName];
+          const kind = keyData.kind;
+          if (kind === 'update' && (keyData.newSection || keyData.newKey || keyData.toIniOnly)) {
+            const newSection = keyData.newSection || sectionName;
+            const newKey = keyData.newKey || keyName;
+            const previousKey = keyData.oldDisplayName || computeDisplayName(keyName);
+            const reason = formatReason(keyData.reason);
+            if (keyData.iniOnly || !keyData.toIniOnly) {
+              const hist = keyData.iniOnly ? histIniOnly : histGlobalSpec;
+              const displayedKey = sections[newSection]?.[newKey]?.displayName || computeDisplayName(newKey);
+              const diffSect = sectionName !== newSection;
+              const diffKey = previousKey !== displayedKey;
+              const sp = diffMarker(' ', diffSect && diffKey);
+              hist.push(`<li>Move <span class="hist-old-name">${diffMarker(`[${sectionName}]`, diffSect)}${sp}${diffMarker(previousKey, diffKey)}</span> to <span class="hist-new-name">${diffMarker(`[${newSection}]`, diffSect)}${sp}${diffMarker(displayedKey, diffKey)}</span>${reason}</li>`);
+            }
+            else if (keyData.toIniOnly) {
+              histGlobalSpec.push(`<li>Remove <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${reason}</li>`);
+            }
+
+            const option = historyTransformations?.[newSection]?.[newKey];
+            if (!option) continue;
+            option.displayName = previousKey;
+            delete historyTransformations[newSection][newKey];
+            default2k(historyTransformations, sectionName, keyName, option);
+            option.history.push(
+              `${version}: Previous name is <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${reason}`
+            );
+          }
+          else if (kind === 'remove') {
+            const previousKey = keyData.oldDisplayName || computeDisplayName(keyName);
+            const hist = keyData.iniOnly ? histIniOnly : histGlobalSpec;
+            hist.push(`<li>Remove <span class="hist-old-name">[${sectionName}] ${previousKey}</span>${formatReason(keyData.reason)}</li>`);
+          }
+        }
+      }
+      else if (kind === 'move') {
+        const reason = formatReason(sectionData.reason);
+        const oldDisplayName = sectionData.oldDisplayName || sectionName;
+        const msg = `<li>Move <span class="hist-old-name">[${oldDisplayName}]</span> to <span class="hist-old-name">[${sectionData.newName}]</span>${reason}</li>`;
+        const hist = sectionData.iniOnly ? histIniOnly : histGlobalSpec;
+        hist.push(msg);
+        const currentSection = historyTransformations[sectionData.newName];
+        if (!currentSection) continue;
+        historyTransformations[sectionName] = currentSection;
+        delete historyTransformations[sectionData.newName];
+        for (const option of currentSection) {
+          option.history.push(
+            `${version}: Previous name is <span class="hist-old-name">[${oldDisplayName}] ${option.displayName}</span>${reason}`
+          );
+        }
+      }
+      else if (kind === 'remove') {
+        const oldDisplayName = sectionData.oldDisplayName || sectionName;
+        const hist = sectionData.iniOnly ? histIniOnly : histGlobalSpec;
+        hist.push(`<li>Remove <span class="hist-old-name">[${oldDisplayName}]</span>${formatReason(sectionData.reason)}</li>`);
+      }
+    }
+    if (histGlobalSpec.length) histFragments.push(`<li>${version}<ul>`, ...histGlobalSpec.sort(), '</ul></li>');
+    if (histIniOnly.length) histIniOnyFragments.push(`<li>${version}<ul>`, ...histIniOnly.sort(), '</ul></li>');
+  }
+  histFragments.push('</ul>');
+  histIniOnyFragments.push('</ul>');
+  return [histFragments.join(''), histIniOnyFragments.join('')];
+};
+
+const computeTagClasses = (tags) => {
+  let s = 'filter-tag-any';
+  if (tags) {
+    for (const tag of tags) {
+      s += ` filter-tag-${tag}`;
+    }
+  }
+  return s;
+};
+
+const makeTagList = (tags) => {
+  if (!tags) return '';
+  let s = '';
+  for (const tag of tags) {
+    s += ` <span class="tag tag-${tag}">${tag}</span>`;
+  }
+  return s;
+};
+
+const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPrefix) => {
+  const menuPrefix = prefixPrefix ? `<span class="menu-group-spec">(${titleMapping[prefix]})</span> ` : '';
+  const sectionPrefix = prefixPrefix ? `<span class="section-spec">(${titleMapping[prefix]})</span> ` : '';
+
+  if (prefixPrefix) {
+    prefix = `${prefixPrefix}-${prefix}`;
+  }
+  else {
+    prefixPrefix = prefix;
+  }
+
+  const htmlMenuFragments = ['<nav id="menu-section">'];
+  const htmlBodyFragments = [];
+
+  for (const sectionName in spec.sections) {
+    const sectionData = spec.sections[sectionName];
+    const sectionId = `${prefix}-${sectionName}`;
+    const classes = `page-${prefixPrefix} ${sectionData.advancedClass} ${sectionData.tagClasses}`;
+
+    const realSectionName = isConnpolicy && sections[sectionName]?.connpolicyName || sectionName;
+    htmlMenuFragments.push(`
+      <p class="menu-group ${classes}">
+        <a class="menu-item ${classes}" href="#${sectionId}">${menuPrefix}[${realSectionName}]</a>
+    `);
+
+    htmlBodyFragments.push(`
+      <section class="option-group ${classes}">
+        <h2 id="${sectionId}"><a href="#${sectionId}">${sectionPrefix}Section: ${realSectionName}</a></h2>
+    `);
+    if (sectionName === 'theme') {
+      htmlBodyFragments.push(`
+      <div id="theme-image">
+        <img src="theme_selector_1.png"/>
+        <img src="theme_selector_2.png"/>
+        <img src="theme_tooltip.png"/>
+        <img src="theme_separator_and_focus_color.png"/>
+        <img src="theme_global.png"/>
+      </div>
+      `);
+    }
+
+    for (const option of sectionData.options) {
+      const optId = `${sectionId}-${option.name}`;
+      const classes = `page-${prefixPrefix} ${option.advancedClass} ${option.tagClasses}`;
+      const tags = makeTagList(option.tags);
+      const listChar = `<span class="advanced-mode-${option.advanced ? 'advanced' : 'normal'}-marker">–</span>`;
+      htmlMenuFragments.push(
+        `<a class="menu-item ${classes}" href="#${optId}">${listChar} ${option.displayName}${tags}</a>`
+      );
+
+      let extraDescription = '';
+      let type = option.type;
+      let description = option.description;
+      let preferHex = option.hex;
+      let humanValue = '';
+      if (type === 'enumStr') {
+        type = option.subtype;
+        const e = enumDatas[type];
+        extraDescription = e.strValues;
+        description ??= e.description;
+      }
+      else if (type === 'enum') {
+        type = option.subtype;
+        const e = enumDatas[type];
+        extraDescription = e.intValues;
+        description ??= e.description;
+        preferHex = e.category === 'flags';
+        const flags = [];
+        for (const info of e.values) {
+          if (info.value && (info.value & option.value) === info.value) {
+            flags.push(`<code>0x${info.value.toString(16)}</code>`);
+          }
+        }
+        if (flags.length > 1) {
+          humanValue = flags.join(' + ');
+        }
+      }
+      else if (type === 'list') {
+        type = `list of ${mappingDisplayedType[option.subtype] || option.subtype}`;
+      }
+      else {
+        type = mappingDisplayedType[type] || type;
+        humanValue = toHumanTime(option.value, mappingHumanTime[type]);
+      }
+
+      description = description
+        ? htmlEscape(description).replaceAll('\n', '<br>')
+        : 'No description';
+
+      const defaultValue = preferHex ? `0x${option.value.toString(16)}` : option.value;
+      humanValue = humanValue && ` (= ${humanValue})`;
+
+      let history = '';
+      if (option.history.length) {
+        history = `<ul class="history"><li>${option.history.join('</li><li>')}</li></ul>`;
+      }
+
+      htmlBodyFragments.push(`
+        <article class="option ${classes}" id="${optId}">
+          <h3><a href="#${optId}">${sectionPrefix}<span class="section-prefix">[${realSectionName}]</span> ${option.displayName}</a>${tags}</h3>
+          <p class="type-info">type: ${type} | ${option.advanced ? 'advanced | ' : ''}default: <code>${defaultValue}</code>${humanValue}</p>
+          <p class="description">${description}</p>
+          ${extraDescription}
+          ${history}
+        </article>
+      `)
+    }
+
+    htmlMenuFragments.push('</p>');
+    htmlBodyFragments.push('</section>');
+  }
+
+  htmlMenuFragments.push(`<p class="notFound page-${prefixPrefix} ${spec.notFoundClass}">No data found</p></nav>`);
+
+  return [htmlMenuFragments.join(''), htmlBodyFragments.join('')];
+};
+
+const makeHtmlAll = (enumDatas, sections, globalSpec, rdpSpec, vncSpec) => {
+  const [gMenu, gBody] = makeHtmlSpec(enumDatas, sections, globalSpec, 'g', false, 'all');
+  const [rdpMenu, rdpBody] = makeHtmlSpec(enumDatas, sections, rdpSpec, 'rdp', true, 'all');
+  const [vncMenu, vncBody] = makeHtmlSpec(enumDatas, sections, vncSpec, 'vnc', true, 'all');
+  return [
+    '<h1>', titleMapping.g, '</h1>',
+    gMenu,
+    '<h1>', titleMapping.rdp, '</h1>',
+    rdpMenu,
+    '<h1>', titleMapping.vnc, '</h1>',
+    vncMenu,
+    gBody,
+    rdpBody,
+    vncBody
+  ];
+};
+
+const makeHtmlAdvancedMod = (name) => {
+  return `<p>Show options:
+    <label><input type="radio" name="${name}-advanced-mode" onclick="setAdvanced('${name}', true, true)" id="button-advanced-mode-both-${name}" checked>Both</label>
+    <label id="button-advanced-mode-advanced"><input type="radio" name="${name}-advanced-mode" onchange="setAdvanced('${name}', false, true)" id="button-advanced-mode-advanced-${name}">Advanced</label>
+    <label id="button-advanced-mode-normal"><input type="radio" name="${name}-advanced-mode" onclick="setAdvanced('${name}', true, false)" id="button-advanced-mode-normal-${name}">Normal</label>
+  </p>`
+}
+
+const formatReason = (reason) => reason ? ` | ${reason}` : '';
+
+const htmlEscape = (s) => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;');
+
+const showTab = (tab) => {
+  document.getElementById(`tab-${tab}`).classList.add('tab-current')
+  document.getElementById(`tab-content-${tab}`).style = 'display:block';
+};
+
+const hideTab = (tab) => {
+  document.getElementById(`tab-${tab}`).classList.remove('tab-current')
+  document.getElementById(`tab-content-${tab}`).style = '';
+};
+
+let currentTab = 'g';
+const _setTab = (newTab) => {
+  showTab(newTab);
+  document.title = titleMapping[newTab];
+  currentTab = newTab;
+};
+
+let lastTab = 'g';
+window.addEventListener('popstate', (event) => {
+  const tab = event.state || lastTab;
+  if (tab !== currentTab) {
+    hideTab(currentTab);
+    _setTab(tab);
+  }
+});
+
+const setTab = (newTab, hash) => {
+  history.replaceState(currentTab, '', `#${hash || currentTab}`);
+  _setTab(newTab);
+  lastTab = newTab;
+};
+
+const tabSelect = (event) => {
+  event.stopImmediatePropagation();
+  const href = event.target.href;
+  const newTab = href.substr(href.indexOf('#') + 1)
+  hideTab(currentTab);
+  setTab(newTab);
+};
+
+const mappingDisplayedType = {
+  u8: 'number',
+  u16: 'number',
+  u32: 'number',
+  u64: 'number',
+  uint: 'number',
+  i8: 'number',
+  i16: 'number',
+  i32: 'number',
+  i64: 'number',
+  int: 'number',
+  str: 'string',
+  bool: 'boolean',
+  rgb: 'color',
+};
+
+const mappingHumanTime = {
+  milliseconds: 1,
+  centiseconds: 10,
+  deciseconds: 100,
+  seconds: 1000,
+  minutes: 1000 * 60,
+};
+
+const toHumanTime = (t, millisecondFactor) => {
+  if (!millisecondFactor || !t) return '';
+
+  // to milliseconds
+  let milliseconds = t * millisecondFactor;
+  const minutes = Math.floor(milliseconds / (1000 * 60));
+  milliseconds = milliseconds - minutes * 1000 * 60;
+  const seconds = Math.floor(milliseconds / 1000);
+  milliseconds = milliseconds - seconds * 1000;
+
+  let s = minutes ? `${minutes}min` : '';
+  if (seconds) {
+    s += `${seconds}s`;
+  }
+  if (milliseconds) {
+    s += `${milliseconds}ms`;
+  }
+  return s;
+};
+
+(async() => {
+  const [enums, config, migrate] = await Promise.all([
+    getJSON('enums.json'),
+    getJSON('config.json'),
+    getJSON('migrate.json'),
+  ]);
+
+  const enumDatas = {};
+  for (const e of enums) {
+    const intDesc = [];
+    const strDesc = [];
+
+    if (e.category !== 'flags') {
+      strDesc.push('<table class="enumStr"><th>Name</th><th>Description</th>');
+      for (const info of e.values) {
+        strDesc.push(`<tr><td>${info.name}</td><td>${info.description || ''}</td></tr>`);
+      }
+      strDesc.push('</table>');
+    }
+
+    intDesc.push('<table class="enumInt"><th>Value</th><th>Name</th><th>Description</th>');
+    for (const info of e.values) {
+      const value = (e.category === 'flags') ? `0x${info.value.toString(16)}` : info.value;
+      const name = info.name.replaceAll('_', ' ');
+      intDesc.push(`<tr><td>${value}</td><td>${name}</td><td>${info.description || info.name}</td></tr>`);
+    }
+    intDesc.push('</table>');
+
+    enumDatas[e.name] = {
+      category: e.category,
+      values: e.values,
+      description: e.description,
+      intValues: intDesc.join(''),
+      strValues: strDesc.join(''),
+    };
+  }
+
+  tagList.push(...config.tags);
+
+  let globalSpec = {};
+  let iniOnlySpec = {};
+  let rdpSpec = {};
+  let vncSpec = {};
+  let jhSpec = {};
+  const historyTransformations = {};
+
+  let optionNameMaxLen = 0;
+  for (const option of config.values) {
+    if (!option.displayName) {
+      option.displayName = computeDisplayName(option.name);
+    }
+    optionNameMaxLen = Math.max(optionNameMaxLen, option.displayName.length);
+    option.advancedClass = option.advanced ? 'advanced-true' : 'advanced-false';
+    option.tagClasses = computeTagClasses(option.tags);
+    if (option.globalSpec) pushOption(globalSpec, option.section, option);
+    if (option.iniOnly) pushOption(iniOnlySpec, option.section, option);
+    if (option.rdp) pushOption(rdpSpec, option.connpolicySection || option.section, option);
+    if (option.vnc) pushOption(vncSpec, option.connpolicySection || option.section, option);
+    if (option.jh) pushOption(jhSpec, option.connpolicySection || option.section, option);
+
+    const history = [];
+    option.history = history;
+
+    default2k(historyTransformations, option.section, option.name,
+      {displayName: option.displayName, history});
+  }
+
+  globalSpec = computeSpecInfo(globalSpec);
+  iniOnlySpec = computeSpecInfo(iniOnlySpec);
+  rdpSpec = computeSpecInfo(rdpSpec);
+  vncSpec = computeSpecInfo(vncSpec);
+  jhSpec = computeSpecInfo(jhSpec);
+
+  const sections = {}
+  for (const section of config.sections) {
+    sections[section.name] = section;
+  }
+
+  const cssColumnWith = Math.floor(optionNameMaxLen / 2.6);
+  const sheet = window.document.styleSheets[0];
+  sheet.insertRule(`nav { column-width: ${cssColumnWith}em }`, sheet.cssRules.length);
+  sheet.insertRule(`.menu-group { width: ${cssColumnWith}em }`, sheet.cssRules.length);
+
+  const htmlTabsMenu = [];
+  for (const name in titleMapping) {
+    htmlTabsMenu.push(`  <li class="tab-label" id="tab-${name}"><a href="#${name}">${titleMapping[name]}</a></li>`)
+  }
+
+  const htmlFilterTag = ['<label class="tag-filter"><input type="radio" name="tag-filter" onchange="tagFilter()" checked>Any</label>'];
+  for (const tag of tagList) {
+    htmlFilterTag.push(` <label class="tag-filter tag-${tag}"><input type="radio" name="tag-filter" onchange="tagFilter('${tag}')" id="tag-filter-${tag}">${tag}</label>`)
+  }
+
+  const [htmlHistory, htmlIniHistory]
+    = makeHtmlHistory(migrate, globalSpec.sections, historyTransformations);
+  const [htmlMenu, htmlBody] = makeHtmlSpec(enumDatas, sections, globalSpec, 'g', false);
+  const [htmlIniMenu, htmlIniBody] = makeHtmlSpec(enumDatas, sections, iniOnlySpec, 'ini', false);
+  const htmlFragments = [
+    '<ul role="nav" id="tabs">', ...htmlTabsMenu, '</ul>',
+
+    '<p id="tag-filter">Tag: ', ...htmlFilterTag, '</p>',
+
+    '<div id="tab-content-g" class="tab-content">',
+    makeHtmlAdvancedMod('g'),
+    htmlMenu, htmlHistory, htmlBody,
+    '</div>',
+
+    '<div id="tab-content-rdp" class="tab-content">',
+    makeHtmlAdvancedMod('rdp'),
+    ...makeHtmlSpec(enumDatas, sections, rdpSpec, 'rdp', true),
+    '</div>',
+
+    '<div id="tab-content-vnc" class="tab-content">',
+    makeHtmlAdvancedMod('vnc'),
+    ...makeHtmlSpec(enumDatas, sections, vncSpec, 'vnc', true),
+    '</div>',
+
+    '<div id="tab-content-jh" class="tab-content">',
+    makeHtmlAdvancedMod('jh'),
+    ...makeHtmlSpec(enumDatas, sections, jhSpec, 'jh', true),
+    '</div>',
+
+    '<div id="tab-content-ini" class="tab-content">',
+    htmlIniMenu, htmlIniHistory, htmlIniBody,
+    '</div>',
+
+    '<div id="tab-content-all" class="tab-content">',
+    makeHtmlAdvancedMod('all'),
+    ...makeHtmlAll(enumDatas, sections, globalSpec, rdpSpec, vncSpec),
+    '</div>',
+  ];
+
+  document.body.insertAdjacentHTML('beforeend', htmlFragments.join(''));
+
+  for (const k in titleMapping) {
+    document.getElementById(`tab-${k}`).firstChild.addEventListener("click", tabSelect, false);
+  }
+
+  // move to anchor
+  if (location.hash) {
+    const id = location.hash.substr(1);
+    for (const name in titleMapping) {
+      if (id.startsWith(name)) {
+        currentTab = name;
+        break;
+      }
+    }
+    setTab(currentTab, id);
+    document.getElementById(id)?.scrollIntoView();
+  }
+  else {
+    setTab(currentTab);
+  }
+
+  // filter tag and advanced mode
+  if (location.search) {
+    const checked = (elem) => {
+      if (elem) {
+        elem.checked = true;
+        elem.onclick();
+      }
+    };
+    const params = new URLSearchParams(location.search);
+
+    const advancedMode = params.get("mode");
+    if (advancedMode) {
+      checked(document.getElementById(`button-advanced-mode-${advancedMode}-${currentTab}`));
+    }
+
+    const tag = params.get("tag");
+    if (tag) {
+      checked(document.getElementById(`tag-filter-${tag}`));
+    }
+  }
+})();
+</script>
+
+</body>
+</html>
