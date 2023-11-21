@@ -557,15 +557,17 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPre
         const e = enumDatas[type];
         extraDescription = e.intValues;
         description ??= e.description;
-        preferHex = e.category === 'flags';
-        const flags = [];
-        for (const info of e.values) {
-          if (info.value && (info.value & option.value) === info.value) {
-            flags.push(`<code>0x${info.value.toString(16)}</code>`);
+        preferHex = (e.category === 'flags');
+        if (e.category !== 'set') {
+          const flags = [];
+          for (const info of e.values) {
+            if (info.value && (info.value & option.value) === info.value) {
+              flags.push(`<code>0x${info.value.toString(16)}</code>`);
+            }
           }
-        }
-        if (flags.length > 1) {
-          humanValue = flags.join(' + ');
+          if (flags.length > 1) {
+            humanValue = flags.join(' + ');
+          }
         }
       }
       else if (type === 'list') {
