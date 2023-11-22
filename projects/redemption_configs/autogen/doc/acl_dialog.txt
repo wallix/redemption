@@ -391,35 +391,27 @@ cfg::server_cert::server_cert_check ⇐ server_cert:server_cert_check   [ServerC
 cfg::server_cert::server_access_allowed_message ⇐ server_cert:server_access_allowed_message   [ServerNotification]
     Warn if check allow connexion to server.
       0x0: nobody
-      0x1: syslog: message sent to syslog
-      0x2: user: User notified (through proxy interface)
-      0x4: admin: admin notified (Bastion notification)
+      0x1: SIEM: message sent to SIEM
     
-    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+    Note: values can be added (enable all: 0x1 = 0x1)
 cfg::server_cert::server_cert_create_message ⇐ server_cert:server_cert_create_message   [ServerNotification]
     Warn that new server certificate file was created.
       0x0: nobody
-      0x1: syslog: message sent to syslog
-      0x2: user: User notified (through proxy interface)
-      0x4: admin: admin notified (Bastion notification)
+      0x1: SIEM: message sent to SIEM
     
-    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+    Note: values can be added (enable all: 0x1 = 0x1)
 cfg::server_cert::server_cert_success_message ⇐ server_cert:server_cert_success_message   [ServerNotification]
     Warn that server certificate file was successfully checked.
       0x0: nobody
-      0x1: syslog: message sent to syslog
-      0x2: user: User notified (through proxy interface)
-      0x4: admin: admin notified (Bastion notification)
+      0x1: SIEM: message sent to SIEM
     
-    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+    Note: values can be added (enable all: 0x1 = 0x1)
 cfg::server_cert::server_cert_failure_message ⇐ server_cert:server_cert_failure_message   [ServerNotification]
     Warn that server certificate file checking failed.
       0x0: nobody
-      0x1: syslog: message sent to syslog
-      0x2: user: User notified (through proxy interface)
-      0x4: admin: admin notified (Bastion notification)
+      0x1: SIEM: message sent to SIEM
     
-    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+    Note: values can be added (enable all: 0x1 = 0x1)
 cfg::server_cert::enable_external_validation ⇐ enable_external_validation   [bool]
 cfg::server_cert::external_cert ⇒ external_cert   [std::string]
 cfg::server_cert::external_response ⇐ external_response   [std::string]

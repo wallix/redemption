@@ -1076,55 +1076,45 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Warn if check allow connexion to server.
 #   0x0: nobody
-#   0x1: syslog: message sent to syslog
-#   0x2: user: User notified (through proxy interface)
-#   0x4: admin: admin notified (Bastion notification)
+#   0x1: SIEM: message sent to SIEM
 # 
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+# Note: values can be added (enable all: 0x1 = 0x1)
 #_advanced
 # (acl config: proxy ⇐ server_cert:server_access_allowed_message)
-#server_access_allowed_message = 1
+#server_access_allowed_message = 0
 
 # Warn that new server certificate file was created.
 #   0x0: nobody
-#   0x1: syslog: message sent to syslog
-#   0x2: user: User notified (through proxy interface)
-#   0x4: admin: admin notified (Bastion notification)
+#   0x1: SIEM: message sent to SIEM
 # 
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+# Note: values can be added (enable all: 0x1 = 0x1)
 #_advanced
 # (acl config: proxy ⇐ server_cert:server_cert_create_message)
 #server_cert_create_message = 1
 
 # Warn that server certificate file was successfully checked.
 #   0x0: nobody
-#   0x1: syslog: message sent to syslog
-#   0x2: user: User notified (through proxy interface)
-#   0x4: admin: admin notified (Bastion notification)
+#   0x1: SIEM: message sent to SIEM
 # 
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+# Note: values can be added (enable all: 0x1 = 0x1)
 #_advanced
 # (acl config: proxy ⇐ server_cert:server_cert_success_message)
-#server_cert_success_message = 1
+#server_cert_success_message = 0
 
 # Warn that server certificate file checking failed.
 #   0x0: nobody
-#   0x1: syslog: message sent to syslog
-#   0x2: user: User notified (through proxy interface)
-#   0x4: admin: admin notified (Bastion notification)
+#   0x1: SIEM: message sent to SIEM
 # 
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+# Note: values can be added (enable all: 0x1 = 0x1)
 #_advanced
 # (acl config: proxy ⇐ server_cert:server_cert_failure_message)
 #server_cert_failure_message = 1
 
 # Warn that server certificate check raised some internal error.
 #   0x0: nobody
-#   0x1: syslog: message sent to syslog
-#   0x2: user: User notified (through proxy interface)
-#   0x4: admin: admin notified (Bastion notification)
+#   0x1: SIEM: message sent to SIEM
 # 
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
+# Note: values can be added (enable all: 0x1 = 0x1)
 #error_message = 1
 
 [mod_vnc]

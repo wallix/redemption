@@ -515,7 +515,7 @@ parse_error parse_from_cfg(ServerNotification & x, ::configs::spec_type<ServerNo
     if (parse_error err = parse_integral(
         xi, value,
         zero_integral<ul>(),
-        std::integral_constant<ul, 7>()
+        std::integral_constant<ul, 1>()
     )) {
         return err;
     }

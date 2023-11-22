@@ -105,9 +105,7 @@ inline void config_type_definition(type_enumerations & e)
 
     e.enumeration_flags("ServerNotification", withNameWhenDdescription)
       .value("nobody")
-      .value("syslog", "message sent to syslog")
-      .value("user", "User notified (through proxy interface)")
-      .value("admin", "admin notified (Bastion notification)")
+      .value("SIEM", "message sent to SIEM")
     ;
 
     e.enumeration_list("ServerCertCheck", withoutNameWhenDescription, "Behavior of certificates check.", "System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.")

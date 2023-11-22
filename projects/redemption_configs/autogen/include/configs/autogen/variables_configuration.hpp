@@ -2417,7 +2417,7 @@ namespace cfg
     /// type: ServerNotification <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: server_cert:server_access_allowed_message <br/>
-    /// default: ServerNotification::syslog <br/>
+    /// default: ServerNotification::nobody <br/>
     struct server_cert::server_access_allowed_message {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
@@ -2425,13 +2425,13 @@ namespace cfg
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 2};
         using type = ServerNotification;
         using mapped_type = ServerNotification;
-        type value { ServerNotification::syslog };
+        type value { ServerNotification::nobody };
     };
     /// Warn that new server certificate file was created. <br/>
     /// type: ServerNotification <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: server_cert:server_cert_create_message <br/>
-    /// default: ServerNotification::syslog <br/>
+    /// default: ServerNotification::SIEM <br/>
     struct server_cert::server_cert_create_message {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
@@ -2439,13 +2439,13 @@ namespace cfg
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 3};
         using type = ServerNotification;
         using mapped_type = ServerNotification;
-        type value { ServerNotification::syslog };
+        type value { ServerNotification::SIEM };
     };
     /// Warn that server certificate file was successfully checked. <br/>
     /// type: ServerNotification <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: server_cert:server_cert_success_message <br/>
-    /// default: ServerNotification::syslog <br/>
+    /// default: ServerNotification::nobody <br/>
     struct server_cert::server_cert_success_message {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
@@ -2453,13 +2453,13 @@ namespace cfg
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 4};
         using type = ServerNotification;
         using mapped_type = ServerNotification;
-        type value { ServerNotification::syslog };
+        type value { ServerNotification::nobody };
     };
     /// Warn that server certificate file checking failed. <br/>
     /// type: ServerNotification <br/>
     /// connpolicy -> proxy <br/>
     /// aclName: server_cert:server_cert_failure_message <br/>
-    /// default: ServerNotification::syslog <br/>
+    /// default: ServerNotification::SIEM <br/>
     struct server_cert::server_cert_failure_message {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
@@ -2467,16 +2467,16 @@ namespace cfg
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section8 + 5};
         using type = ServerNotification;
         using mapped_type = ServerNotification;
-        type value { ServerNotification::syslog };
+        type value { ServerNotification::SIEM };
     };
     /// Warn that server certificate check raised some internal error. <br/>
     /// type: ServerNotification <br/>
-    /// default: ServerNotification::syslog <br/>
+    /// default: ServerNotification::SIEM <br/>
     struct server_cert::error_message {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = ServerNotification;
         using mapped_type = ServerNotification;
-        type value { ServerNotification::syslog };
+        type value { ServerNotification::SIEM };
     };
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>

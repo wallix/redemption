@@ -260,17 +260,13 @@ template<> struct is_valid_enum_value<ColorDepth>
 enum class ServerNotification : uint8_t
 {
     nobody = 0,
-    // message sent to syslog
-    syslog = 1,
-    // User notified (through proxy interface)
-    user = 2,
-    // admin notified (Bastion notification)
-    admin = 4,
+    // message sent to SIEM
+    SIEM = 1,
 };
 
 template<> struct is_valid_enum_value<ServerNotification>
 {
-    constexpr static bool is_valid(uint64_t n) { return n <= 7; }
+    constexpr static bool is_valid(uint64_t n) { return n <= 1; }
 };
 
 inline ServerNotification operator | (ServerNotification x, ServerNotification y)
@@ -290,7 +286,7 @@ inline ServerNotification operator & (ServerNotification x, ServerNotification y
 inline ServerNotification operator ~ (ServerNotification x)
 {
     return static_cast<ServerNotification>(
-        ~static_cast<uint8_t>(x) & 7
+        ~static_cast<uint8_t>(x) & 1
     );
 }
 

@@ -108,11 +108,11 @@ struct ModRDPParams
 
     bool               server_cert_store = true;
     ServerCertCheck    server_cert_check = ServerCertCheck::fails_if_no_match_and_succeed_if_no_know;
-    ServerNotification server_access_allowed_message = ServerNotification::syslog;
-    ServerNotification server_cert_create_message = ServerNotification::syslog;
-    ServerNotification server_cert_success_message = ServerNotification::syslog;
-    ServerNotification server_cert_failure_message = ServerNotification::syslog;
-    ServerNotification server_cert_error_message = ServerNotification::syslog;
+    ServerNotification server_access_allowed_message = ServerNotification::SIEM;
+    ServerNotification server_cert_create_message = ServerNotification::SIEM;
+    ServerNotification server_cert_success_message = ServerNotification::SIEM;
+    ServerNotification server_cert_failure_message = ServerNotification::SIEM;
+    ServerNotification server_cert_error_message = ServerNotification::SIEM;
 
     bool enable_server_cert_external_validation = false;
 

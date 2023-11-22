@@ -220,17 +220,9 @@
       "name": "nobody",
       "value": 0
     }, {
-      "name": "syslog",
+      "name": "SIEM",
       "value": 1,
-      "description": "message sent to syslog"
-    }, {
-      "name": "user",
-      "value": 2,
-      "description": "User notified (through proxy interface)"
-    }, {
-      "name": "admin",
-      "value": 4,
-      "description": "admin notified (Bastion notification)"
+      "description": "message sent to SIEM"
     }
   ]
 }, {

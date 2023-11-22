@@ -86,35 +86,51 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
 , session_log(session_log)
 {}
 
+namespace
+{
+    static constexpr auto server_cert_status_datas = []{
+        using Status = ServerNotifier::Status;
+        struct P { LogId id; zstring_view msg; };
+        std::array<P, 5> a {};
+        a[underlying_cast(Status::AccessAllowed)] = {
+            LogId::CERTIFICATE_CHECK_SUCCESS,
+            "Connection to server allowed"_zv,
+        };
+        a[underlying_cast(Status::CertCreate)] = {
+            LogId::SERVER_CERTIFICATE_NEW,
+            "New X.509 certificate created"_zv,
+        };
+        a[underlying_cast(Status::CertSuccess)] = {
+            LogId::SERVER_CERTIFICATE_MATCH_SUCCESS,
+            "X.509 server certificate match"_zv,
+        };
+        a[underlying_cast(Status::CertFailure)] = {
+            LogId::SERVER_CERTIFICATE_MATCH_FAILURE,
+            "X.509 server certificate match failure"_zv,
+        };
+        a[underlying_cast(Status::CertError)] = {
+            LogId::SERVER_CERTIFICATE_ERROR,
+            "X.509 server certificate internal error: "_zv,
+        };
+        return a;
+    }();
+}
+
 void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::string_view error_msg)
 {
     auto notification_type = this->server_status_messages[underlying_cast(status)];
-    if (bool(notification_type & ServerNotification::syslog)) {
-        auto log6 = [&](LogId id, zstring_view message){
-            this->session_log.log6(id, {KVLog("description"_av, message),});
-            LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message);
-        };
-
-        switch (status)
-        {
-            case Status::AccessAllowed:
-                log6(LogId::CERTIFICATE_CHECK_SUCCESS, "Connection to server allowed"_zv);
-                break;
-            case Status::CertCreate:
-                log6(LogId::SERVER_CERTIFICATE_NEW, "New X.509 certificate created"_zv);
-                break;
-            case Status::CertSuccess:
-                log6(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS, "X.509 server certificate match"_zv);
-                break;
-            case Status::CertFailure:
-                log6(LogId::SERVER_CERTIFICATE_MATCH_FAILURE, "X.509 server certificate match failure"_zv);
-                break;
-            case Status::CertError:
-                log6(LogId::SERVER_CERTIFICATE_ERROR,
-                        str_concat("X.509 server certificate internal error: "_zv, error_msg));
-                break;
+    auto data = server_cert_status_datas[underlying_cast(status)];
+    if (bool(notification_type & ServerNotification::SIEM)) {
+        chars_view msg = data.msg;
+        std::string tmp;
+        if (status == Status::CertError && !error_msg.empty()) {
+            str_assign(tmp, msg, error_msg);
+            msg = tmp;
         }
+        this->session_log.log6(data.id, {KVLog("description"_av, msg)});
     }
+    LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
+        LOG_INFO, "%s%.*s", data.msg, int(error_msg.size()), error_msg.data());
 }
 
 CertificateResult RdpNegociation::RDPServerNotifier::server_cert_callback(

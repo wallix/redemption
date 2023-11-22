@@ -37,7 +37,7 @@ enum class CertificateResult { wait, valid, invalid, };
 class ServerNotifier
 {
 public:
-    enum class Status
+    enum class Status : uint8_t
     {
         AccessAllowed,
         CertCreate,
