@@ -25,6 +25,10 @@ def process_migrate(migrate_def: MigrationDescType, ini: str) -> Tuple[bool, str
     r = migrate(parse_configuration(ini), migrate_def)
     return (r[0], ''.join(fragment.text for fragment in r[1]))
 
+def find_migrade_def(version: RedemptionVersion) -> MigrationDescType:
+    return next(migrate_def for def_version, migrate_def in migration_defs
+                if version == def_version)
+
 
 class TestMigration(unittest.TestCase):
     maxDiff = None
@@ -457,8 +461,7 @@ class TestMigration(unittest.TestCase):
 
 
     def test_migrate_10_5_31(self):
-        migrate_def = next(migrate_def for version, migrate_def in migration_defs
-                           if RedemptionVersion("10.5.31") == version)
+        migrate_def = find_migrade_def(RedemptionVersion("10.5.31"))
 
         self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_keyboard_log=3\n'),
                          (True, '[video]\nenable_keyboard_log=True\n'))
@@ -480,3 +483,12 @@ class TestMigration(unittest.TestCase):
 
         self.assertEqual(process_migrate(migrate_def, '[video]\ndisable_file_system_log=4\n'),
                          (True, '[video]\ndisable_file_system_log=2\n'))
+
+
+    def test_migrate_12_0_1(self):
+        migrate_def = find_migrade_def(RedemptionVersion("12.0.1"))
+
+        self.assertEqual(process_migrate(migrate_def, '[server_cert]\n'\
+            'server_cert_create_message=0xa\nserver_cert_success_message=0xb\n'),
+        (True, '[server_cert]\n'\
+            'server_cert_create_message=1\nserver_cert_success_message=1\n'))

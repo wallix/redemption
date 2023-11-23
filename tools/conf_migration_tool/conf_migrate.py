@@ -543,11 +543,11 @@ def main(migration_defs: List[MigrationType], argv: List[str]) -> int:
     return 0
 
 
-def _to_bool(value: str) -> bool:
+def to_bool(value: str) -> bool:
     return value.strip().lower() in ('1', 'yes', 'true', 'on')
 
 
-def _to_int(value: str) -> int:
+def to_int(value: str) -> int:
     try:
         if value.startswith('0x'):
             return int(value, 16)
@@ -582,8 +582,8 @@ def _get_values(fragments: Iterable[ConfigurationFragment],
 
 def _merge_session_log_format_10_5_31(value: str, fragments: Iterable[ConfigurationFragment]) -> str:
     enable_session_log, enable_arcsight_log = _get_values(
-        fragments, (('session_log', 'enable_session_log', True, _to_bool),
-                    ('session_log', 'enable_arcsight_log', False, _to_bool)))
+        fragments, (('session_log', 'enable_session_log', True, to_bool),
+                    ('session_log', 'enable_arcsight_log', False, to_bool)))
 
     return str(
         (1 if enable_session_log else 0) |
@@ -607,8 +607,8 @@ def _performance_flags_to_string(flags: int, enable: bool) -> PerformanceFlagPar
 
 def _merge_performance_flags_10_5_31(value: str, fragments: Iterable[ConfigurationFragment]) -> str:
     force_present, force_not_present = _get_values(
-        fragments, (('client', 'performance_flags_force_present', 0x28, _to_int),
-                    ('client', 'performance_flags_force_not_present', 0, _to_int)))
+        fragments, (('client', 'performance_flags_force_present', 0x28, to_int),
+                    ('client', 'performance_flags_force_not_present', 0, to_int)))
 
     force_not_present_elements = _performance_flags_to_string(force_not_present, True)
     force_present_elements = _performance_flags_to_string(force_present, False)
@@ -617,6 +617,11 @@ def _merge_performance_flags_10_5_31(value: str, fragments: Iterable[Configurati
                     for not_present, present in zip(force_not_present_elements,
                                                     force_present_elements)
                     if not_present or present)
+
+def _server_cert_notif_12_0_1(value: str, _) -> str:
+    return f'{min(to_int(value), 1)}'
+
+_update_server_cert_notif_12_0_1 = UpdateItem(value_transformation=_server_cert_notif_12_0_1)
 
 
 migration_defs: List[MigrationType] = [
@@ -751,13 +756,13 @@ migration_defs: List[MigrationType] = [
             'disable_keyboard_log': UpdateItem(
                 key='enable_keyboard_log',
                 # has meta (4) -> False
-                value_transformation=lambda value, _: f'{(int(value) & 4) == 0}'),
+                value_transformation=lambda value, _: f'{(to_int(value) & 4) == 0}'),
             'disable_clipboard_log': UpdateItem(
-                value_transformation=lambda value, _: f'{(int(value) >> 1)}'),
+                value_transformation=lambda value, _: f'{(to_int(value) >> 1)}'),
             'disable_file_system_log': UpdateItem(
-                value_transformation=lambda value, _: f'{(int(value) >> 1)}'),
+                value_transformation=lambda value, _: f'{(to_int(value) >> 1)}'),
             'png_interval': UpdateItem(
-                value_transformation=lambda value, _: f'{(int(value) * 100)}',
+                value_transformation=lambda value, _: f'{(to_int(value) * 100)}',
                 to_ini_only=True),
             'png_limit': ToIniOnly(reason='Old mechanism before Redis.'),
         }
@@ -776,6 +781,40 @@ migration_defs: List[MigrationType] = [
             'force_performance_flags': UpdateItem(section='mod_rdp'),
             'auto_adjust_performance_flags': UpdateItem(section='mod_rdp'),
             'show_target_user_in_f12_message': UpdateItem(section='globals'),
+        },
+    }),
+    (RedemptionVersion("12.0.1"), {
+        'server_cert': {
+            'server_access_allowed_message': _update_server_cert_notif_12_0_1,
+            'server_cert_create_message': _update_server_cert_notif_12_0_1,
+            'server_cert_success_message': _update_server_cert_notif_12_0_1,
+            'server_cert_failure_message': _update_server_cert_notif_12_0_1,
+            'error_message': _update_server_cert_notif_12_0_1,
+        },
+        'video': {
+            # -> [capture]
+            'capture_flags': UpdateItem(section='capture'),
+            'disable_clipboard_log': UpdateItem(section='capture'),
+            'disable_file_system_log': UpdateItem(section='capture'),
+            'break_interval': UpdateItem(section='capture', key='wrm_break_interval'),
+            'wrm_color_depth_selection_strategy': UpdateItem(section='capture'),
+            'wrm_compression_algorithm': UpdateItem(section='capture'),
+            'file_permissions': UpdateItem(section='capture'),
+            # -> [audit]
+            'enable_keyboard_log': UpdateItem(section='audit'),
+            'break_interval': UpdateItem(section='audit', key='video_break_interval'),
+            'framerate': UpdateItem(section='audit', key='video_frame_rate'),
+            'notimestamp': UpdateItem(section='audit', key='video_notimestamp'),
+            'codec_id': UpdateItem(section='audit', key='wrm_break_interval'),
+            'ffmpeg_options': UpdateItem(section='audit'),
+            'smart_video_cropping': UpdateItem(section='audit'),
+            'play_video_with_corrupted_bitmap': UpdateItem(section='audit'),
+            'png_interval': UpdateItem(section='audit', key='rt_png_interval'),
+            'png_limit': UpdateItem(section='audit', key='rt_png_limit'),
+            'record_tmp_path': UpdateItem(section='audit'),
+            'record_path': UpdateItem(section='audit'),
+            'hash_path': UpdateItem(section='audit'),
+            'file_permissions': UpdateItem(section='audit'),
         },
     }),
 ]
