@@ -751,13 +751,13 @@ migration_defs: List[MigrationType] = [
             'disable_keyboard_log': UpdateItem(
                 key='enable_keyboard_log',
                 # has meta (4) -> False
-                value_transformation=lambda value, _: f'{(int(value) & 4) == 0}'),
+                value_transformation=lambda value, _: f'{(_to_int(value) & 4) == 0}'),
             'disable_clipboard_log': UpdateItem(
-                value_transformation=lambda value, _: f'{(int(value) >> 1)}'),
+                value_transformation=lambda value, _: f'{(_to_int(value) >> 1)}'),
             'disable_file_system_log': UpdateItem(
-                value_transformation=lambda value, _: f'{(int(value) >> 1)}'),
+                value_transformation=lambda value, _: f'{(_to_int(value) >> 1)}'),
             'png_interval': UpdateItem(
-                value_transformation=lambda value, _: f'{(int(value) * 100)}',
+                value_transformation=lambda value, _: f'{(_to_int(value) * 100)}',
                 to_ini_only=True),
             'png_limit': ToIniOnly(reason='Old mechanism before Redis.'),
         }
