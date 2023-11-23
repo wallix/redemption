@@ -534,6 +534,7 @@ public:
         capture_params.record_tmp_path,
         png_params.real_basename,
         ".png",
+        capture_params.file_permissions,
         FilesystemFullReporter{capture_params.session_log})
     {}
 
@@ -569,6 +570,7 @@ public:
         capture_params.record_tmp_path,
         png_params.real_basename,
         ".png",
+        capture_params.file_permissions,
         FilesystemFullReporter{capture_params.session_log})
     {}
 

@@ -274,6 +274,7 @@ private:
         std::string codec_options;
         int frame_rate;
         int verbosity;
+        FilePermissions file_permissions;
     };
 
     const RecorderParams recorder_params;

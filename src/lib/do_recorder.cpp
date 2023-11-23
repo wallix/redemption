@@ -537,38 +537,42 @@ static inline int check_encrypted_or_checksumed(
     return 0;
 }
 
-static void raise_error(
-    std::string const& output_filename,
-    int code, chars_view message)
+namespace
 {
-    if (output_filename.empty()) {
-        return;
+struct PgsFile
+{
+    std::string const& filename;
+    FilePermissions permissions;
+
+    void raise_error(int code, chars_view message)
+    {
+        if (filename.empty()) {
+            return;
+        }
+
+        auto outfile = ParsePath(filename);
+
+        char progress_filename[4096];
+        std::snprintf(progress_filename, sizeof(progress_filename), "%s%s.pgs",
+                      outfile.directory.c_str(), outfile.basename.c_str());
+
+        (void)unlink(progress_filename);
+        UpdateProgressData update_progress_data(progress_filename, permissions,
+                                                MonotonicTimePoint(), MonotonicTimePoint());
+
+        update_progress_data.raise_error(code, truncated_bounded_array_view(message));
     }
 
-    auto outfile = ParsePath(output_filename);
+    void raise_error_and_log(zstring_view message)
+    {
+        std::cerr << message << std::endl;
+        raise_error(-1, message);
+    }
+};
+} // anonymous namespace
 
-    char progress_filename[4096];
-    std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
-            , outfile.directory.c_str(), outfile.basename.c_str());
-
-    (void)unlink(progress_filename);
-    UpdateProgressData update_progress_data(
-        progress_filename, MonotonicTimePoint(), MonotonicTimePoint());
-
-    update_progress_data.raise_error(code, truncated_bounded_array_view(message));
-}
-
-static int raise_error_and_log(
-    std::string const& output_filename,
-    int code, zstring_view message)
-{
-    std::cerr << message << std::endl;
-    raise_error(output_filename, -1, message);
-    return code;
-}
-
-static inline int update_filename_and_check_size(
-    std::string const& output_filename,
+static inline bool update_filename_and_check_size(
+    PgsFile pgs,
     std::vector<MetaLine> const& wrms,
     std::vector<std::string>& filenames,
     std::string_view other_wrm_directory,
@@ -592,7 +596,8 @@ static inline int update_filename_and_check_size(
 
             if (has_error) {
                 LOG(LOG_INFO, "Wrm file not found: %s", filenames.back());
-                return raise_error_and_log(output_filename, -1, "wrm file not fount"_zv);
+                pgs.raise_error_and_log("wrm file not fount"_zv);
+                return false;
             }
         }
         else {
@@ -603,11 +608,12 @@ static inline int update_filename_and_check_size(
             using ull = unsigned long long;
             LOG(LOG_INFO, "Wrm file size mismatch (%llu != %llu): %s",
                 ull(wrm.size), ull(st.st_size), filenames.back());
-            return raise_error_and_log(output_filename, -1, "wrm file size mismatch"_zv);
+            pgs.raise_error_and_log("wrm file size mismatch"_zv);
+            return false;
         }
     }
 
-    return 0;
+    return true;
 }
 
 
@@ -944,6 +950,14 @@ struct RecorderParams
     // verifier options
     bool quick_check      = false;
     bool ignore_file_size = false;
+
+    PgsFile pgs() const
+    {
+        return {
+            output_filename,
+            file_permissions,
+        };
+    }
 };
 
 static inline int replay(
@@ -972,7 +986,8 @@ static inline int replay(
         }
 
         if (first == last) {
-            return raise_error_and_log(rp.output_filename, -1, "Asked time not found in mwrm file"_zv);
+            rp.pgs().raise_error_and_log("Asked time not found in mwrm file"_zv);
+            return -1;
         }
 
         file_count = checked_int{first - wrm_lines.begin() + 1};
@@ -1053,6 +1068,7 @@ static inline int replay(
                                     , outfile.directory.c_str(), outfile.basename.c_str());
 
                     UpdateProgressData update_progress_data(progress_filename,
+                                                            rp.file_permissions,
                                                             progress_start_time,
                                                             progress_stop_time);
 
@@ -1119,7 +1135,6 @@ static inline int replay(
                             rp.wrm_compression_algorithm.get_or(
                                 player.get_wrm_info().compression_algorithm),
                             rp.wrm_verbosity,
-                            rp.file_permissions
                         };
 
                         CaptureParams capture_params{
@@ -1128,6 +1143,7 @@ static inline int replay(
                             spath.basename.c_str(),
                             record_tmp_path,
                             record_path,
+                            rp.file_permissions,
                             nullptr,
                             rp.smart_video_cropping,
                             0
@@ -1287,7 +1303,7 @@ static inline int replay(
     }
     catch (const Error & e) {
         const bool msg_with_error_id = false;
-        raise_error(rp.output_filename, e.id, e.errmsg(msg_with_error_id));
+        rp.pgs().raise_error(e.id, e.errmsg(msg_with_error_id));
     }
 
     std::cout << std::endl;
@@ -1496,7 +1512,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     auto cl_error = [&recorder](chars_view mes, int const errnum = 1) /*NOLINT*/ {
         std::cerr << mes.as<std::string_view>() << "\n";
-        raise_error(recorder.output_filename, errnum, mes);
+        recorder.pgs().raise_error(errnum, mes);
         return ClRes::Err;
     };
 
@@ -1828,9 +1844,8 @@ int do_main(int argc, char const ** argv,
         auto& wrms = mwrm_infos.wrms;
 
         if (wrms.empty()) {
-            return raise_error_and_log(
-                rp.output_filename, -1, "wrm file not found in mwrm file"_zv
-            );
+            rp.pgs().raise_error_and_log("wrm file not found in mwrm file"_zv);
+            return -1;
         }
 
         auto normalize_time = [&](std::chrono::seconds t){
@@ -1852,21 +1867,20 @@ int do_main(int argc, char const ** argv,
                 wrms.erase(wrms.begin(), it);
             }
             else {
-                return raise_error_and_log(
-                    rp.output_filename, -1, "no recording on the requested time slot"_zv
-                );
+                rp.pgs().raise_error_and_log("no recording on the requested time slot"_zv);
+                return -1;
             }
         }
 
         std::vector<std::string> wrm_filenames;
 
-        if (int r = update_filename_and_check_size(rp.output_filename,
-                                                   wrms,
-                                                   wrm_filenames,
-                                                   rp.mwrm_path,
-                                                   rp.ignore_file_size)
+        if (!update_filename_and_check_size(rp.pgs(),
+                                            wrms,
+                                            wrm_filenames,
+                                            rp.mwrm_path,
+                                            rp.ignore_file_size)
         ) {
-            return r;
+            return -1;
         }
 
         Rect      crop_rect {};
@@ -1897,7 +1911,7 @@ int do_main(int argc, char const ** argv,
         }
         catch (Error const& e) {
             const bool msg_with_error_id = false;
-            raise_error(rp.output_filename, e.id, e.errmsg(msg_with_error_id));
+            rp.pgs().raise_error(e.id, e.errmsg(msg_with_error_id));
         }
 
         capture_times.adjust_time(wrms.front().start_time, wrms.back().stop_time);

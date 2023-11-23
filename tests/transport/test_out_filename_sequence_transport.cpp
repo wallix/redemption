@@ -27,7 +27,9 @@ Author(s): Jonathan Poelen
 RED_AUTO_TEST_CASE_WD(TestOutFilenameSequenceTransport, wd)
 {
     OutFilenameSequenceTransport fnt(
-        wd.dirname(), "test_outfilenametransport", ".txt", [](const Error & /*error*/){});
+        wd.dirname(), "test_outfilenametransport", ".txt",
+        FilePermissions::user_permissions(BitPermissions::read),
+        [](const Error & /*error*/){});
     fnt.send("We write, ", 10);
     fnt.send("and again, ", 11);
     fnt.send("and so on.", 10);

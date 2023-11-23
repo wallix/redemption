@@ -67,9 +67,11 @@ OutFilenameSequenceTransport::OutFilenameSequenceTransport(
     const char * const prefix,
     const char * const filename,
     const char * const extension,
+    FilePermissions file_permissions,
     std::function<void(const Error & error)> notify_error)
 : filegen_(prefix, filename, extension)
 , buf_(invalid_fd(), std::move(notify_error))
+, file_permissions_(file_permissions)
 {
     this->current_filename_[0] = 0;
 }
@@ -108,8 +110,8 @@ OutFilenameSequenceTransport::~OutFilenameSequenceTransport()
 
 void OutFilenameSequenceTransport::do_send(const uint8_t * data, size_t len)
 {
-    if (!this->buf_.is_open()) {
-        this->open_filename(this->filegen_.get(this->num_file_));
+    if (REDEMPTION_UNLIKELY(!this->buf_.is_open())) {
+        this->open_filename();
     }
     this->buf_.send(data, len);
 }
@@ -126,8 +128,9 @@ int OutFilenameSequenceTransport::do_next()
     return 1;
 }
 
-void OutFilenameSequenceTransport::open_filename(const char * filename)
+void OutFilenameSequenceTransport::open_filename()
 {
+    const char * filename = this->filegen_.get(this->num_file_);
     snprintf(this->current_filename_, sizeof(this->current_filename_),
                 "%sred-XXXXXX.tmp", filename);
     const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
@@ -136,7 +139,7 @@ void OutFilenameSequenceTransport::open_filename(const char * filename)
     }
     // LOG(LOG_INFO, "pngcapture=%s", this->current_filename_);
     // TODO PERF used fchmod
-    if (chmod(this->current_filename_, S_IRUSR | S_IRGRP) == -1) {
+    if (chmod(this->current_filename_, file_permissions_.permissions_as_uint()) == -1) {
         LOG( LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%d]"
             , this->current_filename_, strerror(errno), errno);
     }

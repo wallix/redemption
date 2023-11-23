@@ -133,7 +133,6 @@ namespace
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
             RDPSerializerVerbose::none,
-            FilePermissions::user_and_group_permissions(BitPermissions::read)
         }
         , capture_params{
             now,
@@ -141,6 +140,7 @@ namespace
             basename,
             record_tmp_path,
             record_path,
+            FilePermissions::user_permissions(BitPermissions::read),
             &session_log,
             SmartVideoCropping::disable,
             0

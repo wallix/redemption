@@ -1278,6 +1278,7 @@ public:
             record_filebase,
             record_tmp_path,
             record_path.c_str(),
+            ini.get<cfg::capture::file_permissions>(),
             &session_log,
             ini.get<cfg::audit::smart_video_cropping>(),
             ini.get<cfg::debug::capture>()

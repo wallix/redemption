@@ -21,6 +21,7 @@
 #pragma once
 
 #include "transport/file_transport.hpp"
+#include "utils/file_permissions.hpp"
 
 
 // TODO in PngCapture
@@ -31,6 +32,7 @@ public:
         const char * const prefix,
         const char * const filename,
         const char * const extension,
+        FilePermissions file_permissions,
         std::function<void(const Error & error)> notify_error);
 
     ~OutFilenameSequenceTransport();
@@ -72,13 +74,14 @@ private:
 
     /// \return 0 if success
     int do_next();
-    void open_filename(const char * filename);
+    void open_filename();
 
     const char * rename_filename();
 
     char current_filename_[1024];
     FilenameGenerator filegen_;
     OutFileTransport buf_;
+    FilePermissions file_permissions_;
     unsigned num_file_ = 0;
     uint32_t seqno_ = 0;
     bool status = true;

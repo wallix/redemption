@@ -32,6 +32,7 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
 {
     auto const start_time = MonotonicTimePoint(123456789s);
     auto const end_time = start_time + 100s;
+    auto const read_permisssions = FilePermissions::user_permissions(BitPermissions::read);
     char const * filename = wf.c_str();
 
     auto read_file = [=, contents = std::string()] () mutable -> std::string const& {
@@ -39,9 +40,14 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
         return contents;
     };
 
-    {
+    auto mk_progress = [=]{
         unlink(filename);
-        UpdateProgressData p(filename, start_time, end_time);
+        return UpdateProgressData(filename, read_permisssions, start_time, end_time);
+    };
+
+
+    {
+        auto p = mk_progress();
 
         RED_REQUIRE(p.is_valid());
 
@@ -59,8 +65,7 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
     RED_CHECK_EQUAL(read_file(), R"({"percentage":100,"eta":0,"videos":1})");
 
     {
-        unlink(filename);
-        UpdateProgressData p(filename, start_time, end_time);
+        auto p = mk_progress();
 
         RED_REQUIRE(p.is_valid());
 
@@ -78,8 +83,7 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
     RED_CHECK_EQUAL(read_file(), R"({"percentage":100,"eta":0,"videos":2})");
 
     {
-        unlink(filename);
-        UpdateProgressData p(filename, start_time, end_time);
+        auto p = mk_progress();
 
         RED_REQUIRE(p.is_valid());
 

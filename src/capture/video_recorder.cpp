@@ -94,9 +94,14 @@ namespace
     {
         explicit VideoRecorderOutputFile(
             std::string_view filename,
+            FilePermissions file_permissions,
             AclReportApi * acl_report)
         : tmp_filename(str_concat(filename, "red-XXXXXX.tmp"_av))
-        , fd{[acl_report, tmp_filename = this->tmp_filename.data()]{
+        , fd{[
+            acl_report,
+            tmp_filename = this->tmp_filename.data(),
+            mode = file_permissions.permissions_as_uint()
+        ]{
             int fd = ::mkostemps(tmp_filename, 4, O_WRONLY | O_CREAT);
             if (fd == -1) {
                 int const errnum = errno;
@@ -106,7 +111,7 @@ namespace
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
             }
 
-            if (fchmod(fd, S_IRUSR|S_IRGRP) == -1) {
+            if (fchmod(fd, mode) == -1) {
                 int const errnum = errno;
                 LOG( LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%d]"
                    , tmp_filename, strerror(errnum), errnum);
@@ -253,8 +258,8 @@ struct video_recorder::D
     std::unique_ptr<uint8_t, default_av_free> custom_io_buffer;
     AVIOContext* custom_io_context = nullptr;
 
-    D(std::string_view filename, AclReportApi * acl_report)
-    : out_file(filename, acl_report)
+    D(std::string_view filename, FilePermissions file_permissions, AclReportApi * acl_report)
+    : out_file(filename, file_permissions, acl_report)
     , dst_frame(av_frame_alloc())
     , pkt(av_packet_alloc())
     {}
@@ -294,11 +299,11 @@ static void check_errnum(int errnum, char const* msg)
 // https://libav.org/documentation/doxygen/master/encode_video_8c-example.html
 
 video_recorder::video_recorder(
-    char const* filename, AclReportApi * acl_report,
+    char const* filename, FilePermissions file_permissions, AclReportApi * acl_report,
     ImageView const& image_view, int frame_rate,
     const char * codec_name, char const* codec_options, int log_level
 )
-: d(std::make_unique<D>(filename, acl_report))
+: d(std::make_unique<D>(filename, file_permissions, acl_report))
 {
     const int width = image_view.width();
     const int height = image_view.height();
@@ -566,7 +571,7 @@ void video_recorder::encoding_video_frame(int64_t frame_index)
 struct video_recorder::D {};
 
 video_recorder::video_recorder(
-    char const* /*filename*/, AclReportApi * /*acl_report*/,
+    char const* /*filename*/, FilePermissions /*file_permissions*/, AclReportApi * /*acl_report*/,
     ImageView const & /*image_view*/, int /*frame_rate*/,
     const char * /*codec_name*/, char const* /*codec_options*/, int /*log_level*/
 )

@@ -21,6 +21,7 @@
 #pragma once
 
 #include "configs/autogen/enums.hpp"
+#include "utils/file_permissions.hpp"
 #include "utils/monotonic_clock.hpp"
 #include "utils/real_clock.hpp"
 
@@ -36,6 +37,9 @@ struct CaptureParams
     char const * basename;
     char const * record_tmp_path;
     char const * record_path;
+
+    FilePermissions file_permissions;
+
     SessionLogApi * session_log;
 
     SmartVideoCropping smart_video_cropping;

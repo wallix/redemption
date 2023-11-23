@@ -25,6 +25,7 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/bounded_array_view.hpp"
+#include "utils/file_permissions.hpp"
 #include "utils/monotonic_clock.hpp"
 
 #include <cassert>
@@ -75,9 +76,9 @@ class UpdateProgressData : noncopyable
 
 public:
     UpdateProgressData(
-        const char * progress_filename,
+        const char * progress_filename, FilePermissions file_permissions,
         MonotonicTimePoint start_record, MonotonicTimePoint stop_record)
-    : fd(create_progress_file(progress_filename))
+    : fd(create_progress_file(progress_filename, file_permissions))
     , start_record(start_record)
     , stop_record(stop_record)
     , processing_start_time(MonotonicTimePoint::clock::now())
@@ -183,9 +184,9 @@ private:
         }
     }
 
-    static unique_fd create_progress_file(const char * progress_filename)
+    static unique_fd create_progress_file(const char * progress_filename, FilePermissions permissions)
     {
-        int const file_mode = S_IRUSR | S_IRGRP;
+        unsigned const file_mode = permissions.permissions_as_uint();
         int const fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, file_mode);
         // umask (man umask) can change effective mode of created file
         if ((fd < 0) || (chmod(progress_filename, file_mode) < 0)) {

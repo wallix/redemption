@@ -158,7 +158,7 @@ private:
         Capture(
             const uint16_t width, const uint16_t height,
             RealTimePoint real_time, char const* movie_name, char const* record_path,
-            WrmParams const& wrm_params)
+            FilePermissions file_permissions, WrmParams const& wrm_params)
         : drawable(width, height)
         , wrm_capture(
             CaptureParams{
@@ -167,6 +167,7 @@ private:
                 movie_name,
                 record_path,
                 record_path,
+                file_permissions,
                 nullptr,
                 SmartVideoCropping{},
                 0
@@ -707,12 +708,13 @@ public:
             , std::chrono::seconds(600) /* break_interval */
             , WrmCompressionAlgorithm::no_compression
             , RDPSerializerVerbose::none
-            , FilePermissions(0777)
         };
 
         this->capture = std::make_unique<Capture>(
             this->config.info.screen_info.width, this->config.info.screen_info.height,
-            real_time, movie_name.c_str(), record_path.c_str(), wrmParams);
+            real_time, movie_name.c_str(), record_path.c_str(),
+            FilePermissions::user_and_group_permissions(BitPermissions::rw),
+            wrmParams);
     }
 
 

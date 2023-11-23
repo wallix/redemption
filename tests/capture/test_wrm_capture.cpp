@@ -71,6 +71,7 @@ namespace
             CaptureParams{
                 now, RealTimePoint{1000s},
                 filebase, tmp_wd.dirname(), record_wd.dirname(),
+                FilePermissions::user_and_group_permissions(BitPermissions::read),
                 nullptr, SmartVideoCropping::disable, 0},
             WrmParams{
                 BitsPerPixel{24},
@@ -96,7 +97,6 @@ namespace
                 /*wrm_break_interval = */3s,
                 WrmCompressionAlgorithm::no_compression,
                 RDPSerializerVerbose::none,
-                FilePermissions(0777),
             },
             gd_drawable.drawable(),
             rail_window_rect,

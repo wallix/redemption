@@ -58,7 +58,6 @@ WrmParams wrm_params_from_ini(
         ini.get<cfg::capture::wrm_break_interval>(),
         ini.get<cfg::capture::wrm_compression_algorithm>(),
         safe_cast<RDPSerializerVerbose>(ini.get<cfg::debug::capture>()),
-        ini.get<cfg::capture::file_permissions>()
     };
 }
 

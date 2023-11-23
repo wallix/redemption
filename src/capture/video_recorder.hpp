@@ -23,6 +23,7 @@
 #pragma once
 
 #include "utils/image_view.hpp"
+#include "utils/file_permissions.hpp"
 
 #include <memory>
 #include <cstdint>
@@ -34,7 +35,7 @@ class video_recorder
 {
 public:
     video_recorder(
-        char const* filename, AclReportApi * acl_report,
+        char const* filename, FilePermissions file_permissions, AclReportApi * acl_report,
         ImageView const& image_view, int frame_rate,
         const char * codec_name, char const* codec_options, int log_level
     );
