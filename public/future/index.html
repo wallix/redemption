@@ -396,8 +396,9 @@ const computeSpecInfo = (spec) => {
 const diffMarker = (s, marker) => marker ? `<span class="diff-marker">${s}</span>` : s;
 
 const makeHtmlHistory = (migrate, sections, historyTransformations) => {
-  const histFragments = ['<p>ReDemPtion versions:</p><ul>'];
-  const histIniOnyFragments = ['<p>ReDemPtion versions:</p><ul>'];
+  const h = '<p>Change by ReDemPtion versions (rename and remove only):</p><ul>';
+  const histFragments = [h];
+  const histIniOnyFragments = [h];
   for (const {version, data} of migrate.reverse()) {
     const histGlobalSpec = [];
     const histIniOnly = [];
