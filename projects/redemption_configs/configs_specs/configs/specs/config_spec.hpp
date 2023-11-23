@@ -2342,7 +2342,6 @@ _.section("capture", [&]
             "(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
     });
 
-    // TODO enable_clipboard_log in [audit]
     _.member(MemberInfo{
         .name = "disable_clipboard_log",
         .value = from_enum(ClipboardLogFlags::none),
@@ -2350,7 +2349,6 @@ _.section("capture", [&]
         .desc = "Disable clipboard log:",
     });
 
-    // TODO enable_file_system_log in [audit]
     _.member(MemberInfo{
         .name = "disable_file_system_log",
         .value = from_enum(FileSystemLogFlags::none),
@@ -2358,7 +2356,6 @@ _.section("capture", [&]
         .desc = "Disable (redirected) file system log:",
     });
 
-    // TODO png_break_interval
     _.member(MemberInfo{
         .name = "wrm_break_interval",
         .value = value<std::chrono::seconds>(600),
@@ -2380,13 +2377,12 @@ _.section("capture", [&]
         .spec = global_spec(no_acl, spec::advanced),
     });
 
-    // TODO
-    // _.member(MemberInfo{
-    //     .name = "file_permissions",
-    //     .value = value<FilePermissions>(0440),
-    //     .spec = ini_only(no_acl),
-    //     .desc = "Allow to control permissions on recorded files",
-    // });
+    _.member(MemberInfo{
+        .name = "file_permissions",
+        .value = value<FilePermissions>(0440),
+        .spec = ini_only(no_acl),
+        .desc = "Allow to control permissions on recorded files",
+    });
 });
 
 _.section("audit", [&]
@@ -2401,21 +2397,34 @@ _.section("audit", [&]
     });
 
     _.member(MemberInfo{
-        .name = "codec_id",
-        .value = value<std::string>("mp4"),
-        .spec = ini_only(no_acl),
+        .name = "video_break_interval",
+        .value = value<std::chrono::seconds>(60*60*24*7), // 1 week
+        .spec = global_spec(no_acl, spec::advanced),
+        .desc = "The maximum time between 2 videos when none title bar is detected."
     });
 
     _.member(MemberInfo{
-        .name = names{
-            .all = "framerate",
-            .display = "Frame rate"
-        },
+        .name = "video_frame_rate",
         .value = value<types::range<types::unsigned_, 1, 120>>(5),
         .spec = global_spec(no_acl, spec::advanced),
         .desc =
             "Maximum number of images per second for video generation.\n"
             "A higher value will produce smoother videos, but the file weight is higher and the generation time longer."
+    });
+
+    _.member(MemberInfo{
+        .name = "video_notimestamp",
+        .value = value(false),
+        .spec = global_spec(no_acl, spec::advanced),
+        .desc = "In the generated video of the session record traces, remove the top left banner with the timestamp.\n"
+        "Can slightly speed up the video generation.",
+    });
+
+    _.member(MemberInfo{
+        .name = "video_codec",
+        .value = value<std::string>("mp4"),
+        .spec = ini_only(no_acl),
+        .desc = "Video codec used for video generation.",
     });
 
     _.member(MemberInfo{
@@ -2428,14 +2437,6 @@ _.section("audit", [&]
         .desc =
             "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
             "⚠ Some browsers and video decoders don't support crf=0"
-    });
-
-    _.member(MemberInfo{
-        .name = "notimestamp",
-        .value = value(false),
-        .spec = global_spec(no_acl, spec::advanced),
-        .desc = "In the generated video of the session record traces, remove the top left banner with the timestamp.\n"
-        "Can slightly speed up the video generation.",
     });
 
     _.member(MemberInfo{
@@ -2454,7 +2455,7 @@ _.section("audit", [&]
 
     _.member(MemberInfo{
         .name = "file_permissions",
-        .value = value<FilePermissions>(0440),
+        .value = value<FilePermissions>(0640),
         .spec = ini_only(no_acl),
         .desc = "Allow to control permissions on video files",
     });

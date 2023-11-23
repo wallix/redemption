@@ -2873,6 +2873,15 @@ namespace cfg
         using mapped_type = WrmCompressionAlgorithm;
         type value { WrmCompressionAlgorithm::gzip };
     };
+    /// Allow to control permissions on recorded files <br/>
+    /// type: FilePermissions <br/>
+    /// default: 0440 <br/>
+    struct capture::file_permissions {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = FilePermissions;
+        using mapped_type = FilePermissions;
+        type value { 0440 };
+    };
 
     /// Show keyboard input event in meta file <br/>
     /// (Please see also "Keyboard input masking level" in "session_log".) <br/>
@@ -2884,24 +2893,43 @@ namespace cfg
         using mapped_type = bool;
         type value { true };
     };
-    /// type: std::string <br/>
-    /// default: "mp4" <br/>
-    struct audit::codec_id {
+    /// The maximum time between 2 videos when none title bar is detected. <br/>
+    /// type: std::chrono::seconds <br/>
+    /// default: 604800 <br/>
+    struct audit::video_break_interval {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = std::string;
-        using mapped_type = std::string;
-        type value { "mp4" };
+        using type = std::chrono::seconds;
+        using mapped_type = std::chrono::seconds;
+        type value { 604800 };
     };
     /// Maximum number of images per second for video generation. <br/>
     /// A higher value will produce smoother videos, but the file weight is higher and the generation time longer. <br/>
     /// type: unsigned <br/>
-    /// displayName: Frame rate <br/>
     /// default: 5 <br/>
-    struct audit::framerate {
+    struct audit::video_frame_rate {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = unsigned;
         using mapped_type = ::configs::spec_types::range<unsigned, 1, 120>;
         type value { 5 };
+    };
+    /// In the generated video of the session record traces, remove the top left banner with the timestamp. <br/>
+    /// Can slightly speed up the video generation. <br/>
+    /// type: bool <br/>
+    /// default: false <br/>
+    struct audit::video_notimestamp {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = bool;
+        using mapped_type = bool;
+        type value { false };
+    };
+    /// Video codec used for video generation. <br/>
+    /// type: std::string <br/>
+    /// default: "mp4" <br/>
+    struct audit::video_codec {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = std::string;
+        using mapped_type = std::string;
+        type value { "mp4" };
     };
     /// FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264 <br/>
     /// ⚠ Some browsers and video decoders don't support crf=0 <br/>
@@ -2913,16 +2941,6 @@ namespace cfg
         using type = std::string;
         using mapped_type = std::string;
         type value { "crf=35 preset=superfast" };
-    };
-    /// In the generated video of the session record traces, remove the top left banner with the timestamp. <br/>
-    /// Can slightly speed up the video generation. <br/>
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct audit::notimestamp {
-        static constexpr unsigned acl_proxy_communication_flags = 0b00;
-        using type = bool;
-        using mapped_type = bool;
-        type value { false };
     };
     /// type: SmartVideoCropping <br/>
     /// default: SmartVideoCropping::v2 <br/>
@@ -2943,12 +2961,12 @@ namespace cfg
     };
     /// Allow to control permissions on video files <br/>
     /// type: FilePermissions <br/>
-    /// default: 0440 <br/>
+    /// default: 0640 <br/>
     struct audit::file_permissions {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = FilePermissions;
         using mapped_type = FilePermissions;
-        type value { 0440 };
+        type value { 0640 };
     };
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>
@@ -5279,6 +5297,7 @@ struct capture
 , cfg::capture::record_subdirectory
 , cfg::capture::fdx_path
 , cfg::capture::wrm_break_interval
+, cfg::capture::file_permissions
 , cfg::capture::hash_path
 , cfg::capture::record_tmp_path
 , cfg::capture::record_path
@@ -5291,7 +5310,8 @@ struct capture
 { static constexpr bool is_section = true; };
 
 struct audit
-: cfg::audit::codec_id
+: cfg::audit::video_break_interval
+, cfg::audit::video_codec
 , cfg::audit::ffmpeg_options
 , cfg::audit::rt_png_interval
 , cfg::audit::redis_timeout
@@ -5302,8 +5322,8 @@ struct audit
 , cfg::audit::redis_tls_key
 , cfg::audit::file_permissions
 , cfg::audit::enable_keyboard_log
-, cfg::audit::framerate
-, cfg::audit::notimestamp
+, cfg::audit::video_frame_rate
+, cfg::audit::video_notimestamp
 , cfg::audit::smart_video_cropping
 , cfg::audit::play_video_with_corrupted_bitmap
 , cfg::audit::rt_display

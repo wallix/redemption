@@ -156,7 +156,7 @@ class Session
                 ini.get<cfg::session_log::enable_syslog_format>(),
                 SessionLogFile::SaveToFile(ini.get<cfg::session_log::enable_session_log_file>()),
                 record_path.c_str(), hash_path.c_str(),
-                this->ini.get<cfg::audit::file_permissions>(), /*derivator=*/basename);
+                this->ini.get<cfg::capture::file_permissions>(), /*derivator=*/basename);
 
             return *this;
         }

@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::video_notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::capture::capture_flags>());
@@ -113,7 +113,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(600, ini.get<cfg::internal_mod::close_box_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/", ini.get<cfg::mod_replay::replay_path>());
-    RED_CHECK_EQUAL(0440,    ini.get<cfg::audit::file_permissions>().permissions_as_uint());
+    RED_CHECK_EQUAL(0640,    ini.get<cfg::audit::file_permissions>().permissions_as_uint());
 
     RED_CHECK_EQUAL("0.0.0.0",                   ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(false,                       ini.get<cfg::globals::enable_transparent_mode>());
@@ -337,7 +337,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::low,                       ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::video_notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::capture::capture_flags>());
@@ -500,7 +500,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::medium,                    ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::video_notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::capture::capture_flags>());
@@ -652,7 +652,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::low,                       ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::video_notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::capture::capture_flags>());
@@ -802,7 +802,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::low,                       ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::video_notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::capture::capture_flags>());
@@ -935,7 +935,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::video_notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::capture::capture_flags>());
@@ -1064,7 +1064,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::video_notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::capture::capture_flags>());
@@ -1179,7 +1179,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::video_notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::capture::capture_flags>());
@@ -1297,7 +1297,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::video_notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::capture::capture_flags>());

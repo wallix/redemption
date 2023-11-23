@@ -1780,6 +1780,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "file_permissions"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::file_permissions&>(this->variables).value,
+                ::configs::spec_type<FilePermissions>{},
+                value
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
@@ -1796,19 +1804,35 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "codec_id"_zv) {
+        else if (key == "video_break_interval"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::audit::codec_id&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                static_cast<cfg::audit::video_break_interval&>(this->variables).value,
+                ::configs::spec_type<std::chrono::seconds>{},
                 value
             );
         }
-        else if (key == "framerate"_zv) {
+        else if (key == "video_frame_rate"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::audit::framerate&>(this->variables).value,
+                static_cast<cfg::audit::video_frame_rate&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::range<unsigned, 1, 120>>{},
+                value
+            );
+        }
+        else if (key == "video_notimestamp"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::audit::video_notimestamp&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "video_codec"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::audit::video_codec&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
                 value
             );
         }
@@ -1817,14 +1841,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::audit::ffmpeg_options&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
-                value
-            );
-        }
-        else if (key == "notimestamp"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::audit::notimestamp&>(this->variables).value,
-                ::configs::spec_type<bool>{},
                 value
             );
         }

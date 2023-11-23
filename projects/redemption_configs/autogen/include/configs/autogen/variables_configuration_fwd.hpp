@@ -264,14 +264,16 @@ namespace cfg
         struct wrm_break_interval;
         struct wrm_color_depth_selection_strategy;
         struct wrm_compression_algorithm;
+        struct file_permissions;
     };
 
     struct audit {
         struct enable_keyboard_log;
-        struct codec_id;
-        struct framerate;
+        struct video_break_interval;
+        struct video_frame_rate;
+        struct video_notimestamp;
+        struct video_codec;
         struct ffmpeg_options;
-        struct notimestamp;
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
         struct file_permissions;

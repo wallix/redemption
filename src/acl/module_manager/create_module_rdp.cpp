@@ -251,7 +251,7 @@ public:
                 str_concat(record_dir.as_string(), subdir),
                 str_concat(hash_dir.as_string(), subdir),
                 filebase,
-                session_id, ini.get<cfg::audit::file_permissions>(),
+                session_id, ini.get<cfg::capture::file_permissions>(),
                 cctx, gen,
                 /* TODO should be a log (siem?)*/
                 [](const Error & /*error*/){});

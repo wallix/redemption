@@ -233,11 +233,13 @@ template<> struct acl_and_spec_type<cfg::capture::disable_file_system_log> { usi
 template<> struct acl_and_spec_type<cfg::capture::wrm_break_interval> { using type = std::chrono::seconds; };
 template<> struct acl_and_spec_type<cfg::capture::wrm_color_depth_selection_strategy> { using type = ColorDepthSelectionStrategy; };
 template<> struct acl_and_spec_type<cfg::capture::wrm_compression_algorithm> { using type = WrmCompressionAlgorithm; };
+template<> struct acl_and_spec_type<cfg::capture::file_permissions> { using type = FilePermissions; };
 template<> struct acl_and_spec_type<cfg::audit::enable_keyboard_log> { using type = bool; };
-template<> struct acl_and_spec_type<cfg::audit::codec_id> { using type = std::string; };
-template<> struct acl_and_spec_type<cfg::audit::framerate> { using type = ::configs::spec_types::range<unsigned, 1, 120>; };
+template<> struct acl_and_spec_type<cfg::audit::video_break_interval> { using type = std::chrono::seconds; };
+template<> struct acl_and_spec_type<cfg::audit::video_frame_rate> { using type = ::configs::spec_types::range<unsigned, 1, 120>; };
+template<> struct acl_and_spec_type<cfg::audit::video_notimestamp> { using type = bool; };
+template<> struct acl_and_spec_type<cfg::audit::video_codec> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::audit::ffmpeg_options> { using type = std::string; };
-template<> struct acl_and_spec_type<cfg::audit::notimestamp> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::audit::smart_video_cropping> { using type = SmartVideoCropping; };
 template<> struct acl_and_spec_type<cfg::audit::play_video_with_corrupted_bitmap> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::audit::file_permissions> { using type = FilePermissions; };

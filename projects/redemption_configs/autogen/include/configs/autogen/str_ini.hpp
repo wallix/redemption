@@ -1298,6 +1298,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #wrm_compression_algorithm = 1
 
+# Allow to control permissions on recorded files
+# (in octal or symbolic mode format (as chmod Linux command))
+#file_permissions = 440
+
 [audit]
 
 # Show keyboard input event in meta file
@@ -1306,26 +1310,31 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #enable_keyboard_log = 1
 
-#codec_id = mp4
+# The maximum time between 2 videos when none title bar is detected.
+# (in seconds)
+#_advanced
+#video_break_interval = 604800
 
 # Maximum number of images per second for video generation.
 # A higher value will produce smoother videos, but the file weight is higher and the generation time longer.
 # (min = 1, max = 120)
 #_advanced
-#_display_name=Frame rate
-#framerate = 5
+#video_frame_rate = 5
+
+# In the generated video of the session record traces, remove the top left banner with the timestamp.
+# Can slightly speed up the video generation.
+# (type: boolean (0/no/false or 1/yes/true))
+#_advanced
+#video_notimestamp = 0
+
+# Video codec used for video generation.
+#video_codec = mp4
 
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
 # ⚠ Some browsers and video decoders don't support crf=0
 #_advanced
 #_display_name=FFmpeg options
 #ffmpeg_options = crf=35 preset=superfast
-
-# In the generated video of the session record traces, remove the top left banner with the timestamp.
-# Can slightly speed up the video generation.
-# (type: boolean (0/no/false or 1/yes/true))
-#_advanced
-#notimestamp = 0
 
 #   0: disable: When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
 #   1: v1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
@@ -1339,7 +1348,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Allow to control permissions on video files
 # (in octal or symbolic mode format (as chmod Linux command))
-#file_permissions = 440
+#file_permissions = 640
 
 # Allow real-time view (4 eyes) without session recording enabled in the authorization
 # (type: boolean (0/no/false or 1/yes/true))

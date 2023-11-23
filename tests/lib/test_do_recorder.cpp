@@ -744,6 +744,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunk, wd)
         "-o",
             output.c_str(),
         "--chunk",
+        "--video-break-interval", "600",
         "--video-codec", "mp4",
         "-D", mp4_options,
     };

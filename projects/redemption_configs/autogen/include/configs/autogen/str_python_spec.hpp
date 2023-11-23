@@ -419,22 +419,26 @@ wrm_compression_algorithm = option(0, 1, 2, default=1)
 #_advanced
 enable_keyboard_log = boolean(default=True)
 
+# The maximum time between 2 videos when none title bar is detected.<br/>
+# (in seconds)
+#_advanced
+video_break_interval = integer(min=0, default=604800)
+
 # Maximum number of images per second for video generation.
 # A higher value will produce smoother videos, but the file weight is higher and the generation time longer.
 #_advanced
-#_display_name=Frame rate
-framerate = integer(min=1, max=120, default=5)
+video_frame_rate = integer(min=1, max=120, default=5)
+
+# In the generated video of the session record traces, remove the top left banner with the timestamp.
+# Can slightly speed up the video generation.
+#_advanced
+video_notimestamp = boolean(default=False)
 
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
 # ⚠ Some browsers and video decoders don't support crf=0
 #_advanced
 #_display_name=FFmpeg options
 ffmpeg_options = string(default="crf=35 preset=superfast")
-
-# In the generated video of the session record traces, remove the top left banner with the timestamp.
-# Can slightly speed up the video generation.
-#_advanced
-notimestamp = boolean(default=False)
 
 # &nbsp; &nbsp;   0: disable: When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
 # &nbsp; &nbsp;   1: v1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session

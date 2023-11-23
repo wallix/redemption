@@ -1534,18 +1534,18 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     // VideoParams
     //@{
     if (!recorder.video_params.frame_rate) {
-        recorder.video_params.frame_rate = ini.get<cfg::audit::framerate>();
+        recorder.video_params.frame_rate = ini.get<cfg::audit::video_frame_rate>();
     }
 
     if (recorder.video_params.codec.empty()) {
-        recorder.video_params.codec = ini.get<cfg::audit::codec_id>();
+        recorder.video_params.codec = ini.get<cfg::audit::video_codec>();
     }
 
     recorder.video_params.codec_options = codec_options.data()
         ? codec_options
         : ini.get<cfg::audit::ffmpeg_options>();
 
-    recorder.video_params.no_timestamp = ini.get<cfg::audit::notimestamp>();
+    recorder.video_params.no_timestamp = ini.get<cfg::audit::video_notimestamp>();
     recorder.video_params.verbosity = ini.get<cfg::debug::ffmpeg>();
     //@}
 
@@ -1554,7 +1554,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     //@{
     recorder.sequenced_video_params.break_interval = video_break_interval.count()
         ? video_break_interval
-        : ini.get<cfg::capture::wrm_break_interval>();
+        : ini.get<cfg::audit::video_break_interval>();
     //@}
 
 

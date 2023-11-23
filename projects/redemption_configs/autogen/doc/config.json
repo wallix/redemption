@@ -2371,6 +2371,14 @@
       "subtype": "WrmCompressionAlgorithm"
     },
     {
+      "section": "capture",
+      "name": "file_permissions",
+      "type": "FilePermissions",
+      "value": "440",
+      "description": "Allow to control permissions on recorded files",
+      "iniOnly": true
+    },
+    {
       "section": "audit",
       "name": "enable_keyboard_log",
       "type": "bool",
@@ -2381,22 +2389,39 @@
     },
     {
       "section": "audit",
-      "name": "codec_id",
-      "type": "str",
-      "value": "mp4",
-      "description": "",
-      "iniOnly": true
+      "name": "video_break_interval",
+      "type": "seconds",
+      "value": 604800,
+      "description": "The maximum time between 2 videos when none title bar is detected.",
+      "globalSpec": true,
+      "advanced": true
     },
     {
       "section": "audit",
-      "name": "framerate",
+      "name": "video_frame_rate",
       "type": "uint",
       "value": 5,
       "description": "Maximum number of images per second for video generation.\nA higher value will produce smoother videos, but the file weight is higher and the generation time longer.",
-      "displayName": "Frame rate",
       "globalSpec": true,
       "advanced": true,
       "min": 1, "max": 120
+    },
+    {
+      "section": "audit",
+      "name": "video_notimestamp",
+      "type": "bool",
+      "value": false,
+      "description": "In the generated video of the session record traces, remove the top left banner with the timestamp.\nCan slightly speed up the video generation.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "audit",
+      "name": "video_codec",
+      "type": "str",
+      "value": "mp4",
+      "description": "Video codec used for video generation.",
+      "iniOnly": true
     },
     {
       "section": "audit",
@@ -2405,15 +2430,6 @@
       "value": "crf=35 preset=superfast",
       "description": "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n⚠ Some browsers and video decoders don't support crf=0",
       "displayName": "FFmpeg options",
-      "globalSpec": true,
-      "advanced": true
-    },
-    {
-      "section": "audit",
-      "name": "notimestamp",
-      "type": "bool",
-      "value": false,
-      "description": "In the generated video of the session record traces, remove the top left banner with the timestamp.\nCan slightly speed up the video generation.",
       "globalSpec": true,
       "advanced": true
     },
@@ -2439,7 +2455,7 @@
       "section": "audit",
       "name": "file_permissions",
       "type": "FilePermissions",
-      "value": "440",
+      "value": "640",
       "description": "Allow to control permissions on video files",
       "iniOnly": true
     },
