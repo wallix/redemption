@@ -1534,18 +1534,18 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     // VideoParams
     //@{
     if (!recorder.video_params.frame_rate) {
-        recorder.video_params.frame_rate = ini.get<cfg::video::framerate>();
+        recorder.video_params.frame_rate = ini.get<cfg::audit::framerate>();
     }
 
     if (recorder.video_params.codec.empty()) {
-        recorder.video_params.codec = ini.get<cfg::video::codec_id>();
+        recorder.video_params.codec = ini.get<cfg::audit::codec_id>();
     }
 
     recorder.video_params.codec_options = codec_options.data()
         ? codec_options
-        : ini.get<cfg::video::ffmpeg_options>();
+        : ini.get<cfg::audit::ffmpeg_options>();
 
-    recorder.video_params.no_timestamp = ini.get<cfg::video::notimestamp>();
+    recorder.video_params.no_timestamp = ini.get<cfg::audit::notimestamp>();
     recorder.video_params.verbosity = ini.get<cfg::debug::ffmpeg>();
     //@}
 
@@ -1554,17 +1554,17 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     //@{
     recorder.sequenced_video_params.break_interval = video_break_interval.count()
         ? video_break_interval
-        : ini.get<cfg::video::break_interval>();
+        : ini.get<cfg::capture::wrm_break_interval>();
     //@}
 
 
     // MetaParams
     //@{
     recorder.log_cliboard_activities = MetaParams::LogClipboardActivities(
-        (ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::meta)
+        (ini.get<cfg::capture::disable_clipboard_log>() & ClipboardLogFlags::meta)
         != ClipboardLogFlags::meta);
     recorder.log_file_system_activities = MetaParams::LogFileSystemActivities(
-        (ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::meta)
+        (ini.get<cfg::capture::disable_file_system_log>() & FileSystemLogFlags::meta)
         != FileSystemLogFlags::meta);
     recorder.log_only_relevant_clipboard_activities = MetaParams::LogOnlyRelevantClipboardActivities(
         ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>());
@@ -1593,7 +1593,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     recorder.wrm_keyboard_log = !keyboard_input_fully_masked
                              && !bool(disable_keyboard_log & KeyboardLogFlags::wrm);
-    recorder.meta_keyboard_log = ini.get<cfg::video::enable_keyboard_log>();
+    recorder.meta_keyboard_log = ini.get<cfg::audit::enable_keyboard_log>();
     //@}
 
 
@@ -1607,14 +1607,14 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     }
 
     if (recorder.hash_path.empty()) {
-        recorder.hash_path = ini.get<cfg::video::hash_path>().as_string();
+        recorder.hash_path = ini.get<cfg::capture::hash_path>().as_string();
     }
     else if (recorder.hash_path.back() != '/') {
         recorder.hash_path += '/';
     }
 
     if (recorder.mwrm_path.empty()) {
-        recorder.mwrm_path = ini.get<cfg::video::record_path>().as_string();
+        recorder.mwrm_path = ini.get<cfg::capture::record_path>().as_string();
     }
     else if (recorder.mwrm_path.back() != '/') {
         recorder.mwrm_path += '/';
@@ -1704,9 +1704,9 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     }
 
     recorder.play_video_with_corrupted_bitmap
-        = ini.get<cfg::video::play_video_with_corrupted_bitmap>();
-    recorder.smart_video_cropping = ini.get<cfg::video::smart_video_cropping>();
-    recorder.file_permissions = ini.get<cfg::video::file_permissions>();
+        = ini.get<cfg::audit::play_video_with_corrupted_bitmap>();
+    recorder.smart_video_cropping = ini.get<cfg::audit::smart_video_cropping>();
+    recorder.file_permissions = ini.get<cfg::audit::file_permissions>();
     recorder.wrm_verbosity = safe_cast<RDPSerializerVerbose>(ini.get<cfg::debug::capture>());
 
     return ClRes::Ok;

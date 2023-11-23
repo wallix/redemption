@@ -92,19 +92,19 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
-                                                      ini.get<cfg::video::capture_flags>());
-    RED_CHECK_EQUAL(1000,                             ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
+                                                      ini.get<cfg::capture::capture_flags>());
+    RED_CHECK_EQUAL(1000,                             ini.get<cfg::audit::rt_png_interval>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::capture::wrm_break_interval>().count());
 
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
+    RED_CHECK_EQUAL(5,                                ini.get<cfg::audit::rt_png_limit>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
-                                                        ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+                                                        ini.get<cfg::capture::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
-                                                        ini.get<cfg::video::wrm_compression_algorithm>());
+                                                        ini.get<cfg::capture::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,  ini.get<cfg::globals::handshake_timeout>().count());
     RED_CHECK_EQUAL(900, ini.get<cfg::globals::base_inactivity_timeout>().count());
@@ -113,7 +113,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(600, ini.get<cfg::internal_mod::close_box_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/", ini.get<cfg::mod_replay::replay_path>());
-    RED_CHECK_EQUAL(0440,    ini.get<cfg::video::file_permissions>().permissions_as_uint());
+    RED_CHECK_EQUAL(0440,    ini.get<cfg::audit::file_permissions>().permissions_as_uint());
 
     RED_CHECK_EQUAL("0.0.0.0",                   ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(false,                       ini.get<cfg::globals::enable_transparent_mode>());
@@ -310,7 +310,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "server_clipboard_encoding_type=latin1\n"
         "bogus_clipboard_infinite_loop=0\n"
         "\n"
-        "[video]\n"
+        "[capture]\n"
         "hash_path=/mnt/wab/hash\n"
         "record_path=/mnt/wab/recorded/rdp\n"
         "record_tmp_path=/mnt/tmp/wab/recorded/rdp\n"
@@ -337,24 +337,24 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::low,                       ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
-                                                      ini.get<cfg::video::capture_flags>());
-    RED_CHECK_EQUAL(1000,                             ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
+                                                      ini.get<cfg::capture::capture_flags>());
+    RED_CHECK_EQUAL(1000,                             ini.get<cfg::audit::rt_png_interval>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::capture::wrm_break_interval>().count());
 
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
+    RED_CHECK_EQUAL(5,                                ini.get<cfg::audit::rt_png_limit>());
 
-    RED_CHECK_EQUAL("/mnt/wab/hash/",                 ini.get<cfg::video::hash_path>());
-    RED_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>());
-    RED_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>());
+    RED_CHECK_EQUAL("/mnt/wab/hash/",                 ini.get<cfg::capture::hash_path>());
+    RED_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::capture::record_path>());
+    RED_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::capture::record_tmp_path>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,   ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::none, ini.get<cfg::video::disable_file_system_log>());
+    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,   ini.get<cfg::capture::disable_clipboard_log>());
+    RED_CHECK_EQUAL(FileSystemLogFlags::none, ini.get<cfg::capture::disable_file_system_log>());
 
-    RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16, ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip, ini.get<cfg::video::wrm_compression_algorithm>());
+    RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16, ini.get<cfg::capture::wrm_color_depth_selection_strategy>());
+    RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip, ini.get<cfg::capture::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(5,     ini.get<cfg::globals::handshake_timeout>().count());
     RED_CHECK_EQUAL(900,   ini.get<cfg::globals::base_inactivity_timeout>().count());
@@ -473,7 +473,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "keepalive_timeout=6000\n"
         "[mod_replay]\n"
         "on_end_of_data=1\n"
-        "[video]\n"
+        "[capture]\n"
         "hash_path=/mnt/wab/hash/\n"
         "record_path=/mnt/wab/recorded/rdp/\n"
         "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
@@ -500,26 +500,26 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::medium,                    ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
-                                                      ini.get<cfg::video::capture_flags>());
-    RED_CHECK_EQUAL(1000,                             ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
+                                                      ini.get<cfg::capture::capture_flags>());
+    RED_CHECK_EQUAL(1000,                             ini.get<cfg::audit::rt_png_interval>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::capture::wrm_break_interval>().count());
 
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
+    RED_CHECK_EQUAL(5,                                ini.get<cfg::audit::rt_png_limit>());
 
-    RED_CHECK_EQUAL("/mnt/wab/hash/",                 ini.get<cfg::video::hash_path>());
-    RED_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>());
-    RED_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>());
+    RED_CHECK_EQUAL("/mnt/wab/hash/",                 ini.get<cfg::capture::hash_path>());
+    RED_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::capture::record_path>());
+    RED_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::capture::record_tmp_path>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,           ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::meta,         ini.get<cfg::video::disable_file_system_log>());
+    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,           ini.get<cfg::capture::disable_clipboard_log>());
+    RED_CHECK_EQUAL(FileSystemLogFlags::meta,         ini.get<cfg::capture::disable_file_system_log>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
-                                                        ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+                                                        ini.get<cfg::capture::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
-                                                        ini.get<cfg::video::wrm_compression_algorithm>());
+                                                        ini.get<cfg::capture::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
@@ -632,7 +632,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
         "on_launch_failure=2\n"
         "[mod_replay]\n"
         "on_end_of_data=0\n"
-        "[video]\n"
+        "[capture]\n"
         "wrm_color_depth_selection_strategy=1\n"
         "wrm_compression_algorithm=1\n"
         "\n"
@@ -652,19 +652,19 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::low,                       ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
-                                                        ini.get<cfg::video::capture_flags>());
-    RED_CHECK_EQUAL(1000,                             ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
+                                                        ini.get<cfg::capture::capture_flags>());
+    RED_CHECK_EQUAL(1000,                             ini.get<cfg::audit::rt_png_interval>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::capture::wrm_break_interval>().count());
 
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
+    RED_CHECK_EQUAL(5,                                ini.get<cfg::audit::rt_png_limit>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
-                                                        ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+                                                        ini.get<cfg::capture::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
-                                                        ini.get<cfg::video::wrm_compression_algorithm>());
+                                                        ini.get<cfg::capture::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
@@ -778,7 +778,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
         "on_end_of_data=0\n"
         "[mod_vnc]\n"
         "bogus_clipboard_infinite_loop=2\n"
-        "[video]\n"
+        "[capture]\n"
         "wrm_color_depth_selection_strategy=1\n"
         "wrm_compression_algorithm=1\n"
         "disable_clipboard_log=1\n"
@@ -802,22 +802,22 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::low,                       ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
-                                                        ini.get<cfg::video::capture_flags>());
-    RED_CHECK_EQUAL(1000,                             ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
+                                                        ini.get<cfg::capture::capture_flags>());
+    RED_CHECK_EQUAL(1000,                             ini.get<cfg::audit::rt_png_interval>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::capture::wrm_break_interval>().count());
 
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
+    RED_CHECK_EQUAL(5,                                ini.get<cfg::audit::rt_png_limit>());
 
-    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,           ini.get<cfg::video::disable_clipboard_log>());
-    RED_CHECK_EQUAL(FileSystemLogFlags::none,         ini.get<cfg::video::disable_file_system_log>());
+    RED_CHECK_EQUAL(ClipboardLogFlags::wrm,           ini.get<cfg::capture::disable_clipboard_log>());
+    RED_CHECK_EQUAL(FileSystemLogFlags::none,         ini.get<cfg::capture::disable_file_system_log>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
-                                                        ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+                                                        ini.get<cfg::capture::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
-                                                        ini.get<cfg::video::wrm_compression_algorithm>());
+                                                        ini.get<cfg::capture::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(7,                                ini.get<cfg::globals::handshake_timeout>().count());
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
@@ -935,19 +935,19 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
-                                                        ini.get<cfg::video::capture_flags>());
-    RED_CHECK_EQUAL(1000,                             ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
+                                                        ini.get<cfg::capture::capture_flags>());
+    RED_CHECK_EQUAL(1000,                             ini.get<cfg::audit::rt_png_interval>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::capture::wrm_break_interval>().count());
 
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
+    RED_CHECK_EQUAL(5,                                ini.get<cfg::audit::rt_png_limit>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
-                                                        ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+                                                        ini.get<cfg::capture::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
-                                                        ini.get<cfg::video::wrm_compression_algorithm>());
+                                                        ini.get<cfg::capture::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
@@ -1064,19 +1064,19 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
-                                                        ini.get<cfg::video::capture_flags>());
-    RED_CHECK_EQUAL(1000,                             ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
+                                                        ini.get<cfg::capture::capture_flags>());
+    RED_CHECK_EQUAL(1000,                             ini.get<cfg::audit::rt_png_interval>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::capture::wrm_break_interval>().count());
 
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
+    RED_CHECK_EQUAL(5,                                ini.get<cfg::audit::rt_png_limit>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
-                                                        ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+                                                        ini.get<cfg::capture::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
-                                                        ini.get<cfg::video::wrm_compression_algorithm>());
+                                                        ini.get<cfg::capture::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
@@ -1169,7 +1169,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
 
 
-    // TODO video related values should go to [video] section
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
@@ -1180,19 +1179,19 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
-                                                        ini.get<cfg::video::capture_flags>());
-    RED_CHECK_EQUAL(1000,                             ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
+                                                        ini.get<cfg::capture::capture_flags>());
+    RED_CHECK_EQUAL(1000,                             ini.get<cfg::audit::rt_png_interval>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::capture::wrm_break_interval>().count());
 
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
+    RED_CHECK_EQUAL(5,                                ini.get<cfg::audit::rt_png_limit>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
-                                                        ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+                                                        ini.get<cfg::capture::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
-                                                        ini.get<cfg::video::wrm_compression_algorithm>());
+                                                        ini.get<cfg::capture::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());
@@ -1298,19 +1297,19 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(RdpSecurityEncryptionLevel::high,                      ini.get<cfg::client::encryption_level>());
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::audit::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
-                                                        ini.get<cfg::video::capture_flags>());
-    RED_CHECK_EQUAL(1000,                             ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
+                                                        ini.get<cfg::capture::capture_flags>());
+    RED_CHECK_EQUAL(1000,                             ini.get<cfg::audit::rt_png_interval>().count());
+    RED_CHECK_EQUAL(600,                              ini.get<cfg::capture::wrm_break_interval>().count());
 
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
+    RED_CHECK_EQUAL(5,                                ini.get<cfg::audit::rt_png_limit>());
 
     RED_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
-                                                        ini.get<cfg::video::wrm_color_depth_selection_strategy>());
+                                                        ini.get<cfg::capture::wrm_color_depth_selection_strategy>());
     RED_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
-                                                        ini.get<cfg::video::wrm_compression_algorithm>());
+                                                        ini.get<cfg::capture::wrm_compression_algorithm>());
 
     RED_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
     RED_CHECK_EQUAL(900,                              ini.get<cfg::globals::base_inactivity_timeout>().count());

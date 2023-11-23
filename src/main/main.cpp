@@ -442,7 +442,7 @@ int main(int argc, char** argv)
         }
     }
 
-    if (bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr)
+    if (bool(ini.get<cfg::capture::capture_flags>() & CaptureFlags::ocr)
      && ini.get<cfg::ocr::version>() == OcrVersion::v2
     ) {
         // pre-load global constants...

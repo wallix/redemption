@@ -195,7 +195,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::listen_address>(cip);
     ini.set<cfg::globals::listen_address>(sip);
     ini.set<cfg::globals::is_rec>(true);
-    ini.set<cfg::video::notimestamp>(true);
+    ini.set<cfg::audit::notimestamp>(true);
     ini.set<cfg::globals::port>(1);
     ini.set<cfg::globals::base_inactivity_timeout>(std::chrono::seconds{1});
     ini.set_acl<cfg::globals::target>(cs);
@@ -261,20 +261,20 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::translation::language>(Language::en);
     ini.set_acl<cfg::translation::login_language>(LoginLanguage::Auto);
 
-    ini.set<cfg::video::break_interval>(std::chrono::seconds{1});
-    ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-    ini.set<cfg::video::hash_path>(cpath);
-    ini.set<cfg::video::hash_path>(spath);
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-    ini.set<cfg::video::png_limit>(1);
-    ini.set<cfg::video::record_path>(cpath);
-    ini.set<cfg::video::record_path>(spath);
-    ini.set<cfg::video::record_tmp_path>(cpath);
-    ini.set<cfg::video::record_tmp_path>(spath);
+    ini.set<cfg::capture::wrm_break_interval>(std::chrono::seconds{1});
+    ini.set<cfg::capture::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
+    ini.set<cfg::capture::hash_path>(cpath);
+    ini.set<cfg::capture::hash_path>(spath);
+    ini.set<cfg::audit::rt_png_interval>(std::chrono::seconds{1});
+    ini.set<cfg::audit::rt_png_limit>(1);
+    ini.set<cfg::capture::record_path>(cpath);
+    ini.set<cfg::capture::record_path>(spath);
+    ini.set<cfg::capture::record_tmp_path>(cpath);
+    ini.set<cfg::capture::record_tmp_path>(spath);
     ini.set<cfg::mod_replay::replay_path>(cpath);
     ini.set<cfg::mod_replay::replay_path>(spath);
-    ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth16);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::gzip);
+    ini.set<cfg::capture::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth16);
+    ini.set<cfg::capture::wrm_compression_algorithm>(WrmCompressionAlgorithm::gzip);
 
     ini.set<cfg::audit::rt_display>(1);
 }

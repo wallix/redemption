@@ -78,7 +78,6 @@ _.set_sections({
     "session_log",
     "ocr",
     "capture",
-    "video",
     "audit",
 
     "file_verification",
@@ -2288,36 +2287,26 @@ _.section("ocr", [&]
     });
 });
 
-_.section("video", [&]
+_.section("capture", [&]
 {
     _.member(MemberInfo{
-        .name = "capture_flags",
-        .value = from_enum(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
-        .spec = global_spec(no_acl, spec::advanced),
+        .name = "record_filebase",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+        .desc = "basename without extension",
     });
 
     _.member(MemberInfo{
-        .name = "png_interval",
-        .value = value<std::chrono::milliseconds>(1000),
-        .spec = ini_only(no_acl),
-        .desc = "Frame interval for 4eyes. A value lower than 6 will have no visible effect.",
+        .name = "record_subdirectory",
+        .value = value<std::string>(),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+        .desc = "subdirectory of record_path (video section)",
     });
 
     _.member(MemberInfo{
-        .name = "break_interval",
-        .value = value<std::chrono::seconds>(600),
-        .spec = global_spec(no_acl, spec::advanced),
-        .desc =
-            "Time between 2 wrm recording file.\n"
-            "⚠ A value that is too small increases the disk space required for recordings."
-    });
-
-    // TODO remove ?
-    _.member(MemberInfo{
-        .name = "png_limit",
-        .value = value<types::unsigned_>(5),
-        .spec = ini_only(no_acl),
-        .desc = "Number of png captures to keep.",
+        .name = "fdx_path",
+        .value = value<std::string>(),
+        .spec = proxy_to_acl(no_reset_back_to_selector),
     });
 
     _.member(MemberInfo{
@@ -2339,14 +2328,21 @@ _.section("video", [&]
     });
 
     _.member(MemberInfo{
-        .name = "enable_keyboard_log",
-        .value = value(true),
+        .name = "capture_flags",
+        .value = from_enum(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
         .spec = global_spec(no_acl, spec::advanced),
-        .desc =
-            "Show keyboard input event in meta file\n"
-            "(Please see also \"Keyboard input masking level\" in \"session_log\".)"
     });
 
+    _.member(MemberInfo{
+        .name = "disable_keyboard_log",
+        .value = from_enum(KeyboardLogFlags::none),
+        .spec = connpolicy(rdp_and_jh, L, spec::advanced),
+        .desc =
+            "Disable keyboard log:\n"
+            "(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
+    });
+
+    // TODO enable_clipboard_log in [audit]
     _.member(MemberInfo{
         .name = "disable_clipboard_log",
         .value = from_enum(ClipboardLogFlags::none),
@@ -2354,11 +2350,22 @@ _.section("video", [&]
         .desc = "Disable clipboard log:",
     });
 
+    // TODO enable_file_system_log in [audit]
     _.member(MemberInfo{
         .name = "disable_file_system_log",
         .value = from_enum(FileSystemLogFlags::none),
         .spec = global_spec(no_acl, spec::advanced),
         .desc = "Disable (redirected) file system log:",
+    });
+
+    // TODO png_break_interval
+    _.member(MemberInfo{
+        .name = "wrm_break_interval",
+        .value = value<std::chrono::seconds>(600),
+        .spec = global_spec(no_acl, spec::advanced),
+        .desc =
+            "Time between 2 wrm recording file.\n"
+            "⚠ A value that is too small increases the disk space required for recordings."
     });
 
     _.member(MemberInfo{
@@ -2371,6 +2378,26 @@ _.section("video", [&]
         .name = "wrm_compression_algorithm",
         .value = from_enum(WrmCompressionAlgorithm::gzip),
         .spec = global_spec(no_acl, spec::advanced),
+    });
+
+    // TODO
+    // _.member(MemberInfo{
+    //     .name = "file_permissions",
+    //     .value = value<FilePermissions>(0440),
+    //     .spec = ini_only(no_acl),
+    //     .desc = "Allow to control permissions on recorded files",
+    // });
+});
+
+_.section("audit", [&]
+{
+    _.member(MemberInfo{
+        .name = "enable_keyboard_log",
+        .value = value(true),
+        .spec = global_spec(no_acl, spec::advanced),
+        .desc =
+            "Show keyboard input event in meta file\n"
+            "(Please see also \"Keyboard input masking level\" in \"session_log\".)"
     });
 
     _.member(MemberInfo{
@@ -2426,6 +2453,21 @@ _.section("video", [&]
     });
 
     _.member(MemberInfo{
+        .name = "file_permissions",
+        .value = value<FilePermissions>(0440),
+        .spec = ini_only(no_acl),
+        .desc = "Allow to control permissions on video files",
+    });
+
+    // real-time conf
+    //@{
+    _.member(MemberInfo{
+        .name = "rt_display",
+        .value = value(false),
+        .spec = acl_to_proxy(reset_back_to_selector, L),
+    });
+
+    _.member(MemberInfo{
         .name = "allow_rt_without_recording",
         .value = value(false),
         .spec = global_spec(no_acl),
@@ -2433,54 +2475,22 @@ _.section("video", [&]
     });
 
     _.member(MemberInfo{
-        .name = "file_permissions",
-        .value = value<FilePermissions>(0440),
+        .name = "rt_png_interval",
+        .value = value<std::chrono::milliseconds>(1000),
         .spec = ini_only(no_acl),
-        .desc = "Allow to control permissions on recorded files",
-    });
-});
-
-_.section("capture", [&]
-{
-    _.member(MemberInfo{
-        .name = "record_filebase",
-        .value = value<std::string>(),
-        .spec = acl_to_proxy(reset_back_to_selector, L),
-        .desc = "basename without extension",
+        .desc = "Frame interval for 4eyes. A value lower than 6 will have no visible effect.",
     });
 
     _.member(MemberInfo{
-        .name = "record_subdirectory",
-        .value = value<std::string>(),
-        .spec = acl_to_proxy(reset_back_to_selector, L),
-        .desc = "subdirectory of record_path (video section)",
+        .name = "rt_png_limit",
+        .value = value<types::unsigned_>(5),
+        .spec = ini_only(no_acl),
+        .desc = "Number of png captures to keep.",
     });
+    //@}
 
-    _.member(MemberInfo{
-        .name = "fdx_path",
-        .value = value<std::string>(),
-        .spec = proxy_to_acl(no_reset_back_to_selector),
-    });
-
-    _.member(MemberInfo{
-        .name = "disable_keyboard_log",
-        .connpolicy_section = "video",
-        .value = from_enum(KeyboardLogFlags::none),
-        .spec = connpolicy(rdp_and_jh, L, spec::advanced),
-        .desc =
-            "Disable keyboard log:\n"
-            "(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
-    });
-});
-
-_.section("audit", [&]
-{
-    _.member(MemberInfo{
-        .name = "rt_display",
-        .value = value(false),
-        .spec = acl_to_proxy(reset_back_to_selector, L),
-    });
-
+    // redis conf
+    //@{
     _.member(MemberInfo{
         .name = "use_redis",
         .value = value(true),
@@ -2540,6 +2550,7 @@ _.section("audit", [&]
         .value = value<std::string>(),
         .spec = acl_to_proxy(no_reset_back_to_selector, L),
     });
+    //@}
 });
 
 _.section("crypto", [&]

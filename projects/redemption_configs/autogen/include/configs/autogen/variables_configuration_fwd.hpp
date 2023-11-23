@@ -254,34 +254,31 @@ namespace cfg
         struct record_filebase;
         struct record_subdirectory;
         struct fdx_path;
-        struct disable_keyboard_log;
-    };
-
-    struct video {
-        struct capture_flags;
-        struct png_interval;
-        struct break_interval;
-        struct png_limit;
         struct hash_path;
         struct record_tmp_path;
         struct record_path;
-        struct enable_keyboard_log;
+        struct capture_flags;
+        struct disable_keyboard_log;
         struct disable_clipboard_log;
         struct disable_file_system_log;
+        struct wrm_break_interval;
         struct wrm_color_depth_selection_strategy;
         struct wrm_compression_algorithm;
+    };
+
+    struct audit {
+        struct enable_keyboard_log;
         struct codec_id;
         struct framerate;
         struct ffmpeg_options;
         struct notimestamp;
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
-        struct allow_rt_without_recording;
         struct file_permissions;
-    };
-
-    struct audit {
         struct rt_display;
+        struct allow_rt_without_recording;
+        struct rt_png_interval;
+        struct rt_png_limit;
         struct use_redis;
         struct redis_timeout;
         struct redis_address;

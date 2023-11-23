@@ -116,13 +116,6 @@ RED_AUTO_TEST_CASE(TestFront)
 {
     ClientInfo info = make_client_info();
 
-    Inifile ini;
-    ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
-    ini.set<cfg::client::cache_waiting_list>(true);
-    ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
-    ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     const uint32_t verbose = 3;
 
     // Uncomment the code block below to generate testing data.
@@ -139,14 +132,22 @@ RED_AUTO_TEST_CASE(TestFront)
 
     LCGRandom gen1;
 
+    Inifile ini;
+    ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
+    ini.set<cfg::client::cache_waiting_list>(true);
+    ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
+    ini.set<cfg::capture::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
+    ini.set<cfg::capture::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
     ini.set<cfg::client::encryption_level>(RdpSecurityEncryptionLevel::low);
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
     ini.set<cfg::client::fast_path>(false);
-    ini.set<cfg::globals::is_rec>(true);
-    ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
+    ini.set<cfg::capture::capture_flags>(CaptureFlags::wrm);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
+
+    // // Uncomment the code block below to generate testing data.
+    // ini.set<cfg::globals::is_rec>(true);
 
     EventManager event_manager;
     auto& events = event_manager.get_events();

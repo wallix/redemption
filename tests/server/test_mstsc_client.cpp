@@ -30,22 +30,21 @@
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "configs/config.hpp"
-// Uncomment the code block below to generate testing data.
-// include "core/listen.hpp"
-// include "core/session.hpp"
-// include "transport/socket_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
 #include "utils/timebase.hpp"
 #include "core/events.hpp"
 
-// Uncomment the code block below to generate testing data.
+// // Uncomment the code block below to generate testing data.
+// include "core/listen.hpp"
+// include "core/session.hpp"
+// include "transport/socket_transport.hpp"
 //#include <netinet/tcp.h>
 
 RED_AUTO_TEST_CASE(TestIncomingConnection)
 {
-    // Uncomment the code block below to generate testing data.
+    // // Uncomment the code block below to generate testing data.
     //int port = 3389;
     //unique_fd sck_server = create_server(0, port);
     //unique_server_loop(std::move(sck_server), [&](int sck)
@@ -60,21 +59,6 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //    memset(&u, 0, sin_size);
     //    int one_shot_server_sck = accept(sck, nullptr, nullptr);
 
-
-
-
-
-    Inifile ini;
-    ini.set<cfg::debug::front>(511);
-    ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
-    ini.set<cfg::client::cache_waiting_list>(true);
-    ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
-    ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-    ini.set<cfg::globals::experimental_enable_serializer_data_block_size_limit>(true);
-
-    // Uncomment the code block below to generate testing data.
     //int nodelay = 1;
     //if (-1 == setsockopt( one_shot_server_sck, IPPROTO_TCP, TCP_NODELAY
     //                   , (char *)&nodelay, sizeof(nodelay))) {
@@ -89,6 +73,12 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     // Comment the code block below to generate testing data.
     TestTransport front_trans(cstr_array_view(indata), cstr_array_view(outdata));
 
+    Inifile ini;
+    ini.set<cfg::debug::front>(511);
+    ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
+    ini.set<cfg::client::cache_waiting_list>(true);
+    ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
+    ini.set<cfg::globals::experimental_enable_serializer_data_block_size_limit>(true);
     ini.set<cfg::client::tls_support>(true);
     ini.set<cfg::client::tls_fallback_legacy>(false);
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
@@ -106,23 +96,17 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
         front.incoming(no_mod);
     }
 
+    // // Uncomment the code block below to generate testing data.
     //LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     // TestCardMod mod(front, front.screen_info().width, front.screen_info().height, global_font());
     // mod.init();
-//    mod.draw_event(front);
+    // mod.draw_event(front);
 
-    // Uncomment the code block below to generate testing data.
     //sleep(5);
 
-    // Uncomment the code block below to generate testing data.
     //LOG(LOG_INFO, "Listener closed\n");
 
-
-
-
-
-    // Uncomment the code block below to generate testing data.
     //    return true;
     //});
 }

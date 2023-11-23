@@ -111,8 +111,8 @@ class Session
                 }
             })
         {
-            auto has_drive = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
-            auto has_clipboard = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
+            auto has_drive = bool(ini.get<cfg::capture::disable_file_system_log>() & FileSystemLogFlags::wrm);
+            auto has_clipboard = bool(ini.get<cfg::capture::disable_clipboard_log>() & ClipboardLogFlags::wrm);
 
             this->dont_log |= (has_drive ? LogCategoryId::Drive : LogCategoryId::None);
             this->dont_log |= (has_clipboard ? LogCategoryId::Clipboard : LogCategoryId::None);
@@ -134,8 +134,8 @@ class Session
             this->cctx.set_trace_type(this->ini.get<cfg::globals::trace_type>());
 
             auto const& subdir = this->ini.get<cfg::capture::record_subdirectory>();
-            auto const& record_dir = this->ini.get<cfg::video::record_path>();
-            auto const& hash_dir = this->ini.get<cfg::video::hash_path>();
+            auto const& record_dir = this->ini.get<cfg::capture::record_path>();
+            auto const& hash_dir = this->ini.get<cfg::capture::hash_path>();
             auto const& filebase = this->ini.get<cfg::capture::record_filebase>();
 
             std::string record_path = str_concat(record_dir.as_string(), subdir, '/');
@@ -156,7 +156,7 @@ class Session
                 ini.get<cfg::session_log::enable_syslog_format>(),
                 SessionLogFile::SaveToFile(ini.get<cfg::session_log::enable_session_log_file>()),
                 record_path.c_str(), hash_path.c_str(),
-                this->ini.get<cfg::video::file_permissions>(), /*derivator=*/basename);
+                this->ini.get<cfg::audit::file_permissions>(), /*derivator=*/basename);
 
             return *this;
         }

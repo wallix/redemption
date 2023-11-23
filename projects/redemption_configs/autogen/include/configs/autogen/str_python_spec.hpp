@@ -363,7 +363,7 @@ on_title_bar_only = boolean(default=True)
 #_advanced
 max_unrecog_char_rate = integer(min=0, max=100, default=40)
 
-[video]
+[capture]
 
 # Specifies the type of data to be captured:
 # &nbsp; &nbsp;   0x0: none
@@ -374,17 +374,6 @@ max_unrecog_char_rate = integer(min=0, max=100, default=40)
 #_advanced
 #_hex
 capture_flags = integer(min=0, max=15, default=11)
-
-# Time between 2 wrm recording file.
-# ⚠ A value that is too small increases the disk space required for recordings.<br/>
-# (in seconds)
-#_advanced
-break_interval = integer(min=0, default=600)
-
-# Show keyboard input event in meta file
-# (Please see also "Keyboard input masking level" in "session_log".)
-#_advanced
-enable_keyboard_log = boolean(default=True)
 
 # Disable clipboard log:
 # &nbsp; &nbsp;   0x0: none
@@ -404,6 +393,12 @@ disable_clipboard_log = integer(min=0, max=3, default=0)
 #_hex
 disable_file_system_log = integer(min=0, max=3, default=0)
 
+# Time between 2 wrm recording file.
+# ⚠ A value that is too small increases the disk space required for recordings.<br/>
+# (in seconds)
+#_advanced
+wrm_break_interval = integer(min=0, default=600)
+
 # The method by which the proxy RDP establishes criteria on which to chosse a color depth for Session recording file (wrm):
 # &nbsp; &nbsp;   0: 24-bit
 # &nbsp; &nbsp;   1: 16-bit
@@ -416,6 +411,13 @@ wrm_color_depth_selection_strategy = option(0, 1, default=1)
 # &nbsp; &nbsp;   2: Snappy: Faster than GZip, but files are less compressed
 #_advanced
 wrm_compression_algorithm = option(0, 1, 2, default=1)
+
+[audit]
+
+# Show keyboard input event in meta file
+# (Please see also "Keyboard input masking level" in "session_log".)
+#_advanced
+enable_keyboard_log = boolean(default=True)
 
 # Maximum number of images per second for video generation.
 # A higher value will produce smoother videos, but the file weight is higher and the generation time longer.

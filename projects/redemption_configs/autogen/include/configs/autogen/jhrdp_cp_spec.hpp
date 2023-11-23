@@ -149,7 +149,7 @@ server_cert_failure_message = integer(min=0, max=1, default=1)
 # &nbsp; &nbsp;   3: keyboard inputs are not logged
 keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
-[video]
+[capture]
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)

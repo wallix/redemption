@@ -243,15 +243,15 @@ public:
             LOG(LOG_INFO, "Enable clipboard file storage");
             auto const& session_id = ini.get<cfg::context::session_id>();
             auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
-            auto const& record_dir = ini.get<cfg::video::record_path>();
-            auto const& hash_dir = ini.get<cfg::video::hash_path>();
+            auto const& record_dir = ini.get<cfg::capture::record_path>();
+            auto const& hash_dir = ini.get<cfg::capture::hash_path>();
             auto const& filebase = ini.get<cfg::capture::record_filebase>();
 
             this->fdx_capture = std::make_unique<FdxCapture>(
                 str_concat(record_dir.as_string(), subdir),
                 str_concat(hash_dir.as_string(), subdir),
                 filebase,
-                session_id, ini.get<cfg::video::file_permissions>(),
+                session_id, ini.get<cfg::audit::file_permissions>(),
                 cctx, gen,
                 /* TODO should be a log (siem?)*/
                 [](const Error & /*error*/){});
@@ -640,7 +640,7 @@ ModPack create_mod_rdp(
     mod_rdp_params.adjust_performance_flags_for_recording
             = (ini.get<cfg::globals::is_rec>()
             && ini.get<cfg::mod_rdp::auto_adjust_performance_flags>()
-            && ((ini.get<cfg::video::capture_flags>()
+            && ((ini.get<cfg::capture::capture_flags>()
                 & (CaptureFlags::wrm | CaptureFlags::ocr)) != CaptureFlags::none));
     {
         auto & rap = mod_rdp_params.remote_app_params;

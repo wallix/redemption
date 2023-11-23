@@ -228,7 +228,7 @@ void ModFactory::create_mod_replay()
         this->ini.get_mutable_ref<cfg::context::auth_error_message>(),
         !this->ini.get<cfg::mod_replay::on_end_of_data>(),
         this->ini.get<cfg::mod_replay::replay_on_loop>(),
-        this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
+        this->ini.get<cfg::audit::play_video_with_corrupted_bitmap>(),
         safe_cast<FileToGraphicVerbose>(this->ini.get<cfg::debug::capture>())
     );
     Impl::set_mod(*this, ModuleName::autotest, mod_pack_from_widget(new_mod), false);

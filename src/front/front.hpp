@@ -1181,11 +1181,11 @@ public:
         }
 
         const bool is_rec = ini.get<cfg::globals::is_rec>();
-        const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
+        const CaptureFlags capture_flags = ini.get<cfg::capture::capture_flags>();
 
         const bool enable_4eyes = is_rec
             ? bool(capture_flags & CaptureFlags::png)
-            : ini.get<cfg::video::allow_rt_without_recording>();
+            : ini.get<cfg::audit::allow_rt_without_recording>();
 
         // capture not necessary
         if (!( enable_4eyes
@@ -1204,16 +1204,16 @@ public:
             this->show_session_config();
         }
 
-        this->capture_bpp = (this->ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16)
+        this->capture_bpp = (this->ini.get<cfg::capture::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16)
             ? BitsPerPixel{16}
             : BitsPerPixel{24};
 
-        char const * const record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+        char const * const record_tmp_path = ini.get<cfg::capture::record_tmp_path>().c_str();
         char const * const record_filebase = ini.get<cfg::capture::record_filebase>().c_str();
 
         auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
-        auto const& record_dir = ini.get<cfg::video::record_path>();
-        auto const& hash_dir = ini.get<cfg::video::hash_path>();
+        auto const& record_dir = ini.get<cfg::capture::record_path>();
+        auto const& hash_dir = ini.get<cfg::capture::hash_path>();
         auto const record_path = str_concat(record_dir.as_string(), subdir, '/');
         auto const hash_path = str_concat(hash_dir.as_string(), subdir, '/');
 
@@ -1235,8 +1235,8 @@ public:
         PngParams const png_params = {
             .png_width = 0,
             .png_height = 0,
-            .png_interval = ini.get<cfg::video::png_interval>(),
-            .png_limit = enable_4eyes ? ini.get<cfg::video::png_limit>() : 0,
+            .png_interval = ini.get<cfg::audit::rt_png_interval>(),
+            .png_limit = enable_4eyes ? ini.get<cfg::audit::rt_png_limit>() : 0,
             .real_time_image_capture = true,
             .remote_program_session = this->client_info.remote_program,
             .use_redis_with_rt_display = ini.get<cfg::audit::use_redis>(),
@@ -1279,7 +1279,7 @@ public:
             record_tmp_path,
             record_path.c_str(),
             &session_log,
-            ini.get<cfg::video::smart_video_cropping>(),
+            ini.get<cfg::audit::smart_video_cropping>(),
             ini.get<cfg::debug::capture>()
         };
 

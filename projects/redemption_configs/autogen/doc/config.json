@@ -14,7 +14,6 @@
   {"name": "session_log"},
   {"name": "ocr"},
   {"name": "capture"},
-  {"name": "video"},
   {"name": "audit"},
   {"name": "file_verification"},
   {"name": "file_storage"},
@@ -2268,55 +2267,6 @@
     },
     {
       "section": "capture",
-      "name": "disable_keyboard_log",
-      "type": "enum",
-      "value": 0,
-      "description": "Disable keyboard log:\n(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)",
-      "connpolicySection": "video",
-      "rdp": true,
-      "jh": true,
-      "aclToProxy": true,
-      "advanced": true,
-      "logStategy": "1",
-      "subtype": "KeyboardLogFlags"
-    },
-    {
-      "section": "video",
-      "name": "capture_flags",
-      "type": "enum",
-      "value": 11,
-      "description": "Specifies the type of data to be captured:",
-      "globalSpec": true,
-      "advanced": true,
-      "subtype": "CaptureFlags"
-    },
-    {
-      "section": "video",
-      "name": "png_interval",
-      "type": "milliseconds",
-      "value": 1000,
-      "description": "Frame interval for 4eyes. A value lower than 6 will have no visible effect.",
-      "iniOnly": true
-    },
-    {
-      "section": "video",
-      "name": "break_interval",
-      "type": "seconds",
-      "value": 600,
-      "description": "Time between 2 wrm recording file.\n⚠ A value that is too small increases the disk space required for recordings.",
-      "globalSpec": true,
-      "advanced": true
-    },
-    {
-      "section": "video",
-      "name": "png_limit",
-      "type": "uint",
-      "value": 5,
-      "description": "Number of png captures to keep.",
-      "iniOnly": true
-    },
-    {
-      "section": "video",
       "name": "hash_path",
       "type": "dirpath",
       "value": "app_path(AppPath::Hash)", "cppExpr": true,
@@ -2327,7 +2277,7 @@
       "logStategy": "1"
     },
     {
-      "section": "video",
+      "section": "capture",
       "name": "record_tmp_path",
       "type": "dirpath",
       "value": "app_path(AppPath::RecordTmp)", "cppExpr": true,
@@ -2338,7 +2288,7 @@
       "logStategy": "1"
     },
     {
-      "section": "video",
+      "section": "capture",
       "name": "record_path",
       "type": "dirpath",
       "value": "app_path(AppPath::Record)", "cppExpr": true,
@@ -2349,16 +2299,30 @@
       "logStategy": "1"
     },
     {
-      "section": "video",
-      "name": "enable_keyboard_log",
-      "type": "bool",
-      "value": true,
-      "description": "Show keyboard input event in meta file\n(Please see also \"Keyboard input masking level\" in \"session_log\".)",
+      "section": "capture",
+      "name": "capture_flags",
+      "type": "enum",
+      "value": 11,
+      "description": "Specifies the type of data to be captured:",
       "globalSpec": true,
-      "advanced": true
+      "advanced": true,
+      "subtype": "CaptureFlags"
     },
     {
-      "section": "video",
+      "section": "capture",
+      "name": "disable_keyboard_log",
+      "type": "enum",
+      "value": 0,
+      "description": "Disable keyboard log:\n(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1",
+      "subtype": "KeyboardLogFlags"
+    },
+    {
+      "section": "capture",
       "name": "disable_clipboard_log",
       "type": "enum",
       "value": 0,
@@ -2368,7 +2332,7 @@
       "subtype": "ClipboardLogFlags"
     },
     {
-      "section": "video",
+      "section": "capture",
       "name": "disable_file_system_log",
       "type": "enum",
       "value": 0,
@@ -2378,7 +2342,16 @@
       "subtype": "FileSystemLogFlags"
     },
     {
-      "section": "video",
+      "section": "capture",
+      "name": "wrm_break_interval",
+      "type": "seconds",
+      "value": 600,
+      "description": "Time between 2 wrm recording file.\n⚠ A value that is too small increases the disk space required for recordings.",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "capture",
       "name": "wrm_color_depth_selection_strategy",
       "type": "enum",
       "value": 1,
@@ -2388,7 +2361,7 @@
       "subtype": "ColorDepthSelectionStrategy"
     },
     {
-      "section": "video",
+      "section": "capture",
       "name": "wrm_compression_algorithm",
       "type": "enum",
       "value": 1,
@@ -2398,7 +2371,16 @@
       "subtype": "WrmCompressionAlgorithm"
     },
     {
-      "section": "video",
+      "section": "audit",
+      "name": "enable_keyboard_log",
+      "type": "bool",
+      "value": true,
+      "description": "Show keyboard input event in meta file\n(Please see also \"Keyboard input masking level\" in \"session_log\".)",
+      "globalSpec": true,
+      "advanced": true
+    },
+    {
+      "section": "audit",
       "name": "codec_id",
       "type": "str",
       "value": "mp4",
@@ -2406,7 +2388,7 @@
       "iniOnly": true
     },
     {
-      "section": "video",
+      "section": "audit",
       "name": "framerate",
       "type": "uint",
       "value": 5,
@@ -2417,7 +2399,7 @@
       "min": 1, "max": 120
     },
     {
-      "section": "video",
+      "section": "audit",
       "name": "ffmpeg_options",
       "type": "str",
       "value": "crf=35 preset=superfast",
@@ -2427,7 +2409,7 @@
       "advanced": true
     },
     {
-      "section": "video",
+      "section": "audit",
       "name": "notimestamp",
       "type": "bool",
       "value": false,
@@ -2436,7 +2418,7 @@
       "advanced": true
     },
     {
-      "section": "video",
+      "section": "audit",
       "name": "smart_video_cropping",
       "type": "enum",
       "value": 2,
@@ -2445,7 +2427,7 @@
       "subtype": "SmartVideoCropping"
     },
     {
-      "section": "video",
+      "section": "audit",
       "name": "play_video_with_corrupted_bitmap",
       "type": "bool",
       "value": false,
@@ -2454,19 +2436,11 @@
       "advanced": true
     },
     {
-      "section": "video",
-      "name": "allow_rt_without_recording",
-      "type": "bool",
-      "value": false,
-      "description": "Allow real-time view (4 eyes) without session recording enabled in the authorization",
-      "globalSpec": true
-    },
-    {
-      "section": "video",
+      "section": "audit",
       "name": "file_permissions",
       "type": "FilePermissions",
       "value": "440",
-      "description": "Allow to control permissions on recorded files",
+      "description": "Allow to control permissions on video files",
       "iniOnly": true
     },
     {
@@ -2478,6 +2452,30 @@
       "aclToProxy": true,
       "resetBackToSelector": true,
       "logStategy": "1"
+    },
+    {
+      "section": "audit",
+      "name": "allow_rt_without_recording",
+      "type": "bool",
+      "value": false,
+      "description": "Allow real-time view (4 eyes) without session recording enabled in the authorization",
+      "globalSpec": true
+    },
+    {
+      "section": "audit",
+      "name": "rt_png_interval",
+      "type": "milliseconds",
+      "value": 1000,
+      "description": "Frame interval for 4eyes. A value lower than 6 will have no visible effect.",
+      "iniOnly": true
+    },
+    {
+      "section": "audit",
+      "name": "rt_png_limit",
+      "type": "uint",
+      "value": 5,
+      "description": "Number of png captures to keep.",
+      "iniOnly": true
     },
     {
       "section": "audit",

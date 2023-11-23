@@ -1228,43 +1228,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [capture]
 
-# Disable keyboard log:
-# (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
-#   0x0: none
-#   0x1: disable keyboard log in session log
-#   0x2: disable keyboard log in recorded sessions
-# 
-# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
-#_advanced
-# (acl config: proxy ⇐ capture:disable_keyboard_log)
-#disable_keyboard_log = 0
-
-[video]
-
-# Specifies the type of data to be captured:
-#   0x0: none
-#   0x1: png
-#   0x2: wrm: Session recording file.
-#   0x8: ocr
-# 
-# Note: values can be added (enable all: 0x1 + 0x2 + 0x8 = 0xb)
-#_advanced
-#capture_flags = 11
-
-# Frame interval for 4eyes. A value lower than 6 will have no visible effect.
-# (in milliseconds)
-#png_interval = 1000
-
-# Time between 2 wrm recording file.
-# ⚠ A value that is too small increases the disk space required for recordings.
-# (in seconds)
-#_advanced
-#break_interval = 600
-
-# Number of png captures to keep.
-# (min = 0)
-#png_limit = 5
-
 # (maxlen = 4096)
 # (acl config: proxy ⇐ hash_path)
 #hash_path = )gen_config_ini" << (app_path(AppPath::Hash)) << R"gen_config_ini(
@@ -1277,11 +1240,26 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ record_path)
 #record_path = )gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(
 
-# Show keyboard input event in meta file
-# (Please see also "Keyboard input masking level" in "session_log".)
-# (type: boolean (0/no/false or 1/yes/true))
+# Specifies the type of data to be captured:
+#   0x0: none
+#   0x1: png
+#   0x2: wrm: Session recording file.
+#   0x8: ocr
+# 
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x8 = 0xb)
 #_advanced
-#enable_keyboard_log = 1
+#capture_flags = 11
+
+# Disable keyboard log:
+# (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
+#   0x0: none
+#   0x1: disable keyboard log in session log
+#   0x2: disable keyboard log in recorded sessions
+# 
+# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
+#_advanced
+# (acl config: proxy ⇐ capture:disable_keyboard_log)
+#disable_keyboard_log = 0
 
 # Disable clipboard log:
 #   0x0: none
@@ -1301,6 +1279,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #disable_file_system_log = 0
 
+# Time between 2 wrm recording file.
+# ⚠ A value that is too small increases the disk space required for recordings.
+# (in seconds)
+#_advanced
+#wrm_break_interval = 600
+
 # The method by which the proxy RDP establishes criteria on which to chosse a color depth for Session recording file (wrm):
 #   0: 24-bit
 #   1: 16-bit
@@ -1313,6 +1297,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   2: Snappy: Faster than GZip, but files are less compressed
 #_advanced
 #wrm_compression_algorithm = 1
+
+[audit]
+
+# Show keyboard input event in meta file
+# (Please see also "Keyboard input masking level" in "session_log".)
+# (type: boolean (0/no/false or 1/yes/true))
+#_advanced
+#enable_keyboard_log = 1
 
 #codec_id = mp4
 
@@ -1345,15 +1337,21 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #play_video_with_corrupted_bitmap = 0
 
+# Allow to control permissions on video files
+# (in octal or symbolic mode format (as chmod Linux command))
+#file_permissions = 440
+
 # Allow real-time view (4 eyes) without session recording enabled in the authorization
 # (type: boolean (0/no/false or 1/yes/true))
 #allow_rt_without_recording = 0
 
-# Allow to control permissions on recorded files
-# (in octal or symbolic mode format (as chmod Linux command))
-#file_permissions = 440
+# Frame interval for 4eyes. A value lower than 6 will have no visible effect.
+# (in milliseconds)
+#rt_png_interval = 1000
 
-[audit]
+# Number of png captures to keep.
+# (min = 0)
+#rt_png_limit = 5
 
 # (type: boolean (0/no/false or 1/yes/true))
 #use_redis = 1

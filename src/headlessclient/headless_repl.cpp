@@ -299,7 +299,7 @@ bool HeadlessRepl::can_be_start_capture(SessionLogApi& session_log)
             std::move(fd), drawable->drawable(), drawable->get_pointer_cache(),
             time_base.monotonic_time, time_base.real_time,
             client_info.screen_info.bpp, client_info.remote_program,
-            ini.get<cfg::video::wrm_compression_algorithm>(),
+            ini.get<cfg::capture::wrm_compression_algorithm>(),
             safe_cast<RDPSerializerVerbose>(ini.get<cfg::debug::capture>())
         ));
 

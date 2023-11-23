@@ -39,41 +39,38 @@ void Inifile::ConfigurationHolder::set_section(zstring_view section) {
     else if (section == "capture"_zv) {
         this->section_id = 12;
     }
-    else if (section == "video"_zv) {
+    else if (section == "audit"_zv) {
         this->section_id = 13;
     }
-    else if (section == "audit"_zv) {
+    else if (section == "file_verification"_zv) {
         this->section_id = 14;
     }
-    else if (section == "file_verification"_zv) {
+    else if (section == "file_storage"_zv) {
         this->section_id = 15;
     }
-    else if (section == "file_storage"_zv) {
+    else if (section == "icap_server_down"_zv) {
         this->section_id = 16;
     }
-    else if (section == "icap_server_down"_zv) {
+    else if (section == "icap_server_up"_zv) {
         this->section_id = 17;
     }
-    else if (section == "icap_server_up"_zv) {
+    else if (section == "websocket"_zv) {
         this->section_id = 18;
     }
-    else if (section == "websocket"_zv) {
+    else if (section == "internal_mod"_zv) {
         this->section_id = 19;
     }
-    else if (section == "internal_mod"_zv) {
+    else if (section == "mod_replay"_zv) {
         this->section_id = 20;
     }
-    else if (section == "mod_replay"_zv) {
+    else if (section == "translation"_zv) {
         this->section_id = 21;
     }
-    else if (section == "translation"_zv) {
+    else if (section == "theme"_zv) {
         this->section_id = 22;
     }
-    else if (section == "theme"_zv) {
-        this->section_id = 23;
-    }
     else if (section == "debug"_zv) {
-        this->section_id = 24;
+        this->section_id = 23;
     }
     else if (static_cast<cfg::debug::config>(this->variables).value) {
         LOG(LOG_WARNING, "unknown section [%s]", section);
@@ -1703,11 +1700,83 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     }
     else if (this->section_id == 12) {
         if (0) {}
+        else if (key == "hash_path"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::hash_path&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::directory_path>{},
+                value
+            );
+        }
+        else if (key == "record_tmp_path"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::record_tmp_path&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::directory_path>{},
+                value
+            );
+        }
+        else if (key == "record_path"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::record_path&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::directory_path>{},
+                value
+            );
+        }
+        else if (key == "capture_flags"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::capture_flags&>(this->variables).value,
+                ::configs::spec_type<CaptureFlags>{},
+                value
+            );
+        }
         else if (key == "disable_keyboard_log"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::capture::disable_keyboard_log&>(this->variables).value,
                 ::configs::spec_type<KeyboardLogFlags>{},
+                value
+            );
+        }
+        else if (key == "disable_clipboard_log"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::disable_clipboard_log&>(this->variables).value,
+                ::configs::spec_type<ClipboardLogFlags>{},
+                value
+            );
+        }
+        else if (key == "disable_file_system_log"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::disable_file_system_log&>(this->variables).value,
+                ::configs::spec_type<FileSystemLogFlags>{},
+                value
+            );
+        }
+        else if (key == "wrm_break_interval"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::wrm_break_interval&>(this->variables).value,
+                ::configs::spec_type<std::chrono::seconds>{},
+                value
+            );
+        }
+        else if (key == "wrm_color_depth_selection_strategy"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::wrm_color_depth_selection_strategy&>(this->variables).value,
+                ::configs::spec_type<ColorDepthSelectionStrategy>{},
+                value
+            );
+        }
+        else if (key == "wrm_compression_algorithm"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::capture::wrm_compression_algorithm&>(this->variables).value,
+                ::configs::spec_type<WrmCompressionAlgorithm>{},
                 value
             );
         }
@@ -1719,106 +1788,18 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
     }
     else if (this->section_id == 13) {
         if (0) {}
-        else if (key == "capture_flags"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::capture_flags&>(this->variables).value,
-                ::configs::spec_type<CaptureFlags>{},
-                value
-            );
-        }
-        else if (key == "png_interval"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::png_interval&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
-                value
-            );
-        }
-        else if (key == "break_interval"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::break_interval&>(this->variables).value,
-                ::configs::spec_type<std::chrono::seconds>{},
-                value
-            );
-        }
-        else if (key == "png_limit"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::png_limit&>(this->variables).value,
-                ::configs::spec_type<unsigned>{},
-                value
-            );
-        }
-        else if (key == "hash_path"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::hash_path&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
-                value
-            );
-        }
-        else if (key == "record_tmp_path"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::record_tmp_path&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
-                value
-            );
-        }
-        else if (key == "record_path"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::record_path&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
-                value
-            );
-        }
         else if (key == "enable_keyboard_log"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::video::enable_keyboard_log&>(this->variables).value,
+                static_cast<cfg::audit::enable_keyboard_log&>(this->variables).value,
                 ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "disable_clipboard_log"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::disable_clipboard_log&>(this->variables).value,
-                ::configs::spec_type<ClipboardLogFlags>{},
-                value
-            );
-        }
-        else if (key == "disable_file_system_log"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::disable_file_system_log&>(this->variables).value,
-                ::configs::spec_type<FileSystemLogFlags>{},
-                value
-            );
-        }
-        else if (key == "wrm_color_depth_selection_strategy"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::wrm_color_depth_selection_strategy&>(this->variables).value,
-                ::configs::spec_type<ColorDepthSelectionStrategy>{},
-                value
-            );
-        }
-        else if (key == "wrm_compression_algorithm"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::wrm_compression_algorithm&>(this->variables).value,
-                ::configs::spec_type<WrmCompressionAlgorithm>{},
                 value
             );
         }
         else if (key == "codec_id"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::video::codec_id&>(this->variables).value,
+                static_cast<cfg::audit::codec_id&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 value
             );
@@ -1826,7 +1807,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
         else if (key == "framerate"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::video::framerate&>(this->variables).value,
+                static_cast<cfg::audit::framerate&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::range<unsigned, 1, 120>>{},
                 value
             );
@@ -1834,7 +1815,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
         else if (key == "ffmpeg_options"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::video::ffmpeg_options&>(this->variables).value,
+                static_cast<cfg::audit::ffmpeg_options&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 value
             );
@@ -1842,7 +1823,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
         else if (key == "notimestamp"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::video::notimestamp&>(this->variables).value,
+                static_cast<cfg::audit::notimestamp&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -1850,7 +1831,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
         else if (key == "smart_video_cropping"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::video::smart_video_cropping&>(this->variables).value,
+                static_cast<cfg::audit::smart_video_cropping&>(this->variables).value,
                 ::configs::spec_type<SmartVideoCropping>{},
                 value
             );
@@ -1858,15 +1839,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
         else if (key == "play_video_with_corrupted_bitmap"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::video::play_video_with_corrupted_bitmap&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "allow_rt_without_recording"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::allow_rt_without_recording&>(this->variables).value,
+                static_cast<cfg::audit::play_video_with_corrupted_bitmap&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -1874,19 +1847,35 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
         else if (key == "file_permissions"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::video::file_permissions&>(this->variables).value,
+                static_cast<cfg::audit::file_permissions&>(this->variables).value,
                 ::configs::spec_type<FilePermissions>{},
                 value
             );
         }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
-                key, this->section_name);
+        else if (key == "allow_rt_without_recording"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::audit::allow_rt_without_recording&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
         }
-    }
-    else if (this->section_id == 14) {
-        if (0) {}
+        else if (key == "rt_png_interval"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::audit::rt_png_interval&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                value
+            );
+        }
+        else if (key == "rt_png_limit"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::audit::rt_png_limit&>(this->variables).value,
+                ::configs::spec_type<unsigned>{},
+                value
+            );
+        }
         else if (key == "use_redis"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -1909,7 +1898,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 15) {
+    else if (this->section_id == 14) {
         if (0) {}
         else if (key == "socket_path"_zv) {
             ::config_parse_and_log(
@@ -2013,7 +2002,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 16) {
+    else if (this->section_id == 15) {
         if (0) {}
         else if (key == "store_file"_zv) {
             ::config_parse_and_log(
@@ -2029,13 +2018,13 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
+    else if (this->section_id == 16) {
+        // all members are external
+    }
     else if (this->section_id == 17) {
         // all members are external
     }
     else if (this->section_id == 18) {
-        // all members are external
-    }
-    else if (this->section_id == 19) {
         if (0) {}
         else if (key == "enable_websocket"_zv) {
             ::config_parse_and_log(
@@ -2067,7 +2056,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 20) {
+    else if (this->section_id == 19) {
         if (0) {}
         else if (key == "enable_target_field"_zv) {
             ::config_parse_and_log(
@@ -2107,7 +2096,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 21) {
+    else if (this->section_id == 20) {
         if (0) {}
         else if (key == "replay_path"_zv) {
             ::config_parse_and_log(
@@ -2139,7 +2128,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 22) {
+    else if (this->section_id == 21) {
         if (0) {}
         else if (key == "language"_zv) {
             ::config_parse_and_log(
@@ -2163,7 +2152,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 23) {
+    else if (this->section_id == 22) {
         if (0) {}
         else if (key == "enable_theme"_zv) {
             ::config_parse_and_log(
@@ -2355,7 +2344,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 key, this->section_name);
         }
     }
-    else if (this->section_id == 24) {
+    else if (this->section_id == 23) {
         if (0) {}
         else if (key == "fake_target_ip"_zv) {
             ::config_parse_and_log(
