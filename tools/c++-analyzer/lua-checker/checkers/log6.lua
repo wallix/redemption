@@ -135,7 +135,12 @@ function terminate()
 
     -- add not extracted id
     for _,id in ipairs({
-        "PROBE_STATUS",
+        'PROBE_STATUS',
+        'SERVER_CERTIFICATE_ERROR',
+        'SERVER_CERTIFICATE_MATCH_SUCCESS',
+        'CERTIFICATE_CHECK_SUCCESS',
+        'SERVER_CERTIFICATE_NEW',
+        'SERVER_CERTIFICATE_MATCH_FAILURE',
     }) do
         if ids[id] ~= 0 then
             utils.print_error(id .. ' is already used, please update script\n')
