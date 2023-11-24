@@ -27,7 +27,6 @@
 #include "capture/lazy_drawable_pointer.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/updatable_graphics.hpp"
-#include "transport/file_transport.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/timestamp_tracer.hpp"
 #include "utils/monotonic_time_to_real_time.hpp"
