@@ -48,6 +48,14 @@ def update_dict(d: LogFormatType,
         d.setdefault(logid, set()).add(f'{cat}="{logid}"{data}')
 
 
+def print_alert_on_list(msg: str, l: Iterable[str], color: bool) -> None:
+    colored = color_builder('33') if color else identity
+    print(colored('Some LogId are unused'), ':\n - ',
+          '\n - '.join(l),
+          file=sys.stderr, sep='')
+
+
+
 def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # proxy
                                                              LogFormatType,   # rdp
                                                              LogFormatType]:  # vnc
@@ -170,12 +178,10 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
     unused_logs.remove('PROBE_STATUS')
 
     if unused_logs:
-        print('some LogId are unused:\n -',
-            '\n - '.join(unused_logs), file=sys.stderr)
+        print_alert_on_list('Some LogId are unused', unused_logs, color)
 
     if other_logs:
-        print('Some LogId are uncategorized.\n -',
-            '\n - '.join(other_logs), file=sys.stderr)
+        print_alert_on_list('Some LogId are uncategorized', other_logs, color)
 
     for k in chain(rdp_logs, vnc_logs):
         if k != 'TITLE_BAR':
