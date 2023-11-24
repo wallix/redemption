@@ -2455,7 +2455,7 @@ _.section("audit", [&]
 
     _.member(MemberInfo{
         .name = "file_permissions",
-        .value = value<FilePermissions>(0640),
+        .value = value<FilePermissions>(0440),
         .spec = ini_only(no_acl),
         .desc = "Allow to control permissions on video files",
     });

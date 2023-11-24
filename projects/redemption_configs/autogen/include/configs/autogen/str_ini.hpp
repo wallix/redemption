@@ -1348,7 +1348,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Allow to control permissions on video files
 # (in octal or symbolic mode format (as chmod Linux command))
-#file_permissions = 640
+#file_permissions = 440
 
 # Allow real-time view (4 eyes) without session recording enabled in the authorization
 # (type: boolean (0/no/false or 1/yes/true))

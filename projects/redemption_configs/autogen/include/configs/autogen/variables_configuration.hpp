@@ -2961,12 +2961,12 @@ namespace cfg
     };
     /// Allow to control permissions on video files <br/>
     /// type: FilePermissions <br/>
-    /// default: 0640 <br/>
+    /// default: 0440 <br/>
     struct audit::file_permissions {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = FilePermissions;
         using mapped_type = FilePermissions;
-        type value { 0640 };
+        type value { 0440 };
     };
     /// type: bool <br/>
     /// acl ⇒ proxy <br/>

@@ -2455,7 +2455,7 @@
       "section": "audit",
       "name": "file_permissions",
       "type": "FilePermissions",
-      "value": "640",
+      "value": "440",
       "description": "Allow to control permissions on video files",
       "iniOnly": true
     },

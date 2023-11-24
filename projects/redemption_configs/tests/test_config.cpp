@@ -113,7 +113,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(600, ini.get<cfg::internal_mod::close_box_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/", ini.get<cfg::mod_replay::replay_path>());
-    RED_CHECK_EQUAL(0640,    ini.get<cfg::audit::file_permissions>().permissions_as_uint());
+    RED_CHECK_EQUAL(0440,    ini.get<cfg::audit::file_permissions>().permissions_as_uint());
 
     RED_CHECK_EQUAL("0.0.0.0",                   ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(false,                       ini.get<cfg::globals::enable_transparent_mode>());
