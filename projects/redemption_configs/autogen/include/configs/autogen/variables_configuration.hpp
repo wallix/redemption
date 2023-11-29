@@ -1262,12 +1262,12 @@ namespace cfg
     /// Do not transmit client machine name to RDP server. <br/>
     /// If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host. <br/>
     /// type: bool <br/>
-    /// default: true <br/>
+    /// default: false <br/>
     struct mod_rdp::hide_client_name {
         static constexpr unsigned acl_proxy_communication_flags = 0b00;
         using type = bool;
         using mapped_type = bool;
-        type value { true };
+        type value { false };
     };
     /// Stores CALs issued by the terminal servers. <br/>
     /// type: bool <br/>
