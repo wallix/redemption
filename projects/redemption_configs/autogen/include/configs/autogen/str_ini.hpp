@@ -507,7 +507,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Do not transmit client machine name to RDP server.
 # If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host.
 # value: 0 or 1
-#hide_client_name = 1
+#hide_client_name = 0
 
 # Stores CALs issued by the terminal servers.
 # value: 0 or 1

@@ -438,7 +438,7 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"hide_client_name"}, desc{
             "Do not transmit client machine name to RDP server.\n"
             "If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host."
-        }, set(true));
+        }, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"use_license_store"}, desc{"Stores CALs issued by the terminal servers."}, set(true));
 
