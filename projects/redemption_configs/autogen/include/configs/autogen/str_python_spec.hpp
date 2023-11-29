@@ -247,7 +247,7 @@ checkout_channel = string(max=7, default="")
 
 # Do not transmit client machine name to RDP server.
 # If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host.
-hide_client_name = boolean(default=True)
+hide_client_name = boolean(default=False)
 
 # Stores CALs issued by the terminal servers.
 #_advanced

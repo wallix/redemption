@@ -1074,7 +1074,7 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "hide_client_name",
-        .value = value(true),
+        .value = value(false),
         .spec = global_spec(no_acl),
         .desc =
             "Do not transmit client machine name to RDP server.\n"

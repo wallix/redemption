@@ -1075,7 +1075,7 @@
       "section": "mod_rdp",
       "name": "hide_client_name",
       "type": "bool",
-      "value": true,
+      "value": false,
       "description": "Do not transmit client machine name to RDP server.\nIf Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host.",
       "globalSpec": true
     },
