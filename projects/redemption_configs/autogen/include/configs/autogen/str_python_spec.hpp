@@ -694,7 +694,7 @@ server_cert_error_message = integer(min=0, max=7, default=1)
 
 # Do not transmit client machine name or RDP server.
 # If Per-Device licensing mode is configured on the RD host, this Bastion will consume a CAL for all of these connections to the RD host.
-hide_client_name = boolean(default=True)
+hide_client_name = boolean(default=False)
 
 # Stores CALs issued by the terminal servers.
 #_advanced
