@@ -393,7 +393,7 @@ def migrate_file(migration_defs: List[MigrationType],
                  temporary_ini_filename: str,
                  saved_ini_filename: str,
                  ) -> bool:
-    _, fragments = parse_configuration_from_file(ini_filename)
+    content, fragments = parse_configuration_from_file(ini_filename)
 
     is_changed = False
     for _, desc in migration_filter(migration_defs, version):
@@ -401,8 +401,12 @@ def migrate_file(migration_defs: List[MigrationType],
         is_changed = is_changed or is_updated
 
     if is_changed:
+        new_content = ''.join(fragment.text for fragment in fragments)
+        if content == new_content:
+            return False
+
         with open(temporary_ini_filename, 'w', encoding='utf-8') as f:
-            f.write(''.join(fragment.text for fragment in fragments))
+            f.write(new_content)
 
         copyfile(ini_filename, saved_ini_filename)
 
