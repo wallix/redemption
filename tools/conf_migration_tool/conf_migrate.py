@@ -175,6 +175,11 @@ MigrationDescType = Dict[str, MigrationSectionOrderType]
 
 MigrationType = Tuple[RedemptionVersion, MigrationDescType]
 
+RangeConditionVersion = Tuple[RedemptionVersion, RedemptionVersion]  # inclusive range
+InjectionValue = Tuple[Iterable[RangeConditionVersion], str]
+ValuesInjectionsDescType = Dict[str, Dict[str, Iterable[InjectionValue]]]
+
+InjectionsType = Dict[str, Dict[str, str]]
 
 def migration_filter(migration_defs: Iterable[MigrationType],
                      previous_version: RedemptionVersion) -> List[MigrationType]:
@@ -378,24 +383,94 @@ def migrate(fragments: List[ConfigurationFragment],
     return (True, result_fragments)
 
 
-### --dump=json
-### @{
-
 def remove_ini_only_type(desc: MigrationDescType) -> MigrationDescType:
     return {section: ({k: v for k, v in values_or_item.items() if type(v) != ToIniOnly}
                       if isinstance(values_or_item, dict) else values_or_item)
             for section, values_or_item in desc.items() if type(values_or_item) != ToIniOnly}
 
 
-def migrate_file(migration_defs: List[MigrationType],
+def push_value_injection(injections: InjectionsType,
+                         section_name: str,
+                         key: str,
+                         conditions_values: Iterable[InjectionValue],
+                         version: RedemptionVersion) -> None:
+    for conditions_value in conditions_values:
+        for low, high in conditions_value[0]:
+            if low <= version <= high:
+                injections.setdefault(section_name, {})[key] = conditions_value[1]
+                return
+
+
+def extract_value_injections(value_injections: ValuesInjectionsDescType,
+                             fragments: ConfigurationFragmentListType,
+                             version: RedemptionVersion,
+                             ) -> InjectionsType:
+
+    # extract value for specific version
+    injections: InjectionsType = {}
+    for section_name, injection_values in value_injections.items():
+        for key, conditions_values in injection_values.items():
+            push_value_injection(injections, section_name, key, conditions_values, version)
+
+    # remove value already set
+    section = None
+    for fragment in fragments:
+        if fragment.kind == ConfigKind.KeyValue:
+            if section is not None:
+                section.pop(fragment.value1, None)
+        elif fragment.kind == ConfigKind.Section:
+            section = injections.get(fragment.value1)
+
+    # remove empty dict
+    return {k: d for k, d in injections.items() if d}
+
+
+def build_with_injected_values(injections: InjectionsType,
+                               fragments: ConfigurationFragmentListType,
+                               ) -> ConfigurationFragmentListType:
+    new_fragments: ConfigurationFragmentListType = []
+
+    def inject_section(section):
+        for key, value in section.items():
+            new_fragments.append(newline_fragment)
+            new_fragments.append(ConfigurationFragment(
+                f'{key}={value}', ConfigKind.KeyValue, key, value
+            ))
+            new_fragments.append(newline_fragment)
+
+    # rebuild fragment
+    for fragment in fragments:
+        new_fragments.append(fragment)
+        if fragment.kind == ConfigKind.Section:
+            section = injections.pop(fragment.value1, {})
+            inject_section(section)
+
+    # add remaining section
+    for section_name, section in injections.items():
+        new_fragments.append(ConfigurationFragment(
+            f'[{section_name}]', ConfigKind.Section, section_name
+        ))
+        inject_section(section)
+
+    return new_fragments
+
+
+def migrate_file(migration_defs: Iterable[MigrationType],
+                 value_injections_desc: ValuesInjectionsDescType,
                  version: RedemptionVersion,
                  ini_filename: str,
                  temporary_ini_filename: str,
                  saved_ini_filename: str,
                  ) -> bool:
-    _, fragments = parse_configuration_from_file(ini_filename)
+    content, fragments = parse_configuration_from_file(ini_filename)
 
     is_changed = False
+
+    injections = extract_value_injections(value_injections_desc, fragments, version)
+    if injections:
+        is_changed = True
+        fragments = build_with_injected_values(injections, fragments)
+
     for _, desc in migration_filter(migration_defs, version):
         is_updated, fragments = migrate(fragments, remove_ini_only_type(desc))
         is_changed = is_changed or is_updated
@@ -509,10 +584,10 @@ def dump_json(defs: List[MigrationType]) -> List[Any]:
 
     return l
 
-### @}
 
-
-def main(migration_defs: List[MigrationType], argv: List[str]) -> int:
+def main(migration_defs: List[MigrationType],
+         value_injections_desc: ValuesInjectionsDescType,
+         argv: List[str]) -> int:
     if len(argv) != 4 or argv[1] not in ('-s', '-f'):
         if len(argv) == 2 and argv[1] == '--dump=json':
             import json
@@ -535,6 +610,7 @@ def main(migration_defs: List[MigrationType], argv: List[str]) -> int:
     print(f"PreviousRedemptionVersion={old_version}")
 
     if migrate_file(migration_defs,
+                    value_injections_desc,
                     old_version,
                     ini_filename=ini_filename,
                     temporary_ini_filename=f'{ini_filename}.work',
@@ -619,7 +695,7 @@ def _merge_performance_flags_10_5_31(value: str, fragments: Iterable[Configurati
                     if not_present or present)
 
 
-migration_defs: List[MigrationType] = [
+migration_defs: Iterable[MigrationType] = (
     (RedemptionVersion('9.1.39'), {
         'globals': {
             'session_timeout': UpdateItem(key='base_inactivity_timeout'),
@@ -778,7 +854,22 @@ migration_defs: List[MigrationType] = [
             'show_target_user_in_f12_message': UpdateItem(section='globals'),
         },
     }),
-]
+)
+
+value_injections_desc: ValuesInjectionsDescType = {
+    'mod_rdp': {
+        'hide_client_name': (
+            (
+                # inclusive range
+                (
+                    (RedemptionVersion("9.0.8"), RedemptionVersion("9.0.9")),
+                    (RedemptionVersion("10.0.4"), RedemptionVersion("10.0.5")),
+                ),
+                '1',
+            ),
+        )
+    }
+}
 
 if __name__ == '__main__':
-    exit(main(migration_defs, sys.argv))
+    exit(main(migration_defs, value_injections_desc, sys.argv))
