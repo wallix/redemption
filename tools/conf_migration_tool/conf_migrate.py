@@ -805,7 +805,7 @@ migration_defs: List[MigrationType] = [
             'break_interval': UpdateItem(section='audit', key='video_break_interval'),
             'framerate': UpdateItem(section='audit', key='video_frame_rate'),
             'notimestamp': UpdateItem(section='audit', key='video_notimestamp'),
-            'codec_id': UpdateItem(section='audit', key='wrm_break_interval'),
+            'codec_id': UpdateItem(section='audit', key='video_codec'),
             'ffmpeg_options': UpdateItem(section='audit'),
             'smart_video_cropping': UpdateItem(section='audit'),
             'play_video_with_corrupted_bitmap': UpdateItem(section='audit'),
