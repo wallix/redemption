@@ -163,6 +163,12 @@ MigrationDescType = Dict[str, MigrationSectionOrderType]
 
 MigrationType = Tuple[RedemptionVersion, MigrationDescType]
 
+RangeConditionVersion = Tuple[RedemptionVersion, RedemptionVersion]  # inclusive range
+InjectionValue = Tuple[Iterable[RangeConditionVersion], str]
+ValuesInjectionsDescType = Dict[str, Dict[str, Iterable[InjectionValue]]]
+
+InjectionsType = Dict[str, Dict[str, str]]
+
 
 def migration_filter(migration_defs: Iterable[MigrationType],
                      previous_version: RedemptionVersion) -> List[MigrationType]:
@@ -365,6 +371,72 @@ def migrate(fragments: List[ConfigurationFragment],
     return (True, result_fragments)
 
 
+def push_value_injection(injections: InjectionsType,
+                         section_name: str,
+                         key: str,
+                         conditions_values: Iterable[InjectionValue],
+                         version: RedemptionVersion) -> None:
+    for conditions_value in conditions_values:
+        for low, high in conditions_value[0]:
+            if low <= version <= high:
+                injections.setdefault(section_name, {})[key] = conditions_value[1]
+                return
+
+
+def extract_value_injections(value_injections: ValuesInjectionsDescType,
+                             fragments: ConfigurationFragmentListType,
+                             version: RedemptionVersion,
+                             ) -> InjectionsType:
+
+    # extract value for specific version
+    injections: InjectionsType = {}
+    for section_name, injection_values in value_injections.items():
+        for key, conditions_values in injection_values.items():
+            push_value_injection(injections, section_name, key, conditions_values, version)
+
+    # remove value already set
+    section = None
+    for fragment in fragments:
+        if fragment.kind == ConfigKind.KeyValue:
+            if section is not None:
+                section.pop(fragment.value1, None)
+        elif fragment.kind == ConfigKind.Section:
+            section = injections.get(fragment.value1)
+
+    # remove empty dict
+    return {k: d for k, d in injections.items() if d}
+
+
+def build_with_injected_values(injections: InjectionsType,
+                               fragments: ConfigurationFragmentListType,
+                               ) -> ConfigurationFragmentListType:
+    new_fragments: ConfigurationFragmentListType = []
+
+    def inject_section(section):
+        for key, value in section.items():
+            new_fragments.append(newline_fragment)
+            new_fragments.append(ConfigurationFragment(
+                f'{key}={value}', ConfigKind.KeyValue, key, value
+            ))
+            new_fragments.append(newline_fragment)
+
+    # rebuild fragment
+    for fragment in fragments:
+        new_fragments.append(fragment)
+        if fragment.kind == ConfigKind.Section:
+            section = injections.pop(fragment.value1, {})
+            inject_section(section)
+
+    # add remaining section
+    for section_name, section in injections.items():
+        new_fragments.append(ConfigurationFragment(
+            f'[{section_name}]', ConfigKind.Section, section_name
+        ))
+        inject_section(section)
+
+    return new_fragments
+
+
 migration_defs: List[MigrationType] = [
     (RedemptionVersion('9.1.39'), {
         'globals': {
@@ -403,6 +475,21 @@ migration_defs: List[MigrationType] = [
     }),
 ]
 
+value_injections_desc: ValuesInjectionsDescType = {
+    'mod_rdp': {
+        'hide_client_name': (
+            # inclusive range
+            (
+                (
+                    (RedemptionVersion("9.0.8"), RedemptionVersion("9.0.9")),
+                    (RedemptionVersion("10.0.4"), RedemptionVersion("10.0.5")),
+                ),
+                '1',
+            ),
+        )
+    }
+}
+
 
 def migrate_file(version: RedemptionVersion,
                  ini_filename: str,
@@ -412,6 +499,12 @@ def migrate_file(version: RedemptionVersion,
     _, fragments = parse_configuration_from_file(ini_filename)
 
     is_changed = False
+
+    injections = extract_value_injections(value_injections_desc, fragments, version)
+    if injections:
+        is_changed = True
+        fragments = build_with_injected_values(injections, fragments)
+
     for _, desc in migration_filter(migration_defs, version):
         is_updated, fragments = migrate(fragments, desc)
         is_changed = is_changed or is_updated

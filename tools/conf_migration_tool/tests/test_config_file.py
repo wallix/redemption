@@ -14,7 +14,10 @@ from conf_migrate import (parse_configuration,
                           RemoveItem,
                           MoveSection,
                           ConfigKind,
-                          ConfigurationFragment)
+                          ConfigurationFragment,
+                          extract_value_injections,
+                          build_with_injected_values,
+                          )
 
 
 class TestMigration(unittest.TestCase):
@@ -334,3 +337,196 @@ class TestMigration(unittest.TestCase):
 
         os.remove(ini_filename)
         os.remove(f'{ini_filename}.{version}')
+
+
+    def test_extract_value_injections(self):
+        value_injections = {
+            'mod_rdp': {
+                'hide_client_name': (
+                    # inclusive range
+                    (
+                        (
+                            (RedemptionVersion("9.0.8"), RedemptionVersion("9.0.9")),
+                            (RedemptionVersion("10.0.4"), RedemptionVersion("10.0.5")),
+                        ),
+                        '1',
+                    ),
+                )
+            }
+        }
+
+        fragments_with_section = [
+            ConfigurationFragment(text='[mod_rdp]', kind=ConfigKind.Section, value1='mod_rdp', value2=''),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
+            ConfigurationFragment(text='[sec2]', kind=ConfigKind.Section, value1='sec2', value2=''),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
+            ConfigurationFragment(text='key = other value', kind=ConfigKind.KeyValue,
+                                  value1='key', value2='other value'),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2='')
+        ]
+
+        fragments_with_value = [
+            ConfigurationFragment(text='[mod_rdp]', kind=ConfigKind.Section, value1='mod_rdp', value2=''),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2=''),
+            ConfigurationFragment(text='hide_client_name = X', kind=ConfigKind.KeyValue,
+                                  value1='hide_client_name', value2='X'),
+            ConfigurationFragment(text='\n', kind=ConfigKind.NewLine, value1='', value2='')
+        ]
+
+        for version, result in (
+            ('9.0.7', {}),
+            ('9.0.8', {'mod_rdp': {'hide_client_name': '1'}}),
+            ('9.0.9', {'mod_rdp': {'hide_client_name': '1'}}),
+            ('9.0.10', {}),
+            ('10.0.3', {}),
+            ('10.0.4', {'mod_rdp': {'hide_client_name': '1'}}),
+            ('10.0.5', {'mod_rdp': {'hide_client_name': '1'}}),
+            ('10.0.6', {}),
+            ('11.0.0', {}),
+        ):
+            with self.subTest(version=version):
+                version = RedemptionVersion(version)
+
+                self.assertEqual(
+                    extract_value_injections(value_injections, [], version),
+                    result)
+
+                self.assertEqual(
+                    extract_value_injections(value_injections, fragments_with_section, version),
+                    result)
+
+                self.assertEqual(
+                    extract_value_injections(value_injections, fragments_with_value, version),
+                    {})
+
+        value_injections = {
+            'mod_rdp': {
+                'hide_client_name': (
+                    (
+                        (
+                            (RedemptionVersion("9.0.8"), RedemptionVersion("9.0.9")),
+                            (RedemptionVersion("10.0.4"), RedemptionVersion("10.0.5")),
+                        ),
+                        '1',
+                    ),
+                    (
+                        (
+                            (RedemptionVersion("0.0.0"), RedemptionVersion("9999.9999.9999")),
+                        ),
+                        '0',
+                    ),
+                ),
+                'xyz': (
+                    (
+                        (
+                            (RedemptionVersion("9.0.10"), RedemptionVersion("10.0.4")),
+                        ),
+                        'abc',
+                    ),
+                ),
+            },
+            'vnc': {
+                'hide_client_name': (
+                    (
+                        (
+                            (RedemptionVersion("10.0.4"), RedemptionVersion("10.0.4")),
+                        ),
+                        'A',
+                    ),
+                )
+            },
+        }
+
+        for version, result in (
+            ('9.0.7', {'mod_rdp': {'hide_client_name': '0'}}),
+            ('9.0.8', {'mod_rdp': {'hide_client_name': '1'}}),
+            ('9.0.9', {'mod_rdp': {'hide_client_name': '1'}}),
+            ('9.0.10', {'mod_rdp': {'hide_client_name': '0', 'xyz': 'abc'}}),
+            ('10.0.3', {'mod_rdp': {'hide_client_name': '0', 'xyz': 'abc'}}),
+            ('10.0.4', {'mod_rdp': {'hide_client_name': '1', 'xyz': 'abc'},
+                        'vnc': {'hide_client_name': 'A'}}),
+            ('10.0.5', {'mod_rdp': {'hide_client_name': '1'}}),
+            ('10.0.6', {'mod_rdp': {'hide_client_name': '0'}}),
+            ('11.0.0', {'mod_rdp': {'hide_client_name': '0'}}),
+        ):
+            with self.subTest(version=version):
+                version = RedemptionVersion(version)
+
+                self.assertEqual(
+                    extract_value_injections(value_injections, [], version),
+                    result)
+
+                self.assertEqual(
+                    extract_value_injections(value_injections, fragments_with_section, version),
+                    result)
+
+                result['mod_rdp'].pop('hide_client_name')
+                if not result['mod_rdp']:
+                    result.pop('mod_rdp')
+                self.assertEqual(
+                    extract_value_injections(value_injections, fragments_with_value, version),
+                    result)
+
+
+    def test_build_with_injected_values(self):
+        mod_rdp = ConfigurationFragment(text='[mod_rdp]', kind=ConfigKind.Section,
+                                        value1='mod_rdp', value2='')
+        mod_vnc = ConfigurationFragment(text='[mod_vnc]', kind=ConfigKind.Section,
+                                        value1='mod_vnc', value2='')
+        new_line = ConfigurationFragment(text='\n', kind=ConfigKind.NewLine,
+                                         value1='', value2='')
+        value0 = ConfigurationFragment(text='value=0', kind=ConfigKind.KeyValue,
+                                       value1='value', value2='0')
+        value1 = ConfigurationFragment(text='value=1', kind=ConfigKind.KeyValue,
+                                       value1='value', value2='1')
+        other_value = ConfigurationFragment(text='xxx=abc', kind=ConfigKind.KeyValue,
+                                            value1='xxx', value2='abc')
+
+        def injections():
+            return {'mod_rdp': {'value': '0'}}
+
+        self.assertEqual(
+            build_with_injected_values(injections(), []),
+            [
+                mod_rdp,
+                new_line,
+                value0,
+                new_line,
+            ]
+        )
+
+        self.assertEqual(
+            build_with_injected_values(injections(), [
+                mod_rdp,
+                new_line,
+            ]),
+            [
+                mod_rdp,
+                new_line,
+                value0,
+                new_line,
+                new_line,
+            ]
+        )
+
+        self.assertEqual(
+            build_with_injected_values(injections(), [
+                mod_vnc,
+                new_line,
+                mod_rdp,
+                new_line,
+                mod_vnc,
+                new_line,
+            ]),
+            [
+                mod_vnc,
+                new_line,
+                mod_rdp,
+                new_line,
+                value0,
+                new_line,
+                new_line,
+                mod_vnc,
+                new_line,
+            ]
+        )
