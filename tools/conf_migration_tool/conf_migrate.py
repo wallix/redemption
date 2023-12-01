@@ -476,18 +476,6 @@ migration_defs: List[MigrationType] = [
 ]
 
 value_injections_desc: ValuesInjectionsDescType = {
-    'mod_rdp': {
-        'hide_client_name': (
-            # inclusive range
-            (
-                (
-                    (RedemptionVersion("9.0.8"), RedemptionVersion("9.0.9")),
-                    (RedemptionVersion("10.0.4"), RedemptionVersion("10.0.5")),
-                ),
-                '1',
-            ),
-        )
-    }
 }
 
 
