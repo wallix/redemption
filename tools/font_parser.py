@@ -156,13 +156,13 @@ class FontInfo(NamedTuple):
     ascent: int
 
 
-def mask_to_tuple(mask: PIL.Image.core, bbox: None | BBox = None) -> Pixels:
-    if bbox is None:
-        bbox = mask.getbbox()
+def mask_to_tuple(mask: PIL.Image.core) -> Pixels:
+    bbox = mask.getbbox()
     yseq = range(bbox[1], bbox[3])
+    xseq = range(bbox[0], bbox[2])
     return bytes(bytearray(mask.getpixel((ix, iy))
                            for iy in yseq
-                           for ix in range(bbox[0], bbox[2])))
+                           for ix in xseq))
 
 def load_truetype(fontpath: str, fontsize: int, unknown_unicode_for_glyphs: tuple[str]) -> FontInfo:
     print(f'load {fontpath}')
@@ -200,12 +200,13 @@ unknown_glyph = (GlyphType.Unknown,
 
 replacement_uni = 0xFFFD
 replacement_unicode_char = chr(replacement_uni)
-replacement_char: GlyphInfo = (GlyphType.Replacement,
-                               mask_to_tuple(mask := font_infos[0].font.getmask(replacement_unicode_char, mode='1')),
-                               mask.getbbox(),
-                               (bbox_font := font_infos[0].font.getbbox(replacement_unicode_char, mode='1'))[0],
-                               bbox_font[1] + max_ascent - font_infos[0].ascent,
-                               )
+replacement_char: GlyphInfo = (
+    GlyphType.Replacement,
+    mask_to_tuple(mask := font_infos[0].font.getmask(replacement_unicode_char, mode='1')),
+    mask.getbbox(),
+    (bbox_font := font_infos[0].font.getbbox(replacement_unicode_char, mode='1'))[0],
+    bbox_font[1] + max_ascent - font_infos[0].ascent,
+)
 
 def get_glyph_info(char: str) -> GlyphInfo:
     for font_info in font_infos:
@@ -215,8 +216,11 @@ def get_glyph_info(char: str) -> GlyphInfo:
         bbox = mask.getbbox()
         # is None for spaces
         if not bbox:
-            bbox = (x1, 0, x2, y2 - y1)
-            pixels = mask_to_tuple(mask, bbox)
+            # rdesktop require non empty data for glyph
+            # create a transparent image with height=1
+            y = y2 - y1 if y2 - y1 else y2
+            bbox = (x1, y - 1, x2, y)
+            pixels = b'0' * (x2 * y2)
         else:
             pixels = mask_to_tuple(mask)
             if any(bbox == unknown_char[1] and pixels == unknown_char[0]
@@ -262,7 +266,6 @@ def serialize_glyph(x1: int, y1: int, cx: int, cy: int, incby: int, offsetx: int
                 byte = 0
 
         if counter != 0:
-            # line += padding_line
             data += struct.pack('<B', byte << padding)
 
         line += right_empty_line
@@ -337,7 +340,7 @@ for uni in ichar_gen:
     is_printable = valid_chr(char)
 
     if is_printable:
-        glyphs.add(uni, char, get_glyph_info(char) if is_printable else replacement_char)
+        glyphs.add(uni, char, get_glyph_info(char))
     else:
         if uni < CONTIGUOUS_LIMIT:
             # replacement
