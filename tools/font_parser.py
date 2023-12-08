@@ -78,12 +78,18 @@ name = ''
 output = ''
 
 CHARSET_START = 32
-# CHARSET_END = 0x3134b
 CHARSET_END = 0x2fa1e
-# CHARSET_START = 0x20e3
-# CHARSET_END = CHARSET_START + 2
 
 CONTIGUOUS_LIMIT = 0xD7FC
+
+# inclusive range
+ICHARS_GEN = (
+    (0, 0xD7FB),
+    # (0xE000, 0xF8FF),  # private usage zone
+    (0xF900, 0x11FFF),
+    (0x17000, 0x3FFFF),
+
+)
 
 
 if len(sys.argv) > 1:
@@ -232,7 +238,7 @@ def get_glyph_info(char: str) -> GlyphInfo:
         return GlyphType.Normal, pixels, bbox, offsetx, offsety
     return unknown_glyph
 
-def valid_chr(char: str) -> bool:
+def is_printable(char: str) -> bool:
     cat = category(char)
     general_cat = cat[0]
     return general_cat != 'C' and (general_cat != 'Z' or cat == 'Zs')
@@ -328,25 +334,22 @@ class Glyphs:
             self.data_glyphs.append(b'\0')
 
 
-ichar_gen = range(CHARSET_START, CHARSET_END)
-
 glyphs = Glyphs()
 
 glyphs.add(replacement_uni, 'ReplacementChar', replacement_char, True)
 
-for uni in ichar_gen:
-    char = chr(uni)
-    # TODO space as special glyph ?
-    is_printable = valid_chr(char)
+for rng in (range(max(CHARSET_START, r[0]), min(CHARSET_END, r[1]+1)) for r in ICHARS_GEN):
+    for uni in rng:
+        char = chr(uni)
 
-    if is_printable:
-        glyphs.add(uni, char, get_glyph_info(char))
-    else:
-        if uni < CONTIGUOUS_LIMIT:
-            # replacement
-            glyphs.data_glyphs.append(b'\0')
+        if is_printable(char):
+            glyphs.add(uni, char, get_glyph_info(char))
+        else:
+            if uni < CONTIGUOUS_LIMIT:
+                # replacement
+                glyphs.data_glyphs.append(b'\0')
 
-        print(f'{uni:#x}  CHR: NonPrintable')
+            print(f'{uni:#x}  CHR: NonPrintable')
 
 
 print(f'Output file: {output}')
