@@ -36,8 +36,6 @@
 #include "utils/diffiehellman.hpp"
 #include "utils/hexdump.hpp"
 
-#include <openssl/tls1.h>
-
 using namespace std::literals::chrono_literals;
 
 
@@ -490,7 +488,7 @@ bool mod_vnc::doTlsSwitch()
     case VeNCRYPT_TLSVnc:
         /* needed params for anonymous TLS */
         tlsParams.security_level = 0;
-        tlsParams.tls_max_level = TLS1_2_VERSION;
+        tlsParams.tls_max_level = 3;
         tlsParams.cipher_string = "ADH";
         tlsParams.anonymous_tls = true;
         break;
