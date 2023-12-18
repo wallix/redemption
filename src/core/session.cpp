@@ -1673,6 +1673,7 @@ void session_start_wss(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile
         WsTransport::UseTls::Yes, WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
             ini.get<cfg::client::ssl_cipher_list>(),
+            ini.get<cfg::client::tls_1_3_ciphersuites>(),
             ini.get<cfg::client::tls_min_level>(),
             ini.get<cfg::client::tls_max_level>(),
             ini.get<cfg::client::show_common_cipher_list>(),

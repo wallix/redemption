@@ -36,6 +36,7 @@ namespace configs
         "mod_rdp:tls_max_level"_zv,
         "mod_rdp:tls_security_level"_zv,
         "mod_rdp:cipher_string"_zv,
+        "mod_rdp:tls_1_3_ciphersuites"_zv,
         "mod_rdp:show_common_cipher_list"_zv,
         "mod_rdp:allowed_channels"_zv,
         "mod_rdp:denied_channels"_zv,

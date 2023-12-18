@@ -72,8 +72,16 @@ tls_min_level = integer(min=0, default=0)
 # Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 tls_max_level = integer(min=0, default=0)
 
-# TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
+# TLSv1.2 and below additional ciphers supported.
+# Empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
+# The format used is described on this page: https://www.openssl.org/docs/man3.1/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT
 cipher_string = string(default="ALL")
+
+# Configure the available TLSv1.3 ciphersuites.
+# Empty to apply system-wide configuration.
+# The format used is described in the third paragraph of this page: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html#DESCRIPTION
+#_display_name=TLS 1.3 cipher suites
+tls_1_3_ciphersuites = string(default="")
 
 # Show in the logs the common cipher list supported by client and server
 # ⚠ Only for debug purposes

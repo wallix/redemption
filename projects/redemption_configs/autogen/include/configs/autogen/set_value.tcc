@@ -332,19 +332,27 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "show_common_cipher_list"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::client::show_common_cipher_list&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
         else if (key == "ssl_cipher_list"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::client::ssl_cipher_list&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+        else if (key == "tls_1_3_ciphersuites"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::client::tls_1_3_ciphersuites&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+        else if (key == "show_common_cipher_list"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::client::show_common_cipher_list&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 value
             );
         }
@@ -608,6 +616,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::cipher_string&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                value
+            );
+        }
+        else if (key == "tls_1_3_ciphersuites"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::tls_1_3_ciphersuites&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 value
             );

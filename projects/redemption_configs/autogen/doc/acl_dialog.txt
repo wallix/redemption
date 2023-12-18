@@ -74,7 +74,13 @@ cfg::mod_rdp::tls_security_level ⇐ mod_rdp:tls_security_level   [int]
     
     A negative value uses the default value configured in OpenSSL.
 cfg::mod_rdp::cipher_string ⇐ mod_rdp:cipher_string   [std::string]
-    TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
+    TLSv1.2 and below additional ciphers supported.
+    Empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
+    The format used is described on this page: https://www.openssl.org/docs/man3.1/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT
+cfg::mod_rdp::tls_1_3_ciphersuites ⇐ mod_rdp:tls_1_3_ciphersuites   [std::string]
+    Configure the available TLSv1.3 ciphersuites.
+    Empty to apply system-wide configuration.
+    The format used is described in the third paragraph of this page: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html#DESCRIPTION
 cfg::mod_rdp::show_common_cipher_list ⇐ mod_rdp:show_common_cipher_list   [bool]
     Show in the logs the common cipher list supported by client and server
     ⚠ Only for debug purposes

@@ -153,16 +153,23 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (min = 0)
 #tls_max_level = 0
 
+# [Not configured]: Compatible with more RDP clients (less secure)
+# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
+# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
+# The format used is described on this page: https://www.openssl.org/docs/man3.1/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT
+#ssl_cipher_list = HIGH:!ADH:!3DES:!SHA
+
+# Configure the available TLSv1.3 ciphersuites.
+# Empty to apply system-wide configuration.
+# The format used is described in the third paragraph of this page: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html#DESCRIPTION
+#_display_name=TLS 1.3 cipher suites
+#tls_1_3_ciphersuites = 
+
 # Show in the logs the common cipher list supported by client and server
 # ⚠ Only for debug purposes
 # (type: boolean (0/no/false or 1/yes/true))
 #_advanced
 #show_common_cipher_list = 0
-
-# [Not configured]: Compatible with more RDP clients (less secure)
-# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
-# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
-#ssl_cipher_list = HIGH:!ADH:!3DES:!SHA
 
 # Needed for primary NTLM or Kerberos connections over NLA.
 # (type: boolean (0/no/false or 1/yes/true))
@@ -373,9 +380,18 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ mod_rdp:tls_security_level)
 #tls_security_level = 1
 
-# TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
+# TLSv1.2 and below additional ciphers supported.
+# Empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
+# The format used is described on this page: https://www.openssl.org/docs/man3.1/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT
 # (acl config: proxy ⇐ mod_rdp:cipher_string)
 #cipher_string = ALL
+
+# Configure the available TLSv1.3 ciphersuites.
+# Empty to apply system-wide configuration.
+# The format used is described in the third paragraph of this page: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html#DESCRIPTION
+#_display_name=TLS 1.3 cipher suites
+# (acl config: proxy ⇐ mod_rdp:tls_1_3_ciphersuites)
+#tls_1_3_ciphersuites = 
 
 # Show in the logs the common cipher list supported by client and server
 # ⚠ Only for debug purposes

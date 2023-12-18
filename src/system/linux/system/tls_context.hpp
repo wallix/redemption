@@ -182,6 +182,10 @@ public:
             LOG(LOG_INFO, "TLS Client cipher list: %s", tls_client_params.cipher_string.c_str());
             SSL_CTX_set_cipher_list(ctx, tls_client_params.cipher_string.c_str());
         }
+        if (not tls_client_params.tls_1_3_ciphersuites.empty()) { // if parameter is not defined, use system default
+            LOG(LOG_INFO, "TLS 1.3 Client cipher suites: %s", tls_client_params.tls_1_3_ciphersuites.c_str());
+            SSL_CTX_set_ciphersuites(ctx, tls_client_params.tls_1_3_ciphersuites.c_str());
+        }
 
         if (tls_client_params.security_level >= 0) {
             SSL_CTX_set_security_level(ctx, tls_client_params.security_level);
@@ -380,7 +384,7 @@ public:
         return Transport::TlsResult::Fail;
     }
 
-    bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+    bool enable_server_tls(int sck, const char * certificate_password, const char * cipher_list, const char * tls_1_3_cyphersuites, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
         LOG(LOG_INFO, "Enable server TLS");
         // reference doc: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_new.html
@@ -556,9 +560,13 @@ public:
         // SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
         // Not compatible with MSTSC 6.1 on XP and W2K3
         // SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
-        if (ssl_cipher_list && *ssl_cipher_list) {
+        if (cipher_list && *cipher_list) {
             LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL cipher list");
-            SSL_CTX_set_cipher_list(ctx, ssl_cipher_list);
+            SSL_CTX_set_cipher_list(ctx, cipher_list);
+        }
+        if (tls_1_3_cyphersuites && *tls_1_3_cyphersuites) {
+            LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL ciphersuites");
+            SSL_CTX_set_ciphersuites(ctx, tls_1_3_cyphersuites);
         }
 
         // -------- End of system wide SSL_Ctx option ----------------------------------

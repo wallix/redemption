@@ -44,6 +44,7 @@ struct TLSClientParams
     uint32_t tls_max_level = 0;
     bool show_common_cipher_list = false;
     std::string cipher_string;
+    std::string tls_1_3_ciphersuites;
     int security_level = 1;
     bool anonymous_tls = false;
 };
@@ -68,12 +69,15 @@ public:
         return TlsResult::Fail;
     }
 
-    virtual void enable_server_tls(const char * certificate_password,
-        const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+    virtual void enable_server_tls(
+        const char * certificate_password,
+        const char * cipher_list, const char * tls_1_3_ciphersuites,
+        uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
         // default enable_tls do nothing
         (void)certificate_password;
-        (void)ssl_cipher_list;
+        (void)cipher_list;
+        (void)tls_1_3_ciphersuites;
         (void)tls_min_level;
         (void)tls_max_level;
         (void)show_common_cipher_list;
@@ -217,8 +221,8 @@ struct InTransport
         return this->t.enable_client_tls(server_notifier, tls_client_params);
     }
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
-    { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list); }
+    void enable_server_tls(const char * certificate_password, const char * cipher_list, const char * tls_1_3_cyphersuites, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+    { this->t.enable_server_tls(certificate_password, cipher_list, tls_1_3_cyphersuites, tls_min_level, tls_max_level, show_common_cipher_list); }
 
     [[nodiscard]] u8_array_view get_public_key() const { return this->t.get_public_key(); }
 
@@ -244,8 +248,8 @@ struct OutTransport
         return this->t.enable_client_tls(server_notifier, tls_client_params);
     }
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
-    { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list); }
+    void enable_server_tls(const char * certificate_password, const char * cipher_list, const char * tls_1_3_cyphersuites, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+    { this->t.enable_server_tls(certificate_password, cipher_list, tls_1_3_cyphersuites, tls_min_level, tls_max_level, show_common_cipher_list); }
 
     [[nodiscard]] u8_array_view get_public_key() const { return this->t.get_public_key(); }
 

@@ -238,16 +238,6 @@ Transport::TlsResult ReplayTransport::enable_client_tls(ServerNotifier & /*serve
     return Transport::TlsResult::Ok;
 }
 
-void ReplayTransport::enable_server_tls(
-    const char* certificate_password, const char* ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
-{
-    (void)certificate_password;
-    (void)ssl_cipher_list;
-    (void)tls_min_level;
-    (void)tls_max_level;
-    (void)show_common_cipher_list;
-}
-
 bool ReplayTransport::connect()
 {
     //this->next_current_data(PacketType::Connect);

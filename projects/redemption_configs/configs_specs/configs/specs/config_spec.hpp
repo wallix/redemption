@@ -156,6 +156,12 @@ std::string_view disabled_orders_desc =
     "  27: GlyphIndex"
 ;
 
+std::string_view tls_1_3_ciphersuites_desc =
+    "Configure the available TLSv1.3 ciphersuites.\n"
+    "Empty to apply system-wide configuration.\n"
+    "The format used is described in the third paragraph of this page: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html#DESCRIPTION"
+;
+
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wc99-designator")
 
@@ -575,15 +581,6 @@ _.section("client", [&]
     });
 
     _.member(MemberInfo{
-        .name = "show_common_cipher_list",
-        .value = value(false),
-        .spec = global_spec(no_acl, spec::advanced),
-        .tags = Tag::Debug,
-        .desc = "Show in the logs the common cipher list supported by client and server\n"
-        "⚠ Only for debug purposes",
-    });
-
-    _.member(MemberInfo{
         .name = "ssl_cipher_list",
         .value = value<std::string>("HIGH:!ADH:!3DES:!SHA"),
         .spec = global_spec(no_acl),
@@ -591,6 +588,27 @@ _.section("client", [&]
             "[Not configured]: Compatible with more RDP clients (less secure)\n"
             "HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)\n"
             "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)"
+            "\n"
+            "The format used is described on this page: https://www.openssl.org/docs/man3.1/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT"
+    });
+
+    _.member(MemberInfo{
+        .name = names{
+            .all = "tls_1_3_ciphersuites",
+            .display = "TLS 1.3 cipher suites",
+        },
+        .value = value<std::string>(""),
+        .spec = global_spec(no_acl),
+        .desc = tls_1_3_ciphersuites_desc,
+    });
+
+    _.member(MemberInfo{
+        .name = "show_common_cipher_list",
+        .value = value(false),
+        .spec = global_spec(no_acl, spec::advanced),
+        .tags = Tag::Debug,
+        .desc = "Show in the logs the common cipher list supported by client and server\n"
+        "⚠ Only for debug purposes",
     });
 
     _.member(MemberInfo{
@@ -863,7 +881,20 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .name = "cipher_string",
         .value = value<std::string>("ALL"),
         .spec = connpolicy(rdp_and_jh, L),
-        .desc = "TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.",
+        .desc =
+            "TLSv1.2 and below additional ciphers supported.\n"
+            "Empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.\n"
+            "The format used is described on this page: https://www.openssl.org/docs/man3.1/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT",
+    });
+
+    _.member(MemberInfo{
+        .name = names{
+            .all = "tls_1_3_ciphersuites",
+            .display = "TLS 1.3 cipher suites",
+        },
+        .value = value<std::string>(""),
+        .spec = connpolicy(rdp_and_jh, L),
+        .desc = tls_1_3_ciphersuites_desc,
     });
 
     _.member(MemberInfo{

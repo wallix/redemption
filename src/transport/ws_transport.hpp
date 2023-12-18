@@ -32,7 +32,8 @@ public:
     struct TlsOptions
     {
         std::string certificate_password {};
-        std::string ssl_cipher_list {};
+        std::string cipher_list {};
+        std::string tls_1_3_cyphersuites {};
         uint32_t tls_min_level {};
         uint32_t tls_max_level {};
         bool show_common_cipher_list {};

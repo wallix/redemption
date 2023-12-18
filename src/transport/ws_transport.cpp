@@ -75,7 +75,8 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
         this->state = State::Error;
         SocketTransport::enable_server_tls(
             this->tls_options.certificate_password.c_str(),
-            this->tls_options.ssl_cipher_list.c_str(),
+            this->tls_options.cipher_list.c_str(),
+            this->tls_options.tls_1_3_cyphersuites.c_str(),
             this->tls_options.tls_min_level,
             this->tls_options.tls_max_level,
             this->tls_options.show_common_cipher_list);

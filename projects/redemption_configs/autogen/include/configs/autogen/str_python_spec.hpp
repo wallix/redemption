@@ -85,15 +85,22 @@ tls_min_level = integer(min=0, default=2)
 # ⚠ Change this value only for compatibility reasons.
 tls_max_level = integer(min=0, default=0)
 
+# [Not configured]: Compatible with more RDP clients (less secure)
+# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
+# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
+# The format used is described on this page: https://www.openssl.org/docs/man3.1/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT
+ssl_cipher_list = string(default="HIGH:!ADH:!3DES:!SHA")
+
+# Configure the available TLSv1.3 ciphersuites.
+# Empty to apply system-wide configuration.
+# The format used is described in the third paragraph of this page: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html#DESCRIPTION
+#_display_name=TLS 1.3 cipher suites
+tls_1_3_ciphersuites = string(default="")
+
 # Show in the logs the common cipher list supported by client and server
 # ⚠ Only for debug purposes
 #_advanced
 show_common_cipher_list = boolean(default=False)
-
-# [Not configured]: Compatible with more RDP clients (less secure)
-# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
-# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
-ssl_cipher_list = string(default="HIGH:!ADH:!3DES:!SHA")
 
 # Specifies the highest RDP compression support available on client connection session.
 # &nbsp; &nbsp;   0: The RDP bulk compression is disabled

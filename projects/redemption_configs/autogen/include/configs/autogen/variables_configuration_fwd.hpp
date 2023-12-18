@@ -54,8 +54,9 @@ namespace cfg
         struct tls_support;
         struct tls_min_level;
         struct tls_max_level;
-        struct show_common_cipher_list;
         struct ssl_cipher_list;
+        struct tls_1_3_ciphersuites;
+        struct show_common_cipher_list;
         struct enable_nla;
         struct disable_tsk_switch_shortcuts;
         struct rdp_compression;
@@ -96,6 +97,7 @@ namespace cfg
         struct tls_max_level;
         struct tls_security_level;
         struct cipher_string;
+        struct tls_1_3_ciphersuites;
         struct show_common_cipher_list;
         struct persistent_disk_bitmap_cache;
         struct cache_waiting_list;
