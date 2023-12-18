@@ -16,8 +16,6 @@ exe-js js_client :
 :
   app_path_exe.bc
   crypto.bc
-  gssapi_krb5.bc
-  krb5.bc
   src/red_channels/clipboard.bc
   src/red_channels/js_channel.bc
   src/redjs/front.bc

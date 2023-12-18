@@ -21,6 +21,7 @@ disable_sources=''
 for f in \
     src/mod/rdp/channels/*.hpp \
     src/RAIL/client_execute.hpp \
+    src/core/RDP/nla/kerberos.hpp \
     src/core/RDP/capabilities/rail.hpp \
     src/core/RDP/caches/bmpcachepersister.hpp \
     src/mod/rdp/params/rdp_session_probe_params.hpp \
