@@ -151,14 +151,16 @@ int main(int argc, char** argv)
     RedirectionInfo redir_info;
     ModRdpFactory mod_rdp_factory;
     NullLicenseStore license_store;
-    TLSClientParams tls_client_params {};
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     std::string close_box_extra_message_ref;
     const ChannelsAuthorizations channels_authorizations("*"_zv, ""_zv);
-    tls_client_params.tls_min_level = profile.tls_min_level;
-    tls_client_params.tls_max_level = profile.tls_max_level;
-    tls_client_params.cipher_string = profile.cipher_string;
-    tls_client_params.show_common_cipher_list = true;
+    TlsConfig tls_config {
+        .min_level = profile.tls_min_level,
+        .max_level = profile.tls_max_level,
+        .cipher_list = profile.cipher_string,
+        // TODO .tls_1_3_ciphersuites
+        .show_common_cipher_list = true,
+    };
 
     ClientInfo client_info;
     headless_init_client_info(client_info);
@@ -195,7 +197,7 @@ int main(int argc, char** argv)
     auto mod = new_mod_rdp(
         socket, *screen, osd, event_manager.event_container,
         session_log, front, client_info, redir_info, rnd,
-        channels_authorizations, mod_rdp_params, tls_client_params,
+        channels_authorizations, mod_rdp_params, tls_config,
         license_store, ini, nullptr, mod_rdp_factory
     );
 

@@ -77,9 +77,9 @@ public:
 
     void add_info(bytes_view info);
 
-    TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) override;
+    TlsResult enable_client_tls(ServerNotifier & server_notifier, TlsConfig const& tls_config, AnonymousTls anonymous_tls) override;
 
-    void enable_server_tls(const char * certificate_password, const char * cipher_list, const char * tls_1_3_cyphersuites, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list) override;
+    void enable_server_tls(const char * certificate_password, TlsConfig const& tls_config) override;
 
     [[nodiscard]] u8_array_view get_public_key() const override;
 

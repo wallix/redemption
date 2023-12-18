@@ -222,13 +222,13 @@ RED_AUTO_TEST_CASE(TestFront)
 
     FileValidatorService * file_validator_service = nullptr;
 
-    TLSClientParams tls_client_params;
+    TlsConfig tls_config{};
     RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
         t, front.gd(), osd, events, session_log,
         front, info, redir_info, gen2, channels_authorizations, mod_rdp_params,
-        tls_client_params, license_store, ini, file_validator_service,
+        tls_config, license_store, ini, file_validator_service,
         mod_rdp_factory);
 
     // incoming connexion data

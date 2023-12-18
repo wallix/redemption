@@ -182,7 +182,7 @@ RdpNegociation::RdpNegociation(
     LicenseApi& license_store,
     bool has_managed_drive,
     bool convert_remoteapp_to_desktop,
-    const TLSClientParams & tls_client_params
+    const TlsConfig & tls_config
     )
     : mod_channel_list(mod_channel_list)
     , channels_authorizations(channels_authorizations)
@@ -226,7 +226,7 @@ RdpNegociation::RdpNegociation(
         mod_rdp_params.enable_nla, mod_rdp_params.enable_restricted_admin_mode,
         mod_rdp_params.target_host, mod_rdp_params.enable_krb, gen, time_base,
         mod_rdp_params.close_box_extra_message_ref, mod_rdp_params.lang,
-        tls_client_params,
+        tls_config,
         RdpNego::Verbose(mod_rdp_params.verbose)
     )
     , desktop_physical_width(info.desktop_physical_width)

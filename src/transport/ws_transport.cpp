@@ -75,11 +75,7 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
         this->state = State::Error;
         SocketTransport::enable_server_tls(
             this->tls_options.certificate_password.c_str(),
-            this->tls_options.cipher_list.c_str(),
-            this->tls_options.tls_1_3_cyphersuites.c_str(),
-            this->tls_options.tls_min_level,
-            this->tls_options.tls_max_level,
-            this->tls_options.show_common_cipher_list);
+            this->tls_options.tls_config);
 
         this->state = State::HttpHeader;
         return 0;
@@ -168,7 +164,8 @@ void WsTransport::do_send(const uint8_t * const buffer, size_t const len)
 
 WsTransport::TlsResult WsTransport::enable_client_tls(
     ServerNotifier& /*server_notifier*/,
-    const TLSClientParams & /*tls_client_params*/)
+    TlsConfig const& /*tls_config*/,
+    AnonymousTls /*anonymous_tls*/)
 {
     LOG(LOG_ERR, "enable_client_tls");
     return TlsResult::Fail;

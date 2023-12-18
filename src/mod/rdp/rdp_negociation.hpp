@@ -222,7 +222,7 @@ public:
         LicenseApi& license_store,
         bool has_managed_drive,
         bool convert_remoteapp_to_desktop,
-        const TLSClientParams & tls_client_params
+        const TlsConfig & tls_config
     );
 
     void set_program(char const* program, char const* directory) noexcept;

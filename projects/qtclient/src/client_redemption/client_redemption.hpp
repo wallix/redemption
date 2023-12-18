@@ -417,11 +417,13 @@ public:
                         this->config.rDPRemoteAppConfig);
                 }
 
-                TLSClientParams tls_client_params;
-                tls_client_params.tls_min_level                   = this->config.tls_client_params_data.tls_min_level;
-                tls_client_params.tls_max_level                   = this->config.tls_client_params_data.tls_max_level;
-                tls_client_params.cipher_string                   = this->config.tls_client_params_data.cipher_string;
-                tls_client_params.show_common_cipher_list         = this->config.tls_client_params_data.show_common_cipher_list;
+                TlsConfig tls_config{
+                    .min_level = this->config.tls_client_params_data.tls_min_level,
+                    .max_level = this->config.tls_client_params_data.tls_max_level,
+                    .cipher_list = this->config.tls_client_params_data.cipher_string,
+                    // TODO .tls_1_3_ciphersuites
+                    .show_common_cipher_list = this->config.tls_client_params_data.show_common_cipher_list,
+                };
 
                 const ChannelsAuthorizations channels_authorizations("*"_zv, ""_zv);
 
@@ -437,7 +439,7 @@ public:
                   , *this->gen
                   , channels_authorizations
                   , mod_rdp_params
-                  , tls_client_params
+                  , tls_config
                   , this->licensestore
                   , this->ini
                   , nullptr

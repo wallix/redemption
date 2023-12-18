@@ -34,7 +34,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     Random& gen,
     const ChannelsAuthorizations& channels_authorizations,
     const ModRDPParams& mod_rdp_params,
-    const TLSClientParams & tls_client_params,
+    const TlsConfig & tls_config,
     LicenseApi& license_store,
     ModRdpVariables vars,
     FileValidatorService * file_validator_service,
@@ -43,6 +43,6 @@ std::unique_ptr<mod_api> new_mod_rdp(
 {
     return std::make_unique<mod_rdp>(
         trans, gd, osd, events, session_log, front, info, redir_info,
-        gen, channels_authorizations, mod_rdp_params, tls_client_params,
+        gen, channels_authorizations, mod_rdp_params, tls_config,
         license_store, vars, file_validator_service, mod_rdp_factory);
 }

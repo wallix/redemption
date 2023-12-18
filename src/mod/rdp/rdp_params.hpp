@@ -47,7 +47,6 @@ class ClientExecute;
 class Transport;
 class Theme;
 class Font;
-class TLSClientParams;
 
 struct ModRDPParams
 {

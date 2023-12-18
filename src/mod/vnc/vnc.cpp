@@ -478,7 +478,8 @@ void mod_vnc::rdp_input_invalidate(Rect r) {
 
 bool mod_vnc::doTlsSwitch()
 {
-    TLSClientParams tlsParams;
+    TlsConfig tls_config {};
+    AnonymousTls anonymous_tls{};
 
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
@@ -487,10 +488,10 @@ bool mod_vnc::doTlsSwitch()
     case VeNCRYPT_TLSPlain:
     case VeNCRYPT_TLSVnc:
         /* needed params for anonymous TLS */
-        tlsParams.security_level = 0;
-        tlsParams.tls_max_level = 3;
-        tlsParams.cipher_string = "ADH";
-        tlsParams.anonymous_tls = true;
+        tls_config.security_level = 0;
+        tls_config.max_level = 3;
+        tls_config.cipher_list = "ADH";
+        anonymous_tls = AnonymousTls::Yes;
         break;
     default:
         break;
@@ -499,7 +500,7 @@ bool mod_vnc::doTlsSwitch()
 
     NullServerNotifier notifier;
 
-    switch (this->t.enable_client_tls(notifier, tlsParams)) {
+    switch (this->t.enable_client_tls(notifier, tls_config, anonymous_tls)) {
         case Transport::TlsResult::WaitExternalEvent:
         case Transport::TlsResult::Want:
             return false;

@@ -86,7 +86,7 @@ void ProxyRecorder::front_step1(Transport & frontConn)
 
     if ((this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)
     || (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {
-        frontConn.enable_server_tls("inquisition", nullptr, nullptr, 0 /* tls_min_level */, 0  /* tls_max_level */, true);
+        frontConn.enable_server_tls("inquisition", TlsConfig{.show_common_cipher_list = true});
     }
 }
 
@@ -103,19 +103,15 @@ void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn,
         this->pstate = PState::NEGOCIATING_BACK_NLA;
     }
 
-    TLSClientParams tls_client_params;
-    tls_client_params.tls_min_level = 0;
-    tls_client_params.tls_max_level = 0;
-    tls_client_params.show_common_cipher_list = false;
+    TlsConfig tls_config{};
     nla_password += '\0';
-    // tls_client_params.cipher_string;
     this->nego_client = std::make_unique<NegoClient>(
         !nla_username.empty(),
         this->front_CR_TPDU.cinfo.flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
         this->back_nla_tee_trans, this->time_base,
         this->host, nla_username.c_str(),
         nla_password.c_str(),
-        enable_kerberos, tls_client_params,
+        enable_kerberos, tls_config,
         safe_cast<RdpNego::Verbose>(uint32_t(this->verbosity >> 32)));
 
     // equivalent to nego_client->send_negotiation_request()

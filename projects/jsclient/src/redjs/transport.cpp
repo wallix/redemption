@@ -31,7 +31,7 @@ namespace
 namespace redjs
 {
 
-Transport::TlsResult Transport::enable_client_tls(ServerNotifier& /*server_notifier*/, const TLSClientParams & /*tls_client_params*/)
+Transport::TlsResult Transport::enable_client_tls(ServerNotifier& /*server_notifier*/, const TlsConfig & /*tls_config*/, AnonymousTls /*anonymous_tls*/)
 {
     LOG(LOG_ERR, "Transport: enable_client_tls is not implemented.");
     return TlsResult::Fail;

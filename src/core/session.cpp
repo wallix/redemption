@@ -1672,10 +1672,13 @@ void session_start_wss(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile
         "RDP Wss Client"_sck_name, std::move(sck), sck_start_time, ini, pid_file, font, prevent_early_log,
         WsTransport::UseTls::Yes, WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
-            ini.get<cfg::client::ssl_cipher_list>(),
-            ini.get<cfg::client::tls_1_3_ciphersuites>(),
-            ini.get<cfg::client::tls_min_level>(),
-            ini.get<cfg::client::tls_max_level>(),
-            ini.get<cfg::client::show_common_cipher_list>(),
-        });
+            TlsConfig{
+                .min_level = ini.get<cfg::client::tls_min_level>(),
+                .max_level = ini.get<cfg::client::tls_max_level>(),
+                .cipher_list = ini.get<cfg::client::ssl_cipher_list>(),
+                .tls_1_3_ciphersuites = ini.get<cfg::client::tls_1_3_ciphersuites>(),
+                .show_common_cipher_list = ini.get<cfg::client::show_common_cipher_list>(),
+            },
+        }
+    );
 }

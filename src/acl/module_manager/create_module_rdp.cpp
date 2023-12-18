@@ -278,7 +278,7 @@ public:
       , Random & gen
       , const ChannelsAuthorizations & channels_authorizations
       , const ModRDPParams & mod_rdp_params
-      , const TLSClientParams & tls_client_params
+      , const TlsConfig & tls_config
       , LicenseApi & license_store
       , ModRdpVariables vars
       , [[maybe_unused]] FileValidatorService * file_validator_service
@@ -288,7 +288,7 @@ public:
     : RdpData(events, ini, name, std::move(sck), verbose, error_message, use_failure_simulation_socket_transport)
     , mod_rdp(transport_wrapper_fn(this->get_transport()), gd
         , osd, events, session_log, front, info, redir_info, gen
-        , channels_authorizations, mod_rdp_params, tls_client_params
+        , channels_authorizations, mod_rdp_params, tls_config
         , license_store
         , vars, file_validator_service, this->get_rdp_factory())
     , ini(ini)
@@ -581,11 +581,12 @@ ModPack create_mod_rdp(
     mod_rdp_params.device_id = ini.get<cfg::globals::device_id>().c_str();
 
     //mod_rdp_params.enable_tls                          = true;
-    TLSClientParams tls_client_params {
-        .tls_min_level = ini.get<cfg::mod_rdp::tls_min_level>(),
-        .tls_max_level = ini.get<cfg::mod_rdp::tls_max_level>(),
+    TlsConfig tls_config {
+        .min_level = ini.get<cfg::mod_rdp::tls_min_level>(),
+        .max_level = ini.get<cfg::mod_rdp::tls_max_level>(),
+        .cipher_list = ini.get<cfg::mod_rdp::cipher_string>(),
+        .tls_1_3_ciphersuites = ini.get<cfg::mod_rdp::tls_1_3_ciphersuites>(),
         .show_common_cipher_list = ini.get<cfg::mod_rdp::show_common_cipher_list>(),
-        .cipher_string = ini.get<cfg::mod_rdp::cipher_string>(),
         .security_level = ini.get<cfg::mod_rdp::tls_security_level>(),
     };
 
@@ -898,7 +899,7 @@ ModPack create_mod_rdp(
         gen,
         channels_authorizations,
         mod_rdp_params,
-        tls_client_params,
+        tls_config,
         file_system_license_store,
         ini,
         enable_validator ? &file_validator->service : nullptr,

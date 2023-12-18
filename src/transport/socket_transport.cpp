@@ -109,9 +109,7 @@ u8_array_view SocketTransport::get_public_key() const
     return this->tls ? this->tls->get_public_key() : nullptr;
 }
 
-void SocketTransport::enable_server_tls(const char * certificate_password,
-                                        const char * cipher_list, const char * tls_1_3_cyphersuites,
-                                        uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+void SocketTransport::enable_server_tls(const char * certificate_password, TlsConfig const& tls_config)
 {
     if (this->tls != nullptr) {
         // TODO this should be an error, no need to commute two times to TLS
@@ -121,7 +119,7 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
 
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() start (%s)", this->name);
 
-    if (!this->tls->enable_server_tls(this->sck, certificate_password, cipher_list, tls_1_3_cyphersuites, tls_min_level, tls_max_level, show_common_cipher_list)) {
+    if (!this->tls->enable_server_tls(this->sck, certificate_password, tls_config)) {
         this->tls.reset();
         throw Error(ERR_TRANSPORT_TLS_SERVER);
     }
@@ -129,13 +127,13 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() done (%s)", this->name);
 }
 
-Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
+Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_notifier, TlsConfig const& tls_config, AnonymousTls anonymous_tls)
 {
     switch (this->tls_state) {
         case TLSState::Uninit:
             LOG(LOG_INFO, "Client TLS start");
             this->tls = std::make_unique<TLSContext>();
-            if (!this->tls->enable_client_tls_start(this->sck, this->error_message, tls_client_params)) {
+            if (!this->tls->enable_client_tls_start(this->sck, this->error_message, tls_config)) {
                 return Transport::TlsResult::Fail;
             }
             this->tls_state = TLSState::Want;
@@ -152,7 +150,8 @@ Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_
                 case Transport::TlsResult::Ok: {
                     try {
                         ret = this->tls->check_certificate(
-                            server_notifier, this->error_message, this->ip_address, this->port, tls_client_params.anonymous_tls);
+                            server_notifier, this->error_message,
+                            this->ip_address, this->port, bool(anonymous_tls));
 
                         if (ret == Transport::TlsResult::WaitExternalEvent) {
                             this->tls_state = TLSState::WaitCertCb;

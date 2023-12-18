@@ -36,7 +36,7 @@ class RedirectionInfo;
 class Random;
 class ModRDPParams;
 class FileValidatorService;
-class TLSClientParams;
+class TlsConfig;
 class ModRdpFactory;
 class ChannelsAuthorizations;
 
@@ -57,7 +57,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     Random& gen,
     const ChannelsAuthorizations& channels_authorizations,
     const ModRDPParams& mod_rdp_params,
-    const TLSClientParams& tls_client_params,
+    const TlsConfig& tls_config,
     LicenseApi& license_store,
     ModRdpVariables vars,
     FileValidatorService * file_validator_service,

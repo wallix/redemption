@@ -1,30 +1,10 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+SPDX-FileCopyrightText: 2023 Wallix Proxies Team
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean
-
-   Transport layer abstraction
+SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-
 #pragma once
-
-#include <cstdint>
-#include <cstddef>
 
 #include "cxx/cxx.hpp"
 #include "core/error.hpp"
@@ -34,20 +14,23 @@
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/buffer_view.hpp"
 
+#include <cstdint>
+#include <string>
+
 
 class ServerNotifier;
 
-
-struct TLSClientParams
+struct TlsConfig
 {
-    uint32_t tls_min_level = 0;
-    uint32_t tls_max_level = 0;
-    bool show_common_cipher_list = false;
-    std::string cipher_string;
+    uint32_t min_level = 0;
+    uint32_t max_level = 0;
+    std::string cipher_list;
     std::string tls_1_3_ciphersuites;
-    int security_level = 1;
-    bool anonymous_tls = false;
+    bool show_common_cipher_list = false;
+    int security_level = -1;
 };
+
+enum class AnonymousTls : bool { No, Yes };
 
 
 class Transport : noncopyable
@@ -61,26 +44,21 @@ public:
     virtual ~Transport() = default;
 
     enum class [[nodiscard]] TlsResult : uint8_t { Ok, Fail, Want, WaitExternalEvent, };
-    virtual TlsResult enable_client_tls(
-        ServerNotifier & server_notifier, const TLSClientParams & /*tls_client_params*/)
+
+    virtual TlsResult enable_client_tls(ServerNotifier & server_notifier, TlsConfig const& tls_config, AnonymousTls anonymous_tls)
     {
         // default enable_tls do nothing
         (void)server_notifier;
+        (void)tls_config;
+        (void)anonymous_tls;
         return TlsResult::Fail;
     }
 
-    virtual void enable_server_tls(
-        const char * certificate_password,
-        const char * cipher_list, const char * tls_1_3_ciphersuites,
-        uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+    virtual void enable_server_tls(const char * certificate_password, TlsConfig const& tls_config)
     {
         // default enable_tls do nothing
         (void)certificate_password;
-        (void)cipher_list;
-        (void)tls_1_3_ciphersuites;
-        (void)tls_min_level;
-        (void)tls_max_level;
-        (void)show_common_cipher_list;
+        (void)tls_config;
     }
 
     [[nodiscard]] virtual u8_array_view get_public_key() const
@@ -192,8 +170,13 @@ public:
         return true;
     }
 
-    [[nodiscard]] virtual int get_fd() const { return INVALID_SOCKET; }
+    [[nodiscard]]
+    virtual int get_fd() const
+    {
+        return INVALID_SOCKET;
+    }
 };
+
 
 class SequencedTransport : public Transport
 {
@@ -201,38 +184,71 @@ public:
     virtual bool next() = 0;
 };
 
+
 struct InTransport
 {
     InTransport(Transport & t)
       : t(t)
     {}
 
-    void recv_boom(writable_byte_ptr buffer, size_t len) { this->t.recv_boom(buffer, len); }
-    void recv_boom(writable_buffer_view buffer) { this->t.recv_boom(buffer); }
-
-    [[nodiscard]]
-    Transport::Read atomic_read(writable_byte_ptr buffer, size_t len) { return this->t.atomic_read(buffer, len); }
-
-    [[nodiscard]]
-    size_t partial_read(writable_byte_ptr buffer, size_t len) { return this->t.partial_read(buffer, len); }
-
-    Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
+    void recv_boom(writable_byte_ptr buffer, size_t len)
     {
-        return this->t.enable_client_tls(server_notifier, tls_client_params);
+        this->t.recv_boom(buffer, len);
     }
 
-    void enable_server_tls(const char * certificate_password, const char * cipher_list, const char * tls_1_3_cyphersuites, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
-    { this->t.enable_server_tls(certificate_password, cipher_list, tls_1_3_cyphersuites, tls_min_level, tls_max_level, show_common_cipher_list); }
+    void recv_boom(writable_buffer_view buffer)
+    {
+        this->t.recv_boom(buffer);
+    }
 
-    [[nodiscard]] u8_array_view get_public_key() const { return this->t.get_public_key(); }
+    [[nodiscard]]
+    Transport::Read atomic_read(writable_byte_ptr buffer, size_t len)
+    {
+        return this->t.atomic_read(buffer, len);
+    }
 
-    bool disconnect() { return this->t.disconnect(); }
-    bool connect() { return this->t.connect(); }
-    [[nodiscard]] int get_fd() const { return this->t.get_fd(); }
+    [[nodiscard]]
+    size_t partial_read(writable_byte_ptr buffer, size_t len)
+    {
+        return this->t.partial_read(buffer, len);
+    }
+
+    Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, TlsConfig const& tls_config, AnonymousTls anonymous_tls)
+    {
+        return this->t.enable_client_tls(server_notifier, tls_config, anonymous_tls);
+    }
+
+    void enable_server_tls(const char * certificate_password, TlsConfig const& tls_config)
+    {
+        this->t.enable_server_tls(certificate_password, tls_config);
+    }
+
+    [[nodiscard]]
+    u8_array_view get_public_key() const
+    {
+        return this->t.get_public_key();
+    }
+
+    bool disconnect()
+    {
+        return this->t.disconnect();
+    }
+
+    bool connect()
+    {
+        return this->t.connect();
+    }
+
+    [[nodiscard]]
+    int get_fd() const
+    {
+        return this->t.get_fd();
+    }
 
 private:
     Transport & t;
 };
+
 
 struct OutTransport
 {
@@ -240,25 +256,54 @@ struct OutTransport
       : t(t)
     {}
 
-    void send(byte_ptr buffer, size_t len) { this->t.send(buffer, len); }
-    void send(bytes_view buffer) { this->t.send(buffer); }
-
-    Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
+    void send(byte_ptr buffer, size_t len)
     {
-        return this->t.enable_client_tls(server_notifier, tls_client_params);
+        this->t.send(buffer, len);
     }
 
-    void enable_server_tls(const char * certificate_password, const char * cipher_list, const char * tls_1_3_cyphersuites, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
-    { this->t.enable_server_tls(certificate_password, cipher_list, tls_1_3_cyphersuites, tls_min_level, tls_max_level, show_common_cipher_list); }
+    void send(bytes_view buffer)
+    {
+        this->t.send(buffer);
+    }
 
-    [[nodiscard]] u8_array_view get_public_key() const { return this->t.get_public_key(); }
+    Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, TlsConfig const& tls_config, AnonymousTls anonymous_tls)
+    {
+        return this->t.enable_client_tls(server_notifier, tls_config, anonymous_tls);
+    }
 
-    bool disconnect() { return this->t.disconnect(); }
-    bool connect() { return this->t.connect(); }
-    [[nodiscard]] int get_fd() const { return this->t.get_fd(); }
+    void enable_server_tls(const char * certificate_password, TlsConfig const& tls_config)
+    {
+        this->t.enable_server_tls(certificate_password, tls_config);
+    }
+
+    [[nodiscard]]
+    u8_array_view get_public_key() const
+    {
+        return this->t.get_public_key();
+    }
+
+    bool disconnect()
+    {
+        return this->t.disconnect();
+    }
+
+    bool connect()
+    {
+        return this->t.connect();
+    }
+
+    [[nodiscard]]
+    int get_fd() const
+    {
+        return this->t.get_fd();
+    }
 
     // TODO [[deprecated]]
-    [[nodiscard]] Transport & get_transport() const { return this->t; }
+    [[nodiscard]]
+    Transport & get_transport() const
+    {
+        return this->t;
+    }
 
 private:
     Transport & t;

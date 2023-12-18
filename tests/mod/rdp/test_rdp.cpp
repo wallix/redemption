@@ -153,7 +153,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = false;
 
-    TLSClientParams tls_client_params;
+    TlsConfig tls_config{};
 
     // To always get the same client random, in tests
     LCGRandom gen;
@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     auto mod = new_mod_rdp(
         t, front.gd(), osd, events, session_log,
         front, info, redir_info, gen, channels_authorizations,
-        mod_rdp_params, tls_client_params, license_store,
+        mod_rdp_params, tls_config, license_store,
         ini, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 800);

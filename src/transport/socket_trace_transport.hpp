@@ -66,14 +66,14 @@ public:
         return this->strans.get_public_key();
     }
 
-    void enable_server_tls(const char * certificate_password, const char * cipher_list, char const * tls_1_3_cyphersuites, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list) override
+    void enable_server_tls(const char * certificate_password, TlsConfig const& tls_config) override
     {
-        return this->strans.enable_server_tls(certificate_password, cipher_list, tls_1_3_cyphersuites, tls_min_level, tls_max_level, show_common_cipher_list);
+        return this->strans.enable_server_tls(certificate_password, tls_config);
     }
 
-    TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) override
+    TlsResult enable_client_tls(ServerNotifier & server_notifier, TlsConfig const& tls_config, AnonymousTls anonymous_tls) override
     {
-        return this->strans.enable_client_tls(server_notifier, tls_client_params);
+        return this->strans.enable_client_tls(server_notifier, tls_config, anonymous_tls);
     }
 
     bool disconnect() override

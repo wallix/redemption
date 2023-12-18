@@ -149,7 +149,7 @@ public:
         return {this->public_key.get(), this->public_key_length};
     }
 
-    bool enable_client_tls_start(int sck, std::string* error_message, const TLSClientParams & tls_client_params)
+    bool enable_client_tls_start(int sck, std::string* error_message, TlsConfig const& tls_config)
     {
         SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
 
@@ -174,21 +174,21 @@ public:
         // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
-        set_tls_levels(ctx, tls_client_params.tls_min_level, tls_client_params.tls_max_level);
+        set_tls_levels(ctx, tls_config.min_level, tls_config.max_level);
 
         // https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html
         // "DEFAULT@SEC_LEVEL=1"
-        if (not tls_client_params.cipher_string.empty()) { // if parameter is not defined, use system default
-            LOG(LOG_INFO, "TLS Client cipher list: %s", tls_client_params.cipher_string.c_str());
-            SSL_CTX_set_cipher_list(ctx, tls_client_params.cipher_string.c_str());
+        if (not tls_config.cipher_list.empty()) { // when not defined, use system default
+            LOG(LOG_INFO, "TLS Client cipher list: %s", tls_config.cipher_list.c_str());
+            SSL_CTX_set_cipher_list(ctx, tls_config.cipher_list.c_str());
         }
-        if (not tls_client_params.tls_1_3_ciphersuites.empty()) { // if parameter is not defined, use system default
-            LOG(LOG_INFO, "TLS 1.3 Client cipher suites: %s", tls_client_params.tls_1_3_ciphersuites.c_str());
-            SSL_CTX_set_ciphersuites(ctx, tls_client_params.tls_1_3_ciphersuites.c_str());
+        if (not tls_config.tls_1_3_ciphersuites.empty()) { // when not defined, use system default
+            LOG(LOG_INFO, "TLS 1.3 Client cipher suites: %s", tls_config.tls_1_3_ciphersuites.c_str());
+            SSL_CTX_set_ciphersuites(ctx, tls_config.tls_1_3_ciphersuites.c_str());
         }
 
-        if (tls_client_params.security_level >= 0) {
-            SSL_CTX_set_security_level(ctx, tls_client_params.security_level);
+        if (tls_config.security_level >= 0) {
+            SSL_CTX_set_security_level(ctx, tls_config.security_level);
         }
 
         SSL* ssl = SSL_new(ctx);
@@ -203,7 +203,7 @@ public:
             return tls_ctx_print_error("enable_client_tls", "SSL_set_fd failed", error_message);
         }
 
-        if (tls_client_params.show_common_cipher_list){
+        if (tls_config.show_common_cipher_list){
             log_cipher_list(this->allocated_ssl, "Client");
         }
 
@@ -384,7 +384,7 @@ public:
         return Transport::TlsResult::Fail;
     }
 
-    bool enable_server_tls(int sck, const char * certificate_password, const char * cipher_list, const char * tls_1_3_cyphersuites, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+    bool enable_server_tls(int sck, const char * certificate_password, TlsConfig const& tls_config)
     {
         LOG(LOG_INFO, "Enable server TLS");
         // reference doc: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_new.html
@@ -554,19 +554,19 @@ public:
         LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL options");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
-        set_tls_levels(ctx, tls_min_level, tls_max_level);
+        set_tls_levels(ctx, tls_config.min_level, tls_config.max_level);
 
         // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
         // SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
         // Not compatible with MSTSC 6.1 on XP and W2K3
         // SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
-        if (cipher_list && *cipher_list) {
+        if (not tls_config.cipher_list.empty()) {
             LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL cipher list");
-            SSL_CTX_set_cipher_list(ctx, cipher_list);
+            SSL_CTX_set_cipher_list(ctx, tls_config.cipher_list.c_str());
         }
-        if (tls_1_3_cyphersuites && *tls_1_3_cyphersuites) {
+        if (not tls_config.tls_1_3_ciphersuites.empty()) {
             LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL ciphersuites");
-            SSL_CTX_set_ciphersuites(ctx, tls_1_3_cyphersuites);
+            SSL_CTX_set_ciphersuites(ctx, tls_config.tls_1_3_ciphersuites.c_str());
         }
 
         // -------- End of system wide SSL_Ctx option ----------------------------------
@@ -650,7 +650,7 @@ public:
 
         LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(this->allocated_ssl));
 
-        if (show_common_cipher_list) {
+        if (tls_config.show_common_cipher_list) {
             log_cipher_list(this->allocated_ssl, "Server");
         }
 

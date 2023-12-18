@@ -50,7 +50,7 @@ public:
 
     [[nodiscard]] u8_array_view get_public_key() const override;
 
-    TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) override;
+    TlsResult enable_client_tls(ServerNotifier & server_notifier, TlsConfig const& tls_config, AnonymousTls anonymous_tls) override;
 
     bool disconnect() override;
     bool connect() override;

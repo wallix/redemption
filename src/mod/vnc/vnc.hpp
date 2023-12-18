@@ -92,8 +92,8 @@ public:
 
         void send(bytes_view buffer);
 
-        Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) {
-            return m_trans.enable_client_tls(server_notifier, tls_client_params);
+        Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, TlsConfig const& tls_config, AnonymousTls anonymous_tls) {
+            return m_trans.enable_client_tls(server_notifier, tls_config, anonymous_tls);
         }
 
         int get_fd() const {

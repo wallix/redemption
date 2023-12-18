@@ -70,18 +70,18 @@ void RecorderTransport::add_info(bytes_view info)
     this->out.write_packet(RecorderFile::PacketType::Info, info);
 }
 
-Transport::TlsResult RecorderTransport::enable_client_tls(ServerNotifier& server_notifier, const TLSClientParams & tls_client_params)
+Transport::TlsResult RecorderTransport::enable_client_tls(ServerNotifier& server_notifier, TlsConfig const& tls_config, AnonymousTls anonymous_tls)
 {
-    auto const r = this->trans.enable_client_tls(server_notifier, tls_client_params);
+    auto const r = this->trans.enable_client_tls(server_notifier, tls_config, anonymous_tls);
     if (r != RecorderTransport::TlsResult::Fail) {
         this->out.write_packet(RecorderFile::PacketType::ClientCert, this->trans.get_public_key());
     }
     return r;
 }
 
-void RecorderTransport::enable_server_tls(const char * certificate_password, const char * cipher_list, const char * tls_1_3_cyphersuites, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+void RecorderTransport::enable_server_tls(const char * certificate_password, TlsConfig const& tls_config)
 {
-    this->trans.enable_server_tls(certificate_password, cipher_list, tls_1_3_cyphersuites, tls_min_level, tls_max_level, show_common_cipher_list);
+    this->trans.enable_server_tls(certificate_password, tls_config);
     this->out.write_packet(RecorderFile::PacketType::ServerCert, this->trans.get_public_key());
 }
 

@@ -1602,11 +1602,14 @@ public:
         if (this->tls_client_active) {
             this->trans.enable_server_tls(
                 this->ini.get<cfg::globals::certificate_password>(),
-                this->ini.get<cfg::client::ssl_cipher_list>().c_str(),
-                this->ini.get<cfg::client::tls_1_3_ciphersuites>().c_str(),
-                this->ini.get<cfg::client::tls_min_level>(),
-                this->ini.get<cfg::client::tls_max_level>(),
-                this->ini.get<cfg::client::show_common_cipher_list>());
+                TlsConfig{
+                     .min_level = this->ini.get<cfg::client::tls_min_level>(),
+                     .max_level = this->ini.get<cfg::client::tls_max_level>(),
+                     .cipher_list = this->ini.get<cfg::client::ssl_cipher_list>(),
+                     .tls_1_3_ciphersuites = this->ini.get<cfg::client::tls_1_3_ciphersuites>(),
+                     .show_common_cipher_list = this->ini.get<cfg::client::show_common_cipher_list>()
+                }
+            );
 
             if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
                 this->nego_server = std::make_unique<NegoServer>(

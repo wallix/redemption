@@ -48,8 +48,7 @@ struct RdpNegoProtocols
 RdpNego::RdpNego(
     const bool tls, const std::string & username, bool nla, bool admin_mode,
     const char * target_host, const bool krb, Random & rand, const TimeBase & time_base,
-    std::string& extra_message, Language lang,
-    const TLSClientParams & tls_client_params,
+    std::string& extra_message, Language lang, TlsConfig const& tls_config,
     const Verbose verbose)
 : tls(nla || tls)
 , nla(nla)
@@ -67,7 +66,7 @@ RdpNego::RdpNego(
 , lb_info(nullptr)
 , extra_message(extra_message)
 , lang(lang)
-, tls_client_params(tls_client_params)
+, tls_config(tls_config)
 , verbose(verbose)
 {
     LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s adminMode=%s",
@@ -370,9 +369,9 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
     return State::Final;
 }
 
-inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, const TLSClientParams & tls_client_params)
+static bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, TlsConfig const& tls_config)
 {
-    switch (trans.enable_client_tls(notifier, tls_client_params))
+    switch (trans.enable_client_tls(notifier, tls_config, AnonymousTls::No))
     {
         case Transport::TlsResult::WaitExternalEvent:
         case Transport::TlsResult::Want:
@@ -388,7 +387,7 @@ inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, cons
 
 RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerNotifier& notifier) const
 {
-    if (!enable_client_tls(trans, notifier, this->tls_client_params)) {
+    if (!enable_client_tls(trans, notifier, this->tls_config)) {
         return State::Tls;
     }
     return State::Final;
@@ -402,7 +401,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
     //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
     //     this->restricted_admin_mode = true;
     // }
-    if (!enable_client_tls(trans, notifier, this->tls_client_params)) {
+    if (!enable_client_tls(trans, notifier, this->tls_config)) {
         return State::SslHybrid;
     }
 

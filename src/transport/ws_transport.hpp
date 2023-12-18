@@ -32,11 +32,7 @@ public:
     struct TlsOptions
     {
         std::string certificate_password {};
-        std::string cipher_list {};
-        std::string tls_1_3_cyphersuites {};
-        uint32_t tls_min_level {};
-        uint32_t tls_max_level {};
-        bool show_common_cipher_list {};
+        TlsConfig tls_config;
     };
 
     WsTransport(
@@ -57,7 +53,7 @@ protected:
 
     void do_send(const uint8_t * const buffer, size_t len) override;
 
-    TlsResult enable_client_tls(ServerNotifier& server_notifier, const TLSClientParams & tls_client_params) override;
+    TlsResult enable_client_tls(ServerNotifier& server_notifier, TlsConfig const& tls_config, AnonymousTls anonymous_tls) override;
 
 private:
     class D;

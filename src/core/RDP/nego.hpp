@@ -103,7 +103,7 @@ private:
     State state = State::Negociate;
 
 public:
-    TLSClientParams tls_client_params;
+    TlsConfig tls_config;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -118,8 +118,7 @@ public:
     RdpNego(
         const bool tls, const std::string & username, bool nla, bool admin_mode,
         const char * target_host, const bool krb, Random & rand, const TimeBase & time_base,
-        std::string& extra_message, Language lang,
-        const TLSClientParams & tls_client_params,
+        std::string& extra_message, Language lang, TlsConfig const& tls_config,
         const Verbose verbose);
 
     ~RdpNego();

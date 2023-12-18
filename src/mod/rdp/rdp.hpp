@@ -1933,7 +1933,7 @@ public:
       , Random & gen
       , const ChannelsAuthorizations & channels_authorizations
       , const ModRDPParams & mod_rdp_params
-      , const TLSClientParams & tls_client_params
+      , const TlsConfig & tls_config
       , LicenseApi & license_store
       , ModRdpVariables vars
       , [[maybe_unused]] FileValidatorService * file_validator_service
@@ -2078,7 +2078,7 @@ public:
             false,
             false,
     #endif
-            tls_client_params
+            tls_config
         );
 
         RdpNegociation& rdp_negociation = this->private_rdp_negociation->rdp_negociation;
