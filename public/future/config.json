@@ -462,6 +462,23 @@
     },
     {
       "section": "client",
+      "name": "ssl_cipher_list",
+      "type": "str",
+      "value": "HIGH:!ADH:!3DES:!SHA",
+      "description": "[Not configured]: Compatible with more RDP clients (less secure)\nHIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)\nHIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)\nThe format used is described on this page: https://www.openssl.org/docs/man3.1/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT",
+      "globalSpec": true
+    },
+    {
+      "section": "client",
+      "name": "tls_1_3_ciphersuites",
+      "type": "str",
+      "value": "",
+      "description": "Configure the available TLSv1.3 ciphersuites.\nEmpty to apply system-wide configuration.\nThe format used is described in the third paragraph of this page: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html#DESCRIPTION",
+      "displayName": "TLS 1.3 cipher suites",
+      "globalSpec": true
+    },
+    {
+      "section": "client",
       "name": "show_common_cipher_list",
       "type": "bool",
       "value": false,
@@ -469,14 +486,6 @@
       "tags": ["debug"],
       "globalSpec": true,
       "advanced": true
-    },
-    {
-      "section": "client",
-      "name": "ssl_cipher_list",
-      "type": "str",
-      "value": "HIGH:!ADH:!3DES:!SHA",
-      "description": "[Not configured]: Compatible with more RDP clients (less secure)\nHIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)\nHIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)",
-      "globalSpec": true
     },
     {
       "section": "client",
@@ -778,7 +787,19 @@
       "name": "cipher_string",
       "type": "str",
       "value": "ALL",
-      "description": "TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.",
+      "description": "TLSv1.2 and below additional ciphers supported.\nEmpty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.\nThe format used is described on this page: https://www.openssl.org/docs/man3.1/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "tls_1_3_ciphersuites",
+      "type": "str",
+      "value": "",
+      "description": "Configure the available TLSv1.3 ciphersuites.\nEmpty to apply system-wide configuration.\nThe format used is described in the third paragraph of this page: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html#DESCRIPTION",
+      "displayName": "TLS 1.3 cipher suites",
       "rdp": true,
       "jh": true,
       "aclToProxy": true,
