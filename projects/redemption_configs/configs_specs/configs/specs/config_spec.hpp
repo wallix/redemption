@@ -581,6 +581,16 @@ _.section("client", [&]
     });
 
     _.member(MemberInfo{
+        .name = "tls_security_level",
+        .value = value<types::int_>(-1),
+        .spec = global_spec(no_acl),
+        .desc =
+            "Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0\n"
+            "A negative value uses the default value configured in OpenSSL.\n"
+            "⚠ Change this value only for compatibility reasons.",
+    });
+
+    _.member(MemberInfo{
         .name = "ssl_cipher_list",
         .value = value<std::string>("HIGH:!ADH:!3DES:!SHA"),
         .spec = global_spec(no_acl),
@@ -868,12 +878,10 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
 
     _.member(MemberInfo{
         .name = "tls_security_level",
-        .value = value<types::int_>(1),
-        // .spec = connpolicy(rdp_and_jh, L, spec::advanced),
-        .spec = ini_only(acl_to_proxy(no_reset_back_to_selector, L)),
+        .value = value<types::int_>(-1),
+        .spec = connpolicy(rdp_and_jh, L),
         .desc =
             "Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0\n"
-            "\n"
             "A negative value uses the default value configured in OpenSSL.",
     });
 

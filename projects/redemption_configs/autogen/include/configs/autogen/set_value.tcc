@@ -332,6 +332,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "tls_security_level"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::client::tls_security_level&>(this->variables).value,
+                ::configs::spec_type<int>{},
+                value
+            );
+        }
         else if (key == "ssl_cipher_list"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),

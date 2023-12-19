@@ -536,6 +536,17 @@ namespace cfg
         using mapped_type = uint32_t;
         type value { 0 };
     };
+    /// Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0 <br/>
+    /// A negative value uses the default value configured in OpenSSL. <br/>
+    /// ⚠ Change this value only for compatibility reasons. <br/>
+    /// type: int <br/>
+    /// default: -1 <br/>
+    struct client::tls_security_level {
+        static constexpr unsigned acl_proxy_communication_flags = 0b00;
+        using type = int;
+        using mapped_type = int;
+        type value { -1 };
+    };
     /// [Not configured]: Compatible with more RDP clients (less secure) <br/>
     /// HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure) <br/>
     /// HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure) <br/>
@@ -921,11 +932,11 @@ namespace cfg
         type value { 0 };
     };
     /// Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0 <br/>
-    ///  <br/>
     /// A negative value uses the default value configured in OpenSSL. <br/>
     /// type: int <br/>
-    /// acl ⇒ proxy <br/>
-    /// default: 1 <br/>
+    /// connpolicy -> proxy <br/>
+    /// aclName: mod_rdp:tls_security_level <br/>
+    /// default: -1 <br/>
     struct mod_rdp::tls_security_level {
         static constexpr unsigned acl_proxy_communication_flags = 0b10;
         // for old cppcheck
@@ -933,7 +944,7 @@ namespace cfg
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section5 + 5};
         using type = int;
         using mapped_type = int;
-        type value { 1 };
+        type value { -1 };
     };
     /// TLSv1.2 and below additional ciphers supported. <br/>
     /// Empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers. <br/>
@@ -5130,6 +5141,7 @@ struct client
 , cfg::client::tls_support
 , cfg::client::tls_min_level
 , cfg::client::tls_max_level
+, cfg::client::tls_security_level
 , cfg::client::show_common_cipher_list
 , cfg::client::enable_nla
 , cfg::client::disable_tsk_switch_shortcuts

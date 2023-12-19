@@ -26,8 +26,8 @@ struct TlsConfig
     uint32_t max_level = 0;
     std::string cipher_list;
     std::string tls_1_3_ciphersuites;
-    bool show_common_cipher_list = false;
     int security_level = -1;
+    bool show_common_cipher_list = false;
 };
 
 enum class AnonymousTls : bool { No, Yes };

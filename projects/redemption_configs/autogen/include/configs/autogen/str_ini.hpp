@@ -153,6 +153,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (min = 0)
 #tls_max_level = 0
 
+# Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0
+# A negative value uses the default value configured in OpenSSL.
+# ⚠ Change this value only for compatibility reasons.
+#tls_security_level = -1
+
 # [Not configured]: Compatible with more RDP clients (less secure)
 # HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
 # HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
@@ -375,10 +380,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #tls_max_level = 0
 
 # Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0
-# 
 # A negative value uses the default value configured in OpenSSL.
 # (acl config: proxy ⇐ mod_rdp:tls_security_level)
-#tls_security_level = 1
+#tls_security_level = -1
 
 # TLSv1.2 and below additional ciphers supported.
 # Empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.

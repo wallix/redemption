@@ -53,6 +53,7 @@ template<> struct acl_and_spec_type<cfg::client::tls_fallback_legacy> { using ty
 template<> struct acl_and_spec_type<cfg::client::tls_support> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::client::tls_min_level> { using type = uint32_t; };
 template<> struct acl_and_spec_type<cfg::client::tls_max_level> { using type = uint32_t; };
+template<> struct acl_and_spec_type<cfg::client::tls_security_level> { using type = int; };
 template<> struct acl_and_spec_type<cfg::client::ssl_cipher_list> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::client::tls_1_3_ciphersuites> { using type = std::string; };
 template<> struct acl_and_spec_type<cfg::client::show_common_cipher_list> { using type = bool; };
