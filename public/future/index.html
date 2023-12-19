@@ -251,6 +251,13 @@ label {
 .tag-debug { background-color: #eef; }
 .tag-workaround { background-color: #eff; }
 .tag-compatibility { background-color: #efe; }
+
+.visual-color {
+  display: inline-block;
+  border: 1px gray solid;
+  border-radius: 5px;
+  width: 1.2em;
+}
 </style>
 
 </head>
@@ -572,11 +579,14 @@ const makeHtmlSpec = (enumDatas, sections, spec, prefix, isConnpolicy, prefixPre
         }
       }
       else if (type === 'list') {
-        type = `list of ${mappingDisplayedType[option.subtype] || option.subtype}`;
+        type = `list of ${mappingDisplayType[option.subtype] || option.subtype}`;
       }
       else {
-        type = mappingDisplayedType[type] || type;
-        humanValue = toHumanTime(option.value, mappingHumanTime[type]);
+        const fn = mappingDisplayFn[type];
+        if (fn) {
+          humanValue = fn(option.value);
+        }
+        type = mappingDisplayType[type] || type;
       }
 
       description = description
@@ -680,33 +690,7 @@ const tabSelect = (event) => {
   setTab(newTab);
 };
 
-const mappingDisplayedType = {
-  u8: 'number',
-  u16: 'number',
-  u32: 'number',
-  u64: 'number',
-  uint: 'number',
-  i8: 'number',
-  i16: 'number',
-  i32: 'number',
-  i64: 'number',
-  int: 'number',
-  str: 'string',
-  bool: 'boolean',
-  rgb: 'color',
-};
-
-const mappingHumanTime = {
-  milliseconds: 1,
-  centiseconds: 10,
-  deciseconds: 100,
-  seconds: 1000,
-  minutes: 1000 * 60,
-};
-
 const toHumanTime = (t, millisecondFactor) => {
-  if (!millisecondFactor || !t) return '';
-
   // to milliseconds
   let milliseconds = t * millisecondFactor;
   const minutes = Math.floor(milliseconds / (1000 * 60));
@@ -722,6 +706,35 @@ const toHumanTime = (t, millisecondFactor) => {
     s += `${milliseconds}ms`;
   }
   return s;
+};
+
+const toHumanColor = (color) => {
+  return `<span class="visual-color" style="background: ${color}">&nbsp;</span>`
+}
+
+const mappingDisplayType = {
+  u8: 'number',
+  u16: 'number',
+  u32: 'number',
+  u64: 'number',
+  uint: 'number',
+  i8: 'number',
+  i16: 'number',
+  i32: 'number',
+  i64: 'number',
+  int: 'number',
+  str: 'string',
+  bool: 'boolean',
+  rgb: 'color',
+};
+
+const mappingDisplayFn = {
+  milliseconds: (t) => toHumanTime(t, 1),
+  centiseconds: (t) => toHumanTime(t, 10),
+  deciseconds: (t) => toHumanTime(t, 100),
+  seconds: (t) => toHumanTime(t, 1000),
+  minutes: (t) => toHumanTime(t, 1000 * 60),
+  rgb: toHumanColor,
 };
 
 (async() => {
