@@ -55,6 +55,7 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 //     SSL_set_msg_callback_arg(ssl, BIO_new_fp(stdout, 0));
 // }
 
+REDEMPTION_NOINLINE
 inline bool tls_ctx_print_error(char const* funcname, char const* error_msg, std::string* error_message)
 {
     LOG(LOG_ERR, "TLSContext::%s: %s", funcname, error_msg);
@@ -70,8 +71,23 @@ inline bool tls_ctx_print_error(char const* funcname, char const* error_msg, std
     return false;
 }
 
-inline void set_tls_levels(SSL_CTX* ctx, uint32_t tls_min_level, uint32_t tls_max_level)
+/// \return nullptr when no error. Otherwise function name with an error
+inline char const* apply_tls_config(
+    SSL_CTX* ctx, TlsConfig const& tls_config, bool verbose, char const* funcname)
 {
+    LOG_IF(verbose, LOG_INFO,
+        "TLSContext::%s: TLS: min_level=%d%s, max_level=%d%s, cipher_list='%s', TLSv1.3 ciphersuites='%s', security_level=%d%s",
+        funcname,
+        tls_config.min_level, tls_config.min_level == 0 ? " (system-wide)" : "",
+        tls_config.max_level, tls_config.max_level == 0 ? " (system-wide)" : "",
+        tls_config.cipher_list.empty() ? "(system-wide)"
+            : tls_config.cipher_list.c_str(),
+        tls_config.tls_1_3_ciphersuites.empty() ? "(system-wide)"
+            : tls_config.tls_1_3_ciphersuites.c_str(),
+        tls_config.security_level,
+        tls_config.security_level <= 0 ? " (system-wide)" : ""
+    );
+
     auto to_version = [](uint32_t level) {
         return level == 0 ? 0
              : level == 1 ? TLS1_1_VERSION
@@ -79,10 +95,48 @@ inline void set_tls_levels(SSL_CTX* ctx, uint32_t tls_min_level, uint32_t tls_ma
              : TLS1_3_VERSION;
     };
 
-    SSL_CTX_set_min_proto_version(ctx, to_version(tls_min_level));
-    if (tls_max_level){
-        SSL_CTX_set_max_proto_version(ctx, to_version(tls_max_level));
+#define CHECK_CALL(func, ...) do { if (!func(__VA_ARGS__)) { \
+        return #func;                                        \
+    } } while (0)
+
+    /*
+     * This is necessary, because the Microsoft TLS implementation is not perfect.
+     * SSL_OP_ALL enables a couple of workarounds for buggy TLS implementations,
+     * but the most important workaround being SSL_OP_TLS_BLOCK_PADDING_BUG.
+     * As the size of the encrypted payload may give hints about its contents,
+     * block padding is normally used, but the Microsoft TLS implementation
+     * won't recognize it and will disconnect you after sending a TLS alert.
+     */
+    SSL_CTX_set_options(ctx, SSL_OP_ALL);
+
+    CHECK_CALL(SSL_CTX_set_min_proto_version, ctx, to_version(tls_config.min_level));
+    if (tls_config.max_level) {
+        CHECK_CALL(SSL_CTX_set_max_proto_version, ctx, to_version(tls_config.max_level));
     }
+
+    // https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html
+
+    // when not defined, use system default
+    if (not tls_config.cipher_list.empty()) {
+        // Not compatible with MSTSC 6.1 on XP and W2K3
+        // SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
+        CHECK_CALL(SSL_CTX_set_cipher_list, ctx, tls_config.cipher_list.c_str());
+    }
+
+    // when not defined, use system default
+    if (not tls_config.tls_1_3_ciphersuites.empty()) {
+        CHECK_CALL(SSL_CTX_set_ciphersuites, ctx, tls_config.tls_1_3_ciphersuites.c_str());
+    }
+
+#undef CHECK_CALL
+
+    // "DEFAULT@SEC_LEVEL=1" (<= 1.1)
+    // "DEFAULT@SEC_LEVEL=1" (>= 2)
+    if (tls_config.security_level >= 0) {
+        SSL_CTX_set_security_level(ctx, tls_config.security_level);
+    }
+
+    return nullptr;
 }
 
 inline void log_cipher_list(SSL* ssl, char const* origin)
@@ -162,33 +216,8 @@ public:
         this->allocated_ctx = ctx;
         SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER/* | SSL_MODE_ENABLE_PARTIAL_WRITE*/);
 
-        /*
-         * This is necessary, because the Microsoft TLS implementation is not perfect.
-         * SSL_OP_ALL enables a couple of workarounds for buggy TLS implementations,
-         * but the most important workaround being SSL_OP_TLS_BLOCK_PADDING_BUG.
-         * As the size of the encrypted payload may give hints about its contents,
-         * block padding is normally used, but the Microsoft TLS implementation
-         * won't recognize it and will disconnect you after sending a TLS alert.
-         */
-
-        // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_options()");
-        SSL_CTX_set_options(ctx, SSL_OP_ALL);
-
-        set_tls_levels(ctx, tls_config.min_level, tls_config.max_level);
-
-        // https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html
-        // "DEFAULT@SEC_LEVEL=1"
-        if (not tls_config.cipher_list.empty()) { // when not defined, use system default
-            LOG(LOG_INFO, "TLS Client cipher list: %s", tls_config.cipher_list.c_str());
-            SSL_CTX_set_cipher_list(ctx, tls_config.cipher_list.c_str());
-        }
-        if (not tls_config.tls_1_3_ciphersuites.empty()) { // when not defined, use system default
-            LOG(LOG_INFO, "TLS 1.3 Client cipher suites: %s", tls_config.tls_1_3_ciphersuites.c_str());
-            SSL_CTX_set_ciphersuites(ctx, tls_config.tls_1_3_ciphersuites.c_str());
-        }
-
-        if (tls_config.security_level >= 0) {
-            SSL_CTX_set_security_level(ctx, tls_config.security_level);
+        if (auto* funcname = apply_tls_config(ctx, tls_config, verbose, "enable_client_tls")) {
+            return tls_ctx_print_error("enable_client_tls", funcname, error_message);
         }
 
         SSL* ssl = SSL_new(ctx);
@@ -552,21 +581,9 @@ public:
         // is currently set by default. See the SECURE RENEGOTIATION section for more details.
 
         LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL options");
-        SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
-        set_tls_levels(ctx, tls_config.min_level, tls_config.max_level);
-
-        // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
-        // SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
-        // Not compatible with MSTSC 6.1 on XP and W2K3
-        // SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
-        if (not tls_config.cipher_list.empty()) {
-            LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL cipher list");
-            SSL_CTX_set_cipher_list(ctx, tls_config.cipher_list.c_str());
-        }
-        if (not tls_config.tls_1_3_ciphersuites.empty()) {
-            LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL ciphersuites");
-            SSL_CTX_set_ciphersuites(ctx, tls_config.tls_1_3_ciphersuites.c_str());
+        if (auto* funcname = apply_tls_config(ctx, tls_config, verbose, "enable_server_tls")) {
+            return tls_ctx_print_error("enable_client_tls", funcname, nullptr);
         }
 
         // -------- End of system wide SSL_Ctx option ----------------------------------
