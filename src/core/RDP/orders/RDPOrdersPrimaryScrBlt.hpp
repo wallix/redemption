@@ -232,7 +232,7 @@ class RDPScrBlt {
         lg += snprintf(
             buffer+lg,
             sz-lg,
-            "scrblt(rect(%d,%d,%d,%d) rop=%x srcx=%d srcy=%d)\n",
+            "scrblt(rect(%d,%d,%d,%d) rop=%x srcx=%d srcy=%d)",
             this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
             unsigned(this->rop), this->srcx, this->srcy);
         if (lg >= sz){
