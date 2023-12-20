@@ -842,11 +842,16 @@ namespace parsers
         static constexpr std::string_view default_argname = "<password>";
     };
 
-    template<class Act>
-    struct argname_parser_traits<on_off<Act>>
+    template<>
+    struct argname_parser_traits<on_off_location>
     {
         static constexpr std::string_view default_argname = "{on|off}";
     };
+
+    template<class Act>
+    struct argname_parser_traits<on_off<Act>>
+    : argname_parser_traits<on_off_location>
+    {};
 
     template<class T, class Act>
     struct argname_parser_traits<arg_location<T, Act>>
