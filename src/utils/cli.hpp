@@ -7,13 +7,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <ostream>
 #include <string>
+#include <algorithm>
 #include <string_view>
 #include <type_traits>
 #include "utils/sugar/chars_to_int.hpp"
 
 #ifndef NDEBUG
 #include <cstdio>
-#include <algorithm>
 #endif
 
 namespace cli
