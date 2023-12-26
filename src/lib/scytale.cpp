@@ -412,9 +412,9 @@ int scytale_reader_open_with_auto_detect_encryption_scheme(
     return 0;
 }
 
-
 // 0: if end of file, len: if data was read, negative number on error
-long long scytale_reader_read(ScytaleReaderHandle * handle, uint8_t * buffer, unsigned long len) {
+long long scytale_reader_read(ScytaleReaderHandle * handle, uint8_t * buffer, unsigned long len)
+{
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(
@@ -423,15 +423,52 @@ long long scytale_reader_read(ScytaleReaderHandle * handle, uint8_t * buffer, un
     );
 }
 
+int scytale_reader_send_to(ScytaleReaderHandle * handle, int fd, unsigned bufsize)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
 
-int scytale_reader_close(ScytaleReaderHandle * handle) {
+    if (!bufsize) {
+        bufsize = 1024 * 1024; // 1MiB
+    }
+
+    auto send_to = [=]{
+        std::unique_ptr<char[]> ptr(new char[bufsize]);
+        writable_buffer_view buf{ptr.get(), bufsize};
+        while (size_t n = handle->in_crypto_transport.partial_read(buf)) {
+            size_t pos = 0;
+            do {
+                ssize_t r = write(fd, buf.data() + pos, n);
+                if (r > 0) {
+                    size_t comsumed = checked_int(r);
+                    pos += comsumed;
+                    n -= comsumed;
+                }
+                else if (r == 0) {
+                    return 0;
+                }
+                else { // r < 0
+                    handle->error_ctx.set_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
+                    return -1;
+                }
+            } while (n);
+        }
+        return 0;
+    };
+
+    CHECK_NOTHROW(return send_to(), ERR_TRANSPORT_READ_FAILED);
+}
+
+int scytale_reader_close(ScytaleReaderHandle * handle)
+{
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(handle->in_crypto_transport.close(), ERR_TRANSPORT_CLOSED);
     return 0;
 }
 
-void scytale_reader_delete(ScytaleReaderHandle * handle) {
+void scytale_reader_delete(ScytaleReaderHandle * handle)
+{
     SCOPED_TRACE;
     delete handle; /*NOLINT*/
 }

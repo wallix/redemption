@@ -82,6 +82,7 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
     auto derivator = "encrypted.txt"_av;
     auto finalname = wd.add_file(derivator.data());
     auto hash_finalname = wd.add_file("hash_encrypted.txt");
+    auto copied_filename = wd.add_file("copied");
 
     // Writer
     {
@@ -137,6 +138,28 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
 
         RED_CHECK_EQ(scytale_reader_get_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
         RED_CHECK_EQ(scytale_reader_get_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
+
+        scytale_reader_delete(handle);
+    }
+
+    // Reader with send to
+    {
+        auto handle = scytale_reader_new(
+            byte_ptr_cast(finalname.c_str()), checked_int(finalname.size()),
+            hmac_key, &trace_fn, 0, 0);
+        RED_REQUIRE(handle);
+        RED_CHECK_EQ(scytale_reader_open(
+            handle, finalname,
+            byte_ptr_cast(derivator.data()), checked_int(derivator.size())), 0);
+
+        {
+            unique_fd ufd{open(copied_filename, O_WRONLY | O_CREAT, 0644)};
+            RED_REQUIRE(ufd.is_open());
+            RED_CHECK(scytale_reader_send_to(handle, ufd.fd(), 5) == 0);
+        }
+
+        std::string content = RED_REQUIRE_GET_FILE_CONTENTS(copied_filename);
+        RED_CHECK(content == "We write, and again, and so on."_av);
 
         scytale_reader_delete(handle);
     }

@@ -102,7 +102,7 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     char const * scytale_reader_get_error_message(ScytaleReaderHandle * handle);
 
-    // When derivator is nullptr, computed from record_path
+    /// When derivator is nullptr, computed from record_path
     REDEMPTION_LIB_EXPORT
     int scytale_reader_open(
         ScytaleReaderHandle * handle, char const * path,
@@ -126,6 +126,11 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     long long scytale_reader_read(ScytaleReaderHandle * handle,
         uint8_t * buffer, unsigned long len);
+
+    /// Copy content in fd.
+    /// \c bufsize may be 0
+    REDEMPTION_LIB_EXPORT
+    int scytale_reader_send_to(ScytaleReaderHandle * handle, int fd, unsigned bufsize);
 
     REDEMPTION_LIB_EXPORT
     int scytale_reader_close(ScytaleReaderHandle * handle);

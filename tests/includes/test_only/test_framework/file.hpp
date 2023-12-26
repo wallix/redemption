@@ -88,21 +88,21 @@ namespace ut
     return s;                                                                           \
 }(filename)
 
-# define RED_TEST_LEVEL_FILE_CONTENTS(lvl1, filename, content)                        \
-[&](auto&& filename_, auto&& expected_){                                              \
-    std::string file_contents_;                                                       \
+# define RED_TEST_LEVEL_FILE_CONTENTS(lvl1, filename, content)                       \
+[&](auto&& filename_, auto&& expected_){                                             \
+    std::string file_contents_;                                                      \
     auto current_count_error = ::redemption_unit_test_::current_count_error();       \
-    [[maybe_unused]] std::string_view strctx = #content;                              \
-    RED_TEST_CONTEXT("expr: " << #filename <<                                         \
-        "\n    filename: " << filename_ << "\n    content: "                          \
-    << std::string_view(strctx.data(), strctx.size() > 40 ? 40 : strctx.size())       \
-    << (strctx.size() > 40 ? "[...]" : "")) {                                         \
-        RED_##lvl1(::ut::append_file_contents(filename_,                              \
-            file_contents_) == FileContentsError::None);                              \
+    [[maybe_unused]] std::string_view strctx = #content;                             \
+    RED_TEST_CONTEXT("expr: " << #filename <<                                        \
+        "\n    filename: " << filename_ << "\n    content: "                         \
+    << std::string_view(strctx.data(), strctx.size() > 40 ? 40 : strctx.size())      \
+    << (strctx.size() > 40 ? "[...]" : "")) {                                        \
+        RED_##lvl1(::ut::append_file_contents(filename_,                             \
+            file_contents_) == FileContentsError::None);                             \
         if (current_count_error == ::redemption_unit_test_::current_count_error()) { \
-            RED_##lvl1(file_contents_ == expected_);                                  \
-        }                                                                             \
-    }                                                                                 \
+            RED_##lvl1(file_contents_ == expected_);                                 \
+        }                                                                            \
+    }                                                                                \
 }(filename, content)
 
 # define RED_TEST_FILE_CONTENTS(filename, contents) \
