@@ -24,7 +24,6 @@
 #include "proxy_recorder/nla_tee_transport.hpp"
 #include "system/scoped_ssl_init.hpp"
 #include "transport/socket_transport.hpp"
-#include "transport/socket_trace_transport.hpp"
 #include "core/listen.hpp"
 #include "utils/netutils.hpp"
 #include "utils/select.hpp"
@@ -41,21 +40,29 @@
 
 using PacketType = RecorderFile::PacketType;
 
+namespace
+{
+
+struct ProxyRecorderCliConfig
+{
+    zstring_view target_host {};
+    int target_port = 3389;
+    int listen_port = 8001;
+    std::string_view nla_username {};
+    std::string nla_password {};
+    zstring_view capture_file {};
+    bool no_forkable = false;
+    bool enable_kerberos = false;
+    uint64_t verbosity = 0;
+};
 
 /** @brief the server that handles RDP connections */
 class FrontServer
 {
 public:
-    FrontServer(std::string host, int port, TimeBase & time_base, std::string captureFile, std::string nla_username, std::string nla_password, bool enable_kerberos, bool forkable, uint64_t verbosity)
-        : targetPort(port)
-        , targetHost(std::move(host))
+    FrontServer(ProxyRecorderCliConfig const& config, TimeBase const& time_base)
+        : config(config)
         , time_base(time_base)
-        , captureTemplate(std::move(captureFile))
-        , nla_username(std::move(nla_username))
-        , nla_password(std::move(nla_password))
-        , enable_kerberos(enable_kerberos)
-        , forkable(forkable)
-        , verbosity(verbosity)
     {
         // just ignore this signal because there is no child termination management yet.
         struct sigaction sa;
@@ -74,7 +81,7 @@ public:
             _exit(1);
         }
 
-        const pid_t pid = this->forkable ? fork() : 0;
+        const pid_t pid = this->config.no_forkable ? 0 : fork();
         connection_counter++;
 
         if(pid == 0) {
@@ -86,7 +93,9 @@ public:
             //     _exit(1);
             // }
 
-            const auto sck_verbose = safe_cast<SocketTransport::Verbose>(uint32_t(verbosity >> 32));
+            const auto sck_verbose = safe_cast<SocketTransport::Verbose>(uint32_t(config.verbosity >> 32));
+
+            CaptureTemplate captureTemplate(config.capture_file);
 
             char finalPathBuffer[256];
             char const* finalPath = captureTemplate.format(
@@ -94,23 +103,21 @@ public:
             LOG(LOG_INFO, "Recording front connection in %s", finalPath);
             RecorderFile outFile(this->time_base, finalPath);
 
-            SocketTransport lowFrontConn(
+            SocketTransport frontConn(
                 "front"_sck_name, std::move(sck_in), "127.0.0.1"_av, 3389,
                 std::chrono::milliseconds(1000), std::chrono::milliseconds::zero(),
                 std::chrono::milliseconds(100), sck_verbose);
-            SocketTransport lowBackConn(
-                "back"_sck_name, ip_connect(this->targetHost.c_str(),
-                                            this->targetPort,
+            SocketTransport backConn(
+                "back"_sck_name, ip_connect(config.target_host.c_str(),
+                                            config.target_port,
                                             DefaultConnectTag { }),
-                this->targetHost, this->targetPort,
+                config.target_host, config.target_port,
                 std::chrono::milliseconds(1000), std::chrono::milliseconds::zero(),
                 std::chrono::milliseconds(100), sck_verbose);
-            TraceTransport frontConn("front", lowFrontConn);
-            TraceTransport backConn("back", lowBackConn);
             NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
             NlaTeeTransport back_nla_tee_trans(backConn, outFile, NlaTeeTransport::Type::Client);
 
-            ProxyRecorder conn(back_nla_tee_trans, outFile, this->time_base, this->targetHost.c_str(), enable_kerberos, verbosity);
+            ProxyRecorder conn(back_nla_tee_trans, outFile, this->time_base, config.target_host.c_str(), config.enable_kerberos, config.verbosity);
 
             try {
                 // TODO: key becomes ready quite late (just before calling nego server) inside front_step1(), henceforth doing it here won't work
@@ -123,9 +130,6 @@ public:
                 fd_set rset;
                 int const front_fd = frontConn.get_fd();
                 int const back_fd = backConn.get_fd();
-
-                frontConn.set_trace_send(conn.verbosity > 512);
-                backConn.set_trace_send(conn.verbosity > 512);
 
                 for (;;) {
                     io_fd_zero(rset);
@@ -162,7 +166,7 @@ public:
                                 u8_array_view key = front_nla_tee_trans.get_public_key();
                                 memcpy(front_public_key, key.data(), key.size());
                                 front_public_key_av = writable_array_view(front_public_key, key.size());
-                                conn.back_step1(front_public_key_av, backConn, this->nla_username, this->nla_password);
+                                conn.back_step1(front_public_key_av, backConn, config.nla_username, config.nla_password);
                             }
                         }
                         break;
@@ -177,7 +181,7 @@ public:
                     case ProxyRecorder::PState::NEGOCIATING_FRONT_INITIAL_PDU:
                         if (FD_ISSET(front_fd, &rset)) {
                             conn.frontBuffer.load_data(frontConn);
-                            conn.front_initial_pdu_negociation(backConn, !this->nla_username.empty());
+                            conn.front_initial_pdu_negociation(backConn, !config.nla_username.empty());
                         }
                         break;
 
@@ -192,14 +196,12 @@ public:
                         // FIXME: use front NLA parameters!
                         if (FD_ISSET(back_fd, &rset)) {
                             conn.backBuffer.load_data(backConn);
-                            conn.back_initial_pdu_negociation(frontConn, !this->nla_username.empty());
+                            conn.back_initial_pdu_negociation(frontConn, !config.nla_username.empty());
                         }
                         break;
 
                     case ProxyRecorder::PState::FORWARD:
                         if (FD_ISSET(front_fd, &rset)) {
-                            frontConn.set_trace_receive(conn.verbosity > 1024);
-                            backConn.set_trace_send(conn.verbosity > 1024);
                             LOG_IF(conn.verbosity > 1024, LOG_INFO, "FORWARD (FRONT TO BACK)");
                             uint8_t tmpBuffer[0xffff];
                             size_t ret = frontConn.partial_read(make_writable_array_view(tmpBuffer));
@@ -209,8 +211,6 @@ public:
                             }
                         }
                         if (FD_ISSET(back_fd, &rset)) {
-                            frontConn.set_trace_send(conn.verbosity > 1024);
-                            backConn.set_trace_receive(conn.verbosity > 1024);
                             LOG_IF(conn.verbosity > 1024, LOG_INFO, "FORWARD (BACK to FRONT)");
                             uint8_t tmpBuffer[0xffff];
                             size_t ret = backConn.partial_read(make_writable_array_view(tmpBuffer));
@@ -235,7 +235,7 @@ public:
             LOG(LOG_INFO, "Exiting FrontServer (0)");
             exit(0);
         }
-        else if (!this->forkable) {
+        else if (this->config.no_forkable) {
             return false;
         }
 
@@ -245,15 +245,15 @@ public:
 private:
     struct CaptureTemplate
     {
-        std::string captureTemplate;
+        zstring_view captureTemplate;
         int startDigit = 0;
         int endDigit = 0;
 
-        CaptureTemplate(std::string captureFile)
-            : captureTemplate(std::move(captureFile))
+        CaptureTemplate(zstring_view captureFile)
+            : captureTemplate(captureFile)
         {
             std::string::size_type pos = 0;
-            while ((pos = captureTemplate.find('%', pos)) != std::string::npos) {
+            while ((pos = captureTemplate.to_sv().find('%', pos)) != std::string::npos) {
                 if (captureTemplate[pos+1] == 'd') {
                     startDigit = int(pos);
                     endDigit = startDigit + 2;
@@ -280,43 +280,40 @@ private:
     };
 
     int connection_counter = 0;
-    int targetPort;
-    std::string targetHost;
-    TimeBase & time_base;
-    CaptureTemplate captureTemplate;
-    std::string nla_username;
-    std::string nla_password;
-    bool enable_kerberos;
-    bool forkable;
-    uint64_t verbosity;
+    ProxyRecorderCliConfig const& config;
+    TimeBase const& time_base;
+};
+
+}
+
+template<>
+struct cli::arg_parsers::arg_parse_traits<zstring_view>
+{
+    static Res parse(zstring_view& result, char const* s)
+    {
+        result = zstring_view::from_null_terminated(s);
+        return Res::Ok;
+    }
 };
 
 int main(int argc, char *argv[])
 {
-    char const* target_host = nullptr;
-    int target_port = 3389;
-    int listen_port = 8001;
-    std::string nla_username;
-    std::string nla_password;
-    char const* capture_file = nullptr;
-    bool no_forkable = false;
-    bool enable_kerberos = false;
-    uint64_t verbosity = 0;
+    ProxyRecorderCliConfig config {};
 
     auto options = cli::options(
         cli::option('h', "help").help("Show help").parser(cli::help()),
         cli::option('v', "version").help("Show version")
             .parser(cli::quit([]{ std::cout << "ProxyRecorder 1.0, " << redemption_info_version() << "\n"; })),
-        cli::option('s', "target-host").parser(cli::arg_location(target_host)).argname("<host>"),
-        cli::option('p', "target-port").parser(cli::arg_location(target_port)).argname("<port>"),
-        cli::option('P', "port").help("Listen port").parser(cli::arg_location(listen_port)),
-        cli::option("nla-username").parser(cli::arg_location(nla_username)).argname("<username>"),
-        cli::option("nla-password").parser(cli::password_location(argv, nla_password)),
-        cli::option("enable-kerberos").parser(cli::on_off_location(enable_kerberos)),
+        cli::option('s', "target-host").parser(cli::arg_location(config.target_host)).argname("<host>"),
+        cli::option('p', "target-port").parser(cli::arg_location(config.target_port)).argname("<port>"),
+        cli::option('P', "port").help("Listen port").parser(cli::arg_location(config.listen_port)),
+        cli::option("nla-username").parser(cli::arg_location(config.nla_username)).argname("<username>"),
+        cli::option("nla-password").parser(cli::password_location(argv, config.nla_password)),
+        cli::option("enable-kerberos").parser(cli::on_off_location(config.enable_kerberos)),
         cli::option('t', "template").help("Ex: dump-%d.out")
-            .parser(cli::arg_location(capture_file)).argname("<path>"),
-        cli::option('N', "no-fork").parser(cli::on_off_location(no_forkable)),
-        cli::option('V', "verbose").parser(cli::arg_location(verbosity)).argname("<verbosity>")
+            .parser(cli::arg_location(config.capture_file)).argname("<path>"),
+        cli::option('N', "no-fork").parser(cli::on_off_location(config.no_forkable)),
+        cli::option('V', "verbose").parser(cli::arg_location(config.verbosity)).argname("<verbosity>")
     );
 
     switch (cli::check_result(options, cli::parse(options, argc, argv), std::cout, std::cerr))
@@ -326,15 +323,15 @@ int main(int argc, char *argv[])
         case cli::CheckResult::Error: return 1;
     }
 
-    if (!target_host) {
+    if (config.target_host.empty()) {
         std::cerr << "Missing --target-host\n";
     }
 
-    if (!capture_file) {
+    if (config.capture_file.empty()) {
         std::cerr << "Missing --template\n";
     }
 
-    if (!target_host || !capture_file) {
+    if (config.target_host.empty() || config.capture_file.empty()) {
         cli::print_help(options, std::cerr << "\n");
         return 1;
     }
@@ -344,11 +341,9 @@ int main(int argc, char *argv[])
     openlog("ProxyRecorder", LOG_CONS | LOG_PERROR, LOG_USER);
 
     TimeBase time_base{MonotonicTimePoint::clock::now(), RealTimePoint::clock::now()};
-    FrontServer front(
-        target_host, target_port, time_base, capture_file,
-        std::move(nla_username), std::move(nla_password),
-        enable_kerberos, !no_forkable, verbosity);
-    auto sck = create_server(inet_addr("0.0.0.0"), listen_port, EnableTransparentMode::No);
+    FrontServer front(config, time_base);
+
+    auto sck = create_server(inet_addr("0.0.0.0"), config.listen_port, EnableTransparentMode::No);
     if (!sck) {
         return 2;
     }

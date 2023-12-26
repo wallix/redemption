@@ -46,7 +46,7 @@ struct RdpNegoProtocols
 };
 
 RdpNego::RdpNego(
-    const bool tls, const std::string & username, bool nla, bool admin_mode,
+    const bool tls, std::string_view username, bool nla, bool admin_mode,
     const char * target_host, const bool krb, Random & rand, const TimeBase & time_base,
     std::string& extra_message, Language lang, TlsConfig const& tls_config,
     const Verbose verbose)
@@ -58,6 +58,7 @@ RdpNego::RdpNego(
 , enabled_protocols(RdpNegoProtocols::Rdp
     | (this->tls ? RdpNegoProtocols::Tls : 0)
     | (this->nla ? RdpNegoProtocols::Nla : 0))
+, username(username)
 , target_host(target_host)
 , current_password(nullptr)
 , current_service_password(nullptr)
@@ -80,8 +81,6 @@ RdpNego::RdpNego(
         LOG(LOG_ERR, "NLA disabled. Restricted admin mode requires NLA.");
         throw Error(ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE);
     }
-
-    this->username = username;
 }
 
 RdpNego::~RdpNego() = default;

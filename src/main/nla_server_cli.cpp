@@ -35,7 +35,6 @@
 #include "proxy_recorder/extract_user_domain.hpp"
 #include "transport/recorder_transport.hpp"
 #include "transport/socket_transport.hpp"
-#include "transport/socket_trace_transport.hpp"
 #include "utils/cli.hpp"
 #include "utils/fixed_random.hpp"
 #include "utils/netutils.hpp"

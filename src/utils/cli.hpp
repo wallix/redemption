@@ -1,35 +1,19 @@
 /*
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-Product name: redemption, a FLOSS RDP proxy
-Copyright (C) Wallix 2010-2020
-Author(s): Jonathan Poelen
+SPDX-FileCopyrightText: 2023 Wallix Proxies Team
+SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #pragma once
 
-#include <iomanip>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <algorithm>
 #include "utils/sugar/chars_to_int.hpp"
 
 #ifndef NDEBUG
 #include <cstdio>
+#include <algorithm>
 #endif
 
 namespace cli
@@ -1040,7 +1024,8 @@ void print_help(std::ostream& out, Opt const& opt, int pad)
 
     // if constexpr (!std::is_same_v<detail::uninit_t, decltype(opt._help)>) {
     if (!opt._help.empty()) {
-        out << std::setw(pad) << "" << opt._help;
+        out.width(pad);
+        out << "" << opt._help;
     }
     out << "\n";
 }

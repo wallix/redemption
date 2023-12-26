@@ -36,7 +36,7 @@
 ProxyRecorder::ProxyRecorder(
     NlaTeeTransport & back_nla_tee_trans,
     RecorderFile & outFile,
-    TimeBase & time_base,
+    const TimeBase & time_base,
     const char * host,
     bool enable_kerberos,
     uint64_t verbosity
@@ -90,7 +90,7 @@ void ProxyRecorder::front_step1(Transport & frontConn)
     }
 }
 
-void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn, std::string const& nla_username, std::string nla_password)
+void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn, std::string_view nla_username, std::string nla_password)
 {
     if (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID) {
         if (this->verbosity > 4) {
@@ -109,7 +109,7 @@ void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn,
         !nla_username.empty(),
         this->front_CR_TPDU.cinfo.flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
         this->back_nla_tee_trans, this->time_base,
-        this->host, nla_username.c_str(),
+        this->host, nla_username,
         nla_password.c_str(),
         enable_kerberos, tls_config,
         safe_cast<RdpNego::Verbose>(uint32_t(this->verbosity >> 32)));

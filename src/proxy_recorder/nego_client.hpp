@@ -36,8 +36,8 @@ class NegoClient
 
 public:
     NegoClient(
-        bool is_nla, bool is_admin_mode, Transport& trans, TimeBase & time_base,
-        char const* host, char const* target_user, char const* password,
+        bool is_nla, bool is_admin_mode, Transport& trans, const TimeBase & time_base,
+        char const* host, std::string_view target_user, char const* password,
         bool enable_kerberos, const TlsConfig & tls_config, RdpNego::Verbose verbosity
     )
     : trans(trans)

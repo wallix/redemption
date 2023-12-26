@@ -56,10 +56,8 @@ private:
 
     int sck;
 
-protected:
     const char * name;
 
-private:
     // ip or sockfile
     char ip_address[128];
     int  port;

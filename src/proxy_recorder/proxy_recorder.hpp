@@ -47,7 +47,7 @@ public:
     ProxyRecorder(
         NlaTeeTransport & back_nla_tee_trans,
         RecorderFile & outFile,
-        TimeBase & time_base,
+        const TimeBase & time_base,
         const char * host,
         bool enable_kerberos,
         uint64_t verbosity
@@ -56,7 +56,7 @@ public:
     ~ProxyRecorder();
 
     void front_step1(Transport & frontConn);
-    void back_step1(writable_u8_array_view key, Transport & backConn, std::string const& nla_username, std::string nla_password);
+    void back_step1(writable_u8_array_view key, Transport & backConn, std::string_view nla_username, std::string nla_password);
     void front_nla(Transport & frontConn);
     void front_initial_pdu_negociation(Transport & backConn, bool is_nla);
     void back_nla_negociation(Transport & backConn);
@@ -75,7 +75,7 @@ public:
 
     NlaTeeTransport & back_nla_tee_trans;
     RecorderFile & outFile;
-    TimeBase & time_base;
+    const TimeBase & time_base;
     const char * host;
 
     TpduBuffer frontBuffer;
