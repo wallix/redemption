@@ -93,9 +93,9 @@ public:
             //     _exit(1);
             // }
 
-            const auto sck_verbose = safe_cast<SocketTransport::Verbose>(uint32_t(config.verbosity >> 32));
+            const SocketTransport::Verbose sck_verbose = checked_int(config.verbosity >> 32);
 
-            CaptureTemplate captureTemplate(config.capture_file);
+            const CaptureTemplate captureTemplate(config.capture_file);
 
             char finalPathBuffer[256];
             char const* finalPath = captureTemplate.format(
@@ -284,7 +284,7 @@ private:
     TimeBase const& time_base;
 };
 
-}
+} // anonymous namespace
 
 template<>
 struct cli::arg_parsers::arg_parse_traits<zstring_view>
