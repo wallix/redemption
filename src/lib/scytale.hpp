@@ -127,10 +127,9 @@ extern "C"
     long long scytale_reader_read(ScytaleReaderHandle * handle,
         uint8_t * buffer, unsigned long len);
 
-    /// Copy content in fd.
-    /// \c bufsize may be 0
+    /// Copy content in a fd.
     REDEMPTION_LIB_EXPORT
-    int scytale_reader_send_to(ScytaleReaderHandle * handle, int fd, unsigned bufsize);
+    int scytale_reader_send_to(ScytaleReaderHandle * handle, int fd_out);
 
     REDEMPTION_LIB_EXPORT
     int scytale_reader_close(ScytaleReaderHandle * handle);

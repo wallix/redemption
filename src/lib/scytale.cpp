@@ -38,6 +38,8 @@
 #include <type_traits>
 #include <memory>
 
+#include <sys/sendfile.h> // sendfile
+
 
 #define CHECK_NOTHROW(expr, errid) CHECK_NOTHROW_R(expr, -1, handle->error_ctx, errid)
 
@@ -423,36 +425,80 @@ long long scytale_reader_read(ScytaleReaderHandle * handle, uint8_t * buffer, un
     );
 }
 
-int scytale_reader_send_to(ScytaleReaderHandle * handle, int fd, unsigned bufsize)
+int scytale_reader_send_to(ScytaleReaderHandle * handle, int fd_out)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
 
-    if (!bufsize) {
-        bufsize = 1024 * 1024; // 1MiB
+    const int fd_in = handle->in_crypto_transport.get_fd();
+
+    auto set_error = [=](int errnum){
+        handle->error_ctx.set_error(Error(ERR_TRANSPORT_WRITE_FAILED, errnum));
+        return -1;
+    };
+
+    // fast copy for no encrypted file
+    if (!handle->in_crypto_transport.is_encrypted()) {
+        auto buf = handle->in_crypto_transport.get_and_reset_remaining_buffer();
+        size_t pos = 0;
+        size_t n = buf.size();
+        while (n) {
+            ssize_t r = write(fd_out, buf.data() + pos, n);
+            // error or EOF for fd_out -> copy fail
+            if (r <= 0) {
+                return set_error(r ? errno : 0);
+            }
+
+            // r > 0
+            size_t comsumed = checked_int(r);
+            pos += comsumed;
+            n -= comsumed;
+        }
+
+        for (;;) {
+            // use Linux-specific splice(2) for transferring data between arbitrary fds
+            auto n = sendfile(fd_out, fd_in, nullptr, 0x7ffff000);
+            if (!n) {
+                return 0;
+            }
+            if (n < 0) {
+                int errnum = errno;
+                // fall back to partial_read()/write()
+                if (errnum == EINVAL || errnum == ENOSYS) {
+                    break;
+                }
+                return -1;
+            }
+        }
     }
 
+    // maybe throw
     auto send_to = [=]{
-        std::unique_ptr<char[]> ptr(new char[bufsize]);
-        writable_buffer_view buf{ptr.get(), bufsize};
+        struct Free { void operator()(void* p) { return std::free(p); } };
+        constexpr size_t bufsize = 64 * 1024;
+        auto* ptr = static_cast<char*>(std::aligned_alloc(4096, bufsize));
+        if (!ptr) {
+            return -1;
+        }
+        std::unique_ptr<char[], Free> guard(ptr);
+
+        writable_buffer_view buf{ptr, bufsize};
         while (size_t n = handle->in_crypto_transport.partial_read(buf)) {
             size_t pos = 0;
             do {
-                ssize_t r = write(fd, buf.data() + pos, n);
+                ssize_t r = write(fd_out, buf.data() + pos, n);
                 if (r > 0) {
                     size_t comsumed = checked_int(r);
                     pos += comsumed;
                     n -= comsumed;
                 }
-                else if (r == 0) {
-                    return 0;
-                }
-                else { // r < 0
-                    handle->error_ctx.set_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
-                    return -1;
+                // error or EOF for fd_out -> copy fail
+                else if (r <= 0) {
+                    return set_error(r ? errno : 0);
                 }
             } while (n);
         }
+
         return 0;
     };
 

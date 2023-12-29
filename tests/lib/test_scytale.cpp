@@ -155,7 +155,7 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
         {
             unique_fd ufd{open(copied_filename, O_WRONLY | O_CREAT, 0644)};
             RED_REQUIRE(ufd.is_open());
-            RED_CHECK(scytale_reader_send_to(handle, ufd.fd(), 5) == 0);
+            RED_CHECK(scytale_reader_send_to(handle, ufd.fd()) == 0);
         }
 
         std::string content = RED_REQUIRE_GET_FILE_CONTENTS(copied_filename);

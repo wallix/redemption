@@ -477,6 +477,14 @@ InCryptoTransport::Read InCryptoTransport::do_atomic_read(uint8_t * buffer, size
     return total == len ? Read::Ok : Read::Eof;
 }
 
+writable_buffer_view InCryptoTransport::get_and_reset_remaining_buffer()
+{
+    writable_buffer_view ret{this->clear_data + this->clear_pos, this->raw_size - this->clear_pos};
+    this->raw_size = 0;
+    this->clear_pos = 0;
+    return ret;
+}
+
 
 /* Flush procedure (compression, encryption)
  * Return 0 on success, negatif on error

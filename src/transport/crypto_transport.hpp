@@ -74,6 +74,13 @@ public:
 
     void disable_log_decrypt(bool disable = true) noexcept; /*NOLINT*/
 
+    writable_buffer_view get_and_reset_remaining_buffer();
+
+    int get_fd() const override
+    {
+        return fd;
+    }
+
 private:
     // this perform atomic read, partial read will result in exception
     void raw_read(uint8_t buffer[], const size_t len);
