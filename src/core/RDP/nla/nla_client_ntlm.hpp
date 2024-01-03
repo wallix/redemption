@@ -154,7 +154,7 @@ public:
             case Loop:
             {
                 LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Receiving Authentication Token - Challenge");
-                TSRequest ts_request = recvTSRequest(in_data, this->credssp_verbose);
+                TSRequest const ts_request = recvTSRequest(in_data, this->credssp_verbose);
                 NTLMChallengeMessage server_challenge = recvNTLMChallengeMessage(ts_request.negoTokens);
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
@@ -263,7 +263,7 @@ public:
                 if (this->UseMIC) {
                     array_md5 MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey,
                                                             this->savedNegotiateMessage,
-                                                            server_challenge.raw_bytes,
+                                                            ts_request.negoTokens,
                                                             auth_message);
                     memcpy(auth_message.data()+mic_offset, MessageIntegrityCheck.data(), MessageIntegrityCheck.size());
                 }

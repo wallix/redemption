@@ -533,8 +533,6 @@ RED_AUTO_TEST_CASE(TestNTLMMessagesChallenge)
     };
     NTLMChallengeMessage challenge_message = recvNTLMChallengeMessage(negoTokens.av());
 
-    RED_CHECK_EQUAL(challenge_message.raw_bytes, negoTokens.av());
-
     RED_CHECK_EQUAL(challenge_message.TargetName.bufferOffset, 56);
     RED_CHECK_EQUAL(challenge_message.TargetName.buffer,
         (U8Array{
@@ -544,7 +542,7 @@ RED_AUTO_TEST_CASE(TestNTLMMessagesChallenge)
 
 //    hexdump_d(challenge_message.serverChallenge);
     array_challenge expected_server_challenge{0x01, 0x05, 0x03, 0x5c, 0x69, 0x17, 0x57, 0x89};
-    BOOST_CHECK(challenge_message.serverChallenge == expected_server_challenge);
+    RED_CHECK(challenge_message.serverChallenge == expected_server_challenge);
 
     logNtlmFlags(challenge_message.negoFlags.flags);
 

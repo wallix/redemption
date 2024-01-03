@@ -30,6 +30,8 @@
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
+#include "core/stream_throw_helpers.hpp"
+
 #include "system/ssl_md5.hpp"
 #include "system/ssl_rc4.hpp"
 #include "system/ssl_md4.hpp"
@@ -1844,7 +1846,6 @@ public:
     NtlmField TargetInfo;               /* 8 Bytes */
     NtlmVersion version;                /* 8 Bytes */
     NtlmAvPairList AvPairList;          // used to build TargetInfo payload
-    std::vector<uint8_t> raw_bytes;
 };
 
 
@@ -1907,14 +1908,17 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
 {
     InStream stream(av);
     NTLMChallengeMessage self;
-    self.raw_bytes.assign(av.begin(),av.end());
-
-//    LOG(LOG_INFO, "NTLM Message Challenge Dump (Recv)");
-//    hexdump_d(stream.remaining_bytes());
-
-    uint8_t const * pBegin = stream.get_current();
 
     constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
+
+    constexpr std::size_t mandatory_min_size
+      = sig_len + 4 + 2 + 2 + 4 + 4 + sizeof(self.serverChallenge) + 8 + 2 + 2 + 4;
+
+    check_throw(stream, mandatory_min_size, "recvNTLMChallengeMessage", ERR_SEC);
+
+    // LOG(LOG_INFO, "NTLM Message Challenge Dump (Recv)");
+    // hexdump_d(stream.remaining_bytes());
+
     uint8_t received_sig[sig_len];
     stream.in_copy_bytes(received_sig, sig_len);
     uint32_t type = stream.in_uint32_le();
@@ -1922,12 +1926,12 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
 
     // Add Checks and throw Error if necessary
 
-//    if (type != NtlmChallenge){
-//        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", type);
-//    }
-//    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
-//        LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
-//    }
+    // if (type != NtlmChallenge){
+    //     LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", type);
+    // }
+    // if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
+    //     LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
+    // }
 
     uint16_t TargetName_len = stream.in_uint16_le();
     uint16_t TargetName_maxlen = stream.in_uint16_le();
@@ -1945,6 +1949,8 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
     self.TargetInfo.bufferOffset = stream.in_uint32_le();
 
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+        check_throw(stream, 8, "recvNTLMChallengeMessage.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION", ERR_SEC);
+
         self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
         self.version.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
         self.version.ProductBuild = stream.in_uint16_le();
@@ -1953,21 +1959,18 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
     }
 
     // PAYLOAD
-    auto maxp = std::max(size_t(self.TargetName.bufferOffset + TargetName_len),
-                         size_t(self.TargetInfo.bufferOffset + TargetInfo_len));
+    auto maxp = std::max(static_cast<size_t>(self.TargetName.bufferOffset) + TargetName_len,
+                         static_cast<size_t>(self.TargetInfo.bufferOffset) + TargetInfo_len);
+    check_throw(InStream(av), maxp, "recvNTLMChallengeMessage.payload", ERR_SEC);
 
-    if (pBegin + maxp > stream.get_current()) {
-        stream.in_skip_bytes(pBegin + maxp - stream.get_current());
-    }
-
-    self.TargetName.buffer.assign(pBegin + self.TargetName.bufferOffset,
-                         pBegin + self.TargetName.bufferOffset + TargetName_len);
+    auto targetName = av.subarray(self.TargetName.bufferOffset, TargetName_len);
+    self.TargetName.buffer.assign(targetName.begin(), targetName.end());
 
     LOG(LOG_INFO, "Target Name (%u %u)", self.TargetName.bufferOffset, unsigned(self.TargetName.buffer.size()));
     hexdump_d(self.TargetName.buffer);
 
-    self.TargetInfo.buffer.assign(pBegin + self.TargetInfo.bufferOffset,
-                         pBegin + self.TargetInfo.bufferOffset + TargetInfo_len);
+    auto targetInfo = av.subarray(self.TargetInfo.bufferOffset, TargetInfo_len);
+    self.TargetInfo.buffer.assign(targetInfo.begin(), targetInfo.end());
 
     LOG(LOG_INFO, "Target Info (%u %u)", self.TargetInfo.bufferOffset, unsigned(self.TargetInfo.buffer.size()));
     hexdump_d(self.TargetInfo.buffer);
