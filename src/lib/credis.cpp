@@ -773,6 +773,8 @@ CRedisTransport* credis_transport_new()
 REDEMPTION_LIB_EXPORT
 void credis_transport_delete(CRedisTransport* redis)
 {
+    SCOPED_TRACE;
+
     delete redis;
 }
 

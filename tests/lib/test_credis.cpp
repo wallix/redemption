@@ -187,7 +187,7 @@ RED_AUTO_TEST_CASE(TestCRedisCmdSet)
         "$2\r\nEX\r\n"
         "$1\r\n2\r\n"_av_ascii);
 
-    credis_cmd_set_free_buffer(cmd, 0);
+    RED_CHECK(credis_cmd_set_free_buffer(cmd, 0) == 0);
 
     RED_CHECK(credis_buffer_push_raw_data(buffer, byte_ptr_cast("abcde"), 5) == 0);
     data = credis_cmd_set_build_command(cmd, &len);
