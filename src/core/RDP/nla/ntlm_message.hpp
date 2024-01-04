@@ -1904,7 +1904,7 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(bytes_view target_name, byt
 }
 
 
-inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
+inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av, bool verbose)
 {
     InStream stream(av);
     NTLMChallengeMessage self;
@@ -1966,14 +1966,16 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
     auto targetName = av.subarray(self.TargetName.bufferOffset, TargetName_len);
     self.TargetName.buffer.assign(targetName.begin(), targetName.end());
 
-    LOG(LOG_INFO, "Target Name (%u %u)", self.TargetName.bufferOffset, unsigned(self.TargetName.buffer.size()));
-    hexdump_d(self.TargetName.buffer);
-
     auto targetInfo = av.subarray(self.TargetInfo.bufferOffset, TargetInfo_len);
     self.TargetInfo.buffer.assign(targetInfo.begin(), targetInfo.end());
 
-    LOG(LOG_INFO, "Target Info (%u %u)", self.TargetInfo.bufferOffset, unsigned(self.TargetInfo.buffer.size()));
-    hexdump_d(self.TargetInfo.buffer);
+    if (verbose) {
+        LOG(LOG_INFO, "Target Name:");
+        hexdump_d(self.TargetName.buffer);
+
+        LOG(LOG_INFO, "Target Info:");
+        hexdump_d(self.TargetInfo.buffer);
+    }
 
     InStream in_stream(self.TargetInfo.buffer);
 

@@ -531,7 +531,7 @@ RED_AUTO_TEST_CASE(TestNTLMMessagesChallenge)
          /* 00d0 */ 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00, 0x2e, 0x00, 0x6c, 0x00, 0x61, 0x00, 0x62, 0x00, 0x07, 0x00,  // k.d.c...l.a.b...
          /* 00e0 */ 0x08, 0x00, 0xe5, 0xda, 0xa6, 0x1d, 0x5c, 0x62, 0xd5, 0x01, 0x00, 0x00, 0x00, 0x00,              // .......b......
     };
-    NTLMChallengeMessage challenge_message = recvNTLMChallengeMessage(negoTokens.av());
+    NTLMChallengeMessage challenge_message = recvNTLMChallengeMessage(negoTokens.av(), true);
 
     RED_CHECK_EQUAL(challenge_message.TargetName.bufferOffset, 56);
     RED_CHECK_EQUAL(challenge_message.TargetName.buffer,

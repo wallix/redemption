@@ -143,7 +143,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     hexdump_c(ts_req.negoTokens.data(), ts_req.negoTokens.size());
     // ChallengeMsg.recv(ts_req.negoTokens);
 
-    ChallengeMsg = recvNTLMChallengeMessage(ts_req.negoTokens);
+    ChallengeMsg = recvNTLMChallengeMessage(ts_req.negoTokens, true);
 
     RED_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
     //ChallengeMsg.negoFlags.log();
@@ -200,7 +200,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
-    ChallengeMsgDuplicate = recvNTLMChallengeMessage(challenge);
+    ChallengeMsgDuplicate = recvNTLMChallengeMessage(challenge, true);
 
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 3792339509);
     // ChallengeMsgDuplicate.negoFlags.print();
@@ -635,6 +635,3 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     RED_CHECK_EQUAL(AuthMsgDuplicate.EncryptedRandomSessionKey.buffer.size(), 16);
     RED_CHECK_EQUAL(AuthMsgDuplicate.EncryptedRandomSessionKey.bufferOffset, 232);
 }
-
-
-

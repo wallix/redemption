@@ -155,7 +155,7 @@ public:
             {
                 LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Receiving Authentication Token - Challenge");
                 TSRequest const ts_request = recvTSRequest(in_data, this->credssp_verbose);
-                NTLMChallengeMessage server_challenge = recvNTLMChallengeMessage(ts_request.negoTokens);
+                NTLMChallengeMessage server_challenge = recvNTLMChallengeMessage(ts_request.negoTokens, this->verbose);
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
 
