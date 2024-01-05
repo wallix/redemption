@@ -26,7 +26,7 @@ else
       -a -not -path 'src/core/error.cpp' \
       -a -not -path 'src/utils/log_as_logprint.cpp' \
       -a -not -path 'src/lib/do_recorder.cpp' \
-    | sed -E 's/^src\/(.*)/#include "\1" // NOLINT(cert-err-58-cpp)/'
+    | sed -E 's/^src\/(.*)/#include "\1"/'
     echo "$nolintend"
   } > "$cpp_unity1"
 

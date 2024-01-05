@@ -8,15 +8,13 @@ set -ex
 free
 
 typeset -i fast=1
-typeset -i update=0
 for act in "$@" ; do
     case "$act" in
         full) fast=0 ;;
-        update) update=1 ;;
-        *)  set +x ; echo "$0 [full] [update]
+        *)  set +x ; echo "$0 [full]
 
-fast: enable fast compilation
-update: update targets.jam and others generated files";
+full: compiles with clang and gcc to relase and debug + valgrind + coverage
+";
             exit 1 ;;
     esac
 done
@@ -60,17 +58,12 @@ eval "$(luarocks path)"
 show_duration "lua tests"
 # @}
 
-
-
 # BJAM Build Test
 echo -e "
 using gcc : : g++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
-using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
-using clang : 13 : clang++-13 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING -Wno-reserved-identifier ;
+using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING -Wno-reserved-identifier ;
 " > project-config.jam
-valgrind_compiler=gcc-8
 toolset_gcc=toolset=gcc
-toolset_wab=toolset=gcc-8
 gcovbin=gcov
 toolset_clang=toolset=clang
 
@@ -78,31 +71,28 @@ export REDEMPTION_TEST_DO_NOT_SAVE_IMAGES=1
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
 export UBSAN_OPTIONS=print_stacktrace=1
 
-export BOOST_TEST_COLOR_OUTPUT=0
-
-# TODO
-# if (( $fast == 0 )); then
-#     rm -rf bin
-# else
-#     rm -rf bin/tmp/
-# fi
+# export BOOST_TEST_COLOR_OUTPUT=0
 
 mkdir -p bin/tmp
 export TMPDIR_TEST=bin/tmp/
 
 # export REDEMPTION_LOG_PRINT=1
 export REDEMPTION_LOG_PRINT=0
-export cxx_color=never
+# export cxx_color=never
 
 export BOOST_TEST_RANDOM=$RANDOM
 echo random seed = $BOOST_TEST_RANDOM
 
+run_bjam() {
+    /usr/bin/time --format='%Es - %MK' bjam -q cxxflags=-Wno-deprecated-declarations "$@"
+}
+
 build()
 {
-    /usr/bin/time --format='%Es - %MK' bjam -q "$@" || {
+    run_bjam "$@" || {
         local e=$?
         export REDEMPTION_LOG_PRINT=1
-        /usr/bin/time --format='%Es - %MK' bjam -q "$@" -j1
+        run_bjam "$@" -j1
         exit $e
     }
 }
@@ -117,11 +107,11 @@ mkdir -p bin
 beforerun=$(rootlist)
 
 # release for -Warray-bounds and not assert
-# build $toolset_wab cxxflags=-g
+# build $toolset_gcc cxxflags=-g
 # multi-thread
-build $toolset_wab -j4 cxxflags=-g
+build $toolset_gcc -j4 cxxflags=-g
 
-show_duration $toolset_wab
+show_duration $toolset_gcc
 
 # Warn new files created by tests.
 set -o pipefail
@@ -134,15 +124,19 @@ set +o pipefail
 
 if (( $fast == 0 )); then
     # valgrind
-    #find ./bin/$gcc/release/tests/ -type d -exec \
-    #  ./tools/c++-analyzer/valgrind -qd '{}' \;
-    /usr/bin/time --format="%Es - %MK" \
-      find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
-      parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
+    cmds=()
+    while read l ; do
+        f=${l#*release/tests/}
+        f=valgrind_report/"${f//\//@}".xml
+        cmds+=("valgrind --child-silent-after-fork=yes --xml=yes --xml-file=$f $l")
+    done < <(find ./bin/gcc*/release/tests/ -executable -type f -name test_'*')
+    mkdir -p valgrind_report
+    /usr/bin/time --format="%Es - %MK" parallel -j4 ::: "${cmds[@]}"
 
     show_duration valgrind
 
-    build $toolset_clang -j2 -sNO_FFMPEG=1 san # -s FAST_CHECK=1
+
+    build $toolset_clang -j4 -sNO_FFMPEG=1 san
     rm -rf bin/clang*
 
     show_duration $toolset_clang
@@ -150,10 +144,15 @@ if (( $fast == 0 )); then
 
     # debug with coverage
     build $toolset_gcc -j4 debug -s FAST_CHECK=1 cxxflags=--coverage linkflags=-lgcov
-    gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/
-    rm -r bin/gcc*
+    # gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/
+    while read l ; do
+        gcov $l
+    done < <(find ./bin/gcc*/debug/tests/ -executable -type f -name test_'*')
+    mkdir -p gcov_report
+    mv *gcov gcov_report
 
-    show_duration $toolset_gcc debug
+    show_duration $toolset_gcc coverage
+
 
     # cppcheck
     # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
@@ -174,8 +173,7 @@ if (( $fast == 0 )); then
     #set -o pipefail
 
     # clang analyzer
-    CLANG_TIDY=clang-tidy-13 \
-      ./tools/c++-analyzer/clang-tidy | sed -E '/^(.+\/|)modules\//,/\^/d'
+    ./tools/c++-analyzer/clang-tidy | tee clang_tidy.txt
 
     show_duration clang-tidy
 fi

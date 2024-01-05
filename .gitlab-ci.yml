@@ -76,11 +76,10 @@ build-project:
   needs: []
   except:
     - tags
-  image: debian:buster-slim
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
   script:
-    - apt-get -qq update
-    - DEBIAN_FRONTEND=noninteractive apt-get -y install g++ libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libgssglue-dev libsnappy-dev libpng-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libbz2-dev gettext git libhyperscan-dev
-    - git submodule update --init
     - mkdir -p "$TESTDIR"
     - TMPDIR_TEST="$TESTDIR" bjam -j4 linkflags="-static-libstdc++" variant=release -q cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING' && rm -r "$TESTDIR"
   artifacts:
@@ -110,6 +109,9 @@ build-analyze:
     when: always
     paths:
       - report.txt
+      - clang_tidy.txt
+      - gcov_report
+      - valgrind_report
   timeout: 4h 30m
 
 sonarqube-check:

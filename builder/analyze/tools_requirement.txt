@@ -1,8 +1,9 @@
-clang-13
-clang-tidy-13
+clang
+clang-tidy
+emscripten
 gawk
 gcovr
-lua50
+lua5.1
 luarocks
 parallel
 time
