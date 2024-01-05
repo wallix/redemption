@@ -309,6 +309,8 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     ctx.parent.add_widget(ctx.wedit);
     ctx.parent.set_widget_focus(ctx.wedit, Widget::focus_reason_tabkey);
 
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
+
     ctx.click_down(95, 2);
     ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 

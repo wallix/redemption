@@ -27,6 +27,12 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 
+namespace
+{
+    constexpr char const* button_toggle_visibility_hidden = "◉";
+    constexpr char const* button_toggle_visibility_visible = "◎";
+}
+
 WidgetEditValid::WidgetEditValid(
     gdi::GraphicApi & drawable, CopyPaste & copy_paste,
     const char * text, WidgetEventNotifier onsubmit,
@@ -36,7 +42,7 @@ WidgetEditValid::WidgetEditValid(
     int /*xtext*/, int /*ytext*/, bool pass
 )
     : Widget(drawable, Focusable::Yes)
-    , button_next(drawable, "\xe2\x9e\x9c", onsubmit,
+    , button_next(drawable, "➜", onsubmit,
                   bgcolor, focus_color, focus_color, 1, font, 6, 2)
     , widget_password(pass
         ? new WidgetPassword(drawable, copy_paste, text, onsubmit, fgcolor, bgcolor,
@@ -49,15 +55,22 @@ WidgetEditValid::WidgetEditValid(
     , label(title
         ? new WidgetLabel(drawable, title, MEDIUM_GREY, bgcolor, font, 1, 2)
         : nullptr)
-    , button_toggle_visibility( pass
-        ? new WidgetButton{drawable, "\xE2\x97\x89", WidgetEventNotifier(),
-                           MEDIUM_GREY, bgcolor, focus_color, 0, font, 6, 2}
+    , button_toggle_visibility(pass
+        ? new WidgetButton(drawable, button_toggle_visibility_hidden,
+            [this] {
+                // Switch the visibility state
+                widget_password->toggle_password_visibility();
+                if(widget_password->password_is_visible()) {
+                    button_toggle_visibility->set_text(button_toggle_visibility_visible);
+                } else {
+                    button_toggle_visibility->set_text(button_toggle_visibility_hidden);
+                }
+            },
+            MEDIUM_GREY, bgcolor, focus_color, 0, font, 6, 2)
         : nullptr)
     , use_label_(use_title)
     , border_none_color(border_none_color)
-
-{
-}
+{}
 
 void WidgetEditValid::init_focus()
 {
@@ -76,18 +89,9 @@ Dimension WidgetEditValid::get_optimal_dim() const
 
 WidgetEditValid::~WidgetEditValid()
 {
-    if (this->editbox) {
-        delete this->editbox;
-        this->editbox = nullptr;
-    }
-    if (this->label) {
-        delete this->label;
-        this->label = nullptr;
-    }
-    if (this->button_toggle_visibility) {
-        delete this->button_toggle_visibility;
-        this->button_toggle_visibility = nullptr;
-    }
+    delete this->editbox;
+    delete this->label;
+    delete this->button_toggle_visibility;
 }
 
 void WidgetEditValid::use_title(bool use)
@@ -232,37 +236,24 @@ Widget * WidgetEditValid::widget_at_pos(int16_t x, int16_t y)
 
 void WidgetEditValid::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
-    if (button_next.get_rect().contains_pt(x,y)) {
-        button_next.rdp_input_mouse(device_flags, x, y);
-        rdp_input_invalidate(button_next.get_rect());
-    }
-    else if (is_password_widget() && button_toggle_visibility->get_rect().contains_pt(x,y)) {
-        button_toggle_visibility->rdp_input_mouse(device_flags, x, y);
-        if ((device_flags == MOUSE_FLAG_BUTTON1) && button_next.state == WidgetButton::State::Normal ) {
-            // Switch the visibility state
-            is_password_visible = !is_password_visible;
-            if(is_password_visible) {
-                button_toggle_visibility->set_text("\xE2\x97\x8E");
-            } else {
-                button_toggle_visibility->set_text("\xE2\x97\x89");
+    if (bool(device_flags & MOUSE_FLAG_BUTTON1)) {
+        auto update = [&](WidgetButton& btn){
+            if (btn.get_rect().contains_pt(x,y)
+             || (device_flags == MOUSE_FLAG_BUTTON1 && btn.state == WidgetButton::State::Pressed)
+            ) {
+                btn.rdp_input_mouse(device_flags, x, y);
             }
-            widget_password->toggle_password_visibility();
+        };
+
+        update(button_next);
+        if (is_password_widget()) {
+            update(*button_toggle_visibility);
         }
-        rdp_input_invalidate(button_toggle_visibility->get_rect());
     }
-    else {
-        if (device_flags == MOUSE_FLAG_BUTTON1)
-        {
-            if( button_next.state == WidgetButton::State::Pressed ) {
-                 button_next.state = WidgetButton::State::Normal;
-                rdp_input_invalidate(button_next.get_rect());
-            }
-            if( button_toggle_visibility != nullptr &&
-                button_toggle_visibility->state == WidgetButton::State::Pressed) {
-                    button_toggle_visibility->state = WidgetButton::State::Normal;
-                    rdp_input_invalidate(button_toggle_visibility->get_rect());
-            }
-        }
+
+    if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)
+     && editbox->get_rect().contains_pt(x,y)
+    ) {
         editbox->rdp_input_mouse(device_flags, x, y);
     }
 }

@@ -88,7 +88,6 @@ private:
     WidgetEdit * editbox;
     WidgetLabel * label;
     WidgetButton * button_toggle_visibility;
-    bool is_password_visible = false;
 
     bool use_label_;
 

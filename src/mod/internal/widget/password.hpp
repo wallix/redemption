@@ -45,6 +45,11 @@ public:
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
+    bool password_is_visible() const
+    {
+        return is_password_visible;
+    }
+
 private:
     bool is_password_visible = false;
     Font const& font;
