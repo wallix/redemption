@@ -100,9 +100,6 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
 
     wgrid.set_selection(4);
 
-    // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(wgrid.get_rect());
-
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_2.png");
 
     uint16_t mouse_x = wgrid.x() + 50;
@@ -110,11 +107,6 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
 
     wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, mouse_x, mouse_y);
     wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1, mouse_x, mouse_y);
-    // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
-                                    0 + wgrid.y(),
-                                    wgrid.cx(),
-                                    wgrid.cy()));
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_3.png");
 
@@ -133,14 +125,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     rdp_input_scancode(Keymap::KeyCode::DownArrow);
     rdp_input_scancode(Keymap::KeyCode::DownArrow);
 
-    // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(wgrid.get_rect());
-
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_4.png");
 
     wgrid.clear();
 }
-
-/* TODO
- * the entry point exists in module: it's rdp_input_invalidate
- * je just have to change received values to widget messages */

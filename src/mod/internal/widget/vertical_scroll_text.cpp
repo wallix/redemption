@@ -133,7 +133,7 @@ void WidgetVerticalScrollText::scroll_up()
     this->_scroll_up();
 }
 
-void WidgetVerticalScrollText::_scroll_down()
+bool WidgetVerticalScrollText::_scroll_down()
 {
     const auto old_y = this->current_y;
     const auto new_y = std::min(this->current_y + this->page_h, this->total_h);
@@ -141,10 +141,12 @@ void WidgetVerticalScrollText::_scroll_down()
         this->current_y = new_y;
         this->_update_cursor_button_y();
         this->rdp_input_invalidate(this->get_rect());
+        return true;
     }
+    return false;
 }
 
-void WidgetVerticalScrollText::_scroll_up()
+bool WidgetVerticalScrollText::_scroll_up()
 {
     const auto old_y = this->current_y;
     const auto new_y = std::max(this->current_y - this->page_h, 0);
@@ -152,7 +154,9 @@ void WidgetVerticalScrollText::_scroll_up()
         this->current_y = new_y;
         this->_update_cursor_button_y();
         this->rdp_input_invalidate(this->get_rect());
+        return true;
     }
+    return false;
 }
 
 void WidgetVerticalScrollText::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
@@ -190,13 +194,17 @@ void WidgetVerticalScrollText::rdp_input_mouse(uint16_t device_flags, uint16_t x
         }
         // top
         else if (y < this->y() + this->cursor_button_y) {
-            this->selected_button = ButtonType::Top;
-            this->_scroll_up();
+            auto old = std::exchange(this->selected_button, ButtonType::Top);
+            if (!this->_scroll_up() && old != ButtonType::Top) {
+                this->rdp_input_invalidate(this->get_rect());
+            }
         }
         // bottom
         else if (y > this->y() + this->cursor_button_y + this->button_dim.h) {
-            this->selected_button = ButtonType::Bottom;
-            this->_scroll_down();
+            auto old = std::exchange(this->selected_button, ButtonType::Bottom);
+            if (!this->_scroll_down() && old != ButtonType::Bottom) {
+                this->rdp_input_invalidate(this->get_rect());
+            }
         }
     }
     else if (device_flags == MOUSE_FLAG_BUTTON1) {
@@ -328,7 +336,7 @@ void WidgetVerticalScrollText::rdp_input_invalidate(Rect clip)
 
             draw_text_button(top_button_char, ButtonType::Top, ry, bh, 0);
             draw_text_button(cursor_button_char, ButtonType::Cursor, cy, this->cursor_button_h,
-                             (this->cursor_button_h - this->button_dim.h) / 2);
+                             (this->cursor_button_h - bh) / 2);
             draw_text_button(bottom_button_char, ButtonType::Bottom, ry + rh - bh, bh, 0);
 
             // left scroll border

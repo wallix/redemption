@@ -50,23 +50,17 @@ struct TestScrollCtx
             (is_horizontal ? dim.h : 200) + y*2);
         this->scroll.set_wh(this->drawable.width() - x*2, this->drawable.height() - y*2);
         this->scroll.set_xy(x, y);
-    }
-
-    void draw()
-    {
         this->scroll.rdp_input_invalidate(this->scroll.get_rect());
     }
 
     void down(int x, int y)
     {
         this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x, y);
-        this->draw();
     }
 
     void up(int x, int y)
     {
         this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
-        this->draw();
     }
 };
 
@@ -77,7 +71,6 @@ RED_AUTO_TEST_CASE(TestWidgetHScrollBar)
 {
     TestScrollCtx ctx(true);
 
-    ctx.draw();
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "hscroll_1.png");
 
     ctx.down(5, 5);
@@ -125,7 +118,6 @@ RED_AUTO_TEST_CASE(TestWidgetVScrollBar)
 {
     TestScrollCtx ctx(false);
 
-    ctx.draw();
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "vscroll_1.png");
 
     ctx.down(5, 5);
@@ -175,7 +167,6 @@ RED_AUTO_TEST_CASE(TestWidgetHScrollBarRail)
     int16_t y = 10;
     TestScrollCtx ctx(true, true, x, y);
 
-    ctx.draw();
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "hscroll_rail_1.png");
 
     ctx.down(x + 5, y + 5);
@@ -189,7 +180,6 @@ RED_AUTO_TEST_CASE(TestWidgetVScrollBarRail)
     int16_t y = 10;
     TestScrollCtx ctx(false, true, x, y);
 
-    ctx.draw();
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "vscroll_rail_1.png");
 
     ctx.down(x + 5, y + 5);

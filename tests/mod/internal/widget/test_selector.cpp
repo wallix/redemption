@@ -112,9 +112,6 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 
     selector.selector_lines.set_selection(1);
 
-    // ask to widget to redraw at it's current position
-    selector.rdp_input_invalidate(selector.get_rect());
-
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_2.png");
 }
 
@@ -144,9 +141,6 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_resize_1.png");
 
     selector.selector_lines.set_selection(1);
-
-    // ask to widget to redraw at it's current position
-    selector.rdp_input_invalidate(selector.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "selector_resize_2.png");
 }
@@ -254,7 +248,6 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
         auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
         keymap.event(flags, scancode);
         selector.rdp_input_scancode(flags, scancode, 0, keymap);
-        selector.rdp_input_invalidate(selector.get_rect());
     };
 
     rdp_input_scancode(Keymap::KeyCode::UpArrow);
@@ -338,7 +331,6 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
         auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
         keymap.event(flags, scancode);
         selector.rdp_input_scancode(flags, scancode, 0, keymap);
-        selector.rdp_input_invalidate(selector.get_rect());
     };
 
     rdp_input_scancode(Keymap::KeyCode::Tab);

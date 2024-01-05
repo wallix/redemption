@@ -51,6 +51,7 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     Dimension dim = wnumber_edit.get_optimal_dim();
     wnumber_edit.set_wh(cx, dim.h);
     wnumber_edit.set_xy(x, y);
+    wnumber_edit.focus(Widget::focus_reason_tabkey);
 
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "number_edit_1.png");
@@ -61,7 +62,6 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
 
     keymap.event(KFlags(), Scancode(0x10)); // 'a'
     wnumber_edit.rdp_input_scancode(KFlags(), Scancode(0x10), 0, keymap);
-    wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "number_edit_1.png");
     RED_CHECK(onsubmit.get_and_reset() == 0);
 
@@ -69,7 +69,6 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_scancode(KFlags(), Scancode(0x2a), 0, keymap);
     keymap.event(KFlags(), Scancode(0x03)); // '2'
     wnumber_edit.rdp_input_scancode(KFlags(), Scancode(0x03), 0, keymap);
-    wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "number_edit_3.png");
     RED_CHECK(onsubmit.get_and_reset() == 0);
 }

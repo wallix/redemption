@@ -55,10 +55,9 @@ struct TestScrollCtx
         this->scroll.rdp_input_invalidate(this->scroll.get_rect());
     }
 
-    void click(int x, int y)
+    void click(uint16_t x, uint16_t y)
     {
         this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x, y);
-        this->draw();
         this->scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
     }
 
@@ -69,7 +68,6 @@ struct TestScrollCtx
         auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
         keymap.event(flags, scancode);
         this->scroll.rdp_input_scancode(flags, scancode, 0, keymap);
-        this->draw();
     }
 };
 
@@ -105,7 +103,6 @@ RED_AUTO_TEST_CASE(TestWidgetVerticalScrollTextLongText)
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long1.png");
 
     ctx.scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 290, 10);
-    ctx.draw();
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long2.png");
     ctx.scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 290, 10);
 

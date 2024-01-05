@@ -136,19 +136,14 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     ctx.click(2, 2);
 
-    // ask to widget to redraw at it's current position
-    ctx.wedit.rdp_input_invalidate(ctx.wedit.get_rect());
-
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_3.png");
 
     ctx.wedit.set_text("Ylajali");
-
-    ctx.wedit.rdp_input_invalidate(ctx.wedit.get_rect());
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_4.png");
 
     RED_CHECK_EQUAL("Ylajali"sv, ctx.wedit.get_text());
-
 
     ctx.wedit.set_xy(192, 242);
 
@@ -181,19 +176,15 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     ctx.click(50, 3);
 
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
-
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_7.png");
 
     auto keyboard = ctx.keyboard();
 
     keyboard.send_scancode(0x0F); // tab
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_8.png");
 
     keyboard.send_scancode(0x10); // 'a'
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_9.png");
 }
@@ -222,22 +213,17 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     ctx.click(50, 2);
 
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
-
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_11.png");
 
     auto keyboard = ctx.keyboard();
 
     keyboard.send_scancode(0x0F); // tab
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_12.png");
 
     keyboard.send_scancode(0x10); // 'a'
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_9.png");
 
     keyboard.send_scancode(0x0F); // tab
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_14.png");
 
     keyboard.send_scancode(0x0F); // tab
@@ -272,22 +258,17 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     ctx.click(50, 2);
 
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
-
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_18.png");
 
     auto keyboard = ctx.keyboard();
 
     keyboard.send_scancode(0x0F); // tab
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_19.png");
 
     keyboard.send_scancode(0x10); // 'a'
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_20.png");
 
     keyboard.send_scancode(0x0F); // tab
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_21.png");
 
     keyboard.send_scancode(0x0F); // tab
@@ -309,39 +290,35 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     ctx.parent.add_widget(ctx.wedit);
     ctx.parent.set_widget_focus(ctx.wedit, Widget::focus_reason_tabkey);
 
+    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
+
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
     ctx.click_down(95, 2);
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_24.png");
 
     ctx.click_up(95, 2);
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
     RED_CHECK(ctx.onsubmit.get_and_reset() == 1);
 
     ctx.click_down(95, 2);
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_24.png");
 
     ctx.click_up(2, 2);
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
     RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
 
     ctx.click_down(95, 2);
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_24.png");
 
     ctx.parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0);
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
@@ -350,7 +327,6 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     auto keyboard = ctx.keyboard();
 
     keyboard.send_scancode(0x1C); // enter
-    ctx.parent.rdp_input_invalidate(ctx.parent.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "edit_valid_25.png");
 
     RED_CHECK(ctx.onsubmit.get_and_reset() == 1);

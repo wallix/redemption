@@ -102,11 +102,9 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
     auto& wbutton = button.wbutton;
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15);
-    wbutton.rdp_input_invalidate(wbutton.get_rect());
     RED_CHECK_IMG(button.drawable, IMG_TEST_PATH "button_10.png");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 15, 15);
-    wbutton.rdp_input_invalidate(wbutton.get_rect());
     RED_CHECK_IMG(button.drawable, IMG_TEST_PATH "button_9.png");
 }
 
@@ -232,15 +230,12 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonFocus)
     auto& wbutton = button.wbutton;
 
     wbutton.focus(Widget::focus_reason_tabkey);
-    wbutton.rdp_input_invalidate(wbutton.get_rect());
     RED_CHECK_IMG(button.drawable, IMG_TEST_PATH "button_15.png");
 
     wbutton.blur();
-    wbutton.rdp_input_invalidate(wbutton.get_rect());
     RED_CHECK_IMG(button.drawable, IMG_TEST_PATH "button_14.png");
 
     wbutton.focus(Widget::focus_reason_tabkey);
-    wbutton.rdp_input_invalidate(wbutton.get_rect());
     RED_CHECK_IMG(button.drawable, IMG_TEST_PATH "button_15.png");
 }
 
@@ -252,7 +247,6 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonLite)
     auto& wbutton = button.wbutton;
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2);
-    wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
     RED_CHECK_IMG(button.drawable, IMG_TEST_PATH "button19.png");
 }
 
@@ -264,6 +258,5 @@ RED_AUTO_TEST_CASE(TraceWidgetButtonStrong)
     auto& wbutton = button.wbutton;
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2);
-    wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
     RED_CHECK_IMG(button.drawable, IMG_TEST_PATH "button21.png");
 }

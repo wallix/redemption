@@ -60,7 +60,6 @@ struct TestWidgetGroupBoxCtx
     {
         wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
                                 wbutton.x() + 1, wbutton.y() + 1);
-        wgroupbox.rdp_input_invalidate(wgroupbox.get_rect());
     }
 };
 

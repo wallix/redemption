@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
         parent.rdp_input_invalidate(parent.get_rect());
     };
 
-    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
+    parent.rdp_input_invalidate(parent.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_2.png");
 

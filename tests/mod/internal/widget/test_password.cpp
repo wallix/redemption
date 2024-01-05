@@ -72,7 +72,6 @@ struct TestWidgetPasswordCtx
             auto flags = (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
             keymap.event(flags, scancode);
             ctx.wpassword.rdp_input_scancode(flags, scancode, 0, keymap);
-            ctx.wpassword.rdp_input_invalidate(ctx.wpassword.get_rect());
         }
     };
 
@@ -182,7 +181,6 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     auto keyboard = ctx.keyboard();
 
     keyboard.rdp_input_scancode(Keymap::KeyCode(0x10)); // 'a'
-    wpassword.rdp_input_invalidate(wpassword.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_10.png");
     RED_CHECK(onsubmit.get_and_reset() == 0);
 
@@ -224,7 +222,6 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 12, 3);
     RED_CHECK(onsubmit.get_and_reset() == 0);
 
-    wpassword.rdp_input_invalidate(Rect(0, 0, wpassword.cx(), wpassword.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "password_20.png");
 }
 

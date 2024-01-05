@@ -121,14 +121,13 @@ RED_AUTO_TEST_CASE(TraceWidgetWabCloseExit)
     NotifyTrace notifier;
     TestWidgetCloseCtx ctx("abc\ndef", "tartempion", "caufield", true, Theme(), notifier);
 
-    ctx.flat_wab_close.refresh_timeleft(std::chrono::seconds(183));
-
     ctx.flat_wab_close.rdp_input_invalidate(ctx.flat_wab_close.get_rect());
+
+    ctx.flat_wab_close.refresh_timeleft(std::chrono::seconds(183));
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_7.png");
 
     ctx.flat_wab_close.refresh_timeleft(std::chrono::seconds(49));
-    ctx.flat_wab_close.rdp_input_invalidate(ctx.flat_wab_close.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "wab_close_8.png");
 

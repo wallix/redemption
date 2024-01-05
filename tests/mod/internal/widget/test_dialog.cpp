@@ -284,21 +284,19 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
         "line 3, blah blah\n"
         "line 4");
 
+    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
+
     int x = ctx.flat_dialog.ok.x() + ctx.flat_dialog.ok.cx() / 2 ;
     int y = ctx.flat_dialog.ok.y() + ctx.flat_dialog.ok.cy() / 2 ;
     ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
     RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
     RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
-    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_9.png");
-
 
     ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
     RED_CHECK(ctx.onsubmit.get_and_reset() == 1);
     RED_CHECK(ctx.oncancel.get_and_reset() == 0);
-
-    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_10.png");
 
@@ -309,8 +307,6 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
     RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
-
-    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_11.png");
 
@@ -407,21 +403,19 @@ RED_AUTO_TEST_CASE(EventWidgetDialogWithCopyableLinkOkLink)
         "line 3, blah blah\n"
         "line 4");
 
+    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
+
     int x = ctx.flat_dialog.ok.x() + ctx.flat_dialog.ok.cx() / 2 ;
     int y = ctx.flat_dialog.ok.y() + ctx.flat_dialog.ok.cy() / 2 ;
     ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y);
     RED_CHECK(ctx.onsubmit.get_and_reset() == 0);
     RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
-    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_link_2.png");
-
 
     ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
     RED_CHECK(ctx.onsubmit.get_and_reset() == 1);
     RED_CHECK(ctx.oncancel.get_and_reset() == 0);
-
-    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_link_1.png");
 
@@ -451,6 +445,8 @@ RED_AUTO_TEST_CASE(EventWidgetDialogWithCopyableLinkOkLink)
 
     PastedWidget pasted(ctx.drawable, Widget::Focusable::No);
 
+    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
+
     ctx.copy_paste.paste(pasted);
     RED_CHECK(pasted.str == ""_av);
 
@@ -463,11 +459,10 @@ RED_AUTO_TEST_CASE(EventWidgetDialogWithCopyableLinkOkLink)
     RED_CHECK(ctx.oncancel.get_and_reset() == 0);
 
     ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
+
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_link_1.png");
 
     ctx.flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y);
-
-    ctx.flat_dialog.rdp_input_invalidate(ctx.flat_dialog.get_rect());
 
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "dialog_link_1.png");
 

@@ -100,7 +100,6 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
         flags |= (ukeycode & 0x80) ? Keymap::KbdFlags::Extended : Keymap::KbdFlags();
         keymap.event(flags, scancode);
         wscreen.rdp_input_scancode(flags, scancode, 0, keymap);
-        wscreen.rdp_input_invalidate(wscreen.get_rect());
     };
 
     rdp_input_scancode(Keymap::KeyCode::Tab);
@@ -181,7 +180,6 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.show_tooltip("tooltip test", 30, 35, Rect(0, 0, 500, 41), wscreen.get_rect());
 
-    wscreen.rdp_input_invalidate(wscreen.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_12.png");
 
     wscreen.show_tooltip(nullptr, 30, 35, Rect(), Rect());

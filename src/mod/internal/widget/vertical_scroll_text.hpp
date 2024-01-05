@@ -53,8 +53,8 @@ public:
 
 private:
     void _update_cursor_button_y();
-    void _scroll_up();
-    void _scroll_down();
+    bool _scroll_up();
+    bool _scroll_down();
 
     Color const fg_color;
     Color const bg_color;
