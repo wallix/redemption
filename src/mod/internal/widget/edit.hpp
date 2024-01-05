@@ -57,7 +57,7 @@ public:
 
     void draw_border(Rect clip, Color color);
 
-    [[nodiscard]] virtual Rect get_cursor_rect() const;
+    Rect get_cursor_rect() const;
 
     void draw_current_cursor();
     void draw_cursor(const Rect clip);
@@ -82,6 +82,8 @@ public:
 
     void clipboard_insert_utf8(zstring_view text) override;
 
+    void set_font(Font const & font);
+
 private:
     void insert_unicode_char(uint16_t unicode_char);
 
@@ -89,23 +91,21 @@ private:
 
 protected:
     WidgetLabel label;
-protected:
+private:
     size_t buffer_size;
 public:
     size_t num_chars;
+private:
     size_t edit_buffer_pos;
     size_t edit_pos;
-private:
     size_t cursor_px_pos;
     int w_text;
     int h_text;
     Color cursor_color;
-protected:
     Color focus_color;
-private:
     bool drawall;
 
-    Font const & font;
+    Font const * font;
 
 protected:
     CopyPaste & copy_paste;

@@ -44,7 +44,7 @@ inline void server_add_char(
     GlyphCache & gly_cache, uint8_t cacheId, uint16_t cacheIndex
   , int16_t offset, int16_t baseline, uint16_t width, uint16_t height, const uint8_t * data)
 {
-    FontChar fi(offset, baseline, width, height, 0);
+    RDPFontChar fi(offset, baseline, width, height, 0);
     memcpy(fi.data.get(), data, fi.datasize());
     // LOG(LOG_INFO, "cacheId=%u cacheIndex=%u", cacheId, cacheIndex);
     gly_cache.set_glyph(std::move(fi), cacheId, cacheIndex);

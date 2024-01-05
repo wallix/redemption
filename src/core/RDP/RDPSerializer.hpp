@@ -405,7 +405,7 @@ protected:
     }
 
     void emit_glyph_cache(uint8_t cacheId, uint8_t cacheIndex) {
-        FontChar & fc = this->glyph_cache.glyphs[cacheId][cacheIndex].font_item;
+        RDPFontChar & fc = this->glyph_cache.glyphs[cacheId][cacheIndex].font_item;
         RDPGlyphCache cmd(
             cacheId, /*1, */cacheIndex, fc.offsetx, fc.offsety, fc.width, fc.height, std::move(fc.data));
         // always restored fc.data
@@ -502,7 +502,7 @@ public:
         for (uint8_t i = 0; i < new_cmd.data_len; ) {
             if (new_cmd.data[i] <= 0xFD) {
                 //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
-                FontChar const & fc = gly_cache.glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item;
+                RDPFontChar const & fc = gly_cache.glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item;
                 assert(fc);
 
                 int cacheIndex;

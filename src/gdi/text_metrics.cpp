@@ -278,9 +278,9 @@ void server_draw_text(
             const uint32_t charnum = *unicode_iter;
 
             Font::FontCharElement font_item = font.item(charnum);
-            if (!font_item.is_valid) {
-                LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
-            }
+            // if (!font_item.is_valid) {
+            //     LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
+            // }
 
             auto nextx = x + font_item.view.offsetx + font_item.view.incby;
             if (nextx > clip.x) {
@@ -306,9 +306,9 @@ void server_draw_text(
 
             int cacheIndex = 0;
             Font::FontCharElement font_item = font.item(charnum);
-            if (!font_item.is_valid) {
-                LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
-            }
+            // if (!font_item.is_valid) {
+            //     LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
+            // }
 
             const GlyphCache::t_glyph_cache_result cache_result =
                 mod_glyph_cache.add_glyph(font_item.view, cacheId, cacheIndex);

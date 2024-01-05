@@ -38,8 +38,5 @@ public:
     void insert_text(const char* text) override;
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
-
-private:
-    int initial_x_text;
 };
 

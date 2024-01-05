@@ -242,7 +242,7 @@ Author(s): Jonathan Poelen
 namespace detail
 {
     template<class SetPoint>
-    void rdp_draw_glyph(SetPoint& set_point, FontChar const & fc, int16_t px, int16_t py, Rect clip)
+    void rdp_draw_glyph(SetPoint& set_point, RDPFontChar const & fc, int16_t px, int16_t py, Rect clip)
     {
         const uint8_t * fc_data = fc.data.get();
         for (int yy = 0; yy < fc.height; yy++)
@@ -286,7 +286,7 @@ void rdp_draw_glyphs(
         uint8_t data = variable_bytes.in_uint8();
         if (data <= 0xFD)
         {
-            FontChar const & fc = gly_cache.glyphs[cache_id][data].font_item;
+            RDPFontChar const & fc = gly_cache.glyphs[cache_id][data].font_item;
             if (!fc)
             {
                 LOG( LOG_WARNING,

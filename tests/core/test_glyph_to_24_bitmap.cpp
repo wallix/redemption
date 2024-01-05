@@ -85,7 +85,7 @@ RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
     uint16_t height = 16;
     int16_t incby = 16;
 
-    FontChar fc(offset, baseline, width, height, incby);
+    RDPFontChar fc(offset, baseline, width, height, incby);
 
     for (int i = 0; i < 32; i++) {
         fc.data[i] = bits_data[i];

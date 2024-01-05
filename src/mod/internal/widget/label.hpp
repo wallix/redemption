@@ -63,6 +63,8 @@ public:
 
     void auto_resize();
 
+    void set_font(Font const & font);
+
 public:
     static const size_t buffer_size = 256;
 
@@ -76,5 +78,5 @@ public:
 private:
     int w_border;
 
-    Font const & font;
+    Font const * font;
 };

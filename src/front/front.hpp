@@ -4675,7 +4675,7 @@ private:
             while (variable_bytes.in_remain()) {
                 uint8_t data = variable_bytes.in_uint8();
                 if (data <= 0xFD) {
-                    FontChar const & fc = gly_cache.glyphs[cmd.cache_id][data].font_item;
+                    RDPFontChar const & fc = gly_cache.glyphs[cmd.cache_id][data].font_item;
                     assert(fc);
 
                     if (has_delta_bytes) {

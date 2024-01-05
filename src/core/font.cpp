@@ -34,16 +34,16 @@ namespace
     constexpr FontCharView default_unknown{2, 0, 7, 5, 10, unknown_glyph_data};
 
     constexpr uint32_t contiguous_unicode_max = 0xD7FC;
-}  // namespace
+} // anonymous namespace
 
 REDEMPTION_NOINLINE
-Font::FontCharElement Font::get_higher_item(uint32_t unicode) const
+Font::FontCharElement Font::get_higher_item(uint32_t unicode) const noexcept
 {
-    auto* p = this->unicode_values.get();
+    auto* p = this->unicode_values;
     auto* end = p + this->nb_random_item;
     auto* p2 = std::lower_bound(p, end, unicode);
     if (p2 != end && *p2 == unicode) {
-        auto* item = this->font_items.get() + this->nb_contiguous_item + (p2 - p);
+        auto* item = this->font_items + this->nb_contiguous_item + (p2 - p);
         return {*item, true};
     }
     return {unknown_item, false};
@@ -65,10 +65,10 @@ Font::FontCharElement Font::get_higher_item(uint32_t unicode) const
     * glyph in range [CHARSET_START..CHARSET_END]
 
 - Individual glyph informations are :
-    ? when uni < SPARCE_LIMIT
+    ? when uni < CONTIGUOUS_LIMIT
       * has_glyph (u8 = 1 or 0)
-    ? when has_glyph = 1 or when uni < SPARCE_LIMIT
-      ? when uni >= SPARCE_LIMIT
+    ? when has_glyph = 1 or when uni < CONTIGUOUS_LIMIT
+      ? when uni >= CONTIGUOUS_LIMIT
         * unicode value (u32)
       * offsetx (u8)
       * offsety (u8)
@@ -78,8 +78,7 @@ Font::FontCharElement Font::get_higher_item(uint32_t unicode) const
       * data (the bitmap representing the sketch of the glyph, one bit by pixel,
               0 for background, 1 for foreground)
 */
-
-Font::Font(char const * file_path)
+FontData::FontData(char const * file_path)
   : max_height_(default_unknown.offsety + default_unknown.height + 1)
   , unknown_item(default_unknown)
 {
@@ -177,7 +176,6 @@ Font::Font(char const * file_path)
     auto usable_data_len = total_data_len;
 
     auto extract_glyph = [&](uint32_t index) {
-        // TODO max(0, ...) ?
         auto const offsetx = stream.in_sint8();
         auto const offsety = stream.in_sint8();
         auto const incby = stream.in_uint8();
@@ -203,7 +201,7 @@ Font::Font(char const * file_path)
         }
 
         stream.in_copy_bytes(data, glyph_data_size);
-        *font_char_p++ = FontCharView(offsetx, offsety, incby, cx, cy, data);
+        *font_char_p++ = FontCharView{offsetx, offsety, incby, cx, cy, data};
         data += data_size;
         usable_data_len -= data_size;
 

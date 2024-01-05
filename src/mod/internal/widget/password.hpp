@@ -23,15 +23,17 @@
 
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/edit.hpp"
+#include "core/font.hpp"
 
-class WidgetPassword : public WidgetEdit
+struct WidgetPasswordFont
 {
-    WidgetLabel masked_text;
+    Font shadow_font;
 
-    int w_char;
-    int h_char;
-    bool is_password_visible = false;
+    WidgetPasswordFont(Font const& font);
+};
 
+class WidgetPassword : WidgetPasswordFont, public WidgetEdit
+{
 public:
     WidgetPassword(gdi::GraphicApi & drawable, CopyPaste & copy_paste,
                    const char * text, WidgetEventNotifier onsubmit,
@@ -39,34 +41,11 @@ public:
                    Font const & font,
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0); /*NOLINT*/
 
-    Dimension get_optimal_dim() const override;
-
-    void set_xy(int16_t x, int16_t y) override;
-
-    void set_wh(uint16_t w, uint16_t h) override;
-
-    using WidgetEdit::set_wh;
-
-    void set_text(const char * text) override;
-
-    void insert_text(const char* text) override;
-
     void toggle_password_visibility();
-
-    void hide_password_text();
-    void show_password_text();
-
-    void rdp_input_invalidate(Rect clip) override;
-    void update_draw_cursor(Rect old_cursor) override;
-
-
-    [[nodiscard]] Rect get_cursor_rect() const override;
-    
-    void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override;
 
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
-    void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override;
 private:
-    void set_masked_text();
+    bool is_password_visible = false;
+    Font const& font;
 };

@@ -558,7 +558,8 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
     unique_fd sck1 = interface_create_server(enable_ipv6, s_addr,
                                              ini.get<cfg::globals::port>(),
                                              enable_transparent_mode);
-    const Font font(app_path(AppPath::DefaultFontFile));
+    const FontData font_data(app_path(AppPath::DefaultFontFile));
+    const Font& font = font_data.font();
 
     if (ini.get<cfg::websocket::enable_websocket>())
     {

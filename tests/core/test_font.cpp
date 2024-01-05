@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestCreateFontChar)
     uint16_t height = 8;
     int16_t incby = 8;
 
-    FontChar fc2(offsetx, offsety, width, height, incby);
+    RDPFontChar fc2(offsetx, offsety, width, height, incby);
     RED_CHECK_EQUAL(fc2.datasize(), 8);
     RED_CHECK_EQUAL(fc2.offsetx, offsetx);
     RED_CHECK_EQUAL(fc2.offsety, offsety);
@@ -51,13 +51,12 @@ RED_AUTO_TEST_CASE(TestCreateFontChar)
 
 RED_AUTO_TEST_CASE(TestCreateFont)
 {
-    {
-        Font f;
-        RED_CHECK(!f.is_loaded());
-    }
+    RED_CHECK(!FontData().is_loaded());
 
-    Font f(FIXTURES_PATH "/dejavu_14.rbf2");
-    RED_CHECK(f.is_loaded());
+    FontData data(FIXTURES_PATH "/dejavu_14.rbf2");
+    RED_CHECK(data.is_loaded());
+
+    Font f = data.font();
 
     RED_CHECK(!f.item(31).is_valid);
     RED_CHECK(f.item(' ').is_valid);

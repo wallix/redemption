@@ -502,7 +502,7 @@ void WrmPlayer::_interpret_cache_order()
             RDPGlyphCache cmd;
             cmd.receive(this->in_stream, header);
             this->gly_cache.set_glyph(
-                FontChar(std::move(cmd.aj), cmd.x, cmd.y, cmd.cx, cmd.cy, -1),
+                RDPFontChar(std::move(cmd.aj), cmd.x, cmd.y, cmd.cx, cmd.cy, -1),
                 cmd.cacheId, cmd.cacheIndex
             );
             break;

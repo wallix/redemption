@@ -44,7 +44,7 @@ WidgetEdit::WidgetEdit(
 , cursor_color(0x888888)
 , focus_color(focus_color)
 , drawall(false)
-, font(font)
+, font(&font)
 , copy_paste(copy_paste)
 {
     if (text) {
@@ -52,15 +52,14 @@ WidgetEdit::WidgetEdit(
         this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
         this->edit_pos = std::min(this->num_chars, edit_position);
         this->edit_buffer_pos = UTF8GetPos(byte_ptr_cast(this->label.buffer), this->edit_pos);
-        this->cursor_px_pos = 0;
         char c = this->label.buffer[this->edit_buffer_pos];
         this->label.buffer[this->edit_buffer_pos] = 0;
-        gdi::TextMetrics tm1(this->font, this->label.buffer);
+        gdi::TextMetrics tm1(*this->font, this->label.buffer);
         this->w_text = tm1.width;
         this->cursor_px_pos = this->w_text;
         this->label.buffer[this->edit_buffer_pos] = c;
         // TODO: tm.height unused ?
-        gdi::TextMetrics tm2(this->font, &this->label.buffer[this->edit_buffer_pos]);
+        gdi::TextMetrics tm2(*this->font, &this->label.buffer[this->edit_buffer_pos]);
         this->w_text += tm2.width;
     } else {
         this->buffer_size = 0;
@@ -102,7 +101,7 @@ void WidgetEdit::set_text(const char * text/*, int position = 0*/)
 
         memcpy(this->label.buffer, text, this->buffer_size);
         this->label.buffer[this->buffer_size] = 0;
-        gdi::TextMetrics tm(this->font, this->label.buffer);
+        gdi::TextMetrics tm(*this->font, this->label.buffer);
         this->w_text = tm.width;
         this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
     }
@@ -132,7 +131,7 @@ void WidgetEdit::insert_text(const char * text/*, int position = 0*/)
         }
         this->buffer_size = total_n;
         this->label.buffer[this->buffer_size] = 0;
-        gdi::TextMetrics tm(this->font, this->label.buffer);
+        gdi::TextMetrics tm(*this->font, this->label.buffer);
         this->w_text = tm.width;
         const size_t tmp_num_chars = this->num_chars;
         this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
@@ -147,7 +146,7 @@ void WidgetEdit::insert_text(const char * text/*, int position = 0*/)
             const char c = this->label.buffer[pos];
             this->label.buffer[pos] = 0;
             // TODO: tm.height unused ?
-            gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
+            gdi::TextMetrics tm(*this->font, this->label.buffer + this->edit_buffer_pos);
             this->label.buffer[pos] = c;
             this->cursor_px_pos += tm.width;
             this->edit_buffer_pos += max_n;
@@ -238,7 +237,7 @@ void WidgetEdit::increment_edit_pos()
     size_t n = UTF8GetPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos), 1);
     char c = this->label.buffer[this->edit_buffer_pos + n];
     this->label.buffer[this->edit_buffer_pos + n] = 0;
-    gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
+    gdi::TextMetrics tm(*this->font, this->label.buffer + this->edit_buffer_pos);
     this->cursor_px_pos += tm.width;
     this->label.buffer[this->edit_buffer_pos + n] = c;
     this->edit_buffer_pos += n;
@@ -268,7 +267,7 @@ void WidgetEdit::decrement_edit_pos()
     this->edit_pos--;
     char c = this->label.buffer[this->edit_buffer_pos];
     this->label.buffer[this->edit_buffer_pos] = 0;
-    gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos - len);
+    gdi::TextMetrics tm(*this->font, this->label.buffer + this->edit_buffer_pos - len);
     this->cursor_px_pos -= tm.width;
     this->label.buffer[this->edit_buffer_pos] = c;
     this->edit_buffer_pos -= len;
@@ -320,46 +319,47 @@ void WidgetEdit::move_to_first_character()
 
 void WidgetEdit::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
 {
-    if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-        if (x <= this->x() + this->label.x_text) {
-            if (this->edit_pos) {
-                this->move_to_first_character();
-            }
+    (void)y;
+
+    if (device_flags != (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+        return;
+    }
+
+    if (x <= this->x() + this->label.x_text) {
+        if (this->edit_pos) {
+            this->move_to_first_character();
         }
-        else if (x >= this->w_text + this->x() + this->label.x_text) {
-            if (this->edit_pos < this->num_chars) {
-                this->move_to_last_character();
-            }
+    }
+    else if (x >= this->w_text + this->x() + this->label.x_text) {
+        if (this->edit_pos < this->num_chars) {
+            this->move_to_last_character();
         }
-        else {
-            Rect old_cursor_rect = this->get_cursor_rect();
-            int xx = this->x() + this->label.x_text;
-            size_t e = this->edit_pos;
-            this->edit_pos = 0;
-            this->edit_buffer_pos = 0;
-            size_t len = this->utf8len_current_char();
-            while (this->edit_buffer_pos < this->buffer_size) {
-                char c = this->label.buffer[this->edit_buffer_pos + len];
-                this->label.buffer[this->edit_buffer_pos + len] = 0;
-                gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
-                // TODO: tm.height unused ?
-                this->label.buffer[this->edit_buffer_pos + len] = c;
-                xx += tm.width;
-                if (xx >= x) {
-                    xx -= tm.width;
-                    break;
-                }
-                len = this->utf8len_current_char();
-                this->edit_buffer_pos += len;
-                ++this->edit_pos;
+    }
+    else {
+        Rect old_cursor_rect = this->get_cursor_rect();
+        int xx = this->x() + this->label.x_text;
+        size_t e = this->edit_pos;
+        this->edit_pos = 0;
+        this->edit_buffer_pos = 0;
+        size_t len = this->utf8len_current_char();
+        while (this->edit_buffer_pos < this->buffer_size) {
+            char c = this->label.buffer[this->edit_buffer_pos + len];
+            this->label.buffer[this->edit_buffer_pos + len] = 0;
+            gdi::TextMetrics tm(*this->font, this->label.buffer + this->edit_buffer_pos);
+            this->label.buffer[this->edit_buffer_pos + len] = c;
+            xx += tm.width;
+            if (xx >= x) {
+                xx -= tm.width;
+                break;
             }
-            this->cursor_px_pos = xx - (this->x() + this->label.x_text);
-            if (e != this->edit_pos) {
-                this->update_draw_cursor(old_cursor_rect);
-            }
+            len = this->utf8len_current_char();
+            this->edit_buffer_pos += len;
+            ++this->edit_pos;
         }
-    } else {
-        Widget::rdp_input_mouse(device_flags, x, y);
+        this->cursor_px_pos = xx - (this->x() + this->label.x_text);
+        if (e != this->edit_pos) {
+            this->update_draw_cursor(old_cursor_rect);
+        }
     }
 }
 
@@ -380,7 +380,7 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
             }
 
             if (keymap.is_ctrl_pressed()) {
-                while ( (this->label.buffer[(this->edit_buffer_pos)-1] != ' ')
+                while ( (this->label.buffer[this->edit_buffer_pos-1] != ' ')
                      || (this->label.buffer[(this->edit_buffer_pos)] == ' ')
                 ){
                     if (this->edit_pos > 0) {
@@ -404,7 +404,7 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
             }
 
             if (keymap.is_ctrl_pressed()) {
-                while ( (this->label.buffer[(this->edit_buffer_pos)-1] == ' ')
+                while ( (this->label.buffer[this->edit_buffer_pos-1] == ' ')
                         || (this->label.buffer[(this->edit_buffer_pos)] != ' ') ){
                     if (this->edit_pos < this->num_chars) {
                         Rect old_cursor_rect = this->get_cursor_rect();
@@ -440,10 +440,10 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
                 if (keymap.is_ctrl_pressed()) {
                     // TODO remove_n_char
                     Rect rect = this->get_cursor_rect();
-                    while (this->edit_pos > 0 && this->label.buffer[(this->edit_buffer_pos)-1] == ' ') {
+                    while (this->edit_pos > 0 && this->label.buffer[this->edit_buffer_pos-1] == ' ') {
                         rect = rect.disjunct(remove_one_char());
                     }
-                    while (this->edit_pos > 0 && this->label.buffer[(this->edit_buffer_pos)-1] != ' ') {
+                    while (this->edit_pos > 0 && this->label.buffer[this->edit_buffer_pos-1] != ' ') {
                         rect = rect.disjunct(remove_one_char());
                     }
                     this->rdp_input_invalidate(rect);
@@ -460,7 +460,7 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
                     size_t len = this->utf8len_current_char();
                     char c = this->label.buffer[this->edit_buffer_pos + len];
                     this->label.buffer[this->edit_buffer_pos + len] = 0;
-                    gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
+                    gdi::TextMetrics tm(*this->font, this->label.buffer + this->edit_buffer_pos);
                     this->label.buffer[this->edit_buffer_pos + len] = c;
                     UTF8RemoveOne(make_writable_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
                     this->buffer_size -= len;
@@ -616,4 +616,19 @@ void WidgetEdit::clipboard_insert_utf8(zstring_view text)
     }
 
     this->insert_text(text.c_str());
+}
+
+void WidgetEdit::set_font(Font const & font)
+{
+    this->label.set_font(font);
+    this->font = &font;
+
+    this->w_text = gdi::TextMetrics(font, this->label.buffer).width;
+
+    auto& ch_ref = this->label.buffer[this->edit_buffer_pos];
+    const auto c = std::exchange(ch_ref, '\0');
+
+    this->cursor_px_pos = gdi::TextMetrics(font, this->label.buffer).width;
+
+    ch_ref = c;
 }

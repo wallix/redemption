@@ -32,7 +32,7 @@ public:
     [[nodiscard]] uint8_t const * data() const noexcept { return this->raw_data; }
 
     GlyphTo24Bitmap(
-        FontChar const & fc,
+        RDPFontChar const & fc,
         const BGRColor color_fore,
         const BGRColor color_back) noexcept
     {

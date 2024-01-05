@@ -1,25 +1,6 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages,
-              Raphael Zhou, Jonathan Poelen
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
-
-   Font header file
+SPDX-FileCopyrightText: 2024 Wallix Proxies Team
+SPDX-License-Identifier: GPL-2.0-or-later
 */
 
 #pragma once
@@ -32,31 +13,14 @@
 
 #include "utils/bitfu.hpp"
 
-
-// TODO u16 -> u8
-
-
 struct FontCharView
 {
-    int16_t offsetx = 0;
-    int16_t offsety = 0;
-    int16_t incby = 0;
-    uint16_t width = 0;
-    uint16_t height = 0;
+    int8_t offsetx = 0;
+    int8_t offsety = 0;
+    uint8_t incby = 0;
+    uint8_t width = 0;
+    uint8_t height = 0;
     uint8_t const* data = nullptr;
-
-    constexpr FontCharView(
-        int16_t offsetx, int16_t offsety, int16_t incby,
-        uint16_t width, uint16_t height, uint8_t const* data) noexcept
-    : offsetx{offsetx}
-    , offsety{offsety}
-    , incby{incby}
-    , width{width}
-    , height{height}
-    , data{data}
-    {}
-
-    FontCharView() = default;
 
     explicit operator bool () const noexcept
     {
@@ -72,54 +36,19 @@ struct FontCharView
     {
         return this->data;
     }
-
-    //void show() {
-    //          uint8_t   fc_bit_mask        = 128;
-    //    const uint8_t * fc_data            = this->data.get();
-    //    const bool      skip_padding_pixel = (this->width % 8);
-    //
-    //    for (int y = 0; y < this->height; y++)
-    //    {
-    //        for (int x = 0; x < this->width; x++)
-    //        {
-    //            if (fc_bit_mask & (*fc_data)) {
-    //                printf("X");
-    //            }
-    //            else {
-    //                printf(".");
-    //            }
-    //
-    //            fc_bit_mask >>= 1;
-    //            if (!fc_bit_mask)
-    //            {
-    //                fc_data++;
-    //                fc_bit_mask = 128;
-    //            }
-    //        }
-    //
-    //        if (skip_padding_pixel) {
-    //            fc_data++;
-    //            fc_bit_mask = 128;
-    //            printf("_");
-    //        }
-    //        printf("\n");
-    //    }
-    //    printf("
-    //}
-}; // END STRUCT - FontCharView
+};
 
 
-struct FontChar
+struct RDPFontChar
 {
     int16_t offsetx = 0;
     int16_t offsety = 0;
     int16_t incby = 0;
     uint16_t width = 0;
     uint16_t height = 0;
-    std::unique_ptr<uint8_t[]> data; // PERF mini_vector<32>
+    std::unique_ptr<uint8_t[]> data; // PERF mini_vector<32> or allocator
 
-    // TODO data really aligned ?
-    FontChar(std::unique_ptr<uint8_t[]> data, int16_t offsetx, int16_t offsety, uint16_t width, uint16_t height, int16_t incby)
+    RDPFontChar(std::unique_ptr<uint8_t[]> data, int16_t offsetx, int16_t offsety, uint16_t width, uint16_t height, int16_t incby)
         : offsetx{offsetx}
         , offsety{offsety}
         , incby{incby}
@@ -129,7 +58,7 @@ struct FontChar
     {
     }
 
-    FontChar(int16_t offsetx, int16_t offsety, uint16_t width, uint16_t height, int16_t incby)
+    RDPFontChar(int16_t offsetx, int16_t offsety, uint16_t width, uint16_t height, int16_t incby)
         : offsetx{offsetx}
         , offsety{offsety}
         , incby{incby}
@@ -139,7 +68,7 @@ struct FontChar
     {
     }
 
-    explicit FontChar(FontCharView const& font_char_view)
+    explicit RDPFontChar(FontCharView const& font_char_view)
         : offsetx{font_char_view.offsetx}
         , offsety{font_char_view.offsety}
         , incby{font_char_view.incby}
@@ -151,20 +80,20 @@ struct FontChar
         memcpy(this->data.get(), font_char_view.data, font_char_view.datasize());
     }
 
-    FontChar() = default;
+    RDPFontChar() = default;
 
-    FontChar(FontChar && other) = default;
-    FontChar(FontChar const & other) = delete;
-    FontChar & operator=(FontChar &&) = default;
-    FontChar & operator=(FontChar const &) = delete;
+    RDPFontChar(RDPFontChar && other) = default;
+    RDPFontChar(RDPFontChar const & other) = delete;
+    RDPFontChar & operator=(RDPFontChar &&) = default;
+    RDPFontChar & operator=(RDPFontChar const &) = delete;
 
     void * operator new (size_t) = delete;
 
-    [[nodiscard]] FontChar clone() const
+    [[nodiscard]] RDPFontChar clone() const
     {
         auto ptr = std::make_unique<uint8_t[]>(this->datasize());
         memcpy(ptr.get(), this->data.get(), this->datasize());
-        return FontChar(std::move(ptr), this->offsetx, this->offsety, this->width, this->height, this->incby);
+        return RDPFontChar(std::move(ptr), this->offsetx, this->offsety, this->width, this->height, this->incby);
     }
 
     explicit operator bool () const noexcept
@@ -181,40 +110,6 @@ struct FontChar
     {
         return this->data.get();
     }
-
-    //void show() {
-    //          uint8_t   fc_bit_mask        = 128;
-    //    const uint8_t * fc_data            = this->data.get();
-    //    const bool      skip_padding_pixel = (this->width % 8);
-    //
-    //    for (int y = 0; y < this->height; y++)
-    //    {
-    //        for (int x = 0; x < this->width; x++)
-    //        {
-    //            if (fc_bit_mask & (*fc_data)) {
-    //                printf("X");
-    //            }
-    //            else {
-    //                printf(".");
-    //            }
-    //
-    //            fc_bit_mask >>= 1;
-    //            if (!fc_bit_mask)
-    //            {
-    //                fc_data++;
-    //                fc_bit_mask = 128;
-    //            }
-    //        }
-    //
-    //        if (skip_padding_pixel) {
-    //            fc_data++;
-    //            fc_bit_mask = 128;
-    //            printf("_");
-    //        }
-    //        printf("\n");
-    //    }
-    //    printf("
-    //}
 }; // END STRUCT - FontChar
 
 /* compare the two font items returns true if they match */
@@ -229,17 +124,58 @@ bool font_item_equal(FontChar1 const& font_char1, FontChar2 const& font_char2) n
 }
 
 
+// template<class FontChar1>
+// void show(FontChar1 const& fc)
+// {
+//     uint8_t fc_bit_mask = 128;
+//     const uint8_t * fc_data = fc.data_ptr();
+//     const bool skip_padding_pixel = (fc.width % 8);
+//
+//     for (unsigned y = 0; y < fc.height; y++) {
+//         for (unsigned x = 0; x < fc.width; x++) {
+//             if (fc_bit_mask & (*fc_data)) {
+//                 printf("X");
+//             }
+//             else {
+//                 printf(".");
+//             }
+//
+//             fc_bit_mask >>= 1;
+//             if (!fc_bit_mask)
+//             {
+//                 fc_data++;
+//                 fc_bit_mask = 128;
+//             }
+//         }
+//
+//         if (skip_padding_pixel) {
+//             fc_data++;
+//             fc_bit_mask = 128;
+//             printf("_");
+//         }
+//         printf("\n");
+//     }
+//     printf("");
+// }
+
+
 struct Font
 {
     Font() = default;
 
-    /// \param file_path  path to the font definition file (*.rbf)
-    explicit Font(char const * file_path);
-
-    bool is_loaded() const
-    {
-        return this->nb_contiguous_item && this->nb_random_item;
-    }
+    Font(FontCharView const* font_items,
+         uint32_t nb_contiguous_item,
+         uint32_t nb_random_item,
+         uint16_t max_height,
+         uint32_t const* unicode_values,
+         FontCharView unknown_item)
+    : font_items(font_items)
+    , nb_contiguous_item(nb_contiguous_item)
+    , nb_random_item(nb_random_item)
+    , max_height_(max_height)
+    , unicode_values(unicode_values)
+    , unknown_item(unknown_item)
+    {}
 
     uint16_t max_height() const noexcept
     {
@@ -257,7 +193,7 @@ struct Font
         bool is_valid;
     };
 
-    FontCharElement item(uint32_t unicode) const
+    FontCharElement item(uint32_t unicode) const noexcept
     {
         if (unicode >= 32u) {
             if (unicode - 32u < nb_contiguous_item) {
@@ -269,13 +205,45 @@ struct Font
     }
 
 private:
-    FontCharElement get_higher_item(uint32_t unicode) const;
+    FontCharElement get_higher_item(uint32_t unicode) const noexcept;
 
-    void load_from_file(const char * file_path);
+    FontCharView const* font_items {};
+    uint32_t nb_contiguous_item {};
+    uint32_t nb_random_item {};
+    uint16_t max_height_ {};
+    uint32_t const* unicode_values {};
+    FontCharView unknown_item {};
+};
 
+
+struct FontData
+{
+    FontData() = default;
+
+    /// \param file_path  path to the font definition file (*.rbf)
+    explicit FontData(char const * file_path);
+
+    bool is_loaded() const noexcept
+    {
+        return this->nb_contiguous_item || this->nb_random_item;
+    }
+
+    Font font() const noexcept
+    {
+        return Font(
+            font_items.get(),
+            nb_contiguous_item,
+            nb_random_item,
+            max_height_,
+            unicode_values.get(),
+            unknown_item
+        );
+    }
+
+private:
     std::unique_ptr<FontCharView[]> font_items;
-    std::size_t nb_contiguous_item = 0;
-    std::size_t nb_random_item = 0;
+    uint32_t nb_contiguous_item = 0;
+    uint32_t nb_random_item = 0;
     uint16_t max_height_ = 0;
     std::unique_ptr<uint32_t[]> unicode_values;
     std::unique_ptr<uint8_t[]> data_glyphs;

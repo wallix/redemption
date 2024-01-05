@@ -39,7 +39,7 @@ WidgetLabel::WidgetLabel(
     , bg_color(bgcolor)
     , fg_color(fgcolor)
     , w_border(x_text)
-    , font(font)
+    , font(&font)
 {
     this->set_text(text);
 }
@@ -83,7 +83,7 @@ void WidgetLabel::rdp_input_invalidate(Rect clip)
         this->draw(
             rect_intersect, this->get_rect(), this->drawable, this->buffer,
             this->fg_color, this->bg_color, gdi::ColorCtx::depth24(),
-            this->font, this->x_text, this->y_text);
+            *this->font, this->x_text, this->y_text);
     }
 }
 
@@ -103,8 +103,8 @@ void WidgetLabel::draw(
 
 Dimension WidgetLabel::get_optimal_dim() const
 {
-    int width = this->buffer[0] ? gdi::TextMetrics(this->font, this->buffer).width : 0;
-    return Dimension(width + this->x_text * 2, this->font.max_height() + this->y_text * 2);
+    int width = this->buffer[0] ? gdi::TextMetrics(*this->font, this->buffer).width : 0;
+    return Dimension(width + this->x_text * 2, this->font->max_height() + this->y_text * 2);
 }
 
 Dimension WidgetLabel::get_optimal_dim(Font const & font, char const* text, int xtext, int ytext)
@@ -150,4 +150,9 @@ void WidgetLabel::auto_resize()
 {
     Dimension dim = this->get_optimal_dim();
     this->set_wh(dim);
+}
+
+void WidgetLabel::set_font(Font const & font)
+{
+    this->font = &font;
 }

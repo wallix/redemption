@@ -38,7 +38,7 @@ class GlyphCache : noncopyable {
         bool cached = false;
 
     public:
-        FontChar font_item;
+        RDPFontChar font_item;
     };
 
     /* font */
@@ -79,7 +79,7 @@ public:
         , GLYPH_ADDED_TO_CACHE
     };
 
-    t_glyph_cache_result add_glyph(FontChar const & font_item, int cacheid, int & cacheidx) {
+    t_glyph_cache_result add_glyph(RDPFontChar const & font_item, int cacheid, int & cacheidx) {
         const t_glyph_cache_result ret = priv_add_glyph(font_item, cacheid, cacheidx);
         if (ret == GLYPH_ADDED_TO_CACHE) {
             this->glyphs[cacheid][cacheidx].font_item = font_item.clone();
@@ -87,7 +87,7 @@ public:
         return ret;
     }
 
-    t_glyph_cache_result add_glyph(FontChar && font_item, int cacheid, int & cacheidx) {
+    t_glyph_cache_result add_glyph(RDPFontChar && font_item, int cacheid, int & cacheidx) {
         const t_glyph_cache_result ret = priv_add_glyph(font_item, cacheid, cacheidx);
         if (ret == GLYPH_ADDED_TO_CACHE) {
             this->glyphs[cacheid][cacheidx].font_item = std::move(font_item);
@@ -98,13 +98,12 @@ public:
     t_glyph_cache_result add_glyph(FontCharView const& font_item, int cacheid, int & cacheidx) {
         const t_glyph_cache_result ret = priv_add_glyph(font_item, cacheid, cacheidx);
         if (ret == GLYPH_ADDED_TO_CACHE) {
-            this->glyphs[cacheid][cacheidx].font_item = FontChar(font_item);
+            this->glyphs[cacheid][cacheidx].font_item = RDPFontChar(font_item);
         }
         return ret;
     }
 
 private:
-    // TODO FontChar -> FontCharView
     template<class FontCharItem>
     t_glyph_cache_result priv_add_glyph(FontCharItem const & font_item, int cacheid, int & cacheidx) {
         this->glyph_stamp++;
@@ -136,7 +135,7 @@ private:
     }
 
 public:
-    void set_glyph(FontChar && fc, size_t cacheid, size_t cacheidx) {
+    void set_glyph(RDPFontChar && fc, size_t cacheid, size_t cacheidx) {
         this->glyph_stamp++;
         this->glyphs[cacheid][cacheidx].font_item = std::move(fc);
         this->glyphs[cacheid][cacheidx].stamp     = this->glyph_stamp;
