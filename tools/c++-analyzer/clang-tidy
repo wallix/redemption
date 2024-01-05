@@ -12,21 +12,31 @@ else
   cpp_unity1="$unity_build_base/unity_build1.cpp"
   cpp_unity2="$unity_build_base/unity_build2.cpp"
 
-  find src/ -name '*.cpp' \
-    -a \( -path 'src/main/headlessclient.cpp' -o -not -path 'src/main/*' \) \
-    -a -not -path 'src/capture/ocr/main/*' \
-    -a -not -path 'src/utils/crypto/*' \
-    -a -not -path 'src/keyboard/keylayouts.cpp' \
-    -a -not -path 'src/core/error.cpp' \
-    -a -not -path 'src/utils/log_as_logprint.cpp' \
-    -a -not -path 'src/lib/do_recorder.cpp' \
-  | sed -E 's/^src\/(.*)/#include "\1"/' > "$cpp_unity1"
+  nolint='bugprone-suspicious-include'
+  nolintbegin="// NOLINTBEGIN($nolint)"
+  nolintend="// NOLINTEND($nolint)"
+
+  {
+    echo "$nolintbegin"
+    find src/ -name '*.cpp' \
+      -a \( -path 'src/main/headlessclient.cpp' -o -not -path 'src/main/*' \) \
+      -a -not -path 'src/capture/ocr/main/*' \
+      -a -not -path 'src/utils/crypto/*' \
+      -a -not -path 'src/keyboard/keylayouts.cpp' \
+      -a -not -path 'src/core/error.cpp' \
+      -a -not -path 'src/utils/log_as_logprint.cpp' \
+      -a -not -path 'src/lib/do_recorder.cpp' \
+    | sed -E 's/^src\/(.*)/#include "\1" // NOLINT(cert-err-58-cpp)/'
+    echo "$nolintend"
+  } > "$cpp_unity1"
 
   echo '
+    '"$nolintbegin"'
     #include "core/error.cpp"
     #include "lib/do_recorder.cpp"
     #include "main/mwrm3_editor.cpp"
     #include "utils/log_as_logprint.cpp"
+    '"$nolintend"'
   ' > "$cpp_unity2"
 
   sources=(
@@ -123,6 +133,7 @@ else
 -llvmlibc-callee-namespace,
 -llvmlibc-implementation-in-namespace,
 -llvmlibc-restrict-system-libc-headers,
+-misc-const-correctness,
 -misc-macro-parentheses,
 -misc-non-private-member-variables-in-classes,
 -misc-static-assert,

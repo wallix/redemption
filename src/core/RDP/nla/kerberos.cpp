@@ -266,11 +266,14 @@ void Krb5Creds::KrbErrLogger::log_if_error()
 }
 
 #define CHECK_OR_SET_ERR(err_expr, err_obj, expr, msg, extra) \
-    do { if ((err_obj.ret = expr)) {                          \
-        err_obj.ctx_msg = msg;                                \
-        err_obj.extra_param = extra;                          \
-        err_expr;                                             \
-    } } while (0)
+    do {                                                      \
+        err_obj.ret = expr;                                   \
+        if (err_obj.ret) {                                    \
+            err_obj.ctx_msg = msg;                            \
+            err_obj.extra_param = extra;                      \
+            err_expr;                                         \
+        }                                                     \
+    } while (0)
 
 
 REDEMPTION_DIAGNOSTIC_PUSH()
