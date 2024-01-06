@@ -116,7 +116,7 @@ build-analyze:
 
 sonarqube-check:
   stage: build
-  needs: [build-project, test-sesman]
+  needs: [build-project, test-sesman, build-analyze]
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
