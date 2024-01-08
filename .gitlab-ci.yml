@@ -110,7 +110,7 @@ build-analyze:
     paths:
       - report.txt
       - clang_tidy.txt
-      - gcov_report
+      - gcov_report.xml
       - valgrind_report
   timeout: 4h 30m
 

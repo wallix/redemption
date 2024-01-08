@@ -144,12 +144,7 @@ if (( $fast == 0 )); then
 
     # debug with coverage
     build $toolset_gcc -j4 debug -s FAST_CHECK=1 cxxflags=--coverage linkflags=-lgcov
-    # gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/
-    while read l ; do
-        gcov $l
-    done < <(find ./bin/gcc*/debug/tests/ -executable -type f -name test_'*')
-    mkdir -p gcov_report
-    mv *gcov gcov_report
+    gcovr --gcov-executable $gcovbin --xml -r . -f src/ bin/gcc*/debug/ > gcov_report.xml
 
     show_duration $toolset_gcc coverage
 
