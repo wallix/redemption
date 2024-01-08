@@ -1,0 +1,44 @@
+exclude = [
+    "__pycache__",
+]
+
+# [lint]  # ruff > 0.0.263
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = [
+    # ruff linter | sed -E 's#^\s*([A-Za-z0-9/]+).*#\1#;s#/#", "#;s/^/"/;s/$/",/;'
+
+    # NO!
+    # "D",  # pydocstyle: undocumented-*, blank-line-before-class, etc
+    # "C90",  # complexity
+    # "SLF",  # SLF001 	private-member-access 	Private member accessed: {access}
+    # "ERA",  # eradicate ; ex. ERA001: Found commented-out code
+    # "PTH",  # os.path.xxx() should be replaced by Path.xxx()
+    # "YTT",  # flake8-2020 ; sys-version-*
+    # "CPY",  # flake8-copyright
+
+    "ASYNC", "FA",  "SLOT", "TD",  "FIX", "FLY", "AIR", "PERF", "FURB", "LOG",
+    "E", "F", "W", "I", "N", "ANN", "S", "BLE", "FBT", "B", "A", "COM", "C4",
+    "DTZ", "EM", "EXE", "RUF", "ISC", "ICN", "G", "INP", "PIE", "PYI", "PT",
+    "RSE", "RET", "SIM", "TID", "TCH", "INT", "ARG", "PD", "PGH", "PL", "TRY",
+    "NPY", "T20", "TRIO",
+]
+
+ignore = [
+    "E501",  # Line too long
+    "T201", "T203",  # print, pprint
+    "PLR0912",  # Too many branches ({branches} > {max_branches})
+    "PLR0917",  # Too many positional arguments
+    "INP001",  # implicit-namespace-package
+    "I001",  # Import block is un-sorted or un-formatted
+    "PLR0913",  # Too many arguments to function call
+    "PLR2004",  # Magic value used in comparison, consider replacing XXX with a constant variable
+    "FBT001",  # Boolean positional arg in function definition
+    "ANN101",  # missing-type-self
+    "FBT002",  # Boolean default positional argument in function definition
+    "E741",  # ambiguous-variable-name
+    "TD002",  # Missing author in TODO
+    "TD003",  # Missing issue link on the line following this TODO
+    "TD004",  # Missing colon in TODO
+]

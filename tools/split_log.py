@@ -24,7 +24,6 @@ id_extractor = (re.compile(r' \((\d+)[^)]+\)()') if args.local
 
 files = {}
 
-
 def read_file(f, prefix: str, suffix: str, cp_to_stdout: bool) -> None:
     for line in f:
         m = id_extractor.search(line)
@@ -35,7 +34,7 @@ def read_file(f, prefix: str, suffix: str, cp_to_stdout: bool) -> None:
             if not output:
                 filename = f'{prefix}{pid}{suffix}'
                 print(f'new file: {filename}')
-                output = open(filename, 'w')
+                output = open(filename, 'w', encoding='utf-8')  # noqa: SIM115
                 files[sid] = output
             start, stop = m.span()
             s1 = line[:start]
@@ -46,15 +45,15 @@ def read_file(f, prefix: str, suffix: str, cp_to_stdout: bool) -> None:
                 print(s1, s2, sep='', end='')
 
 if not args.filenames:
-    read_file(sys.stdin, 'stdin.', suffix, True)
+    read_file(sys.stdin, 'stdin.', suffix, cp_to_stdout=True)
 else:
     for filename in args.filenames:
         if filename == '-':
-            read_file(sys.stdin, 'stdin.', suffix, True)
+            read_file(sys.stdin, 'stdin.', suffix, cp_to_stdout=True)
         else:
             p = Path(filename)
             with p.open() as f:
                 read_file(f, f'{p.parent / p.stem}-', suffix, cp_to_stdout)
 
-for pid, f in files.items():
+for f in files.values():
     f.close()

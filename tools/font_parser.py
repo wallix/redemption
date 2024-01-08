@@ -58,9 +58,8 @@
 
 from PIL.ImageFont import ImageFont, truetype
 from unicodedata import category
-from typing import Any, Iterable, NamedTuple
+from typing import Iterable, NamedTuple
 from enum import IntEnum
-from collections.abc import Collection
 
 import os
 import sys
@@ -111,7 +110,7 @@ if len(sys.argv) > 1:
     name = args.name
 
 
-def get_fontpath(filename, dirnames: Iterable[str]) -> str:
+def get_fontpath(filename: str, dirnames: Iterable[str]) -> str:
     for d in dirnames:
         path = f'{d}/{filename}'
         if os.path.exists(path):
@@ -122,9 +121,9 @@ def get_fontpath(filename, dirnames: Iterable[str]) -> str:
 font_descriptions: Iterable[tuple[
     int,  # fontsize or 0 for global fontsize
     str,  # path of font
-    Iterable[str]  # glyph for invalid char rendering
+    Iterable[str],  # glyph for invalid char rendering
 ]] = (
-    (global_fontsize, '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', ('\u02ef', '\u20e3',)),
+    (global_fontsize, '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', ('\u02ef', '\u20e3')),
 
     # https://www.latofonts.com/lato-free-fonts/
     # (global_fontsize, get_fontpath('Lato-Light.ttf', (
@@ -150,7 +149,7 @@ def nbbytes(x: int) -> int:
     return (x + 7) // 8
 
 def align4(x: int) -> int:
-    return (x+3) & ~3
+    return (x + 3) & ~3
 
 def count_bit_padding(cx: int) -> int:
     return (8 - cx % 8) % 8
@@ -201,7 +200,7 @@ unknown_glyph = (GlyphType.Unknown,
                  unknown_char[0],
                  unknown_char[1],
                  unknown_char[2][0],
-                 unknown_char[2][1] + max_ascent - font_infos[0].ascent
+                 unknown_char[2][1] + max_ascent - font_infos[0].ascent,
                  )
 
 replacement_uni = 0xFFFD
@@ -278,7 +277,7 @@ def serialize_glyph(x1: int, y1: int, cx: int, cy: int, incby: int, offsetx: int
 
     return data, line
 
-glyph_graph_adjust_y = set((
+glyph_graph_adjust_y = {
     0x25b8,  # ▸
     0x25b9,  # ▹
     0x25ba,  # ►
@@ -287,10 +286,10 @@ glyph_graph_adjust_y = set((
     0x25c3,  # ◃
     0x25c4,  # ◄
     0x25c5,  # ◅
-))
+}
 
 class Glyphs:
-    def __init__(self):
+    def __init__(self) -> None:
         self.total_data_len = 0
         self.data_glyphs = []
         self.max_heigth = 0
@@ -310,7 +309,7 @@ class Glyphs:
         # because space is usually too big
         if uni == 114 and global_fontsize == 14:  # 'r'
             incby -= 1
-         # align with '◀'/'◁'/'▶'/'▷'
+        # align with '◀'/'◁'/'▶'/'▷'
         elif uni in glyph_graph_adjust_y and global_fontsize == 14:
             offsety += 1
 
@@ -336,9 +335,9 @@ class Glyphs:
 
 glyphs = Glyphs()
 
-glyphs.add(replacement_uni, 'ReplacementChar', replacement_char, True)
+glyphs.add(replacement_uni, 'ReplacementChar', replacement_char, force_insert=True)
 
-for rng in (range(max(CHARSET_START, r[0]), min(CHARSET_END, r[1]+1)) for r in ICHARS_GEN):
+for rng in (range(max(CHARSET_START, r[0]), min(CHARSET_END, r[1] + 1)) for r in ICHARS_GEN):
     for uni in rng:
         char = chr(uni)
 

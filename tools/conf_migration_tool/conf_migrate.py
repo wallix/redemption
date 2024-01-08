@@ -20,15 +20,15 @@ rgx_version = re.compile(r'^(\d+)\.(\d+)\.(\d+)(.*)')
 
 
 class RedemptionVersionError(Exception):
-    pass
+    def __init__(self, version: str) -> None:
+        super().__init__(f"Invalid version string format: {version}")
 
 
 class RedemptionVersion:
     def __init__(self, version: str) -> None:
         m = rgx_version.match(version)
         if m is None:
-            raise RedemptionVersionError(
-                f"Invalid version string format: {version}")
+            raise RedemptionVersionError(version)
 
         self.__major = int(m.group(1))
         self.__minor = int(m.group(2))
@@ -47,9 +47,12 @@ class RedemptionVersion:
     def __eq__(self, other: 'RedemptionVersion') -> bool:
         return self.__part() == other.__part()
 
+    def __hash__(self) -> int:
+        return hash(self.__part())
+
     @staticmethod
     def from_file(filename: str) -> 'RedemptionVersion':
-        with open(filename) as f:
+        with open(filename, encoding='utf-8') as f:
             line = f.readline()  # read first line
             items = line.split()
             version_string = items[1]
@@ -96,14 +99,14 @@ def _to_fragment(m: re.Match) -> ConfigurationFragment:
     # comment
     if m.start(2) != -1:
         return ConfigurationFragment(
-            m.group(0), ConfigKind.Comment
+            m.group(0), ConfigKind.Comment,
         )
 
     # section
     if m.start(3) != -1:
         return ConfigurationFragment(
             m.group(0), ConfigKind.Section,
-            m.group(3)
+            m.group(3),
         )
 
     # variable
@@ -195,7 +198,7 @@ def migration_filter(migration_defs: Iterable[MigrationType],
 
 
 def migration_def_to_actions(fragments: Iterable[ConfigurationFragment],
-                             migration_def: MigrationDescType
+                             migration_def: MigrationDescType,
                              ) -> Tuple[
                                  List[Tuple[str, str]],  # renamed_sections
                                  # section, old_key, new_key, new_value
@@ -244,12 +247,12 @@ def migration_def_to_actions(fragments: Iterable[ConfigurationFragment],
             elif isinstance(order, dict):
                 migration_key_desc = order
             else:
-                for order in order:
-                    if isinstance(order, MoveSection):
-                        renamed_sections.append((section, order.name))
-                        section = order.name
+                for suborder in order:
+                    if isinstance(suborder, MoveSection):
+                        renamed_sections.append((section, suborder.name))
+                        section = suborder.name
                     else:
-                        migration_key_desc = order
+                        migration_key_desc = suborder
 
     return renamed_sections, renamed_keys, moved_keys, removed_sections, removed_keys
 
@@ -257,16 +260,16 @@ def migration_def_to_actions(fragments: Iterable[ConfigurationFragment],
 def fragments_to_spans_of_sections(fragments: Iterable[ConfigurationFragment]) -> Dict[str, List[Sequence[int]]]:
     start = 0
     section = ''
-    section_spans: Dict[str, List[Sequence[int]]] = dict()
+    section_spans: Dict[str, List[Sequence[int]]] = {}
 
     i = 0
     for i, fragment in enumerate(fragments):
         if fragment.kind == ConfigKind.Section:
-            if start < i-1:
-                section_spans.setdefault(section, []).append(range(start, i-1))
+            if start < i - 1:
+                section_spans.setdefault(section, []).append(range(start, i - 1))
             section = fragment.value1
             start = i
-    if start < i-1:
+    if start < i - 1:
         section_spans.setdefault(section, []).append(range(start, i))
 
     return section_spans
@@ -284,15 +287,13 @@ def migrate(fragments: List[ConfigurationFragment],
     if not (renamed_sections or renamed_keys or moved_keys or removed_sections or removed_keys):
         return (False, fragments)
 
-    reinject_fragments: Dict[int, Iterable[ConfigurationFragment]] = dict()
+    reinject_fragments: Dict[int, Iterable[ConfigurationFragment]] = {}
     section_spans = fragments_to_spans_of_sections(fragments)
 
-    def iter_from_spans(spans) -> Iterable[int]:
+    def iter_from_spans(spans: Iterable[Iterable[int]]) -> Iterable[int]:
         return (i for span in spans for i in span)
 
-    def iter_key_fragment(section_name: str,
-                          kind: ConfigKind,
-                          key_name: str
+    def iter_key_fragment(section_name: str, key_name: str,
                           ) -> Generator[Tuple[int, ConfigurationFragment], None, None]:
         for i in iter_from_spans(section_spans.get(section_name, ())):
             fragment: ConfigurationFragment = fragments[i]
@@ -301,7 +302,7 @@ def migrate(fragments: List[ConfigurationFragment],
             yield i, fragment
 
     for section, old_key, new_key, new_value in renamed_keys:
-        for i, fragment in iter_key_fragment(section, ConfigKind.KeyValue, old_key):
+        for i, fragment in iter_key_fragment(section, old_key):  # noqa: B007
             reinject_fragments[i] = (
                 ConfigurationFragment(f'{new_key}={new_value}', ConfigKind.KeyValue,
                                       new_key, new_value),
@@ -310,18 +311,18 @@ def migrate(fragments: List[ConfigurationFragment],
     for section in removed_sections:
         for i in iter_from_spans(section_spans.get(section, ())):
             fragment = fragments[i]
-            if fragment.kind in (ConfigKind.KeyValue, ConfigKind.Section):
+            if fragment.kind in (ConfigKind.KeyValue, ConfigKind.Section):  # noqa: PLR6201
                 # if fragment.kind == ConfigKind.Section:
                 #     del section_spans[section]
                 reinject_fragments[i] = ()
-                if _is_empty_line(i+1, fragments):
-                    reinject_fragments[i+1] = ()
+                if _is_empty_line(i + 1, fragments):
+                    reinject_fragments[i + 1] = ()
 
     for t in itertools.chain(removed_keys, moved_keys):
-        for i, fragment in iter_key_fragment(t[0], ConfigKind.KeyValue, t[1]):
+        for i, fragment in iter_key_fragment(t[0], t[1]):  # noqa: B007
             reinject_fragments[i] = ()
-            if _is_empty_line(i+1, fragments):
-                reinject_fragments[i+1] = ()
+            if _is_empty_line(i + 1, fragments):
+                reinject_fragments[i + 1] = ()
 
     for old_section, new_section in renamed_sections:
         for rng in section_spans.get(old_section, ()):
@@ -330,10 +331,10 @@ def migrate(fragments: List[ConfigurationFragment],
                 ConfigurationFragment(f'[{new_section}]', ConfigKind.Section, new_section),
             )
 
-    added_keys: Dict[str, List[ConfigurationFragment]] = dict()
+    added_keys: Dict[str, List[ConfigurationFragment]] = {}
 
     for old_section, old_key, new_section, new_key, new_value in moved_keys:
-        for _ in iter_key_fragment(old_section, ConfigKind.KeyValue, old_key):
+        for _ in iter_key_fragment(old_section, old_key):
             added_keys.setdefault(new_section, []).extend((
                 newline_fragment,
                 ConfigurationFragment(f'{new_key}={new_value}', ConfigKind.KeyValue,
@@ -348,7 +349,7 @@ def migrate(fragments: List[ConfigurationFragment],
         added_fragments = reinject_fragments.get(i, (fragment,))
         result_fragments.extend(added_fragments)
 
-        for fragment in added_fragments:
+        for fragment in added_fragments:  # noqa: PLW2901
             if fragment.kind == ConfigKind.Section:
                 section = fragment.value1
                 key = added_keys.get(section)
@@ -430,11 +431,11 @@ def build_with_injected_values(injections: InjectionsType,
                                ) -> ConfigurationFragmentListType:
     new_fragments: ConfigurationFragmentListType = []
 
-    def inject_section(section):
+    def inject_section(section: Dict[str, str]) -> None:
         for key, value in section.items():
             new_fragments.append(newline_fragment)
             new_fragments.append(ConfigurationFragment(
-                f'{key}={value}', ConfigKind.KeyValue, key, value
+                f'{key}={value}', ConfigKind.KeyValue, key, value,
             ))
             new_fragments.append(newline_fragment)
 
@@ -448,7 +449,7 @@ def build_with_injected_values(injections: InjectionsType,
     # add remaining section
     for section_name, section in injections.items():
         new_fragments.append(ConfigurationFragment(
-            f'[{section_name}]', ConfigKind.Section, section_name
+            f'[{section_name}]', ConfigKind.Section, section_name,
         ))
         inject_section(section)
 
@@ -525,24 +526,24 @@ def dump_json(defs: List[MigrationType]) -> List[Any]:
         "toIniOnly": optional[bool],
     }
     """
-    def update_if(d, k, v):
+    def update_if(d, k, v):  # noqa: ANN001, ANN202
         if v:
             d[k] = v
 
-    def remove_to_dict(item: RemoveItem):
+    def remove_to_dict(item: RemoveItem):  # noqa: ANN202
         d = {'kind': 'remove'}
         update_if(d, 'reason', item.reason)
         update_if(d, 'oldDisplayName', item.old_display_name)
         update_if(d, 'iniOnly', item.ini_only)
         return d
 
-    def ini_only_to_dict(item: ToIniOnly):
+    def ini_only_to_dict(item: ToIniOnly):  # noqa: ANN202
         d = {'kind': 'update', 'toIniOnly': True}
         update_if(d, 'reason', item.reason)
         update_if(d, 'oldDisplayName', item.old_display_name)
         return d
 
-    def move_to_dict(item: MoveSection):
+    def move_to_dict(item: MoveSection):  # noqa: ANN202
         d = {'kind': 'move', 'newName': item.name}
         update_if(d, 'oldDisplayName', item.old_display_name)
         return d
@@ -559,7 +560,7 @@ def dump_json(defs: List[MigrationType]) -> List[Any]:
         update_if(d, 'toIniOnly', item.to_ini_only)
         return d
 
-    def dict_to_dict(values: Dict[str, MigrationKeyOrderType]):
+    def dict_to_dict(values: Dict[str, MigrationKeyOrderType]) -> Dict[str, MigrationKeyOrderType]:
         data = {}
         for k, item in values.items():
             obj = visitor[type(item)](item)
@@ -575,7 +576,7 @@ def dump_json(defs: List[MigrationType]) -> List[Any]:
         dict: dict_to_dict,
     }
 
-    l = []
+    json_array = []
     for version, desc in defs:
         data = {}
         for section, values_or_item in desc.items():
@@ -583,17 +584,17 @@ def dump_json(defs: List[MigrationType]) -> List[Any]:
             if obj:
                 data[section] = obj
         if data:
-            l.append({'version': str(version), 'data': data})
+            json_array.append({'version': str(version), 'data': data})
 
-    return l
+    return json_array
 
 
 def main(migration_defs: List[MigrationType],
          value_injections_desc: ValuesInjectionsDescType,
          argv: List[str]) -> int:
-    if len(argv) != 4 or argv[1] not in ('-s', '-f'):
+    if len(argv) != 4 or argv[1] not in {'-s', '-f'}:
         if len(argv) == 2 and argv[1] == '--dump=json':
-            import json
+            import json  # noqa: PLC0415
             print(json.dumps(dump_json(migration_defs)))
             return 0
 
@@ -623,7 +624,7 @@ def main(migration_defs: List[MigrationType],
 
 
 def to_bool(value: str) -> bool:
-    return value.strip().lower() in ('1', 'yes', 'true', 'on')
+    return value.strip().lower() in {'1', 'yes', 'true', 'on'}
 
 
 def to_int(value: str) -> int:
@@ -638,7 +639,7 @@ def to_int(value: str) -> int:
 _IniValue = TypeVar("_IniValue")
 
 def _get_values(fragments: Iterable[ConfigurationFragment],
-                desc: Sequence[Tuple[str, str, _IniValue, Callable[[str], _IniValue]]]
+                desc: Sequence[Tuple[str, str, _IniValue, Callable[[str], _IniValue]]],
                 ) -> List[_IniValue]:
     values = [default_value for section, name, default_value, converter in desc]
 
@@ -659,14 +660,16 @@ def _get_values(fragments: Iterable[ConfigurationFragment],
     return values
 
 
-def _merge_session_log_format_10_5_31(value: str, fragments: Iterable[ConfigurationFragment]) -> str:
+def _merge_session_log_format_10_5_31(_value: str,
+                                      fragments: Iterable[ConfigurationFragment],
+                                      ) -> str:
     enable_session_log, enable_arcsight_log = _get_values(
         fragments, (('session_log', 'enable_session_log', True, to_bool),
                     ('session_log', 'enable_arcsight_log', False, to_bool)))
 
     return str(
         (1 if enable_session_log else 0) |
-        (2 if enable_arcsight_log else 0)
+        (2 if enable_arcsight_log else 0),
     )
 
 
@@ -684,20 +687,23 @@ def _performance_flags_to_string(flags: int, enable: bool) -> PerformanceFlagPar
         signs[not enable] + 'desktop_composition' if flags & 0x100 else '',
     )
 
-def _merge_performance_flags_10_5_31(value: str, fragments: Iterable[ConfigurationFragment]) -> str:
+def _merge_performance_flags_10_5_31(_value: str,
+                                     fragments: Iterable[ConfigurationFragment],
+                                     ) -> str:
     force_present, force_not_present = _get_values(
         fragments, (('client', 'performance_flags_force_present', 0x28, to_int),
                     ('client', 'performance_flags_force_not_present', 0, to_int)))
 
-    force_not_present_elements = _performance_flags_to_string(force_not_present, True)
-    force_present_elements = _performance_flags_to_string(force_present, False)
+    force_not_present_elements = _performance_flags_to_string(force_not_present, enable=True)
+    force_present_elements = _performance_flags_to_string(force_present, enable=False)
 
     return ','.join(not_present or present
                     for not_present, present in zip(force_not_present_elements,
-                                                    force_present_elements)
+                                                    force_present_elements,
+                                                    strict=True)
                     if not_present or present)
 
-def _server_cert_notif_12_0_1(value: str, _) -> str:
+def _server_cert_notif_12_0_1(value: str, _fragments: Iterable[ConfigurationFragment]) -> str:
     return f'{min(to_int(value), 1)}'
 
 _update_server_cert_notif_12_0_1 = UpdateItem(value_transformation=_server_cert_notif_12_0_1)
@@ -844,7 +850,7 @@ migration_defs: Iterable[MigrationType] = (
                 value_transformation=lambda value, _: f'{(to_int(value) * 100)}',
                 to_ini_only=True),
             'png_limit': ToIniOnly(reason='Old mechanism before Redis.'),
-        }
+        },
     }),
     (RedemptionVersion("10.5.35"), {
         'globals': {
@@ -881,7 +887,6 @@ migration_defs: Iterable[MigrationType] = (
             'file_permissions': UpdateItem(section='capture'),
             # -> [audit]
             'enable_keyboard_log': UpdateItem(section='audit'),
-            'break_interval': UpdateItem(section='audit', key='video_break_interval'),
             'framerate': UpdateItem(section='audit', key='video_frame_rate'),
             'notimestamp': UpdateItem(section='audit', key='video_notimestamp'),
             'codec_id': UpdateItem(section='audit', key='video_codec'),
@@ -893,7 +898,6 @@ migration_defs: Iterable[MigrationType] = (
             'record_tmp_path': UpdateItem(section='audit'),
             'record_path': UpdateItem(section='audit'),
             'hash_path': UpdateItem(section='audit'),
-            'file_permissions': UpdateItem(section='audit'),
         },
     }),
 )
@@ -914,4 +918,4 @@ value_injections_desc: ValuesInjectionsDescType = {
 }
 
 if __name__ == '__main__':
-    exit(main(migration_defs, value_injections_desc, sys.argv))
+    sys.exit(main(migration_defs, value_injections_desc, sys.argv))
