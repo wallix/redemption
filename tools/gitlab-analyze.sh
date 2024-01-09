@@ -33,25 +33,36 @@ show_duration()
 show_duration redemption-analyzer.sh
 
 
-# Python tests
+# Python tests and coverage
 # @{
 python_test()
 {
     pushd "$1"
-    python3 -m unittest discover -t . tests
+    coverage run -m pytest tests
     popd
 }
 
 python_test tools/sesman
 python_test tools/conf_migration_tool
+coverage combine tools/*/.coverage
+coverage report
+coverage xml -o py_coverage.xml
 
 show_duration "python tests"
 # @}
 
 
+# Python analyzer
+# @{
+ruff --preview tools/*.py tools/sesman/sesmanworker > ruff_report.txt
+
+show_duration "python analyzer"
+# @}
+
+
 # Lua tests
 # @{
-eval "$(luarocks path)"
+# eval "$(luarocks path)"
 
 ./tools/cpp2ctypes/test.sh
 
@@ -127,10 +138,10 @@ if (( $fast == 0 )); then
     cmds=()
     while read l ; do
         f=${l#*release/tests/}
-        f=valgrind_report/"${f//\//@}".xml
+        f=valgrind_reports/"${f//\//@}".xml
         cmds+=("valgrind --child-silent-after-fork=yes --xml=yes --xml-file=$f $l")
     done < <(find ./bin/gcc*/release/tests/ -executable -type f -name test_'*')
-    mkdir -p valgrind_report
+    mkdir -p valgrind_reports
     /usr/bin/time --format="%Es - %MK" parallel -j4 ::: "${cmds[@]}"
 
     show_duration valgrind
@@ -144,7 +155,7 @@ if (( $fast == 0 )); then
 
     # debug with coverage
     build $toolset_gcc -j4 debug -s FAST_CHECK=1 cxxflags=--coverage linkflags=-lgcov
-    gcovr --gcov-executable $gcovbin --xml -r . -f src/ bin/gcc*/debug/ > gcov_report.xml
+    gcovr --gcov-executable $gcovbin --xml -r . -f src/ bin/gcc*/debug/ > gcovr_report.xml
 
     show_duration $toolset_gcc coverage
 
@@ -168,7 +179,7 @@ if (( $fast == 0 )); then
     #set -o pipefail
 
     # clang analyzer
-    ./tools/c++-analyzer/clang-tidy | tee clang_tidy.txt
+    ./tools/c++-analyzer/clang-tidy | tee clang_tidy_report.txt
 
     show_duration clang-tidy
 fi

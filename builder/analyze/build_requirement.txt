@@ -1,6 +1,4 @@
 g++
-gettext
-git
 libboost-test-dev
 libboost-tools-dev
 python3

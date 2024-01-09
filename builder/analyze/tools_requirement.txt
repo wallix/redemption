@@ -3,8 +3,11 @@ clang-tidy
 emscripten
 gawk
 gcovr
-lua5.1
-luarocks
 parallel
 time
 valgrind
+lua5.1
+lua-argparse
+lua-lpeg
+python3-venv
+git

@@ -5,4 +5,4 @@
 
 * Execute::
 
-    docker run -ti --rm -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd)) -u $(id -u ${USER}):$(id -g ${USER})
+    docker run -ti --rm -v $(pwd):/$(basename $(pwd)) -w /$(basename $(pwd)) -u $(id -u ${USER}):$(id -g ${USER}) redemption-build

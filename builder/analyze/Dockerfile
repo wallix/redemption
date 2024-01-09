@@ -9,5 +9,8 @@ RUN apt-get update && xargs apt-get -y install < tools_requirement.txt && apt-ge
 ADD app_requirement.txt app_requirement.txt
 RUN apt-get update && xargs apt-get -y install < app_requirement.txt && apt-get clean
 
-ADD lua_requirement.txt lua_requirement.txt
-RUN while read line; do [ -n "$line" ] && luarocks install $line; done < lua_requirement.txt
+RUN python3 -m venv /pyenv
+ADD py_requirement.txt py_requirement.txt
+RUN /pyenv/bin/pip install -r py_requirement.txt
+RUN chmod -R o+x /pyenv
+ENV PATH="${PATH}:/pyenv/bin"

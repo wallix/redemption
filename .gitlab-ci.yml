@@ -2,8 +2,6 @@ variables:
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
   IMAGE_REDEMPTION_ANALYZE: redemption-analyze
-  IMAGE_SESMAN_TESTS: sshproxies-tests  # image from sshproxies repo
-  IMAGE_PAGES: sshproxies-tagger  # image from sshproxies repo
   TESTDIR: test_tmpdir
 
 stages:
@@ -23,26 +21,10 @@ build-analyze-image:
     - docker push ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
   when: manual
 
-test-sesman:
-  stage: build
-  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_SESMAN_TESTS}
-  script:
-    - cd tools/sesman/
-    - coverage run -m pytest tests
-    - coverage report
-    - coverage xml
-  artifacts:
-    paths:
-      - tools/sesman/coverage.xml
-    expire_in: 1 day
-  only:
-    - merge_requests
-    - future
-
 
 branch-pages:
   stage: build
-  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_PAGES}
+  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
   variables:
     GITLAB_REMOTE: ci
     GIT_BRANCH: pages
@@ -71,30 +53,6 @@ branch-pages:
     - maintenance_bastion_13.0
 
 
-build-project:
-  stage: build
-  needs: []
-  except:
-    - tags
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
-  script:
-    - mkdir -p "$TESTDIR"
-    - TMPDIR_TEST="$TESTDIR" bjam -j4 linkflags="-static-libstdc++" variant=release -q cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING' && rm -r "$TESTDIR"
-  artifacts:
-    when: always
-    name: "$CI_JOB_NAME"
-    paths:
-      - bin/gcc-*/release
-      - "$TESTDIR"
-    exclude:
-      - bin/gcc-*/release/*/
-      - bin/gcc-*/release/*.o
-      - bin/gcc-*/release/libunit_test.so
-    expire_in: 1 day
-
-
 build-analyze:
   stage: build
   needs: []
@@ -110,14 +68,16 @@ build-analyze:
     when: always
     paths:
       - report.txt
-      - clang_tidy.txt
-      - gcov_report.xml
-      - valgrind_report
-  timeout: 4h 30m
+      - clang_tidy_report.txt
+      - gcovr_report.xml
+      - valgrind_reports/
+      - ruff_report.txt
+      - py_coverage.xml
+  timeout: 2h 30m
 
 sonarqube-check:
   stage: build
-  needs: [build-project, test-sesman, build-analyze]
+  needs: [build-analyze]
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
