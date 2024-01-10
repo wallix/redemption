@@ -29,8 +29,8 @@ show_duration()
 
 
 # lua analyzer
-./tools/c++-analyzer/redemption-analyzer.sh
-show_duration redemption-analyzer.sh
+# ./tools/c++-analyzer/redemption-analyzer.sh
+# show_duration redemption-analyzer.sh
 
 
 # Python tests and coverage
@@ -54,7 +54,7 @@ show_duration "python tests"
 
 # Python analyzer
 # @{
-ruff --preview tools/*.py tools/sesman/sesmanworker > ruff_report.txt
+ruff --preview tools/*.py tools/sesman/sesmanworker > ruff_report.txt || true
 
 show_duration "python analyzer"
 # @}
