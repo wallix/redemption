@@ -53,6 +53,30 @@ branch-pages:
     - maintenance_bastion_13.0
 
 
+build-project:
+  stage: build
+  needs: []
+  except:
+    - tags
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
+  script:
+    - mkdir -p "$TESTDIR"
+    - TMPDIR_TEST="$TESTDIR" bjam -j4 linkflags="-static-libstdc++" variant=release -q cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING' && rm -r "$TESTDIR"
+  artifacts:
+    when: always
+    name: "$CI_JOB_NAME"
+    paths:
+      - bin/gcc-*/release
+      - "$TESTDIR"
+    exclude:
+      - bin/gcc-*/release/*/
+      - bin/gcc-*/release/*.o
+      - bin/gcc-*/release/libunit_test.so
+    expire_in: 1 day
+
+
 build-analyze:
   stage: build
   needs: []
@@ -77,7 +101,7 @@ build-analyze:
 
 sonarqube-check:
   stage: build
-  needs: [build-analyze]
+  needs: [build-project, build-analyze]
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
