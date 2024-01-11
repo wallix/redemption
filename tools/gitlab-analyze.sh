@@ -28,9 +28,15 @@ show_duration()
 }
 
 
-# lua analyzer
-# ./tools/c++-analyzer/redemption-analyzer.sh
-# show_duration redemption-analyzer.sh
+# Custom analyzer
+# @{
+# /usr/share/lua/5.1/ is not exported, because ???
+export LUA_PATH="$PWD/tools/c++-analyzer/lua-checker/?.lua;/usr/share/lua/5.1/?.lua"
+find src \( -name '*.hpp' -or -name '*.cpp' \) -and -not -path 'src/keyboard/*' -exec \
+    ./tools/c++-analyzer/lua-checker/lua-checker.lua --checks \* '{}' '+'
+
+show_duration redemption-analyzer.sh
+# @}
 
 
 # Python tests and coverage
