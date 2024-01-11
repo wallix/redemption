@@ -461,6 +461,14 @@ unique_fd addr_connect(const char* addr,
     return unique_fd{-1};
 }
 
+unique_fd addr_connect(const char* addr, int port, bool no_log_for_unix_socket)
+{
+    if (*addr == '/') {
+        return local_connect(addr, std::chrono::milliseconds(1000), no_log_for_unix_socket);
+    }
+    return ip_connect(addr, port, DefaultConnectTag{});
+}
+
 unique_fd addr_connect_blocking(
     const char* addr,
     std::chrono::milliseconds establishment_timeout,
