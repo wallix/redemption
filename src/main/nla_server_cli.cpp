@@ -159,7 +159,11 @@ public:
 
         if ((cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)
         || (cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {
-            trans.enable_server_tls("inquisition", TlsConfig{.show_common_cipher_list = true});
+            trans.enable_server_tls("inquisition", TlsConfig{
+                .cipher_list = {},
+                .tls_1_3_ciphersuites = {},
+                .show_common_cipher_list = true,
+            });
             bytes_view key = trans.get_public_key();
             memcpy(this->front_public_key, key.data(), key.size());
             this->front_public_key_av = writable_array_view{this->front_public_key, key.size()};

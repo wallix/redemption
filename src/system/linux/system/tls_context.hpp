@@ -76,7 +76,7 @@ inline char const* apply_tls_config(
     SSL_CTX* ctx, TlsConfig const& tls_config, bool verbose, char const* funcname)
 {
     LOG_IF(verbose, LOG_INFO,
-        "TLSContext::%s: TLS: min_level=%d%s, max_level=%d%s, cipher_list='%s', TLSv1.3 ciphersuites='%s', security_level=%d%s",
+        "TLSContext::%s: TLS: min_level=%u%s, max_level=%u%s, cipher_list='%s', TLSv1.3 ciphersuites='%s', security_level=%d%s",
         funcname,
         tls_config.min_level, tls_config.min_level == 0 ? " (system-wide)" : "",
         tls_config.max_level, tls_config.max_level == 0 ? " (system-wide)" : "",
