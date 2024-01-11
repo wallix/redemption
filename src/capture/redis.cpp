@@ -387,8 +387,7 @@ RedisSyncSession::IOCode RedisSyncSession::open(
 
     // open socket
     close();
-    int fd = ip_connect(address, checked_int(port), DefaultConnectTag { })
-        .release();
+    int fd = addr_connect(address, checked_int(port), false).release();
     if (fd == -1) {
         return IOCode::ConnectError;
     }

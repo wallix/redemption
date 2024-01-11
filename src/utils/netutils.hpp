@@ -92,6 +92,8 @@ unique_fd addr_connect(const char* addr,
                        std::chrono::milliseconds establishment_timeout,
                        bool no_log_for_unix_socket);
 
+unique_fd addr_connect(const char* addr, int port, bool no_log_for_unix_socket);
+
 unique_fd addr_connect_blocking(
     const char* addr,
     std::chrono::milliseconds establishment_timeout,
