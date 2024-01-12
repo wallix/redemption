@@ -65,7 +65,7 @@ build-analyze:
   script:
     - mkdir -p "$TESTDIR"
     - set -o pipefail
-    - { TMPDIR_TEST="$TESTDIR" ./tools/gitlab-analyze.sh ${FULL} |& tee report.txt } && rm -r "$TESTDIR"
+    - TMPDIR_TEST="$TESTDIR" ./tools/gitlab-analyze.sh ${FULL} |& tee report.txt
   artifacts:
     when: always
     paths:
