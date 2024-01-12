@@ -41,4 +41,6 @@ ignore = [
     "TD002",  # Missing author in TODO
     "TD003",  # Missing issue link on the line following this TODO
     "TD004",  # Missing colon in TODO
+    "COM812",  # Trailing comma missing
+    "SIM300",  # yoda-conditions
 ]
