@@ -124,9 +124,7 @@ mkdir -p bin
 beforerun=$(rootlist)
 
 # release for -Warray-bounds and not assert
-# build $toolset_gcc cxxflags=-g
-# multi-thread
-build $toolset_gcc -j4 cxxflags=-g
+build $toolset_gcc -j4 release cxxflags=-g
 
 show_duration $toolset_gcc
 
@@ -153,7 +151,7 @@ if (( $fast == 0 )); then
     show_duration valgrind
 
 
-    build $toolset_clang -j4 -sNO_FFMPEG=1 san
+    build $toolset_clang -j4 san -sNO_FFMPEG=1
     rm -rf bin/clang*
 
     show_duration $toolset_clang
