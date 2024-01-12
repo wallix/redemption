@@ -51,7 +51,7 @@ if (( $fast == 0 )); then
     python_test()
     {
         pushd "$1"
-        ~/Python-3.7.3/python -m unittest discover -t . tests
+        python3 -m unittest discover -t . tests
         popd
     }
 
