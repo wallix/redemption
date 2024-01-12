@@ -101,7 +101,7 @@ export BOOST_TEST_RANDOM=$RANDOM
 echo random seed = $BOOST_TEST_RANDOM
 
 run_bjam() {
-    /usr/bin/time --format='%Es - %MK' bjam -q cxxflags=-Wno-deprecated-declarations "$@"
+    /usr/bin/time --format='%Es - %MK' bjam -q "$@"
 }
 
 build()
@@ -124,7 +124,7 @@ mkdir -p bin
 beforerun=$(rootlist)
 
 # release for -Warray-bounds and not assert
-build $toolset_gcc -j4 release cxxflags=-g
+build $toolset_gcc -j4 release cxxflags='-g -Wno-deprecated-declarations'
 
 show_duration $toolset_gcc
 
@@ -151,14 +151,14 @@ if (( $fast == 0 )); then
     show_duration valgrind
 
 
-    build $toolset_clang -j4 san -sNO_FFMPEG=1
+    build $toolset_clang -j4 san -sNO_FFMPEG=1 cxxflags='-Wno-deprecated-declarations'
     rm -rf bin/clang*
 
     show_duration $toolset_clang
 
 
     # debug with coverage
-    build $toolset_gcc -j4 debug -s FAST_CHECK=1 cxxflags=--coverage linkflags=-lgcov
+    build $toolset_gcc -j4 debug -s FAST_CHECK=1 cxxflags='--coverage -Wno-deprecated-declarations' linkflags=-lgcov
     gcovr --gcov-executable $gcovbin --xml -r . -f src/ bin/gcc*/debug/ > gcovr_report.xml
 
     show_duration $toolset_gcc coverage
