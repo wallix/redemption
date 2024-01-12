@@ -91,7 +91,7 @@ export UBSAN_OPTIONS=print_stacktrace=1
 # export BOOST_TEST_COLOR_OUTPUT=0
 
 mkdir -p bin/tmp
-export TMPDIR_TEST=bin/tmp/
+export TMPDIR_TEST="${TMPDIR_TEST:-bin/tmp/}"
 
 # export REDEMPTION_LOG_PRINT=1
 export REDEMPTION_LOG_PRINT=0
