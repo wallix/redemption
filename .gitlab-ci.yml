@@ -60,12 +60,10 @@ build-analyze:
     - tags
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
-    FULL: full
   image: ${NEXUS_WAB_PROXIES_URL}/${IMAGE_REDEMPTION_ANALYZE}
   script:
     - mkdir -p "$TESTDIR"
-    - set -o pipefail
-    - TMPDIR_TEST="$TESTDIR" ./tools/gitlab-analyze.sh ${FULL} |& tee report.txt
+    - TMPDIR_TEST="$TESTDIR" ./tools/gitlab-analyze.sh full
   artifacts:
     when: always
     paths:

@@ -7,6 +7,8 @@ set -ex
 
 free
 
+{
+
 typeset -i fast=1
 for act in "$@" ; do
     case "$act" in
@@ -187,3 +189,5 @@ if (( $fast == 0 )); then
 
     show_duration clang-tidy
 fi
+
+} |& tee report.txt
