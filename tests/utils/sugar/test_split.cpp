@@ -35,6 +35,7 @@ void test_splitter(char const* ctx, Splitter&& splitter, chars_view result)
         s += ']';
     }
 
+    (void)ctx; // unused with fast check
     RED_TEST_CONTEXT(ctx) {
         RED_CHECK_EQUAL(s, result);
     }
