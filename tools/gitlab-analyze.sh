@@ -62,7 +62,7 @@ show_duration "python tests"
 
 # Python analyzer
 # @{
-ruff --preview --target-version=py311 tools/*.py tools/sesman/sesmanworker > ruff_report.txt ||:
+./tools/python-analyzer/ruff.sh > ruff_report.txt ||:
 
 show_duration "python analyzer"
 # @}
