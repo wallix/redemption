@@ -5,7 +5,7 @@ from addrutils import is_device_in_subnet
 class Test_addrutils(unittest.TestCase):
     def test_is_device_in_subnet_failure(self):
         def expect_false_result(device, subnet):
-            with self.subTest(device = device, subnet = subnet):
+            with self.subTest(device=device, subnet=subnet):
                 self.assertFalse(is_device_in_subnet(device, subnet))
 
 
@@ -64,7 +64,7 @@ class Test_addrutils(unittest.TestCase):
 
     def test_is_device_in_subnet_success(self):
         def expect_true_result(device, subnet):
-            with self.subTest(device = device, subnet = subnet):
+            with self.subTest(device=device, subnet=subnet):
                 self.assertTrue(is_device_in_subnet(device, subnet), f"device={device} subnet={subnet}")
 
 

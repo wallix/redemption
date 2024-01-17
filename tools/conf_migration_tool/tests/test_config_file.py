@@ -112,9 +112,9 @@ class TestMigration(unittest.TestCase):
         ])
 
     def test_migration_filter(self):
-        c1 = (RedemptionVersion('9.1.30'), dict())
-        c2 = (RedemptionVersion('9.1.32'), dict())
-        c3 = (RedemptionVersion('9.1.34'), dict())
+        c1 = (RedemptionVersion('9.1.30'), {})
+        c2 = (RedemptionVersion('9.1.32'), {})
+        c3 = (RedemptionVersion('9.1.34'), {})
         desc = (c1, c2, c3)
         self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.29')), [c1,c2,c3])
         self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.30')), [c2,c3])

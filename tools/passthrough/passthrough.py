@@ -19,7 +19,7 @@ from struct import unpack_from, pack
 from select import select
 import socket
 
-import uuid # for random rec_path and .log
+import uuid  # for random rec_path and .log
 
 
 MAGICASK = 'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
@@ -104,12 +104,12 @@ class AuthentifierSharedData():
                         Logger().info(d)
                     return d
 
-            except Exception:
+            except Exception as exc:
                 # Logger().info("%s <<<%s>>>" % (
                 #     "Failed to read data from rdpproxy authentifier socket",
                 #     traceback.format_exc())
                 # )
-                raise AuthentifierSocketClosed()
+                raise AuthentifierSocketClosed() from exc
 
             if DEBUG:
                 Logger().info("received_buffer (empty packet)")
@@ -123,7 +123,7 @@ class AuthentifierSharedData():
             def reserve_data(self, n):
                 while len(self._data) - self._offset < n:
                     if DEBUG:
-                        Logger().info("received_buffer (big packet) "\
+                        Logger().info("received_buffer (big packet) "
                                       "old = %d / %d ; required = %d"
                                       % (self._offset, len(self._data), n))
                     self._data = self._data[self._offset:] + read_sck()
@@ -153,7 +153,7 @@ class AuthentifierSharedData():
             if DEBUG:
                 Logger().info("received_buffer (nfield) = %d" % (_nfield,))
 
-            for _ in range(0, _nfield):
+            for _ in range(_nfield):
                 _type, _n = _buffer.unpack("BB", 2)
                 _key = _buffer.extract_name(_n)
 
@@ -161,7 +161,7 @@ class AuthentifierSharedData():
                     Logger().info("received_buffer (key)   = %s%s"
                                   % ('?' if _type == 0x3f else '!', _key,))
 
-                if _type == 0x3f: # b'?'
+                if _type == 0x3f:  # b'?'
                     _data[_key] = MAGICASK
                 else:
                     _n, = _buffer.unpack('>L', 4)
@@ -197,7 +197,7 @@ class ACLPassthrough():
         self.shared = AuthentifierSharedData(conn)
 
     def interactive_target(self, data_to_send):
-        data_to_send.update({ 'module' : 'interactive_target' })
+        data_to_send.update({'module': 'interactive_target'})
         self.shared.send_data(data_to_send)
         self.shared.receive_data()
         if self.shared.get('display_message') != 'True':
@@ -310,7 +310,6 @@ class ACLPassthrough():
 
         self.shared.send_data(kv)
 
-        try_next = False
         signal.signal(signal.SIGUSR1, self.kill_handler)
         try:
             self.shared.send_data(kv)
@@ -319,40 +318,34 @@ class ACLPassthrough():
             while True:
                 r = []
                 Logger().info("Waiting on proxy")
-                got_signal = False
                 try:
-                    r, w, x = select([self.proxy_conx], [], [], 60)
+                    r, _w, _x = select([self.proxy_conx], [], [], 60)
                 except Exception as e:
                     if DEBUG:
                         Logger().info("exception: '%s'" % e)
-                        import traceback
                         Logger().info("<<<<%s>>>>" % traceback.format_exc())
                     if e[0] != 4:
                         raise
                     Logger().info("Got Signal %s" % e)
-                    got_signal = True
                 if self.proxy_conx in r:
-                    self.shared.receive_data();
+                    self.shared.receive_data()
 
                     if self.shared.is_asked('keepalive'):
                         self.shared.send_data({'keepalive': 'True'})
                 # r can be empty
-                else: # (if self.proxy_conx in r)
+                else:  # (if self.proxy_conx in r)
                     Logger().info('Missing Keepalive')
                     Logger().error('break connection')
-                    release_reason = 'Break connection'
                     break
             Logger().debug("End Of Keep Alive")
 
 
         except AuthentifierSocketClosed:
             if DEBUG:
-                import traceback
                 Logger().info("RDP/VNC connection terminated by client")
                 Logger().info("<<<<%s>>>>" % traceback.format_exc())
         except Exception:
             if DEBUG:
-                import traceback
                 Logger().info("RDP/VNC connection terminated by client")
                 Logger().info("<<<<%s>>>>" % traceback.format_exc())
 
@@ -369,7 +362,7 @@ class ACLPassthrough():
     # END METHOD - START
 
 
-    def kill_handler(self, signum, frame):
+    def kill_handler(self, signum, _frame):
         # Logger().info("KILL_HANDLER = %s" % signum)
         if signum == signal.SIGUSR1:
             self.kill()
@@ -383,7 +376,7 @@ class ACLPassthrough():
 
 
 
-from socket import (fromfd, AF_UNIX, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR)
+from socket import (AF_UNIX, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR)
 
 # if this value changes, it should be synchronized with `[globals] authfile` in rdpproxy.ini
 socket_path = '/tmp/redemption-sesman-sock'
@@ -406,9 +399,9 @@ def standalone():
 
     try:
         while 1:
-            rfds, wfds, xfds = select([s1, s2], [], [], 1)
+            rfds, _wfds, _xfds = select([s1, s2], [], [], 1)
             for sck in rfds:
-                if sck in [s1, s2]:
+                if sck in (s1, s2):
                     client_socket, client_addr = sck.accept()
                     child_pid = os.fork()
                     if child_pid == 0:
@@ -419,15 +412,15 @@ def standalone():
                         sys.exit(0)
                     else:
                         client_socket.close()
-                        #os.waitpid(child_pid, 0)
+                        # os.waitpid(child_pid, 0)
 
     except KeyboardInterrupt:
         if client_socket:
             client_socket.close()
         sys.exit(1)
-    except socket.error as e:
+    except socket.error:
         pass
-    except AuthentifierSocketClosed as e:
+    except AuthentifierSocketClosed:
         Logger().info("Authentifier Socket Closed")
     # except Exception as e:
         # Logger().exception("%s" % e)

@@ -43,4 +43,6 @@ ignore = [
     "TD004",  # Missing colon in TODO
     "COM812",  # Trailing comma missing
     "SIM300",  # yoda-conditions
+    "S101",  # Use of assert detected
+    "E226",  # Missing whitespace around arithmetic operator
 ]

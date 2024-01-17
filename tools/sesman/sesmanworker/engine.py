@@ -18,7 +18,7 @@ from wallixgenericnotifier import (
     FILESYSTEM_FULL,
 )
 from wabconfig import Config
-from wallixconst.protocol import RDP, VNC # noqa: F401
+from wallixconst.protocol import RDP, VNC  # noqa: F401
 from wallixconst.authentication import (  # noqa: F401
     PASSWORD_VAULT,
     PASSWORD_INTERACTIVE,
@@ -647,12 +647,13 @@ class Engine:
         for target_info in self.displaytargets:
             temp_service_login = target_info.service_login
             temp_resource_service_protocol_cn = target_info.protocol
-            if (target_info.protocol != "APP"
-                and (target_info.target_name == 'autotest'
-                     or target_info.target_name == 'bouncer2'
-                     or target_info.target_name == 'widget2_message'
-                     or target_info.target_name == 'widgettest'
-                     or target_info.target_name == 'card')):
+            if target_info.protocol != "APP" \
+                and target_info.target_name in {'autotest',
+                                                'bouncer2',
+                                                'widget2_message',
+                                                'widgettest',
+                                                'card',
+                                               }:
                 temp_service_login = target_info.service_login.replace(
                     ':RDP',
                     ':INTERNAL', 1)
@@ -682,10 +683,10 @@ class Engine:
                 target_device = target_info.target_name
                 target_service = target_info.service_name
                 target_field_dict = {
-                    "account" : fc(target_login_real),
-                    "domain" : fc(target_domain_real),
-                    "device" : fc(target_device),
-                    "service" : fc(target_service)}
+                    "account": fc(target_login_real),
+                    "domain": fc(target_domain_real),
+                    "device": fc(target_device),
+                    "service": fc(target_service)}
 
                 if not taf.is_filterable(filter_pattern_dict,
                                          target_field_dict):
@@ -757,7 +758,7 @@ class Engine:
             urights = self.wabengine.get_proxy_user_rights(protocols,
                                                            target_device)
         Logger().debug("** END Get_proxy_right **")
-        if urights and (type(urights[0]) == str):
+        if urights and isinstance(urights[0], str):
             import json
             urights = map(json.loads, urights)
         return urights
@@ -819,9 +820,9 @@ class Engine:
                     continue
                 if (target_context.login
                     and account_login
-                    and target_context.login not in [
+                    and target_context.login not in (
                         account_login, account_logindom,
-                        account_name, account_namedom]):
+                        account_name, account_namedom)):
                     # match context login with login or name
                     # (with or without domain)
                     continue
@@ -1024,8 +1025,7 @@ class Engine:
         # Logger().info("Engine get_app_params: "
         #               "{service_login=} {effective_target=}")
         if self.is_sharing_session(selected_target):
-            from collections import namedtuple
-            status, infos = self.check_target(selected_target)
+            _status, infos = self.check_target(selected_target)
             token = infos.get("shadow_token", {})
             app_params = AppParams("", None, token.get("shadow_id"))
             Logger().info("Engine get_app_params shadow done")
@@ -1309,12 +1309,12 @@ class Engine:
                 return x == "RDP"
         elif proxytype == "SSH":
             def matchproto(x):
-                return x in ("SSH_SHELL_SESSION",
+                return x in {"SSH_SHELL_SESSION",
                              "SSH_REMOTE_COMMAND",
                              "SSH_SCP_UP",
                              "SSH_SCP_DOWN",
                              "SFTP_SESSION",
-                             "RLOGIN", "TELNET")
+                             "RLOGIN", "TELNET"}
         else:
             return {}, {}
         try:
@@ -1354,12 +1354,12 @@ class Engine:
             separator = "\x01"
         elif proxytype == "SSH":
             def matchproto(x):
-                return x in ["SSH_SHELL_SESSION",
+                return x in {"SSH_SHELL_SESSION",
                              "SSH_REMOTE_COMMAND",
                              "SSH_SCP_UP",
                              "SSH_SCP_DOWN",
                              "SFTP_SESSION",
-                             "RLOGIN", "TELNET"]
+                             "RLOGIN", "TELNET"}
             separator = "|"
         else:
             return None, None
@@ -1672,7 +1672,7 @@ class Engine:
 
     def get_physical_target_info(self, physical_target: RightType) -> PhysicalTarget:
         if self.is_sharing_session(physical_target):
-            status, infos = self.check_target(physical_target)
+            _status, infos = self.check_target(physical_target)
             token = infos.get("shadow_token", {})
             return PhysicalTarget(
                 device_host=(token.get('host_target_ip')

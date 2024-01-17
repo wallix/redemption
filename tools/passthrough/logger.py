@@ -1,6 +1,4 @@
-#!/usr/bin/python
-
-import logging
+# import logging
 
 class Logger():
 

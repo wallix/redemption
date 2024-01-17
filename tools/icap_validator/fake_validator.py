@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
+from time import sleep
 import socket
 import select
 import sys
 import os
 import struct
-import time # sleep
 
-def read_session_socket(session_socket, size_to_read):
+def read_session_socket(session_socket, size_to_read: int) -> tuple[bool, bytes]:
     """
     Read exactly size_to_read bytes from socket and
     return a tuple with True if no error is detected and received data
@@ -25,7 +23,7 @@ def read_session_socket(session_socket, size_to_read):
 
     return size_to_read == 0, received_message
 
-def read_session_msg(client_socket):
+def read_session_msg(client_socket) -> tuple[bool, bytes, int]:
     """
     Read session client socket received data, parse the header to return read
     message type and True if no error is detected
@@ -51,18 +49,18 @@ REJECTED_ON_EOF = 2
 ACCEPTED_WITH_DELAY = 3
 REJECTED_WITH_DELAY = 4
 
-def send_response_message(socket, file_id, result, content):
+def send_response_message(socket, file_id: int, result: int, content: bytes) -> None:
     """
     Send a Response message
     """
-    print(f'send: file_id={file_id} content={content}')
+    print(f'send: file_id={file_id} content={content!r}')
     content_len = len(content)
     msg = struct.pack(">BI", 0x05, 9 + content_len)
     msg += struct.pack(">BII", result, file_id, content_len)
     msg += content
     socket.send(msg)
 
-def process_new_data(message, client_socket, data):
+def process_new_data(message, client_socket, data: dict[int, int]) -> None:
     """
     Parse a NewFile message and send a response or
     wait a eof type message. If filename contains
@@ -105,7 +103,7 @@ state_to_msg_table = [
     (REJECTED, b'virus2'),
 ]
 
-def process_eol(message, client_socket, data):
+def process_eol(message, client_socket, data: dict[int, int]) -> None:
     """
     Parse a Eol message and send a ACCEPTED or REJECTED response
     """
@@ -117,7 +115,7 @@ def process_eol(message, client_socket, data):
         print(f'file_id={file_id} state={state}')
         if state >= 3:
             print('7 seconds delay')
-            time.sleep(7)
+            sleep(7)
         p = state_to_msg_table[state]
         send_response_message(client_socket, file_id, p[0], p[1])
         del data[file_id]
@@ -157,30 +155,30 @@ def process_file_data(message, client_socket, data):
         elif b'n\0o\0r\0e\0p\0' in msg_data:
             del data[file_id]
 
-def parse_message(type, message, client_socket, data):
+def parse_message(msg_type, message, client_socket, data):
     """
         Parse received data according to message type
     """
-    if type == 0x01: # File Data Flag
+    if msg_type == 0x01:  # File Data Flag
         print('parse_message: file data')
         process_file_data(message, client_socket, data)
 
-    elif type == 0x07: # New Data Flag
+    elif msg_type == 0x07:  # New Data Flag
         print('parse_message: new data')
         process_new_data(message, client_socket, data)
 
-    elif type == 0x03:  # End of File Flag
+    elif msg_type == 0x03:  # End of File Flag
         print('parse_message: end of file')
         process_eol(message, client_socket, data)
 
-    elif type == 0x04:  # Abort File Flag
+    elif msg_type == 0x04:  # Abort File Flag
         print('parse_message: abort')
         process_abort_file(message, client_socket, data)
 
-    elif type == 0x06: # File Infos Flag
+    elif msg_type == 0x06:  # File Infos Flag
         print('parse_message: infos')
 
-    elif type == 0x02:  # Disconnection Flag
+    elif msg_type == 0x02:  # Disconnection Flag
         print('parse_message: disconnection')
         return False
 
@@ -201,7 +199,7 @@ if __name__ == '__main__':
               '- virus2: send REJECTED 7 seconds after eof or abort\n'
               '- ok2: send ACCEPTED 7 seconds after eof or abort\n'
               '- otherwise, same as ok1')
-        exit(1)
+        sys.exit(1)
 
     socket_path = sys.argv[1]
 

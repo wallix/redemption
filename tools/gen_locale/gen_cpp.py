@@ -5,19 +5,19 @@ from collections import OrderedDict
 import re
 
 class Key2(NamedTuple):
-    codepoint:int
-    is_deadkey:int
-    text:str
+    codepoint: int
+    is_deadkey: int
+    text: str
 
 class Keymap2(NamedTuple):
-    mod:str
-    keymap:KeymapType
-    dkeymap:list[int] # always 128 elements. 0 = no deadkey
-    idx:int
+    mod: str
+    keymap: KeymapType
+    dkeymap: list[int]  # always 128 elements. 0 = no deadkey
+    idx: int
 
 class LayoutInfo(NamedTuple):
-    layout:KeyLayout
-    keymaps:list[Keymap2]
+    layout: KeyLayout
+    keymaps: list[Keymap2]
 
 supported_mods = OrderedDict({
     '': True,
@@ -52,23 +52,23 @@ mods_to_mask = {
     'VK_OEM_8': 32,
 }
 
-supported_mods_mask_to_name = dict(
-    (sum(mods_to_mask[m] for m in mod.split(' ')), mod)
+supported_mods_mask_to_name = {
+    sum(mods_to_mask[m] for m in mod.split(' ')): mod
     for mod in supported_mods
-)
-supported_mods_name_to_mask = dict( (v, k) for k,v in supported_mods_mask_to_name.items() )
+}
+supported_mods_name_to_mask = {v: k for k, v in supported_mods_mask_to_name.items()}
 
-mods_with_capslock = [name for mods,name in supported_mods_mask_to_name.items() if mods & 16]
+mods_with_capslock = [name for mods, name in supported_mods_mask_to_name.items() if mods & 16]
 
-capslock_to_nocapslock_mods = dict(
-    (mod, supported_mods_mask_to_name[supported_mods_name_to_mask[mod] & ~16])
+capslock_to_nocapslock_mods = {
+    mod: supported_mods_mask_to_name[supported_mods_name_to_mask[mod] & ~16]
     for mod in mods_with_capslock
-)
+}
 
-def load_layout_infos(layouts:list[KeyLayout],
-                      unique_keymap:dict[Optional[tuple], int],
-                      unique_deadkeys:dict[tuple, int]) -> list[LayoutInfo]:
-    layouts2:list[LayoutInfo] = []
+def load_layout_infos(layouts: list[KeyLayout],
+                      unique_keymap: dict[Optional[tuple], int],
+                      unique_deadkeys: dict[tuple, int]) -> list[LayoutInfo]:
+    layouts2: list[LayoutInfo] = []
     for layout in layouts:
         keymaps = layout.keymaps
         keymap_for_layout = []
@@ -76,18 +76,18 @@ def load_layout_infos(layouts:list[KeyLayout],
         keymaps_mods = [(keymaps[mod], mod) for mod in supported_mods]
 
         # add capslock when missing
-        keymaps_by_mods = {mod:keymap for keymap,mod in keymaps_mods}
+        keymaps_by_mods = {mod: keymap for keymap, mod in keymaps_mods}
         for i in range(128):
             if all(not keymap[i]
-                   for keymap,mod in keymaps_mods
+                   for keymap, mod in keymaps_mods
                    if mod in mods_with_capslock):
-                for keymap,mod in keymaps_mods:
+                for keymap, mod in keymaps_mods:
                     if not keymap[i] and mod in mods_with_capslock:
                         newmod = capslock_to_nocapslock_mods[mod]
                         # if newmod in keymaps_by_mods:
                         keymap[i] = keymaps_by_mods[newmod][i]
 
-        for keymap,mod in keymaps_mods:
+        for keymap, mod in keymaps_mods:
             keys = []
             dkeys = []
             has_dkidx = False
@@ -102,7 +102,7 @@ def load_layout_infos(layouts:list[KeyLayout],
                         has_dkidx = True
                     dkeys.append(idk)
                     keys.append(Key2(codepoint=key.codepoint,
-                                     is_deadkey=True if idk else False,
+                                     is_deadkey=bool(idk),
                                      text=key.text))
                 else:
                     dkeys.append(0)
@@ -116,11 +116,11 @@ def load_layout_infos(layouts:list[KeyLayout],
     return layouts2
 
 
-layouts:list[KeyLayout] = parse_argv()
+layouts: list[KeyLayout] = parse_argv()
 
 error_messages = []
 for layout in layouts:
-    for mod,keymap in layout.keymaps.items():
+    for mod, keymap in layout.keymaps.items():
         if mod in supported_mods:
             # check that codepoint <= 0x7fff
             if not all(not key or key.codepoint <= 0x7fff for key in keymap):
@@ -128,10 +128,9 @@ for layout in layouts:
             # check that there is no deadkeys of deadkeys
             if not all(not key or key.deadkeys or all(d.deadkeys is None for d in key.deadkeys) for key in keymap):
                 error_messages.append(f'{mod or "NoMod"} for {layout.klid}/{layout.locale_name} have a deadkeys of deadkeys')
-        else:
-            # check that unknown mod is empty
-            if not all(key is None for key in keymap):
-                error_messages.append(f'{mod or "NoMod"} for {layout.klid}/{layout.locale_name} is not null')
+        # check that unknown mod is empty
+        elif not all(key is None for key in keymap):
+            error_messages.append(f'{mod or "NoMod"} for {layout.klid}/{layout.locale_name} is not null')
 if error_messages:
     raise Exception('\n'.join(error_messages))
 
@@ -148,7 +147,7 @@ codepoint_to_char_table = {
     0x5C: '\\\\',
 }
 
-unique_keymap = {(None,)*256: 0,}
+unique_keymap = {(None,)*256: 0}
 unique_deadkeys = {}
 layouts2 = load_layout_infos(layouts, unique_keymap, unique_deadkeys)
 
@@ -206,7 +205,7 @@ for keymap, idx in unique_keymap.items():
     strings.append('};\n\n')
 
 # print deadkeys map (only when a keymap has at least 1 deadkey)
-unique_deadkeys = {v:k for k,v in unique_deadkeys.items()}
+unique_deadkeys = {v: k for k, v in unique_deadkeys.items()}
 for idx,deadkeys in unique_deadkeys.items():
     accent = next(iter(deadkeys))[0]
     strings.append(f'static constexpr KeyLayout::DKeyTable::Data dkeydata_{idx}[] {{\n')
@@ -215,14 +214,14 @@ for idx,deadkeys in unique_deadkeys.items():
     strings.append('};\n\n')
 
 # dkeymap memoization
-dktables = {(0,)*128: 0,}
-for layout, keymaps in layouts2:
-    for mod, keymap, dkeymap, idx in keymaps:
+dktables = {(0,)*128: 0}
+for _layout, keymaps in layouts2:
+    for _mod, _keymap, dkeymap, _idx in keymaps:
         if dkeymap:
             dktables.setdefault(dkeymap, len(dktables))
 
 # print dkeymap (DKeyTable[])
-for deadmap,idx in dktables.items():
+for deadmap, idx in dktables.items():
     strings.append(f'static constexpr KeyLayout::DKeyTable dkeymap_{idx}[] {{\n')
     for i in range(128//8):
         strings.append('    ')
@@ -239,7 +238,7 @@ keymap_by_names = []
 for layout in layouts2:
     mods_array = [0]*64
     dmods_array = [0]*64
-    for mod, keymap, dkeymap, idx in layout.keymaps:
+    for mod, _keymap, dkeymap, idx in layout.keymaps:
         mask = supported_mods_name_to_mask[mod]
         mods_array[mask] = idx
         if dkeymap:
@@ -254,9 +253,11 @@ for layout in layouts2:
 strings2.append('};\n')
 
 keymap_by_names.sort(key=lambda p: p[0])
-strings2.append('\nstatic constexpr KeyLayout layouts_sorted_by_name[] {\n')
-strings2.append(''.join(p[1] for p in keymap_by_names))
-strings2.append('};\n')
+strings2.extend((
+    '\nstatic constexpr KeyLayout layouts_sorted_by_name[] {\n',
+    ''.join(p[1] for p in keymap_by_names),
+    '};\n'
+))
 
 # print layout
 for unique_layout,prefix,atype in (
@@ -272,16 +273,19 @@ for unique_layout,prefix,atype in (
         strings.append('};\n\n')
 
 # print layout
-strings2.append('\narray_view<KeyLayout> keylayouts() noexcept\n')
-strings2.append('{\n    return layouts;\n}\n\n')
-strings2.append('\narray_view<KeyLayout> keylayouts_sorted_by_name() noexcept\n')
-strings2.append('{\n    return layouts_sorted_by_name;\n}\n\n')
-strings2.append('KeyLayout const* find_layout_by_id(KeyLayout::KbdId id) noexcept\n')
-strings2.append('{\n    switch (id)\n    {\n')
-for i,layout in enumerate(layouts):
-    strings2.append(f'    case KbdId{{0x{layout.klid}}}: return &layouts[{i}];\n')
-strings2.append('    }\n    return nullptr;\n}\n')
-strings2.append("""
+strings2.append(
+    '\narray_view<KeyLayout> keylayouts() noexcept\n'
+    '{\n    return layouts;\n}\n\n'
+    '\narray_view<KeyLayout> keylayouts_sorted_by_name() noexcept\n'
+    '{\n    return layouts_sorted_by_name;\n}\n\n'
+    'KeyLayout const* find_layout_by_id(KeyLayout::KbdId id) noexcept\n'
+    '{\n    switch (id)\n    {\n'
+)
+strings2.extend(f'    case KbdId{{0x{layout.klid}}}: return &layouts[{i}];\n'
+                for i,layout in enumerate(layouts))
+strings2.append(
+    '    }\n    return nullptr;\n}\n'
+    """
 KeyLayout const* find_layout_by_name(chars_view name) noexcept
 {
     auto sv_name = name.as<std::string_view>();

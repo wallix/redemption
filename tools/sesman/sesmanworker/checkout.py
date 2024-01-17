@@ -88,30 +88,30 @@ class CheckoutEngine:
     def get_target_login(self, right: RightType) -> Optional[str]:
         # Logger().debug("CHECKOUTENGINE get_target_login")
         target_uid = right['target_uid']
-        tright, credentials = self.session_credentials.get(target_uid,
-                                                           (None, {}))
+        _tright, credentials = self.session_credentials.get(target_uid,
+                                                            (None, {}))
         return credentials.get(CRED_DATA_LOGIN)
 
     def get_target_domain(self, right: RightType) -> Optional[str]:
         # Logger().debug("CHECKOUTENGINE get_target_login")
         target_uid = right['target_uid']
-        tright, credentials = self.session_credentials.get(target_uid,
-                                                           (None, {}))
+        _tright, credentials = self.session_credentials.get(target_uid,
+                                                            (None, {}))
         return credentials.get(CRED_DATA_DOMAIN)
 
     def get_target_passwords(self, right: RightType) -> List[str]:
         # Logger().debug("CHECKOUTENGINE get_target_passwords")
         # Use for password vault or mapping
         target_uid = right['target_uid']
-        tright, credentials = self.session_credentials.get(target_uid,
-                                                           (None, {}))
+        _tright, credentials = self.session_credentials.get(target_uid,
+                                                            (None, {}))
         return credentials.get(CRED_TYPE_PASSWORD, [])
 
     def get_target_privkeys(self, right: RightType) -> List[Tuple[Any, Any, Any]]:
         # Logger().debug("CHECKOUTENGINE get_target_privkeys")
         target_uid = right['target_uid']
-        tright, credentials = self.session_credentials.get(target_uid,
-                                                           (None, {}))
+        _tright, credentials = self.session_credentials.get(target_uid,
+                                                            (None, {}))
         return [(cred.get(CRED_DATA_PRIVATE_KEY),
                  cred.get("passphrase"),
                  cred.get(CRED_DATA_SSH_CERTIFICATE))
@@ -123,8 +123,8 @@ class CheckoutEngine:
             # if is_am, password in credentials is from primary account
             return None
         target_uid = right['target_uid']
-        tright, credentials = self.session_credentials.get(target_uid,
-                                                           (None, {}))
+        _tright, credentials = self.session_credentials.get(target_uid,
+                                                            (None, {}))
         passwords = credentials.get(CRED_TYPE_PASSWORD)
         return passwords[0] if passwords else None
 
@@ -142,7 +142,7 @@ class CheckoutEngine:
         )
         if not res:
             return None
-        right, creds = self.scenario_credentials.get(account, (None, None))
+        _right, creds = self.scenario_credentials.get(account, (None, None))
         if not creds:
             return None
         return AccountInfos(
@@ -249,7 +249,7 @@ class CheckoutEngine:
             return None
         table_creds = (self.pm_credentials if account_type == 'pm' else
                        self.scenario_credentials)
-        right, creds = table_creds.get(account, (None, {}))
+        _right, creds = table_creds.get(account, (None, {}))
         if not creds:
             Logger().debug("check_account_by_type: missing creds")
             return None
@@ -349,7 +349,7 @@ class CheckoutEngine:
                     rights = self.engine.get_user_rights_by_type(
                         'account', scenario=(account_type == 'scenario')
                     )
-                if rights and (type(rights[0]) == str):
+                if rights and isinstance(rights[0], str):
                     rights = list(map(json.loads, rights))
                 table_rights = rights
                 if account_type == 'scenario':
@@ -417,7 +417,7 @@ class CheckoutEngine:
         # Logger().debug("CHECKOUTENGINE release_target")
         target_uid = right['target_uid']
         if target_uid in self.session_credentials:
-            tright, creds = self.session_credentials[target_uid]
+            tright, _creds = self.session_credentials[target_uid]
             with manage_transaction(self.engine, 'checkin_account', reraise=False):
                 self.engine.checkin_account(
                     right=tright,
@@ -432,7 +432,7 @@ class CheckoutEngine:
                        self.scenario_credentials)
         account = (acc_name, dom_name, dev_name)
         if account in table_creds:
-            sright, creds = table_creds[account]
+            sright, _creds = table_creds[account]
             with manage_transaction(self.engine, f'checkin_account ({account_type})', reraise=False):
                 self.engine.checkin_account(
                     right=sright,
@@ -442,14 +442,14 @@ class CheckoutEngine:
 
     def release_all(self) -> None:
         # Logger().debug("CHECKOUTENGINE release_all")
-        for tright, creds in self.session_credentials.values():
+        for tright, _creds in self.session_credentials.values():
             with manage_transaction(self.engine, 'checkin_account', reraise=False):
                 self.engine.checkin_account(
                     right=tright,
                     session=True
                 )
         self.session_credentials.clear()
-        for sright, creds in self.scenario_credentials.values():
+        for sright, _creds in self.scenario_credentials.values():
             with manage_transaction(self.engine, 'checkin_account (scenario)', reraise=False):
                 self.engine.checkin_account(
                     right=sright,
@@ -457,7 +457,7 @@ class CheckoutEngine:
                 )
         self.scenario_credentials.clear()
         self.scenario_rights = None
-        for sright, creds in self.pm_credentials.values():
+        for sright, _creds in self.pm_credentials.values():
             with manage_transaction(self.engine, 'checkin_account (pm)', reraise=False):
                 self.engine.checkin_account(
                     right=sright,

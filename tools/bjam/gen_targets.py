@@ -287,6 +287,7 @@ try:
         if arg == '-h' or arg == '--help':
             for k in options.keys():
                 print(k, '[path]')
+            sys.exit(0)
         lbd = options.get(arg)
         if lbd:
             lbd(next(argv_gen))
