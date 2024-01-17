@@ -30,7 +30,7 @@ BEGINFILE {
 }
 
 /^\s*#\s*include "/ {
-    gsub(/^\s*\#\s*include "|".*$/, "")
+    gsub(/^\s*#\s*include "|".*$/, "")
     m[f][$0]
 }
 
