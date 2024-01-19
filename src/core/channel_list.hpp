@@ -129,8 +129,9 @@ namespace CHANNELS {
         void log(char const * name) const
         {
             LOG(LOG_INFO, "%s channels %zu channels defined", name, this->channels.size());
-            for (uint16_t index = 0; index < this->channels.size(); ++index) {
-                this->channels[index].log(index);
+            uint16_t index = 0;
+            for (auto const& channel : this->channels) {
+                channel.log(index++);
             }
         }
     };

@@ -63,7 +63,8 @@ struct TransportWrapperFnView
     TransportWrapperFnView(TransportWrapperFnView&&) noexcept = default;
     TransportWrapperFnView(TransportWrapperFnView const&) noexcept = default;
 
-    template<class F>
+    template<class F, class
+      = std::enable_if_t<!std::is_same_v<TransportWrapperFnView, std::decay_t<F>>>>
     TransportWrapperFnView(F&& f) noexcept
     {
         using DF = std::decay_t<F>;

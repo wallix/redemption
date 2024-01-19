@@ -66,7 +66,7 @@ namespace detail
 
     template<class U, class P>
     constexpr auto is_convertible_with_two_ptr(P /*p*/)
-    -> decltype(bool(((void)U(P(), P()), true)))
+    -> decltype(bool(((void)U(std::declval<P>(), std::declval<P>()), true)))
     {
         return true;
     }

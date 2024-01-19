@@ -43,7 +43,8 @@ struct writable_buffer_view : writable_bytes_view
     : writable_bytes_view(a, n)
     {}
 
-    template<class T>
+    template<class T, class
+      = std::enable_if_t<!std::is_same_v<writable_buffer_view, std::decay_t<T>>>>
     writable_buffer_view(T&& a) noexcept(noexcept(writable_bytes_view(static_cast<T&&>(a))))
     : writable_bytes_view(static_cast<T&&>(a))
     {}
