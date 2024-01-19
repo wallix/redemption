@@ -39,7 +39,7 @@ while read l ; do
 done < <(bjam "$@" cxxflags='-MM -MF -' -a ||:)
 
 # insert all cpp for log.hpp (the choice depends on the compilation options)
-if [[ $f = 'src/utils/log.hpp' ]]; then
+if [[ -v sources['src/utils/log.hpp'] ]]; then
     if [[ ! -v sources['src/utils/log_as_logprint.cpp'] ]]; then
         dirset[src/utils]+="$redemption_path/src/utils/log_as_logprint.cpp "
     fi
