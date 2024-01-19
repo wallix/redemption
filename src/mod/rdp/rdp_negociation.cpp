@@ -195,7 +195,7 @@ RdpNegociation::RdpNegociation(
     , logon_info(logon_info)
     , front(front)
     , cbAutoReconnectCookie(info.cbAutoReconnectCookie)
-    , redirection_password_or_cookie(std::move(mod_rdp_params.redirection_password_or_cookie))
+    , redirection_password_or_cookie(mod_rdp_params.redirection_password_or_cookie)
     , keylayout(info.keylayout)
     , console_session(info.console_session)
     , front_bpp(info.screen_info.bpp)

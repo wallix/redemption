@@ -121,7 +121,6 @@ static Primitives::pstatus_t yCbCrToRGB_16s8u_P3AC4R_XXX(
 
     for (uint32_t y = 0; y < roi->height; y++) {
         for (uint32_t x = 0; x < roi->width; x++) {
-            int16_t R, G, B;
             const int32_t divisor = 16;
             const int32_t Y = ((*pY++) + 4096) << divisor;
             const int32_t Cb = (*pCb++);
@@ -130,9 +129,9 @@ static Primitives::pstatus_t yCbCrToRGB_16s8u_P3AC4R_XXX(
             const int32_t CrG = Cr * static_cast<int32_t>(0.714401f * (1 << divisor));
             const int32_t CbG = Cb * static_cast<int32_t>(0.343730f * (1 << divisor));
             const int32_t CbB = Cb * static_cast<int32_t>(1.769905f * (1 << divisor));
-            R = static_cast<int16_t>((CrR + Y) >> divisor) >> 5;
-            G = static_cast<int16_t>((Y - CbG - CrG) >> divisor) >> 5;
-            B = static_cast<int16_t>((CbB + Y) >> divisor) >> 5;
+            const int16_t R = static_cast<int16_t>((CrR + Y) >> divisor) >> 5;
+            const int16_t G = static_cast<int16_t>((Y - CbG - CrG) >> divisor) >> 5;
+            const int16_t B = static_cast<int16_t>((CbB + Y) >> divisor) >> 5;
             pRGB = WritePixel::write(pRGB, formatSize, dstFormat, CLIP(R), CLIP(G),
                                      CLIP(B), 0xFF);
         }

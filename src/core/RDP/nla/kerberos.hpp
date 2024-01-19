@@ -54,7 +54,7 @@ private:
         char const* ctx_msg = nullptr;
         char const* extra_param = nullptr;
 
-        void log_if_error();
+        void log_if_error() const;
     };
 
     bool resolve_cache_name(

@@ -232,7 +232,7 @@ FontData::FontData(char const * file_path)
     // extract replacement char
     bool status = extract_contigous_glyph(-1u);
     if (this->font_items.get() != font_char_p) {
-        this->unknown_item = *this->font_items.get();
+        this->unknown_item = this->font_items[0];
         --number_of_glyph;
         --font_char_p;
     }

@@ -27,7 +27,6 @@ Author(s): Proxies Team
 
 #include <cstdint>
 
-#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 

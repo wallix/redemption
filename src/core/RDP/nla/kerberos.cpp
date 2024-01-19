@@ -250,7 +250,7 @@ static char const* get_krb_err_message(krb5_error_code ret)
     return "<unknown>";
 }
 
-void Krb5Creds::KrbErrLogger::log_if_error()
+void Krb5Creds::KrbErrLogger::log_if_error() const
 {
     if (!ret) {
         return ;

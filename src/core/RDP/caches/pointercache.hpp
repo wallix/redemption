@@ -28,7 +28,6 @@
 #include "core/RDP/rdp_pointer.hpp" // predefined_pointer_count
 #include "cxx/cxx.hpp"
 #include "gdi/graphic_api.hpp"
-#include "core/RDP/rdp_pointer.hpp"
 
 
 class PointerCache : noncopyable

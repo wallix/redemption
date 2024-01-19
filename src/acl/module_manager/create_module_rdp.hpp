@@ -57,8 +57,7 @@ enum class PerformAutomaticReconnection : bool { No, Yes, };
 
 struct TransportWrapperFnView
 {
-    TransportWrapperFnView() noexcept
-    {}
+    TransportWrapperFnView() noexcept = default;
 
     TransportWrapperFnView(TransportWrapperFnView&&) noexcept = default;
     TransportWrapperFnView(TransportWrapperFnView const&) noexcept = default;

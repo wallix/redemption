@@ -47,16 +47,16 @@ std::size_t strlcpy(char* dest, char const* src, std::size_t buflen) noexcept
 }
 
 
-void str_replace_inplace(std::string& str, chars_view tag, chars_view replacement)
+void str_replace_inplace(std::string& str, chars_view pattern, chars_view replacement)
 {
-    assert(!tag.empty());
+    assert(!pattern.empty());
 
 #ifdef __EMSCRIPTEN__
     std::experimental::boyer_moore_searcher<std::string_view::iterator>
 #else
     std::boyer_moore_searcher
 #endif
-    searcher(tag.begin(), tag.end());
+    searcher(pattern.begin(), pattern.end());
 
     std::ptrdiff_t i = 0;
 

@@ -88,7 +88,7 @@ public:
         bool capture_kbd, const KbdLogParams& kbd_log_params,
         const VideoParams& video_params,
         UpdateProgressData * update_progress_data,
-        CropperInfo cropping_info,
+        CropperInfo cropper_info,
         Rect rail_window_rect
     );
 

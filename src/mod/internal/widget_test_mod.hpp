@@ -29,7 +29,7 @@ public:
     void rdp_gdi_down() override
     {}
 
-    void rdp_input_invalidate(Rect rect) override;
+    void rdp_input_invalidate(Rect clip) override;
 
     void rdp_input_mouse(uint16_t /*device_flags*/, uint16_t x, uint16_t y) override;
 

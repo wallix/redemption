@@ -142,7 +142,6 @@ struct FileValidatorService;
 #include "utils/sugar/split.hpp"
 #include "utils/sugar/static_array_to_hexadecimal_chars.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
-#include "acl/auth_api.hpp"
 #include "configs/config.hpp"
 
 class RdpSessionProbeWrapper;
