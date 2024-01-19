@@ -1845,6 +1845,15 @@ _.section("session_probe", [&]
             "If enabled, Session Probe activity will be minimized when the user is disconnected from the session. No metadata will be collected during this time.\n"
             "The purpose of this behavior is to optimize CPU consumption."
     });
+
+    _.member(MemberInfo{
+        .name = "monitor_own_resources_consumption",
+        .value = value(false),
+        .spec = connpolicy(rdp_without_jh, L, spec::advanced),
+        .desc =
+            "If enabled, Session Probe will monitor its own system resource consumption.\n"
+            "This feature increases CPU consumption."
+    });
 });
 
 _.section(names{"server_cert"}, [&]

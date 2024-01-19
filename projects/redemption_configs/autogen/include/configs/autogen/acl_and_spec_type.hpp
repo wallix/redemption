@@ -193,6 +193,7 @@ template<> struct acl_and_spec_type<cfg::session_probe::clipboard_based_launcher
 template<> struct acl_and_spec_type<cfg::session_probe::process_command_line_retrieve_method> { using type = SessionProbeProcessCommandLineRetrieveMethod; };
 template<> struct acl_and_spec_type<cfg::session_probe::periodic_task_run_interval> { using type = ::configs::spec_types::range<std::chrono::milliseconds, 300, 2000>; };
 template<> struct acl_and_spec_type<cfg::session_probe::pause_if_session_is_disconnected> { using type = bool; };
+template<> struct acl_and_spec_type<cfg::session_probe::monitor_own_resources_consumption> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::server_cert::server_cert_store> { using type = bool; };
 template<> struct acl_and_spec_type<cfg::server_cert::server_cert_check> { using type = ServerCertCheck; };
 template<> struct acl_and_spec_type<cfg::server_cert::server_access_allowed_message> { using type = ServerNotification; };

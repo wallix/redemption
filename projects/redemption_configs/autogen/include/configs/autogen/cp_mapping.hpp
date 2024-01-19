@@ -92,6 +92,7 @@ cp_spec = {
         ('session_probe:process_command_line_retrieve_method', 'process_command_line_retrieve_method', 2),
         ('session_probe:periodic_task_run_interval', 'periodic_task_run_interval', 500),
         ('session_probe:pause_if_session_is_disconnected', 'pause_if_session_is_disconnected', False),
+        ('session_probe:monitor_own_resources_consumption', 'monitor_own_resources_consumption', False),
     },
     'server_cert': {
         ('server_cert:server_cert_store', 'server_cert_store', True),

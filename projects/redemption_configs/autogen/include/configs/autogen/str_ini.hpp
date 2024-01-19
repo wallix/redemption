@@ -1058,6 +1058,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (acl config: proxy ⇐ session_probe:pause_if_session_is_disconnected)
 #pause_if_session_is_disconnected = 0
 
+# If enabled, Session Probe will monitor its own system resource consumption.
+# This feature increases CPU consumption.
+# (type: boolean (0/no/false or 1/yes/true))
+#_advanced
+# (acl config: proxy ⇐ session_probe:monitor_own_resources_consumption)
+#monitor_own_resources_consumption = 0
+
 [server_cert]
 
 # Keep known server certificates on Bastion

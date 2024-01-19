@@ -81,7 +81,8 @@ enum {
     OPTION_REMOTE_PROGRAM_SESSION                               = 0x00000040,
     OPTION_GET_PROCESS_COMMAND_USING_INTERNAL_APIS_CALL         = 0x00000080,
     OPTION_DONT_GET_PROCESS_COMMAND_LINE_WITH_WMI               = 0x00000100,
-    OPTION_PAUSE_IF_SESSION_IS_DISCONNECTED                     = 0x00000200
+    OPTION_PAUSE_IF_SESSION_IS_DISCONNECTED                     = 0x00000200,
+    OPTION_MONITOR_OWN_RESOURCES_CONSUMPTION                    = 0x00000400
 };
 
 using SessionProbeVariables = vcfg::variables<
@@ -683,6 +684,10 @@ public:
 
                     options |= this->sespro_params.pause_if_session_is_disconnected
                         ? uint32_t(OPTION_PAUSE_IF_SESSION_IS_DISCONNECTED)
+                        : uint32_t();
+
+                    options |= this->sespro_params.monitor_own_resources_consumption
+                        ? uint32_t(OPTION_MONITOR_OWN_RESOURCES_CONSUMPTION)
                         : uint32_t();
 
                     if (options)
