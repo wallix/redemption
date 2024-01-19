@@ -114,6 +114,7 @@ namespace configs
         "session_probe:process_command_line_retrieve_method"_zv,
         "session_probe:periodic_task_run_interval"_zv,
         "session_probe:pause_if_session_is_disconnected"_zv,
+        "session_probe:monitor_own_resources_consumption"_zv,
         "server_cert:server_cert_store"_zv,
         "server_cert:server_cert_check"_zv,
         "server_cert:server_access_allowed_message"_zv,

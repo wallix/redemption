@@ -507,6 +507,11 @@ periodic_task_run_interval = integer(min=300, max=2000, default=500)
 #_advanced
 pause_if_session_is_disconnected = boolean(default=False)
 
+# If enabled, Session Probe will monitor its own system resource consumption.
+# This feature increases CPU consumption.
+#_advanced
+monitor_own_resources_consumption = boolean(default=False)
+
 [server_cert]
 
 # Keep known server certificates on Bastion

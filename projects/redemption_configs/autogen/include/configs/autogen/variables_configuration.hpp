@@ -23,25 +23,25 @@ namespace configs
         inline constexpr int section5 = 19; /* mod_rdp */
         inline constexpr int section6 = 59; /* protocol */
         inline constexpr int section7 = 60; /* session_probe */
-        inline constexpr int section8 = 104; /* server_cert */
-        inline constexpr int section9 = 113; /* mod_vnc */
-        inline constexpr int section10 = 121; /* session_log */
-        // inline constexpr int section11 = 123; /* ocr */
-        inline constexpr int section12 = 123; /* capture */
-        inline constexpr int section13 = 130; /* audit */
-        inline constexpr int section14 = 139; /* file_verification */
-        inline constexpr int section15 = 147; /* file_storage */
-        // inline constexpr int section16 = 148; /* icap_server_down */
-        // inline constexpr int section17 = 148; /* icap_server_up */
-        inline constexpr int section18 = 148; /* crypto */
-        // inline constexpr int section19 = 150; /* websocket */
-        // inline constexpr int section20 = 150; /* vnc_over_ssh */
-        inline constexpr int section21 = 150; /* context */
-        // inline constexpr int section22 = 240; /* internal_mod */
-        inline constexpr int section23 = 240; /* mod_replay */
-        inline constexpr int section24 = 242; /* translation */
-        // inline constexpr int section25 = 244; /* theme */
-        // inline constexpr int section26 = 244; /* debug */
+        inline constexpr int section8 = 105; /* server_cert */
+        inline constexpr int section9 = 114; /* mod_vnc */
+        inline constexpr int section10 = 122; /* session_log */
+        // inline constexpr int section11 = 124; /* ocr */
+        inline constexpr int section12 = 124; /* capture */
+        inline constexpr int section13 = 131; /* audit */
+        inline constexpr int section14 = 140; /* file_verification */
+        inline constexpr int section15 = 148; /* file_storage */
+        // inline constexpr int section16 = 149; /* icap_server_down */
+        // inline constexpr int section17 = 149; /* icap_server_up */
+        inline constexpr int section18 = 149; /* crypto */
+        // inline constexpr int section19 = 151; /* websocket */
+        // inline constexpr int section20 = 151; /* vnc_over_ssh */
+        inline constexpr int section21 = 151; /* context */
+        // inline constexpr int section22 = 241; /* internal_mod */
+        inline constexpr int section23 = 241; /* mod_replay */
+        inline constexpr int section24 = 243; /* translation */
+        // inline constexpr int section25 = 245; /* theme */
+        // inline constexpr int section26 = 245; /* debug */
     } // namespace cfg_indexes
 } // namespace configs
 
@@ -2422,6 +2422,21 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 43};
+        using type = bool;
+        using mapped_type = bool;
+        type value { false };
+    };
+    /// If enabled, Session Probe will monitor its own system resource consumption. <br/>
+    /// This feature increases CPU consumption. <br/>
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// aclName: session_probe:monitor_own_resources_consumption <br/>
+    /// default: false <br/>
+    struct session_probe::monitor_own_resources_consumption {
+        static constexpr unsigned acl_proxy_communication_flags = 0b10;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section7 + 44};
         using type = bool;
         using mapped_type = bool;
         type value { false };
@@ -5297,6 +5312,7 @@ struct session_probe
 , cfg::session_probe::process_command_line_retrieve_method
 , cfg::session_probe::periodic_task_run_interval
 , cfg::session_probe::pause_if_session_is_disconnected
+, cfg::session_probe::monitor_own_resources_consumption
 { static constexpr bool is_section = true; };
 
 struct server_cert
@@ -5708,6 +5724,7 @@ using VariablesAclPack = Pack<
 , cfg::session_probe::process_command_line_retrieve_method
 , cfg::session_probe::periodic_task_run_interval
 , cfg::session_probe::pause_if_session_is_disconnected
+, cfg::session_probe::monitor_own_resources_consumption
 , cfg::server_cert::server_cert_store
 , cfg::server_cert::server_cert_check
 , cfg::server_cert::server_access_allowed_message
@@ -5853,14 +5870,14 @@ using VariablesAclPack = Pack<
 
 constexpr U64BitFlags<4> loggable_field{ {
   0b1111111101111111111111111111111111111111111111101111011111101100
-, 0b1101111111111111011111111111111111111111111111111111111111111111
-, 0b1111010001011110011100001111110110001100000011111111111111011111
-, 0b0000000000000111110000000111000001100011001111111000101001111111
+, 0b1011111111111110111111111111111111111111111111111111111111111111
+, 0b1110100010111100111000011111101100011000000111111111111110111111
+, 0b0000000000001111100000001110000011000110011111110001010011111111
 },
 {
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000001000000000000000000000000000000000000000000
+, 0b0000000000000000000010000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 } };
 } // namespace configs

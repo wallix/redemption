@@ -389,6 +389,8 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
         ini.get<cfg::session_probe::periodic_task_run_interval>();
     spp.vc_params.pause_if_session_is_disconnected =
         ini.get<cfg::session_probe::pause_if_session_is_disconnected>();
+    spp.vc_params.monitor_own_resources_consumption =
+        ini.get<cfg::session_probe::monitor_own_resources_consumption>();
 
     return spp;
 }

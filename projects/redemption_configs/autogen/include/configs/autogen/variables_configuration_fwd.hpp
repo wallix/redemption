@@ -212,6 +212,7 @@ namespace cfg
         struct process_command_line_retrieve_method;
         struct periodic_task_run_interval;
         struct pause_if_session_is_disconnected;
+        struct monitor_own_resources_consumption;
     };
 
     struct server_cert {

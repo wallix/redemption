@@ -383,6 +383,9 @@ cfg::session_probe::periodic_task_run_interval ⇐ session_probe:periodic_task_r
 cfg::session_probe::pause_if_session_is_disconnected ⇐ session_probe:pause_if_session_is_disconnected   [bool]
     If enabled, Session Probe activity will be minimized when the user is disconnected from the session. No metadata will be collected during this time.
     The purpose of this behavior is to optimize CPU consumption.
+cfg::session_probe::monitor_own_resources_consumption ⇐ session_probe:monitor_own_resources_consumption   [bool]
+    If enabled, Session Probe will monitor its own system resource consumption.
+    This feature increases CPU consumption.
 
 cfg::server_cert::server_cert_store ⇐ server_cert:server_cert_store   [bool]
     Keep known server certificates on Bastion

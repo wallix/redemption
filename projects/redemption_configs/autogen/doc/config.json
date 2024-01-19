@@ -1987,6 +1987,17 @@
       "logStategy": "1"
     },
     {
+      "section": "session_probe",
+      "name": "monitor_own_resources_consumption",
+      "type": "bool",
+      "value": false,
+      "description": "If enabled, Session Probe will monitor its own system resource consumption.\nThis feature increases CPU consumption.",
+      "rdp": true,
+      "aclToProxy": true,
+      "advanced": true,
+      "logStategy": "1"
+    },
+    {
       "section": "server_cert",
       "name": "server_cert_store",
       "type": "bool",
