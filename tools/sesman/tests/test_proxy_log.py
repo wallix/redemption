@@ -7,7 +7,7 @@ from proxy_log import RdpProxyLog
 
 class Test_RdpProxyLog(unittest.TestCase):
     @patch('syslog.syslog')
-    def test_log(self, mock):
+    def test_log(self, mock):  # noqa: PLR6301
         logger = RdpProxyLog()
         logger.update_context(1234, 'myname')
 

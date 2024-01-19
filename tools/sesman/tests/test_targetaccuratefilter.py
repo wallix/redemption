@@ -10,9 +10,8 @@ class Test_targetaccuratefilter(unittest.TestCase):
         def expect_is_selector_filter_mode_equal(
                 pattern, expected_selector_filter_mode):
             with self.subTest(pattern=pattern):
-                self.assertEqual(
-                    taf.get_selector_filter_mode(pattern),
-                    expected_selector_filter_mode)
+                assert taf.get_selector_filter_mode(pattern) \
+                    == expected_selector_filter_mode
 
 
         expect_is_selector_filter_mode_equal(
@@ -39,9 +38,8 @@ class Test_targetaccuratefilter(unittest.TestCase):
         def expect_is_filter_pattern_dict_equal(filter_patterns,
                                                 expected_filter_pattern_dict):
             with self.subTest(filter_patterns=filter_patterns):
-                self.assertDictEqual(
-                    taf.get_filter_pattern_dict(filter_patterns),
-                    expected_filter_pattern_dict)
+                assert taf.get_filter_pattern_dict(filter_patterns) \
+                    == expected_filter_pattern_dict
 
 
         # with one filter
@@ -112,8 +110,7 @@ class Test_targetaccuratefilter(unittest.TestCase):
         def expect_is_filterable_true(filter_pattern_dict,
                                       target_field_dict):
             with self.subTest(filter_pattern_dict=filter_pattern_dict):
-                self.assertTrue(taf.is_filterable(filter_pattern_dict,
-                                                  target_field_dict))
+                assert taf.is_filterable(filter_pattern_dict, target_field_dict)
 
 
         # with one filter
@@ -233,8 +230,7 @@ class Test_targetaccuratefilter(unittest.TestCase):
         def expect_is_filterable_false(filter_pattern_dict,
                                        target_field_dict):
             with self.subTest(filter_pattern_dict=filter_pattern_dict):
-                self.assertFalse(taf.is_filterable(filter_pattern_dict,
-                                                   target_field_dict))
+                assert not taf.is_filterable(filter_pattern_dict, target_field_dict)
 
 
         expect_is_filterable_false(
@@ -283,10 +279,8 @@ class Test_targetaccuratefilter(unittest.TestCase):
             with self.subTest(filter_patterns=filter_patterns):
                 with self.assertRaises(FilterKeywordDuplicateError) as cm:
                     taf.get_filter_pattern_dict(filter_patterns)
-                self.assertEqual(cm.exception.args[1],
-                                 ("duplicated filter keyword with '%s'"
-                                  % expected_filter_keyword_err))
-
+                assert cm.exception.args[1] \
+                    == f"duplicated filter keyword with '{expected_filter_keyword_err}'"
 
         expect_filter_keyword_duplicate_error(
             "?account=my_account&?account=my_account",
@@ -302,9 +296,8 @@ class Test_targetaccuratefilter(unittest.TestCase):
             with self.subTest(filter_patterns=filter_patterns):
                 with self.assertRaises(FilterKeywordSyntaxError) as cm:
                     taf.get_filter_pattern_dict(filter_patterns)
-                self.assertEqual(cm.exception.args[1],
-                                 ("unknown filter keyword with '%s'"
-                                  % expected_filter_keyword_err))
+                assert cm.exception.args[1] \
+                    == f"unknown filter keyword with '{expected_filter_keyword_err}'"
 
 
         expect_filter_keyword_syntax_error(
@@ -332,11 +325,9 @@ class Test_targetaccuratefilter(unittest.TestCase):
             with self.subTest(filter_patterns=filter_patterns):
                 with self.assertRaises(ParsingError) as cm:
                     taf.get_filter_pattern_dict(filter_patterns)
-                self.assertEqual(cm.exception.args[1],
-                                 ("'keyword"
-                                  + taf.FILTER_KV_SEPARATOR
-                                  + "value' format parsing error with '%s'"
-                                  % expected_bad_string_err))
+                assert cm.exception.args[1] \
+                    == (f"'keyword{taf.FILTER_KV_SEPARATOR}value' "
+                        f"format parsing error with '{expected_bad_string_err}'")
 
 
         expect_parsing_error(

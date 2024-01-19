@@ -1084,10 +1084,7 @@ class Sesman():
                     'target_service': self.target_service_name,
                 }
                 if not self.internal_target:
-                    self.internal_target = (
-                        True if self.target_service_name == 'INTERNAL'
-                        else False
-                    )
+                    self.internal_target = (self.target_service_name == 'INTERNAL')
                 self.send_data(data_to_send)
                 _status = True
             elif self.shared.get('selector') == MAGICASK:
@@ -1244,8 +1241,7 @@ class Sesman():
                     data_to_send['target_service'] = service_name
                     self._full_user_device_account = f"{target_login}@{device_name}:{wab_login}"
                     if not self.internal_target:
-                        self.internal_target = (True if s[2] == 'INTERNAL'
-                                                else False)
+                        self.internal_target = (s[2] == 'INTERNAL')
                     self.send_data(data_to_send)
                     self.target_service_name = service_name
                     self.target_group = s[0]
@@ -1839,7 +1835,7 @@ class Sesman():
 
         if _status:
             module = kv.get('proto_dest')
-            if module not in ['RDP', 'VNC', 'INTERNAL']:
+            if module not in {'RDP', 'VNC', 'INTERNAL'}:
                 module = 'RDP'
             if self.internal_target:
                 module = 'INTERNAL'
