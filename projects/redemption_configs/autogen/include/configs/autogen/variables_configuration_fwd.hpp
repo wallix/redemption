@@ -218,6 +218,7 @@ namespace cfg
         struct session_probe_process_command_line_retrieve_method;
         struct session_probe_periodic_task_run_interval;
         struct session_probe_pause_if_session_is_disconnected;
+        struct session_probe_monitor_own_resources_consumption;
         struct replace_null_pointer_by_default_pointer;
     };
 

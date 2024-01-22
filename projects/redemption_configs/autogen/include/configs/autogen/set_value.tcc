@@ -1486,6 +1486,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "session_probe_monitor_own_resources_consumption"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::session_probe_monitor_own_resources_consumption&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_WARNING, "unknown parameter %s in section [%s]",

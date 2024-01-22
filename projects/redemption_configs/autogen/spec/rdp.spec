@@ -341,6 +341,11 @@ periodic_task_run_interval = integer(min=0, default=500)
 #_advanced
 pause_if_session_is_disconnected = boolean(default=False)
 
+# If enabled, Session Probe will monitor its own system resource consumption.
+# This feature increases CPU consumption.
+#_advanced
+monitor_own_resources_consumption = boolean(default=False)
+
 # Comma-separated rules
 # (Ex. IPv4 addresses: $deny:192.168.0.0/24:5900,$allow:192.168.0.110:21)
 # (Ex. IPv6 addresses: $deny:2001:0db8:85a3:0000:0000:8a2e:0370:7334:3389,$allow:[20D1:0:3238:DFE1:63::FEFB]:21)

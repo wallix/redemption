@@ -185,6 +185,8 @@ struct SessionProbeVirtualChannelParams
     std::chrono::milliseconds periodic_task_run_interval {};
 
     bool pause_if_session_is_disconnected = false;
+
+    bool monitor_own_resources_consumption = false;
 };
 
 

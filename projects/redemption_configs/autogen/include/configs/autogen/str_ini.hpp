@@ -926,6 +926,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_pause_if_session_is_disconnected = 0
 
+# If enabled, Session Probe will monitor its own system resource consumption.
+# This feature increases CPU consumption.
+# value: 0 or 1
+#_hidden
+#session_probe_monitor_own_resources_consumption = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

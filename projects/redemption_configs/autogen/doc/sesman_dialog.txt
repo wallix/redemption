@@ -265,6 +265,9 @@ cfg::mod_rdp::session_probe_process_command_line_retrieve_method ⇐ mod_rdp:ses
       2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 cfg::mod_rdp::session_probe_periodic_task_run_interval ⇐ mod_rdp:session_probe_periodic_task_run_interval   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_pause_if_session_is_disconnected ⇐ mod_rdp:session_probe_pause_if_session_is_disconnected   [bool]
+cfg::mod_rdp::session_probe_monitor_own_resources_consumption ⇐ mod_rdp:session_probe_monitor_own_resources_consumption   [bool]
+    If enabled, Session Probe will monitor its own system resource consumption.
+    This feature increases CPU consumption.
 cfg::mod_rdp::replace_null_pointer_by_default_pointer ⇐ mod_rdp:replace_null_pointer_by_default_pointer   [bool]
     The use of this feature is not recommended!
     Replace an empty mouse pointer with normal pointer.

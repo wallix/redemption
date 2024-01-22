@@ -231,6 +231,9 @@ cp_spec = {
         u'mod_rdp:session_probe_pause_if_session_is_disconnected': (
             'pause_if_session_is_disconnected', False
         ),
+        u'mod_rdp:session_probe_monitor_own_resources_consumption': (
+            'monitor_own_resources_consumption', False
+        ),
         u'context:session_probe_outbound_connection_monitoring_rules': (
             'outbound_connection_monitoring_rules', u''
         ),

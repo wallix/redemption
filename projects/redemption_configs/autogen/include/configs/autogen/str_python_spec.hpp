@@ -785,6 +785,11 @@ session_probe_periodic_task_run_interval = integer(min=0, default=500)
 #_hidden
 session_probe_pause_if_session_is_disconnected = boolean(default=False)
 
+# If enabled, Session Probe will monitor its own system resource consumption.
+# This feature increases CPU consumption.
+#_hidden
+session_probe_monitor_own_resources_consumption = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
