@@ -122,6 +122,8 @@ mod_vnc::mod_vnc( Transport & t
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
 {
+    LOG_IF(bool(verbose), LOG_INFO, "mod_vnc::verbosity=0x%x", underlying_cast(verbose));
+
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
 
     std::snprintf(this->username, sizeof(this->username), "%s", username);

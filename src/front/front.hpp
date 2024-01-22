@@ -974,6 +974,8 @@ public:
         .enable_shared_control = guest_params.enable_shared_control,
     }
     {
+        LOG_IF(bool(verbose), LOG_INFO, "Front::verbosity=0x%x", underlying_cast(verbose));
+
         client_info.screen_info = guest_params.screen_info;
 
         using namespace std::literals::chrono_literals;

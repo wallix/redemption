@@ -2026,6 +2026,8 @@ public:
         (void)session_log;
         #endif
 
+        LOG_IF(bool(verbose), LOG_INFO, "mod_rdp::verbosity=0x%x", underlying_cast(verbose));
+
         using namespace std::literals::chrono_literals;
 
         if (this->enable_remotefx){
@@ -3216,7 +3218,7 @@ public:
                             if (this->channels.session_probe.enable_launch_mask) {
                                 this->delayed_start_capture = true;
 
-                                LOG(LOG_INFO, "Mod_rdp: Capture starting is delayed.");
+                                LOG(LOG_INFO, "mod_rdp: Capture starting is delayed.");
                             }
                             else
 #endif
@@ -6055,19 +6057,19 @@ private:
 public:
     void disable_input_event()
     {
-        LOG(LOG_INFO, "Mod_rdp: disable input event.");
+        LOG(LOG_INFO, "mod_rdp: disable input event.");
         this->input_event_disabled = true;
     }
 
     void enable_input_event()
     {
-        LOG(LOG_INFO, "Mod_rdp: enable input event.");
+        LOG(LOG_INFO, "mod_rdp: enable input event.");
         this->input_event_disabled = false;
     }
 
     void disable_graphics_update()
     {
-        LOG(LOG_INFO, "Mod_rdp: Disable graphics update.");
+        LOG(LOG_INFO, "mod_rdp: Disable graphics update.");
         this->graphics_update_disabled = true;
 
 #ifndef __EMSCRIPTEN__
@@ -6079,7 +6081,7 @@ public:
 
     void enable_graphics_update()
     {
-        LOG(LOG_INFO, "Mod_rdp: Enable graphics update.");
+        LOG(LOG_INFO, "mod_rdp: Enable graphics update.");
         bool need_full_screen_update = this->graphics_update_disabled;
         this->graphics_update_disabled = false;
 
