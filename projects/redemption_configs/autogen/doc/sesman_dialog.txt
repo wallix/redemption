@@ -252,6 +252,9 @@ cfg::session_probe::process_command_line_retrieve_method ⇐ session_probe:proce
       2: First use internal system APIs call, if that fails, use Windows Management Instrumentation method.
 cfg::session_probe::periodic_task_run_interval ⇐ session_probe:periodic_task_run_interval   [std::chrono::milliseconds]
 cfg::session_probe::pause_if_session_is_disconnected ⇐ session_probe:pause_if_session_is_disconnected   [bool]
+cfg::session_probe::monitor_own_resources_consumption ⇐ session_probe:monitor_own_resources_consumption   [bool]
+    If enabled, Session Probe will monitor its own system resource consumption.
+    This feature increases CPU consumption.
 
 cfg::server_cert::server_cert_store ⇐ server_cert:server_cert_store   [bool]
     Keep known server certificates on WAB

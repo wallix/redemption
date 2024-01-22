@@ -693,6 +693,11 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<types::range<std::chrono::milliseconds, 300, 2000>>(), names{"periodic_task_run_interval"}, set(500));
 
         W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"pause_if_session_is_disconnected"}, set(false));
+
+        W.member(hidden_in_gui, rdp_without_jh_connpolicy | advanced_in_connpolicy, L, type_<bool>(), names{"monitor_own_resources_consumption"}, set(false), desc{
+            "If enabled, Session Probe will monitor its own system resource consumption.\n"
+            "This feature increases CPU consumption."
+        });
     });
 
     W.section(names{"server_cert"}, [&]

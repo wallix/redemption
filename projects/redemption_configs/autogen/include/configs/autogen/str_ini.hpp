@@ -865,6 +865,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #pause_if_session_is_disconnected = 0
 
+# If enabled, Session Probe will monitor its own system resource consumption.
+# This feature increases CPU consumption.
+# value: 0 or 1
+#_hidden
+#monitor_own_resources_consumption = 0
+
 [server_cert]
 
 # Keep known server certificates on WAB
