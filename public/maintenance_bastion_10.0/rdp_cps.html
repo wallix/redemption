@@ -173,6 +173,7 @@ const setAdvanced = function(a, b) {
 <a class=menu-item href=#session_probe-launcher_abort_delay>Launcher Abort Delay</a>
 <a class=menu-item href=#session_probe-log_level>Log Level</a>
 <a class=menu-item href=#session_probe-memory_usage_limit>Memory Usage Limit</a>
+<a class=menu-item href=#session_probe-monitor_own_resources_consumption>Monitor Own Resources Consumption</a>
 <a class=menu-item href=#session_probe-on_account_manipulation>On Account Manipulation</a>
 <a class=menu-item href=#session_probe-on_keepalive_timeout>On Keepalive Timeout</a>
 <a class=menu-item href=#session_probe-on_launch_failure>On Launch Failure</a>
@@ -196,7 +197,7 @@ const setAdvanced = function(a, b) {
 <a class=menu-item href=#video-disable_keyboard_log>Disable Keyboard Log</a>
 </p>
 </nav>
-<p>Number of documented parameters = 52 / 97</p>
+<p>Number of documented parameters = 53 / 98</p>
 <p>Undocumented (45):</p><dl id="shortdesc">
 <li><a href="#rdp-enable_nla">[rdp] enable_nla</a>:  NLA authentication in secondary target. 
 </li><li><a href="#rdp-tls_min_level">[rdp] tls_min_level</a>:  Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 
@@ -592,6 +593,10 @@ Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0
 </div>
 <div class="option advanced-true"><h3 id=session_probe-pause_if_session_is_disconnected>[session probe] Pause If Session Is Disconnected</h3>
 <p>(type: boolean| advanced | default: <code>False</code>)</p>
+</div>
+<div class="option advanced-true"><h3 id=session_probe-monitor_own_resources_consumption>[session probe] Monitor Own Resources Consumption</h3>
+<p>(type: boolean| advanced | default: <code>False</code>)</p>
+<p>If enabled, Session Probe will monitor its own system resource consumption.<br/>This feature increases CPU consumption.</p>
 </div>
 </section>
 <section>
