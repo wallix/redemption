@@ -426,7 +426,15 @@ void SessionProbeClipboardBasedLauncher::make_delay_sequencer()
                         : false),
                     std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-                this->rdp.send_cliprdr_message(out_s.get_produced_bytes());
+                const size_t totalLength = out_s.get_offset();
+
+                this->cliprdr_channel->process_client_message(
+                        totalLength,
+                          CHANNELS::CHANNEL_FLAG_FIRST
+                        | CHANNELS::CHANNEL_FLAG_LAST
+                        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                        out_s.get_produced_bytes());
+
                 event.alarm.reset_timeout(this->get_long_delay_timeout());
                 set_state(Wait_format_list_response);
                 event.garbage = true;
@@ -682,6 +690,10 @@ bool SessionProbeClipboardBasedLauncher::process_client_cliprdr_message(InStream
                     current_chunk_pos, current_chunk_size);
                 this->current_client_format_list_pdu_flags  = flags;
 
+LOG(LOG_WARNING,
+    "> > > > > SessionProbeClipboardBasedLauncher :=> process_client_cliprdr_message(CB_FORMAT_LIST): "
+        "format_list_sent=%s",
+    this->format_list_sent ? "Yes" : "No");
                 if (this->format_list_sent)
                 {
                     RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
