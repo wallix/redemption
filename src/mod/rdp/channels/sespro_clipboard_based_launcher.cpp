@@ -690,10 +690,6 @@ bool SessionProbeClipboardBasedLauncher::process_client_cliprdr_message(InStream
                     current_chunk_pos, current_chunk_size);
                 this->current_client_format_list_pdu_flags  = flags;
 
-LOG(LOG_WARNING,
-    "> > > > > SessionProbeClipboardBasedLauncher :=> process_client_cliprdr_message(CB_FORMAT_LIST): "
-        "format_list_sent=%s",
-    this->format_list_sent ? "Yes" : "No");
                 if (this->format_list_sent)
                 {
                     RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
