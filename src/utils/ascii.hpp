@@ -346,13 +346,12 @@ namespace detail
     };
 
     template<class Transform>
-    constexpr inline std::size_t unsafe_ascii_to(char* dest, chars_view src, Transform&& transform) noexcept
+    constexpr inline char* unsafe_ascii_to(char* dest, chars_view src, Transform&& transform) noexcept
     {
-        auto* start = dest;
         for (char c : src) {
             *dest++ = transform(c);
         }
-        return std::size_t(dest - start);
+        return dest;
     }
 } // namespace detail
 
@@ -365,7 +364,7 @@ chars_to_tagged_string_array(chars_view str, To&& to)
     if (str.size() <= N) {
         auto& array = detail::StringAsArrayAccess::internal(upper.str);
         auto* p = array.buffer.data();
-        array.len = detail::unsafe_ascii_to(p, str, to);
+        array.len = static_cast<std::size_t>(detail::unsafe_ascii_to(p, str, to) - p);
     }
     return upper;
 }
@@ -377,8 +376,9 @@ chars_to_tagged_zstring_array(chars_view str, To&& to)
 {
     TaggedZStringArray<Tag, N> upper;
     if (str.size() <= N) {
-        upper.str.delayed_build([&](auto& array){
-            return detail::unsafe_ascii_to(array.data(), str, to);
+        upper.str.delayed_build([&](auto buffer){
+            auto* end_ptr = detail::unsafe_ascii_to(buffer.data(), str, to);
+            return buffer.set_end_string_ptr(end_ptr);
         });
     }
     return upper;

@@ -30,15 +30,15 @@ RdpLogonInfo::RdpLogonInfo(bounded_chars_view<0, HOST_NAME_MAX> hostname, bool h
                            char const* target_user, bool split_domain) noexcept
 {
     if (hide_client_name) {
-        this->_hostname.delayed_build([](auto& array) {
+        this->_hostname.delayed_build([](auto buffer) {
+            auto array = buffer.chars_with_null_terminated();
             ::gethostname(array.data(), array.size());
             array.back() = '\0';
             char* separator = strchr(array.data(), '.');
             if (!separator) {
-                return strlen(array.data());
+                return buffer.compute_strlen();
             }
-            size_t hostlen = checked_int(separator - array.data());
-            return hostlen;
+            return buffer.set_end_string_ptr(separator);
         });
     }
     else{

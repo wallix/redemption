@@ -63,17 +63,65 @@ RED_AUTO_TEST_CASE(TestStaticString)
     s3.clear();
     RED_CHECK_EQUAL(s3, ""_av);
 
-    s3.delayed_build([](auto& array){
-        array[0] = 'a';
-        array[1] = 'b';
-        array[2] = 'c';
-        return checked_int(3u);
+    // set_string_len()
+    s3.delayed_build([](auto buffer) {
+        auto array = buffer.chars_without_null_terminated();
+        std::size_t i = 0;
+        array[i++] = 'a';
+        array[i++] = 'b';
+        array[i++] = 'c';
+        return buffer.set_string_len(i);
     });
     RED_CHECK_EQUAL(s3, "abc"_av);
 
+    // set_null_terminated_string_len()
+    s3.delayed_build([](auto buffer) {
+        auto array = buffer.chars_without_null_terminated();
+        std::size_t i = 0;
+        array[i++] = 'x';
+        array[i++] = 'y';
+        array[i++] = 'z';
+        // '\0' is already present
+        return buffer.compute_strlen();
+    });
+    RED_CHECK_EQUAL(s3, "xyz"_av);
+
+    // set_end_string_ptr()
+    s3.delayed_build([](auto buffer) {
+        auto array = buffer.chars_without_null_terminated().data();
+        *array++ = 'd';
+        *array++ = 'e';
+        return buffer.set_end_string_ptr(array);
+    });
+    RED_CHECK_EQUAL(s3, "de"_av);
+
+    // set_buffer_len()
+    s3.delayed_build([](auto buffer) {
+        auto array = buffer.chars_with_null_terminated();
+        std::size_t i = 0;
+        array[i++] = 'f';
+        array[i++] = 'g';
+        array[i++] = 'h';
+        array[i++] = '\0';
+        return buffer.set_buffer_len(i);
+    });
+    RED_CHECK_EQUAL(s3, "fgh"_av);
+
+    // set_end_buffer_ptr()
+    s3.delayed_build([](auto buffer) {
+        auto array = buffer.chars_with_null_terminated().data();
+        *array++ = 'i';
+        *array++ = 'j';
+        *array++ = '\0';
+        return buffer.set_end_buffer_ptr(array);
+    });
+    RED_CHECK_EQUAL(s3, "ij"_av);
+
     // test that there is no assertion
-    s3.delayed_build([&](auto&){
-        return checked_int(s3.max_capacity());
+    s3.delayed_build([&](auto buffer){
+        auto array = buffer.chars_with_null_terminated();
+        memset(array.data(), 0, array.size());
+        return buffer.set_buffer_len(s3.max_capacity());
     });
 }
 

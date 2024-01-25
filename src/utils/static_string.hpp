@@ -21,6 +21,7 @@ Author(s): Proxies Team
 #pragma once
 
 #include "utils/sugar/bounded_array_view.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/traits/is_null_terminated.hpp"
 #include "utils/traits/static_array_desc.hpp"
 #include "cxx/compiler_version.hpp"
@@ -48,6 +49,76 @@ namespace detail
         }
     }
 } // namespace detail
+
+
+struct delayed_build_string_buffer
+{
+    enum class ResultLen : std::size_t;
+
+    delayed_build_string_buffer(writable_chars_view null_terminated_buffer) noexcept
+      : null_terminated_buffer(null_terminated_buffer)
+    {
+        assert(!null_terminated_buffer.empty());
+    }
+
+    writable_chars_view chars_without_null_terminated() noexcept
+    {
+        return null_terminated_buffer.drop_back(1);
+    }
+
+    writable_chars_view chars_with_null_terminated() noexcept
+    {
+        return null_terminated_buffer;
+    }
+
+    char* data() noexcept
+    {
+        return null_terminated_buffer.data();
+    }
+
+    /// Compute len with strlen().
+    /// \pre buffer is initialized with a valid null terminated c-string
+    ResultLen compute_strlen() noexcept
+    {
+        return ResultLen(strlen(null_terminated_buffer.data()));
+    }
+
+    /// Length of the final string.
+    /// Null terminated is automatically added.
+    ResultLen set_string_len(std::size_t len) noexcept
+    {
+        assert(len < null_terminated_buffer.size());
+        null_terminated_buffer[len] = '\0';
+        return ResultLen(len);
+    }
+
+    /// Position of the final string.
+    /// Null terminated is automatically added.
+    ResultLen set_end_string_ptr(char const* end_ptr) noexcept
+    {
+        return set_string_len(checked_int(end_ptr - null_terminated_buffer.data()));
+    }
+
+    /// Length of the final buffer (with null terminated character).
+    /// \param len length with null terminated char
+    ResultLen set_buffer_len(std::size_t len) noexcept
+    {
+        assert(len > 0);
+        assert(len <= null_terminated_buffer.size());
+        assert(null_terminated_buffer[len - 1] == '\0');
+        return ResultLen(len - 1);
+    }
+
+    /// Position of the final buffer (with null terminated character).
+    /// \param end_ptr position after null terminated char
+    ResultLen set_end_buffer_ptr(char const* end_ptr) noexcept
+    {
+        return set_buffer_len(checked_int(end_ptr - null_terminated_buffer.data()));
+    }
+
+private:
+    writable_chars_view null_terminated_buffer;
+};
 
 
 // N = size without null character
@@ -110,9 +181,9 @@ struct static_string
     template<class Builder>
     void delayed_build(Builder&& builder)
     {
-        m_len = builder(m_str);
-        assert(m_len <= max_capacity());
-        m_str[m_len] = '\0';
+        auto res = builder(delayed_build_string_buffer(make_writable_array_view(m_str)));
+        static_assert(std::is_same_v<decltype(res), delayed_build_string_buffer::ResultLen>);
+        m_len = checked_int(res);
     }
 
     static std::size_t max_capacity() noexcept
