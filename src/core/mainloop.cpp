@@ -539,14 +539,20 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     REDEMPTION_DIAGNOSTIC_POP()
 
-    auto reload_ini = [&, old_mtime = timespec{}, inifile = config_filename.c_str()] () mutable {
-        struct stat statbuf;
+    char const* inifile = config_filename.c_str();
+    struct stat statbuf;
+    stat(inifile, &statbuf);
+    timespec old_mtime = statbuf.st_mtim;
+
+    auto reload_ini = [&] () mutable {
         if (!stat(inifile, &statbuf)) {
             if (old_mtime.tv_sec < statbuf.st_mtim.tv_sec
              || (old_mtime.tv_sec == statbuf.st_mtim.tv_sec
               && old_mtime.tv_nsec < statbuf.st_mtim.tv_nsec
             )) {
                 old_mtime = statbuf.st_mtim;
+                LOG_IF(ini.get<cfg::debug::config>(), LOG_INFO, "reload ini");
+                ini.reset_ini_values();
                 configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), inifile);
             }
         }

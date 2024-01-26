@@ -137,6 +137,8 @@ public:
         configs::VariablesConfiguration & variables;
     };
 
+    void reset_ini_values();
+
     using ZStringBuffer = std::array<char, configs::max_str_buffer_size + 1>;
 
     using LoggableCategory = configs::LoggableCategory;

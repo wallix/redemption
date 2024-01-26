@@ -187,3 +187,37 @@ void Inifile::initialize()
 
     this->asked_table.set(cfg::context::target_port::index);
 }
+
+namespace
+{
+    template<class>
+    struct ResetIniValue;
+
+    template<class T>
+    void reset_value(T& dest, T&& src)
+    {
+        dest = static_cast<T&&>(src);
+    }
+
+    template<std::size_t N>
+    void reset_value(char(&dest)[N], char(&&src)[N])
+    {
+        std::memcpy(dest, src, N);
+    }
+
+    template<class... Cfg>
+    struct ResetIniValue<configs::Pack<Cfg...>>
+    {
+        static void reset(configs::VariablesConfiguration& variables)
+        {
+            (..., reset_value(static_cast<Cfg&>(variables).value, Cfg{}.value));
+        }
+    };
+} // anonymous namespace
+
+#include "configs/autogen/cfg_ini_pack.hpp"
+
+void Inifile::reset_ini_values()
+{
+    ResetIniValue<configs::cfg_ini_infos::IniPack>::reset(variables);
+}
