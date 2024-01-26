@@ -462,14 +462,6 @@
     },
     {
       "section": "client",
-      "name": "tls_security_level",
-      "type": "int",
-      "value": -1,
-      "description": "Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0\nA negative value uses the default value configured in OpenSSL.\n⚠ Change this value only for compatibility reasons.",
-      "globalSpec": true
-    },
-    {
-      "section": "client",
       "name": "ssl_cipher_list",
       "type": "str",
       "value": "HIGH:!ADH:!3DES:!SHA",
@@ -775,17 +767,6 @@
       "type": "u32",
       "value": 0,
       "description": "Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3",
-      "rdp": true,
-      "jh": true,
-      "aclToProxy": true,
-      "logStategy": "1"
-    },
-    {
-      "section": "mod_rdp",
-      "name": "tls_security_level",
-      "type": "int",
-      "value": -1,
-      "description": "Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0\nA negative value uses the default value configured in OpenSSL.",
       "rdp": true,
       "jh": true,
       "aclToProxy": true,
