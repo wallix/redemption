@@ -588,7 +588,6 @@ ModPack create_mod_rdp(
         .max_level = ini.get<cfg::mod_rdp::tls_max_level>(),
         .cipher_list = ini.get<cfg::mod_rdp::cipher_string>(),
         .tls_1_3_ciphersuites = ini.get<cfg::mod_rdp::tls_1_3_ciphersuites>(),
-        .security_level = ini.get<cfg::mod_rdp::tls_security_level>(),
         .show_common_cipher_list = ini.get<cfg::mod_rdp::show_common_cipher_list>(),
     };
 

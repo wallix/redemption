@@ -76,16 +76,14 @@ inline char const* apply_tls_config(
     SSL_CTX* ctx, TlsConfig const& tls_config, bool verbose, char const* funcname)
 {
     LOG_IF(verbose, LOG_INFO,
-        "TLSContext::%s: TLS: min_level=%u%s, max_level=%u%s, cipher_list='%s', TLSv1.3 ciphersuites='%s', security_level=%d%s",
+        "TLSContext::%s: TLS: min_level=%u%s, max_level=%u%s, cipher_list='%s', TLSv1.3 ciphersuites='%s'",
         funcname,
         tls_config.min_level, tls_config.min_level == 0 ? " (system-wide)" : "",
         tls_config.max_level, tls_config.max_level == 0 ? " (system-wide)" : "",
         tls_config.cipher_list.empty() ? "(system-wide)"
             : tls_config.cipher_list.c_str(),
         tls_config.tls_1_3_ciphersuites.empty() ? "(system-wide)"
-            : tls_config.tls_1_3_ciphersuites.c_str(),
-        tls_config.security_level,
-        tls_config.security_level <= 0 ? " (system-wide)" : ""
+            : tls_config.tls_1_3_ciphersuites.c_str()
     );
 
     auto to_version = [](uint32_t level) {
@@ -117,6 +115,8 @@ inline char const* apply_tls_config(
     // https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html
 
     // when not defined, use system default
+    // "DEFAULT@SECLEVEL=1" (<= openssl-1.1)
+    // "DEFAULT@SECLEVEL=1" (>= openssl-2)
     if (not tls_config.cipher_list.empty()) {
         // Not compatible with MSTSC 6.1 on XP and W2K3
         // SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
@@ -129,12 +129,6 @@ inline char const* apply_tls_config(
     }
 
 #undef CHECK_CALL
-
-    // "DEFAULT@SEC_LEVEL=1" (<= 1.1)
-    // "DEFAULT@SEC_LEVEL=1" (>= 2)
-    if (tls_config.security_level >= 0) {
-        SSL_CTX_set_security_level(ctx, tls_config.security_level);
-    }
 
     return nullptr;
 }

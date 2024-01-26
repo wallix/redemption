@@ -68,10 +68,6 @@ tls_min_level = integer(min=0, default=0)
 # Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 tls_max_level = integer(min=0, default=0)
 
-# Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0
-# A negative value uses the default value configured in OpenSSL.
-tls_security_level = integer(default=-1)
-
 # TLSv1.2 and below additional ciphers supported.
 # Empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
 # The format used is described on this page: https://www.openssl.org/docs/man3.1/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT

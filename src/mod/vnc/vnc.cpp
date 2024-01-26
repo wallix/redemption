@@ -490,7 +490,6 @@ bool mod_vnc::doTlsSwitch()
     case VeNCRYPT_TLSPlain:
     case VeNCRYPT_TLSVnc:
         /* needed params for anonymous TLS */
-        tls_config.security_level = 0;
         tls_config.max_level = 3;
         tls_config.cipher_list = "ADH";
         anonymous_tls = AnonymousTls::Yes;

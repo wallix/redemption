@@ -85,11 +85,6 @@ tls_min_level = integer(min=0, default=2)
 # ⚠ Change this value only for compatibility reasons.
 tls_max_level = integer(min=0, default=0)
 
-# Set the TLS security level. The values and their behavior are described in the OpenSSL documentation: https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html#Level-0
-# A negative value uses the default value configured in OpenSSL.
-# ⚠ Change this value only for compatibility reasons.
-tls_security_level = integer(default=-1)
-
 # [Not configured]: Compatible with more RDP clients (less secure)
 # HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)
 # HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)
