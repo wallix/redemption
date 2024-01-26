@@ -377,19 +377,15 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
                 Rect old_cursor_rect = this->get_cursor_rect();
                 this->decrement_edit_pos();
                 this->update_draw_cursor(old_cursor_rect);
-            }
 
-            if (keymap.is_ctrl_pressed()) {
-                while ( (this->label.buffer[this->edit_buffer_pos-1] != ' ')
-                     || (this->label.buffer[(this->edit_buffer_pos)] == ' ')
-                ){
-                    if (this->edit_pos > 0) {
+                if (keymap.is_ctrl_pressed()) {
+                    while (this->edit_pos > 0 && (
+                        this->label.buffer[this->edit_buffer_pos-1] != ' '
+                     || this->label.buffer[this->edit_buffer_pos] == ' '
+                    )) {
                         Rect old_cursor_rect = this->get_cursor_rect();
                         this->decrement_edit_pos();
                         this->update_draw_cursor(old_cursor_rect);
-                    }
-                    else {
-                        break;
                     }
                 }
             }
@@ -401,18 +397,15 @@ void WidgetEdit::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t 
                 Rect old_cursor_rect = this->get_cursor_rect();
                 this->increment_edit_pos();
                 this->update_draw_cursor(old_cursor_rect);
-            }
 
-            if (keymap.is_ctrl_pressed()) {
-                while ( (this->label.buffer[this->edit_buffer_pos-1] == ' ')
-                        || (this->label.buffer[(this->edit_buffer_pos)] != ' ') ){
-                    if (this->edit_pos < this->num_chars) {
+                if (keymap.is_ctrl_pressed()) {
+                    while (this->edit_pos < this->num_chars && (
+                        this->label.buffer[this->edit_buffer_pos-1] == ' '
+                     || this->label.buffer[this->edit_buffer_pos] != ' '
+                    )) {
                         Rect old_cursor_rect = this->get_cursor_rect();
                         this->increment_edit_pos();
                         this->update_draw_cursor(old_cursor_rect);
-                    }
-                    else {
-                        break;
                     }
                 }
             }
