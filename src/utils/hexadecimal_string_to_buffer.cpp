@@ -25,11 +25,11 @@ Author(s): Proxies Team
 
 bool hexadecimal_string_to_buffer(chars_view in, writable_bytes_view out) noexcept
 {
-    assert(in.size() <= out.size() * 2);
+    assert(in.size() / 2 <= out.size());
     assert(in.size() % 2 == 0);
 
     unsigned err = 0;
-    uint8_t const* p = bytes_view{in}.data();
+    uint8_t const* p = byte_ptr_cast(in.data());
     for (uint8_t& outc : out) {
         uint8_t c1 = detail::hexadecimal_char_to_int(*p++);
         uint8_t c2 = detail::hexadecimal_char_to_int(*p++);
