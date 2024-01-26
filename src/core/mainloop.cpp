@@ -526,6 +526,45 @@ REDEMPTION_DIAGNOSTIC_POP()
         }
         return create_unix_server(ws_addr, enable_transparent_mode);
     }
+
+    struct IniReloader
+    {
+        IniReloader(Inifile& ini, char const* inifile)
+          : inifile(inifile)
+          , ini(ini)
+        {
+            struct stat statbuf;
+            stat(inifile, &statbuf);
+            old_mtime = statbuf.st_mtim;
+        }
+
+        void check_and_reload_ini()
+        {
+            struct stat statbuf;
+            if (!stat(inifile, &statbuf)) {
+                if (old_mtime.tv_sec < statbuf.st_mtim.tv_sec
+                || (old_mtime.tv_sec == statbuf.st_mtim.tv_sec
+                && old_mtime.tv_nsec < statbuf.st_mtim.tv_nsec
+                )) {
+                    old_mtime = statbuf.st_mtim;
+                    reload_ini();
+                }
+            }
+        }
+
+    private:
+        char const* inifile;
+        timespec old_mtime;
+        Inifile& ini;
+
+        REDEMPTION_NOINLINE
+        void reload_ini()
+        {
+            LOG_IF(ini.get<cfg::debug::config>(), LOG_INFO, "reload ini");
+            ini.reset_ini_values();
+            configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), inifile);
+        }
+    };
 } // anonymous namespace
 
 void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string config_filename, bool forkable)
@@ -539,24 +578,7 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     REDEMPTION_DIAGNOSTIC_POP()
 
-    char const* inifile = config_filename.c_str();
-    struct stat statbuf;
-    stat(inifile, &statbuf);
-    timespec old_mtime = statbuf.st_mtim;
-
-    auto reload_ini = [&] () mutable {
-        if (!stat(inifile, &statbuf)) {
-            if (old_mtime.tv_sec < statbuf.st_mtim.tv_sec
-             || (old_mtime.tv_sec == statbuf.st_mtim.tv_sec
-              && old_mtime.tv_nsec < statbuf.st_mtim.tv_nsec
-            )) {
-                old_mtime = statbuf.st_mtim;
-                LOG_IF(ini.get<cfg::debug::config>(), LOG_INFO, "reload ini");
-                ini.reset_ini_values();
-                configuration_load(Inifile::ConfigurationHolder{ini}.as_ref(), inifile);
-            }
-        }
-    };
+    IniReloader ini_reloader(ini, config_filename.c_str());
 
     const EnableTransparentMode enable_transparent_mode
       = EnableTransparentMode(ini.get<cfg::globals::enable_transparent_mode>());
@@ -577,7 +599,7 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
         const auto ws_sck = sck2.fd();
         two_server_loop(std::move(sck1), std::move(sck2), [&](int sck)
         {
-            reload_ini();
+            ini_reloader.check_and_reload_ini();
             auto const socket_type = (ws_sck == sck)
                 ? ini.get<cfg::websocket::use_tls>()
                     ? SocketType::Wss
@@ -591,7 +613,7 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
     {
         unique_server_loop(std::move(sck1), [&](int sck)
         {
-            reload_ini();
+            ini_reloader.check_and_reload_ini();
             session_server_start(sck, forkable, uid, gid, ini, SocketType::Tls, font);
             return true;
         });
