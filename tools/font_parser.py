@@ -223,7 +223,7 @@ def get_glyph_info(char: str) -> GlyphInfo:
         if not bbox:
             # rdesktop require non empty data for glyph
             # create a transparent image with height=1
-            y = y2 - y1 if y2 - y1 else y2
+            y = 0
             bbox = (x1, y - 1, x2, y)
             pixels = b'0' * (x2 * y2)
         else:
