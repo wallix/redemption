@@ -1334,24 +1334,35 @@ void rle_compress60(ImageView const & image, OutStream & outbuffer)
     uint8_t * red_plane   = mem_color + color_plane_size * 0;
     uint8_t * green_plane = mem_color + color_plane_size * 1;
     uint8_t * blue_plane  = mem_color + color_plane_size * 2;
-    const uint8_t   byte_per_color = safe_int(image.bytes_per_pixel());
     const uint8_t * data = image.data();
     uint8_t * pixel_over_red_plane   = red_plane;
     uint8_t * pixel_over_green_plane = green_plane;
     uint8_t * pixel_over_blue_plane  = blue_plane;
-    for (uint16_t y = 0; y < cy; y++) {
-        for (uint16_t x = 0; x < cx; x++) {
-            uint32_t pixel = in_uint32_from_nb_bytes_le(byte_per_color, data);
-            uint8_t b =  ( pixel        & 0xFF);
-            uint8_t g =  ((pixel >> 8 ) & 0xFF);
-            uint8_t r =  ((pixel >> 16) & 0xFF);
-            uint8_t a =  ((pixel >> 24) & 0xFF);
-            (void)a;
-            *(pixel_over_red_plane++)   = r;
-            *(pixel_over_green_plane++) = g;
-            *(pixel_over_blue_plane++)  = b;
-            data += byte_per_color;
+
+    // bytes_per_color is a template value for constante propagation (20% speed up)
+    auto decode_planes = [&](auto bytes_per_color){
+        for (uint16_t y = 0; y < cy; y++) {
+            for (uint16_t x = 0; x < cx; x++) {
+                uint32_t pixel = in_uint32_from_nb_bytes_le(bytes_per_color, data);
+                uint8_t b = ( pixel        & 0xFF);
+                uint8_t g = ((pixel >> 8 ) & 0xFF);
+                uint8_t r = ((pixel >> 16) & 0xFF);
+                uint8_t a = ((pixel >> 24) & 0xFF);
+                (void)a;
+                *(pixel_over_red_plane++)   = r;
+                *(pixel_over_green_plane++) = g;
+                *(pixel_over_blue_plane++)  = b;
+                data += bytes_per_color;
+            }
         }
+    };
+
+    if (image.bits_per_pixel() == BitsPerPixel{24}) {
+        decode_planes(std::integral_constant<int, 3>());
+    }
+    else {
+        assert(image.bits_per_pixel() == BitsPerPixel{32});
+        decode_planes(std::integral_constant<int, 4>());
     }
     /*
     assert(outbuffer.has_room(1 + color_plane_size * 3));
@@ -1379,8 +1390,8 @@ void rle_decompress60(
   uint16_t src_cx, uint16_t src_cy, const uint8_t *data, size_t data_size)
 {
     //LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
-  assert((image.bits_per_pixel() == BitsPerPixel{24})
-      || (image.bits_per_pixel() == BitsPerPixel{32}));
+    assert(image.bits_per_pixel() == BitsPerPixel{24}
+        || image.bits_per_pixel() == BitsPerPixel{32});
     //LOG(LOG_INFO, "data_size=%u src_cx=%u src_cy=%u", data_size, src_cx, src_cy);
     //hexdump_d(data, data_size);
     uint8_t FormatHeader = *data++;
@@ -1431,13 +1442,24 @@ void rle_decompress60(
     uint8_t * g     = green_plane;
     uint8_t * b     = blue_plane;
     uint8_t * pixel = image.mutable_data();
-    uint8_t   bpp   = safe_int(image.bytes_per_pixel());
-    for (uint16_t y = 0; y < cy; y++) {
-        for (uint16_t x = 0; x < cx; x++) {
-            uint32_t color = (0xFFu << 24) | ((*r++) << 16) | ((*g++) << 8) | (*b++);
-            ::out_bytes_le(pixel, bpp, color);
-            pixel += bpp;
+
+    // bytes_per_color is a template value for constante propagation
+    auto copy_planes = [&](auto bytes_per_color) {
+        for (uint16_t y = 0; y < cy; y++) {
+            for (uint16_t x = 0; x < cx; x++) {
+                uint32_t color = (0xFFu << 24) | uint32_t(*r++ << 16) | uint32_t(*g++ << 8) | *b++;
+                ::out_bytes_le(pixel, bytes_per_color, color);
+                pixel += bytes_per_color;
+            }
         }
+    };
+
+    if (image.bits_per_pixel() == BitsPerPixel{24}) {
+        copy_planes(std::integral_constant<int, 3>());
+    }
+    else {
+        assert(image.bits_per_pixel() == BitsPerPixel{32});
+        copy_planes(std::integral_constant<int, 4>());
     }
     //LOG(LOG_INFO, "bmp decompress60: done");
 }
