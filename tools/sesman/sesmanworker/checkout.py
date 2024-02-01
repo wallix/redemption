@@ -1,5 +1,5 @@
 import json
-from logger import Logger
+from wallix.logger import Logger
 
 from wallixconst.approval import (
     APPROVAL_PENDING as S_PENDING,

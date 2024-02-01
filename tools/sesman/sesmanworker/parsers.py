@@ -8,7 +8,7 @@
 
 import re
 
-from logger import Logger
+from wallix.logger import Logger
 from typing import Optional, Tuple, Dict, Any
 
 

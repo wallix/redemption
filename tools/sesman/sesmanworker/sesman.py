@@ -14,7 +14,7 @@ import traceback
 import json
 import re
 import itertools
-from logger import Logger
+from wallix.logger import Logger
 
 from struct import unpack_from, pack
 from select import select

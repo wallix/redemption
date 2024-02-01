@@ -12,7 +12,7 @@ from time import (
     monotonic as get_time,
     sleep,
 )
-from logger import Logger
+from wallix.logger import Logger
 from subprocess import Popen, PIPE
 from wallixconst.misc import VOLATILE_FOLDER
 

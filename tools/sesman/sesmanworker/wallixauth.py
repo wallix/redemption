@@ -1,6 +1,6 @@
 import traceback
 
-from logger import Logger
+from wallix.logger import Logger
 from wabengine.client.checker import Checker
 from wabengine.common.exception import (
     LicenseException,

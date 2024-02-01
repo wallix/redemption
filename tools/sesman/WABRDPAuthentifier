@@ -29,13 +29,13 @@ from socket import SOCK_STREAM
 from socket import SOL_SOCKET
 from socket import SO_REUSEADDR
 from select import select
-from logger import Logger
 import os
 import signal
 
 path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{path}')
 sys.path.append(f'{path}/wallix_imports')
+from wallix.logger import Logger
 
 socket_path = '/tmp/redemption-sesman-sock'
 # # rdpproxy -c |& sed -E '/recorded\/rdp/!d;s#[^"]+"([^"]+)".*#\1#;s#recorded/rdp##;q'

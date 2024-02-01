@@ -1,6 +1,6 @@
 import ipaddress
 import socket
-from logger import Logger
+from wallix.logger import Logger
 from typing import Union, Optional, Tuple
 
 

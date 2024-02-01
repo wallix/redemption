@@ -4,7 +4,7 @@ from typing import Dict
 
 
 def TR(key: str) -> str:
-    from logger import Logger
+    from wallix.logger import Logger
     language = SESMANCONF.language
     trans = SESMANCONF.conf.get(language)
     if trans is None:

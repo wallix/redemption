@@ -1,4 +1,4 @@
-from logger import Logger
+from wallix.logger import Logger
 
 from wabengine.common.exception import (
     LicenseException,
