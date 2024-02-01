@@ -482,14 +482,14 @@ void decompress_(
                 case 0xF8:
                     opcode = code & 0xf;
                     assert(opcode != 11 && opcode != 12 && opcode != 15);
-                    count = input[0]|(input[1] << 8);
+                    count = input[0] | static_cast<unsigned>(input[1] << 8);
                     count += count;
                     input += 2;
                 break;
                 default:
                     opcode = code & 0xf;
                     assert(opcode != 11 && opcode != 12 && opcode != 15);
-                    count = input[0]|(input[1] << 8);
+                    count = input[0] | static_cast<unsigned>(input[1] << 8);
                     input += 2;
                     // Opcodes 0xFB, 0xFC, 0xFF are some unknown orders of length 1 ?
                 break;
@@ -606,7 +606,7 @@ void decompress_(
 
                 // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
                 if (RM18446_adjusted_size && !RM18446_processing_in_progress && (out == pmax)) {
-                    *RM18446_adjusted_size = RM18446_input_good - RM18446_input_saved;
+                    *RM18446_adjusted_size = checked_int(RM18446_input_good - RM18446_input_saved);
                     return;
                 }
 
@@ -682,7 +682,7 @@ void decompress_(
         if(out == pmax) {
             // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
             if(RM18446_adjusted_size) {
-                *RM18446_adjusted_size = input - RM18446_input_saved;
+                *RM18446_adjusted_size = checked_int(input - RM18446_input_saved);
             }
 
             return;
@@ -1315,13 +1315,14 @@ void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8
     //LOG(LOG_INFO, "compress_color_plane: exit");
 }
 
-} // namespace
+} // anonymous namespace
 
 void rle_compress60(ImageView const & image, OutStream & outbuffer)
 {
     //LOG(LOG_INFO, "bmp compress60");
     assert(image.bits_per_pixel() == BitsPerPixel{24}
         || image.bits_per_pixel() == BitsPerPixel{32});
+
     const uint16_t cx = image.width();
     const uint16_t cy = image.height();
     const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
