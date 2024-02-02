@@ -24,15 +24,6 @@
 
 #pragma once
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <arpa/inet.h> // for sockaddr_in
-#include <cerrno>
-#include <unistd.h>
-#include <fcntl.h>
-#include <netdb.h>
-
 #include "utils/log.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/select.hpp"
@@ -42,6 +33,17 @@
 #include "cxx/diagnostic.hpp"
 
 #include <chrono>
+
+#include <cerrno>
+#include <cstring>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <arpa/inet.h> // for sockaddr_in
+#include <unistd.h>
+#include <fcntl.h>
+#include <netdb.h>
 
 #if !defined(IP_TRANSPARENT)
 #define IP_TRANSPARENT 19
