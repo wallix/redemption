@@ -65,7 +65,7 @@ To compile Redemption you need the following packages:
 - libbz2-dev
 - libhyperscan-dev
 - libffmpeg-dev (see below)
-- libgettext (when musl is used)
+- gettext
 - g++ >= 8.0 or clang++ >= 7.0 or other C++17 compiler
 
 ```sh
