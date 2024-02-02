@@ -277,7 +277,7 @@ static int internal_make_directory(const char *directory, mode_t mode)
             /* Directory does not exist. */
             if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {
                 status = -1;
-                LOG(LOG_ERR, "failed to create directory %s : %s [%d]", directory, strerror(errno), errno);
+                LOG(LOG_ERR, "failed to create directory %s: %s [%d]", directory, strerror(errno), errno);
             }
         }
         else if (!S_ISDIR(st.st_mode)) {
