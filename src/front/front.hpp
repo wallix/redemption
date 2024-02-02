@@ -2550,11 +2550,11 @@ public:
                     throw Error(ERR_RDP_FASTPATH);
             }
             LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                "Front::incoming: Received Fast-Path PUD done");
+                "Front::incoming: Received Fast-Path PDU done");
         }
 
         if (cfpie.payload.in_remain() != 0) {
-            LOG(LOG_WARNING, "Front::incoming: Received Fast-Path PUD, remains=%zu",
+            LOG(LOG_WARNING, "Front::incoming: Received Fast-Path PDU, remains=%zu",
                 cfpie.payload.in_remain());
         }
     }
