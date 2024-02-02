@@ -149,8 +149,13 @@ RegionsCapture RegionsCapture::compute_regions(
             );
         }
 
-        while (!requested_to_shutdown && reader.next_order()) {
-            reader.interpret_order();
+        try {
+            while (!requested_to_shutdown && reader.next_order()) {
+                reader.interpret_order();
+            }
+        }
+        catch (...) {
+            // corrupted wrm
         }
     };
 
@@ -223,7 +228,7 @@ RegionsCapture RegionsCapture::compute_regions(
             }
         }
         catch (...) {
-            // ERR_NO_MORE_DATA
+            // ERR_TRANSPORT_NO_MORE_DATA
         }
     }
 
