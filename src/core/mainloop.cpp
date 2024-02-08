@@ -269,20 +269,21 @@ REDEMPTION_DIAGNOSTIC_POP()
                 LOG(LOG_INFO, "Setting new session socket to %d", sck);
             }
 
+            // Set psid. Format is '{monotonic_seconds}{pid}'
             {
                 long long const sec = std::chrono::duration_cast<std::chrono::seconds>(
                     MonotonicTimePoint::clock::now().time_since_epoch()).count();
                 int const pid = getpid();
-                char psid[128];
+                char psid[64];
                 char* p = psid;
                 p = std::to_chars(p, std::end(psid), sec).ptr;
                 p = std::to_chars(p, std::end(psid), pid).ptr;
-                ini.set_acl<cfg::context::psid>(std::string_view(psid, std::size_t(p - psid)));
-                log_siem::set_psid(ini.get<cfg::context::psid>());
+                std::string_view psid_sv(psid, std::size_t(p - psid));
+                ini.set_acl<cfg::context::psid>(psid_sv);
+                log_siem::set_psid(psid_sv);
             }
 
-            if (!prevent_early_log)
-            {
+            if (!prevent_early_log) {
                 log_siem::incoming_connection(source_ip.to_sv(), source_port);
             }
 
