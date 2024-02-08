@@ -93,7 +93,9 @@ if [[ "$BUILD_EMSCRIPTEN" != '0' ]]; then
     toolset_emscripten=toolset=clang
     bjam -qj2 $toolset_emscripten debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
     set +o pipefail
-    rm -r bin/*
+    if (( $fast == 0 )); then
+        rm -rf bin
+    fi
     popd
 fi
 
@@ -190,9 +192,9 @@ if (( $fast == 0 )); then
       parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
 
     show_duration valgrind
-fi
 
-rm -r bin/gcc*
+    rm -r bin/gcc*
+fi
 
 
 # Warn new files created by tests.
@@ -214,12 +216,13 @@ build_all() {
 }
 
 build_all $toolset_clang -sNO_FFMPEG=1 san -s FAST_CHECK=1
-rm -r bin/clang*
 
 show_duration $toolset_clang
 
 
 if (( $fast == 0 )); then
+    rm -r bin/clang*
+
     # debug with coverage
     # mkdir -p bin/htmlcov
     # GCOV_BIN="$gcovbin" OUTPUT_DIR=bin/htmlcov ./tools/gcovr.sh -q $toolset_gcc debug -s FAST_CHECK=1
