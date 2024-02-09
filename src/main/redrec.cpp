@@ -55,16 +55,6 @@ int main(int argc, const char** argv)
 
     if (argv[arg_used+1][0] == '-')
     {
-        auto set_default_key = [](uint8_t (&key)[CRYPTO_KEY_LENGTH])
-        {
-            for (std::size_t i = 0; i < CRYPTO_KEY_LENGTH; ++i)
-            {
-                key[i] = uint8_t(i);
-            }
-        };
-        set_default_key(hmac_key_buffer);
-        set_default_key(g_key);
-
         if (arg_used)
         {
             argv[arg_used] = command;
