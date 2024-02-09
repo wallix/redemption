@@ -96,6 +96,8 @@ public:
 
     [[nodiscard]] bool is_stopped() const override;
 
+    [[nodiscard]] bool may_synthesize_user_input() const override;
+
     [[nodiscard]] bool use_long_format_name() const;
 
 private:

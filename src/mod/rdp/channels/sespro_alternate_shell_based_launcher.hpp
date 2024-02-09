@@ -163,4 +163,9 @@ public:
     [[nodiscard]] bool is_stopped() const override {
         return this->stopped;
     }
+
+    [[nodiscard]] bool may_synthesize_user_input() const override
+    {
+        return false;
+    }
 };

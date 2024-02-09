@@ -53,4 +53,6 @@ public:
     [[nodiscard]] virtual bool is_keyboard_sequences_started() const = 0;
 
     [[nodiscard]] virtual bool is_stopped() const = 0;
+
+    [[nodiscard]] virtual bool may_synthesize_user_input() const = 0;
 };
