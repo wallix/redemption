@@ -1005,6 +1005,11 @@ void SessionProbeClipboardBasedLauncher::do_state_start()
     return (this->state == State::STOP);
 }
 
+[[nodiscard]] bool SessionProbeClipboardBasedLauncher::may_synthesize_user_input() const
+{
+    return true;
+}
+
 [[nodiscard]] bool SessionProbeClipboardBasedLauncher::use_long_format_name() const
 {
      return this->client_supports_long_format_name
