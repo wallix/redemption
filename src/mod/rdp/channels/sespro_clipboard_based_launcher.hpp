@@ -83,6 +83,8 @@ public:
 
     [[nodiscard]] bool no_clipboard_needed() const override;
 
+    [[nodiscard]] bool may_synthesize_user_input() const override;
+
 private:
     MonotonicTimePoint get_short_delay_timeout() const;
 

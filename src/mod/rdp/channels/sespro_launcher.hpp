@@ -76,4 +76,6 @@ public:
     [[nodiscard]] virtual bool is_stopped() const = 0;
 
     [[nodiscard]] virtual bool no_clipboard_needed() const = 0;
+
+    [[nodiscard]] virtual bool may_synthesize_user_input() const = 0;
 };

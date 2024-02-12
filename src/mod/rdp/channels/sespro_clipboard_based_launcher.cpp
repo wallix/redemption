@@ -886,3 +886,7 @@ void SessionProbeClipboardBasedLauncher::do_state_start()
 [[nodiscard]] bool SessionProbeClipboardBasedLauncher::no_clipboard_needed() const {
     return false;
 }
+
+[[nodiscard]] bool SessionProbeClipboardBasedLauncher::may_synthesize_user_input() const {
+    return true;
+}

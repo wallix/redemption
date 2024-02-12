@@ -1819,8 +1819,8 @@ class mod_rdp : public mod_api, public rdp_api
         gdi::OsdApi& osd;
         SessionProbeChannelCallbacks(mod_rdp & mod, gdi::OsdApi& osd) : mod(mod), osd(osd) {}
         void freeze_screen() override { mod.freeze_screen(); }
-        void disable_input_event() override { mod.disable_input_event(); }
-        void enable_input_event() override { mod.enable_input_event(); }
+        void disable_input_event() override { mod.deny_suppress_output(); mod.disable_input_event(); }
+        void enable_input_event() override { mod.enable_input_event(); mod.allow_suppress_output(); }
         void enable_graphics_update() override { mod.enable_graphics_update(); }
         void disable_graphics_update() override { mod.disable_graphics_update(); }
         void display_osd_message(std::string_view message) override  { osd.display_osd_message(message); }
@@ -1924,6 +1924,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     bool already_upped_and_running = false;
 
+    bool suppress_output_denied   = false;
     bool input_event_disabled     = false;
     bool graphics_update_disabled = false;
 
@@ -2136,6 +2137,11 @@ public:
 #ifndef __EMSCRIPTEN__
         this->channels.init_remote_program_and_session_probe(
             gd, *this, mod_rdp_params, info, program, directory);
+
+        if (this->channels.session_probe.session_probe_launcher &&
+            this->channels.session_probe.session_probe_launcher->may_synthesize_user_input()) {
+            this->deny_suppress_output();
+        }
 #endif
 
         this->negociation_result.front_width = info.screen_info.width;
@@ -2280,6 +2286,7 @@ public:
             #ifndef __EMSCRIPTEN__
                     if (this->channels.session_probe.enable_session_probe) {
                         this->enable_input_event();
+                        this->allow_suppress_output();
                         this->enable_graphics_update();
                     }
             #endif
@@ -2300,6 +2307,7 @@ public:
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe) {
             this->enable_input_event();
+            this->allow_suppress_output();
             this->enable_graphics_update();
         }
 #endif
@@ -3684,6 +3692,7 @@ public:
 #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enable_session_probe) {
                     this->enable_input_event();
+                    this->allow_suppress_output();
                     this->enable_graphics_update();
                 }
 #endif
@@ -5231,6 +5240,7 @@ public:
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe &&
             (!this->channels.session_probe_virtual_channel || !this->channels.session_probe_virtual_channel->has_been_launched())) {
+            this->deny_suppress_output();
             this->disable_input_event();
             if (this->channels.session_probe.enable_launch_mask){
                 this->disable_graphics_update();
@@ -5282,6 +5292,7 @@ public:
 #ifndef __EMSCRIPTEN__
             if (this->channels.session_probe.enable_session_probe &&
                 (!this->channels.session_probe_virtual_channel || !this->channels.session_probe_virtual_channel->has_been_launched())) {
+                this->deny_suppress_output();
                 this->disable_input_event();
                 if (this->channels.session_probe.enable_launch_mask){
                     this->disable_graphics_update();
@@ -5812,6 +5823,12 @@ public:
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
             LOG_INFO, "mod_rdp::rdp_allow_display_updates");
 
+        if (this->suppress_output_denied) {
+            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates rejected");
+
+            return;
+        }
+
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_pdu_type2(
                 PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
@@ -5830,6 +5847,12 @@ public:
     void rdp_suppress_display_updates() override {
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
             LOG_INFO, "mod_rdp::rdp_suppress_display_updates");
+
+        if (this->suppress_output_denied) {
+            LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates rejected");
+
+            return;
+        }
 
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_pdu_type2(
@@ -6202,6 +6225,18 @@ private:
     }
 
 public:
+    void deny_suppress_output()
+    {
+        LOG(LOG_INFO, "mod_rdp: deny suppress output.");
+        this->suppress_output_denied = true;
+    }
+
+    void allow_suppress_output()
+    {
+        LOG(LOG_INFO, "mod_rdp: allow suppress output.");
+        this->suppress_output_denied = false;
+    }
+
     void disable_input_event()
     {
         LOG(LOG_INFO, "Mod_rdp: disable input event.");
