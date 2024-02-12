@@ -940,4 +940,8 @@ public:
     [[nodiscard]] bool no_clipboard_needed() const override {
         return false;
     }
+
+    [[nodiscard]] bool may_synthesize_user_input() const override {
+        return true;
+    }
 };  // class SessionProbeClipboardBasedLauncher

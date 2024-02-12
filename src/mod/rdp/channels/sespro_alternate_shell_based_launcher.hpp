@@ -190,4 +190,8 @@ public:
     [[nodiscard]] bool no_clipboard_needed() const override {
         return true;
     }
+
+    [[nodiscard]] bool may_synthesize_user_input() const override {
+        return false;
+    }
 };
