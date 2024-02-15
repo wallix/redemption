@@ -31,11 +31,11 @@
 struct ParseServerMessage
 {
     static const std::size_t max_arity = 64;
-    static const std::size_t max_order_len = 32;
+    static const std::size_t max_order_len = 126;
 
-    TaggedStringArray<UpperTag, 126> upper_order() const noexcept
+    TaggedStringArray<UpperTag, max_order_len> upper_order() const noexcept
     {
-        return ascii_to_limited_upper<126>(order_);
+        return ascii_to_limited_upper<max_order_len>(order_);
     }
 
     array_view<std::string_view> parameters() const noexcept
