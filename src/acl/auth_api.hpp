@@ -24,7 +24,7 @@
 #include "utils/sugar/array_view.hpp"
 
 
-enum class LogId : unsigned;
+enum class LogId : uint16_t;
 
 struct KVLog
 {

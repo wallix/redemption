@@ -25,7 +25,7 @@
 #include "utils/sugar/zstring_view.hpp"
 
 
-enum class LogCategoryId
+enum class LogCategoryId : uint16_t
 {
     None,
     Clipboard,
@@ -138,7 +138,7 @@ using LogCategoryFlags = utils::flags_t<LogCategoryId>;
     f(SESSION_INVITE_GUEST_VIEW_CHANGED, SessionSharing)
 
 
-enum class LogId : unsigned
+enum class LogId : uint16_t
 {
 #define f(x, cat) x,
     X_LOG_ID(f)
