@@ -340,7 +340,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Log SIEM extractor')
     parser.add_argument('-l', '--list-format', action='store_true')
-    parser.add_argument('-c', '--check-doc', action='append')
+    parser.add_argument('-c', '--check-doc', action='append', metavar='PATH')
     parser.add_argument('-p', '--python-ids', action='store_true')
     parser.add_argument('-o', '--output-python', default=sys.stdout, type=argparse.FileType('w'))
     parser.add_argument('-q', '--no-check-quote', action='store_true')
