@@ -25,12 +25,8 @@ Author(s): Proxies Team
 #include "utils/sugar/bounded_array_view.hpp"
 #include "utils/static_string.hpp"
 
-#include <array>
 #include <chrono>
 #include <vector>
-
-#include <sys/select.h>
-#include <sys/time.h>
 
 
 // redis_command_set(key, value) with accumulator
@@ -148,51 +144,4 @@ private:
     Tls tls {};
     int fd = -1;
     int ssl_errnum = 0;
-};
-
-
-struct RedisSyncSession
-{
-    using IOCode = RedisIOCode;
-
-    struct TlsParams
-    {
-        bool enable_tls;
-        const char * cert_file;
-        const char * key_file;
-        const char * ca_cert_file;
-    };
-
-    IOCode open(
-        zstring_view address, unsigned port,
-        bounded_chars_view<0, 256> password, unsigned db,
-        std::chrono::milliseconds timeout, TlsParams tls_params);
-
-    void close();
-
-    IOCode send(bytes_view buffer);
-
-    int get_last_errno() const noexcept;
-    char const* get_last_error_message() const;
-
-private:
-    template<class F, class Buffer>
-    IOCode loop_event(F&& f, Buffer buffer, IOCode code_for_waiting);
-    IOCode send_impl(bytes_view buffer);
-    IOCode recv_impl(writable_bytes_view buffer);
-
-    enum class State : bool
-    {
-        WaitResponse,
-        WaitPassword,
-    };
-
-    timeval tv;
-    State state;
-    fd_set rfds;
-    fd_set wfds;
-    RedisWriter writer;
-    static constexpr std::size_t resp_buffer_len = 5;
-    char resp_buffer[resp_buffer_len + 1];
-    char const* error_msg = nullptr;
 };

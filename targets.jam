@@ -37,6 +37,7 @@ exe rdpproxy :
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o
   <library>src/capture/redis.o
+  <library>src/capture/redis_session.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
@@ -390,7 +391,6 @@ lib libcredis :
   <library>log.o
   <library>openssl
   <library>src/capture/redis.o
-  <library>src/utils/netutils.o
   <library>src/utils/uninit_buffer.o
   $(LIB_DEPENDENCIES)
 ;
@@ -414,6 +414,7 @@ lib libredrec :
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o
   <library>src/capture/redis.o
+  <library>src/capture/redis_session.o
   <library>src/capture/regions_capture.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
@@ -774,6 +775,7 @@ test-run tests/capture/test_capture :
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o
   <library>src/capture/redis.o
+  <library>src/capture/redis_session.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
   <library>src/capture/video_capture.o
@@ -900,6 +902,7 @@ test-run tests/capture/test_redis :
   <library>crypto
   <library>openssl
   <library>src/capture/redis.o
+  <library>src/capture/redis_session.o
   <library>src/utils/netutils.o
   <linkflags>-pthread
 ;
@@ -2094,6 +2097,7 @@ test-run tests/front/test_front :
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o
   <library>src/capture/redis.o
+  <library>src/capture/redis_session.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
@@ -2375,6 +2379,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o
   <library>src/capture/redis.o
+  <library>src/capture/redis_session.o
   <library>src/capture/regions_capture.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
@@ -3983,6 +3988,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o
   <library>src/capture/redis.o
+  <library>src/capture/redis_session.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
@@ -4058,6 +4064,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o
   <library>src/capture/redis.o
+  <library>src/capture/redis_session.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
@@ -4133,6 +4140,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o
   <library>src/capture/redis.o
+  <library>src/capture/redis_session.o
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
@@ -4919,6 +4927,7 @@ obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_i
 obj src/capture/rail_screen_computation.o : $(REDEMPTION_SRC_PATH)/capture/rail_screen_computation.cpp ;
 obj src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants_from_locale_id.cpp ;
 obj src/capture/redis.o : $(REDEMPTION_SRC_PATH)/capture/redis.cpp ;
+obj src/capture/redis_session.o : $(REDEMPTION_SRC_PATH)/capture/redis_session.cpp ;
 obj src/capture/regions_capture.o : $(REDEMPTION_SRC_PATH)/capture/regions_capture.cpp : <define>ZLIB_CONST ;
 obj src/capture/session_update_buffer.o : $(REDEMPTION_SRC_PATH)/capture/session_update_buffer.cpp ;
 obj src/capture/utils/pattern_searcher.o : $(REDEMPTION_SRC_PATH)/capture/utils/pattern_searcher.cpp : $(REDEMPTION_HYPERSCAN_FLAGS) ;
@@ -6018,6 +6027,7 @@ explicit
   src/capture/rail_screen_computation.o
   src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o
   src/capture/redis.o
+  src/capture/redis_session.o
   src/capture/regions_capture.o
   src/capture/session_update_buffer.o
   src/capture/utils/pattern_searcher.o

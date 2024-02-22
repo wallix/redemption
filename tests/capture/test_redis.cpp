@@ -21,6 +21,7 @@ Author(s): Proxies Team
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "capture/redis.hpp"
+#include "capture/redis_session.hpp"
 #include "core/listen.hpp"
 
 #include <thread>

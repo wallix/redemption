@@ -58,7 +58,7 @@
 
 #include "capture/title_extractors/agent_title_extractor.hpp"
 #include "capture/title_extractors/ocr_title_extractor_builder.hpp"
-#include "capture/redis.hpp"
+#include "capture/redis_session.hpp"
 
 #include "capture/capture_params.hpp"
 #include "capture/drawable_params.hpp"
