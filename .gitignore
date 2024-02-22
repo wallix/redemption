@@ -18,7 +18,7 @@
 /projects/redemption_configs/bin
 /coverage.summary
 /coverage
-projects/qtclient/DATA/
+/projects/qtclient/DATA/
 # bin
 /tools/valgrind-filter/valgrind-filter
 /tools/redcryptofile/redcryptofile.so
