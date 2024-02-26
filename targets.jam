@@ -4839,12 +4839,14 @@ test-run tests/utils/test_scaled_image24 :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/fileutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/check_img.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;

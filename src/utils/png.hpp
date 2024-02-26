@@ -64,10 +64,6 @@ void dump_png24(std::FILE * file, ImageView const & image_view, bool bgr);
 void dump_png24(Transport & trans, ImageView const & image_view, bool bgr);
 void dump_png24(const char * filename, ImageView const & image_view, bool bgr);
 
-void read_png24(std::FILE * file, WritableImageView const & mutable_image_view);
-void read_png24(Transport & trans, WritableImageView const & mutable_image_view);
-void read_png24(const char * filename, WritableImageView const & mutable_image_view);
-
 void set_rows_from_image_chunk(
     Transport & trans,
     WrmChunkType chunk_type,

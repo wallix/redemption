@@ -40,7 +40,6 @@ REDEMPTION_DIAGNOSTIC_POP()
 #include "transport/file_transport.hpp"
 #include "utils/drawable.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/png.hpp"
 #include "utils/stream.hpp"
 #include "utils/strutils.hpp"
 #include "utils/bitmap_from_file.hpp"
@@ -2066,32 +2065,6 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     OutChunkedBufferingTransport<16> png_trans(trans);
     consumer.dump_png24(png_trans, true);
     // drawable.dump_png24(png_trans, true); true);
-}
-
-RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
-{
-    force_paris_timezone();
-    auto source_png =
-        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
-        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
-        "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
-        "\x3b\x37\xe9\xb1"                                                 //;7..
-        "\x00\x00\x00\x32\x49\x44\x41\x54"                                 //...2IDAT
-        "\x28\x91\x63\xfc\xcf\x80\x17\xfc\xff\xcf\xc0\xc8\x88\x4b\x92\x09" //(.c..........K..
-        "\xbf\x5e\xfc\x60\x88\x6a\x66\x41\xe3\x33\x32\xa0\x84\xe0\x7f\x54" //.^.`.jfA.32....T
-        "\x91\xff\x0c\x28\x81\x37\x70\xce\x66\x1c\xb0\x78\x06\x00\x69\xdc" //...(.7p.f..x..i.
-        "\x0a\x12"                                                         //..
-        "\x86\x4a\x0c\x44"                                                 //.J.D
-        "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
-        "\xae\x42\x60\x82"                                                 //.B`.
-        ""_av
-    ;
-
-    RDPDrawable d(20, 10);
-    GeneratorTransport in_png_trans(source_png);
-    read_png24(in_png_trans, gdi::get_writable_image_view(d));
-    BufTransport png_trans;
-    dump_png24(png_trans, d, true);
 }
 
 const char source_wrm_png[] =

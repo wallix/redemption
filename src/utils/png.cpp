@@ -166,26 +166,6 @@ namespace
             }
         }
     }
-
-    void read_png24_impl(
-        PngReadStruct & png, uint8_t * data,
-        const size_t width, const size_t height, const size_t rowsize)
-    {
-        png_read_info(png.ppng, png.pinfo);
-
-        assert(height == png_get_image_height(png.ppng, png.pinfo));
-        assert(width == png_get_image_width(png.ppng, png.pinfo));
-        assert(width <= rowsize);
-
-        (void)width;
-
-        for (size_t k = 0; k < height; ++k) {
-            png_read_row(png.ppng, data, nullptr);
-            data += rowsize;
-        }
-
-        png_read_end(png.ppng, png.pinfo);
-    }
 } // namespace
 
 struct NoExceptTransport
@@ -318,39 +298,6 @@ void dump_png24(const char * filename, ImageView const & image_view, bool bgr)
     }
 }
 
-
-void read_png24(const char * filename, WritableImageView const & mutable_image_view)
-{
-    if (File f{filename, "r"}) {
-        read_png24(f.get(), mutable_image_view);
-    }
-}
-
-void read_png24(std::FILE * file, WritableImageView const & mutable_image_view)
-{
-    PngReadStruct png;
-    png_init_io(png.ppng, file);
-    read_png24_impl(png, mutable_image_view.mutable_data(),
-        mutable_image_view.width(), mutable_image_view.height(),
-        mutable_image_view.line_size());
-}
-
-void read_png24(Transport & trans, WritableImageView const & mutable_image_view)
-{
-    assert(BytesPerPixel{3} == mutable_image_view.bytes_per_pixel());
-
-    auto png_read_data_fn = [](png_structp png_ptr, png_bytep data, png_size_t length) {
-       // TODO catch exception ?
-       // static_cast<Transport*>(png_ptr->io_ptr)->recv_boom(data, length);
-        static_cast<Transport*>(png_get_io_ptr(png_ptr))->recv_boom(data, length);
-    };
-
-    PngReadStruct png;
-    png_set_read_fn(png.ppng, &trans, png_read_data_fn);
-    read_png24_impl(png, mutable_image_view.mutable_data(),
-        mutable_image_view.width(), mutable_image_view.height(),
-        mutable_image_view.line_size());
-}
 
 // TODO void read_png24_by_line(read_fn:size_t(writable_bytes_view), f:void(bytes_view))
 void set_rows_from_image_chunk(
