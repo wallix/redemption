@@ -73,28 +73,28 @@ namespace fonts {
 #   include "ocr1/latin_classifier.hxx"
 #   include "ocr1/cyrillic_classifier.hxx"
 
-    static constexpr Font latin_fonts[] = {
+    inline constexpr Font latin_fonts[] = {
 #       include "ocr1/common_classifier.names.hxx"
 #       include "ocr1/latin_classifier.names.hxx"
     };
 
-    static constexpr Font cyrillic_fonts[] = {
+    inline constexpr Font cyrillic_fonts[] = {
 #       include "ocr1/common_classifier.names.hxx"
 #       include "ocr1/cyrillic_classifier.names.hxx"
     };
 
-    static constexpr Font const * fonts[] = {latin_fonts, cyrillic_fonts};
+    inline constexpr Font const * fonts[] = {latin_fonts, cyrillic_fonts};
 
     using LocaleId = locale::LocaleId;
 
-    static constexpr unsigned nfonts[] = {
+    inline constexpr unsigned nfonts[] = {
         sizeof(latin_fonts)/sizeof(latin_fonts[0])
       , sizeof(cyrillic_fonts)/sizeof(cyrillic_fonts[0])
     };
 
     namespace internal {
         template<std::size_t N>
-        /*constexpr*/ inline unsigned min_height(Font const (& fonts)[N]) noexcept
+        constexpr inline unsigned min_height(Font const (& fonts)[N]) noexcept
         {
             unsigned ret = fonts[0].min_height_char;
             for (unsigned i = 1; i < N; ++i) {
@@ -106,7 +106,7 @@ namespace fonts {
         }
 
         template<std::size_t N>
-        /*constexpr*/ inline unsigned max_height(Font const (& fonts)[N]) noexcept
+        constexpr inline unsigned max_height(Font const (& fonts)[N]) noexcept
         {
             unsigned ret = 0;
             for (unsigned i = 0; i < N; ++i) {
@@ -118,11 +118,11 @@ namespace fonts {
         }
     } // namespace internal
 
-    static const/*expr*/ unsigned min_height_font[] = {
+    inline constexpr unsigned min_height_font[] = {
         internal::min_height(latin_fonts)
       , internal::min_height(cyrillic_fonts)
     };
-    static const/*expr*/ unsigned max_height_font[] = {
+    inline constexpr unsigned max_height_font[] = {
         internal::max_height(latin_fonts)
       , internal::max_height(cyrillic_fonts)
     };

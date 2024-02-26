@@ -125,13 +125,4 @@ void labelize(std::vector<label_attr_t> & attributes, const ::mln::image2d<bool>
     }
 }
 
-inline
-std::vector<label_attr_t> labelize(const ::mln::image2d<bool>& input)
-{
-    std::vector<label_attr_t> attributes;
-    labelize(attributes, input);
-    return attributes;
-}
-
-
 } //namespace ocr

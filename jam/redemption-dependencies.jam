@@ -40,17 +40,14 @@ constant LIB_DEPENDENCIES :
     <variant>release:<cxxflags>-fvisibility=hidden
     <link>shared
     <linkflags>-Wl,-Bsymbolic
-    # $(GCOV_NO_BUILD)
 ;
 
 EXE_DEPENDENCIES +=
     <library>app_path_exe.o
     <library>log.o
-    $(GCOV_NO_BUILD)
 ;
 
 constant EXE_DEPENDENCIES_NO_SYSLOG :
     <library>app_path_exe.o
     <library>log_print.o
-    $(GCOV_NO_BUILD)
 ;

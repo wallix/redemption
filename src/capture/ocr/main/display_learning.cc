@@ -29,6 +29,8 @@ int main(int argc, char** argv)
         }
         return 2;
     }
-    display_char_box(std::cout, input, ocr::labelize(input));
+    std::vector<ocr::label_attr_t> attributes;
+    ocr::labelize(attributes, input);
+    display_char_box(std::cout, input, attributes);
     return 0;
 }

@@ -3,7 +3,6 @@ for f in
     $(REDEMPTION_INCLUDE_PATH)
     $(SYSTEM_SRC_PATH)
     $(OCR1_INCLUDE_PATH)
-    $(MLN_INCLUDES_PATH)
     $(PPOCR_INCLUDES_PATH)
 ## configs @{
     $(REDEMPTION_CONFIG_PATH)/redemption_src

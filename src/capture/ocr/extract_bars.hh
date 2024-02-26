@@ -328,15 +328,6 @@ namespace ocr
                                     f(input, tid, this->context.box(), this->context.col_button);
                                     x = this->context.col_button;
                                 }
-//                                 mln::point2d point2d = this->propagate_old(input, tcolor, xp, y, x_max, y_max);
-//                                 if (unsigned(point2d.col()) >= x) {
-//                                     if (1 + point2d.col() - xp > ocr::bbox_min_width
-//                                      && std::abs(int(point2d.row() - y) - int(this->context.bbox_max_height))
-//                                       <= ocr::bbox_treshold) {
-//                                         f(input, tid, mln::box2d(mln::point2d(y,xp), point2d), point2d.col());
-//                                     }
-//                                     x = point2d.col();
-//                                 }
                             }
                         }
 
@@ -518,99 +509,7 @@ namespace ocr
             }
             this->context.col_first_text = newx;
             this->context.row_first_text = y;
-
-            //while (this->context.row_first_text < this->context.row_last_text
-            //    && this->is_line_bars(
-            //        input, tcolor,
-            //        this->context.col_first_text, this->context.col_last_text, this->context.row_first_text))
-            //{
-            //    ++this->context.row_first_text;
-            //}
-            //
-            //while (this->context.row_last_text - 1 > this->context.row_first_text
-            //    && this->is_line_bars(
-            //        input, tcolor,
-            //        this->context.col_first_text, this->context.col_last_text, this->context.row_last_text-1))
-            //{
-            //   --this->context.row_last_text;
-            //}
-            //
-            //while (this->context.col_first_text < this->context.col_last_text) {
-            //    unsigned y = this->context.row_first_text;
-            //    for (; y < this->context.row_last_text; ++y) {
-            //        if (tcolor.threshold_chars(input(y, this->context.col_first_text))) {
-            //            break;
-            //        }
-            //    }
-            //    if (y != this->context.row_last_text) {
-            //        break;
-            //    }
-            //    ++this->context.col_first_text;
-            //}
         }
-
-        //template <class ImageView>
-        //static bool is_line_bars(
-        //    ImageView const & input, titlebar_color const & tcolor,
-        //    unsigned x, unsigned xmax, unsigned y)
-        //{
-        //    for (; x < xmax; ++x) {
-        //        if (tcolor.threshold_chars(input(y, x))) {
-        //            return false;
-        //        }
-        //    }
-        //    return true;
-        //}
-
-//         template <class ImageView>
-//         mln::point2d propagate_old(
-//             ImageView const & input, titlebar_color const & tcolor,
-//             unsigned x, unsigned y, unsigned x_max, unsigned y_max)
-//         {
-//             unsigned ih = y + 1;
-//             unsigned iw = x + 1;
-//
-//             while (ih < y_max && !this->deja_vu[ih * input.width() + iw] && tcolor.is_color_bar(input(ih, iw))) {
-//                 this->deja_vu[ih * input.width() + iw] = true;
-//                 ++ih;
-//             }
-//
-//             const unsigned hbarre = ih - (y + 1);
-//             unsigned wbarre = 0;
-//
-//             if (hbarre >= this->context.bbox_min_height && hbarre <= this->context.bbox_max_height + ocr::bbox_treshold) {
-//                 ih = y;
-//
-//                 while (iw < x_max && !this->deja_vu[ih * input.width() + iw] && tcolor.is_color_bar(input(ih, iw))) {
-//                     while (ih < y_max && !this->deja_vu[ih * input.width() + iw]
-//                       && tcolor.is_color_bar(input(ih, iw))) {
-//                         ++ih;
-//                     }
-//                     ih = y;
-//                     ++iw;
-//                     ++wbarre;
-//                 }
-//
-//                 std::vector<uint8_t>::iterator it = this->deja_vu.begin() + y * input.width() + x;
-//                 for (unsigned i = 0; i < hbarre; ++i) {
-//                     std::fill(it, it + wbarre, true);
-//                     it += input.width();
-//                 }
-//
-//                 typedef std::vector<uint8_t>::iterator iterator;
-//                 iterator first = this->deja_vu.begin() + y * input.width() + x;
-//                 iterator last = first + input.width() * hbarre;
-//                 for (; first != last; first += input.width()) {
-//                     std::fill(first, first + wbarre, true);
-//                 }
-//                 this->rect_deja_vu.push_back(mln::box2d(mln::point2d(y, x), mln::point2d(y + hbarre, x + wbarre)));
-//
-//                 y += hbarre;
-//                 x += wbarre;
-//             }
-//
-//             return mln::point2d(y, x);
-//         }
     };
 
     template<class ImageView>
