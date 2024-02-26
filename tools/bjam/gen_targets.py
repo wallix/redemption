@@ -46,7 +46,6 @@ inc_test_dep = Dep(cxxflags=[
 
 src_requirements = dict((
     ('src/lib/scytale.cpp', inc_test_dep),
-    ('src/capture/ocr/main/ppocr_extract_text.cpp', Dep(linkflags=['<library>log_print.o'])),
     # otherwise std::bad_alloc or mmap error
     ('tests/front/test_front.cpp', Dep(linkflags=['<noopstacktrace>on'])),
 ))
@@ -92,6 +91,8 @@ target_nosyslog = set((
     'nla_server',
     'rdpinichecker',
     'rdpclient',
+    'extract_text',
+    'ppocr_extract_text',
 ))
 
 sys_lib_assoc = dict((

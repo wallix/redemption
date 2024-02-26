@@ -186,6 +186,22 @@ exe mwrm3_editor :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(EXE_DEPENDENCIES)
 ;
+exe extract_text :
+  src/main/extract_text.o
+:
+  <library>crypto
+  <library>png
+  <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/core/error.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  $(EXE_DEPENDENCIES_NO_SYSLOG)
+;
 exe headlessclient :
   src/main/headlessclient.o
 :
@@ -332,6 +348,25 @@ exe nla_server :
   $(EXE_DEPENDENCIES_NO_SYSLOG)
   $(MUSL_GETTEXT)
 ;
+exe ppocr_extract_text :
+  src/main/ppocr_extract_text.o
+:
+  <library>crypto
+  <library>png
+  <library>ppocr
+  <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/core/error.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  $(EXE_DEPENDENCIES_NO_SYSLOG)
+;
 exe proxy_recorder :
   src/main/proxy_recorder_cli.o
 :
@@ -359,44 +394,6 @@ exe proxy_recorder :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(EXE_DEPENDENCIES_NO_SYSLOG)
   $(MUSL_GETTEXT)
-;
-exe display_learning :
-  src/capture/ocr/main/display_learning.o
-:
-;
-exe extract_text :
-  src/capture/ocr/main/extract_text.o
-:
-  <library>crypto
-  <library>png
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/core/error.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
-exe ppocr_extract_text :
-  src/capture/ocr/main/ppocr_extract_text.o
-:
-  <library>crypto
-  <library>log_print.o
-  <library>png
-  <library>ppocr
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/core/error.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 
 lib libcredis :
@@ -4937,9 +4934,6 @@ obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(FFMPE
 obj src/capture/fdx_capture.o : $(REDEMPTION_SRC_PATH)/capture/fdx_capture.cpp ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
-obj src/capture/ocr/main/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/main/display_learning.cc ;
-obj src/capture/ocr/main/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/main/extract_text.cc ;
-obj src/capture/ocr/main/ppocr_extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/main/ppocr_extract_text.cpp ;
 obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_ini.cpp ;
 obj src/capture/rail_screen_computation.o : $(REDEMPTION_SRC_PATH)/capture/rail_screen_computation.cpp ;
 obj src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants_from_locale_id.cpp ;
@@ -4991,11 +4985,13 @@ obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
 obj src/lib/credis.o : $(REDEMPTION_SRC_PATH)/lib/credis.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
+obj src/main/extract_text.o : $(REDEMPTION_SRC_PATH)/main/extract_text.cpp ;
 obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp : <define>ZLIB_CONST ;
 obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 obj src/main/mwrm3_editor.o : $(REDEMPTION_SRC_PATH)/main/mwrm3_editor.cpp ;
 obj src/main/nla_server_cli.o : $(REDEMPTION_SRC_PATH)/main/nla_server_cli.cpp ;
+obj src/main/ppocr_extract_text.o : $(REDEMPTION_SRC_PATH)/main/ppocr_extract_text.cpp ;
 obj src/main/proxy_recorder_cli.o : $(REDEMPTION_SRC_PATH)/main/proxy_recorder_cli.cpp ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
 obj src/mod/internal/close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/close_mod.cpp ;
@@ -6037,9 +6033,6 @@ explicit
   src/capture/fdx_capture.o
   src/capture/file_to_graphic.o
   src/capture/ocr/locale/latin_to_cyrillic.o
-  src/capture/ocr/main/display_learning.o
-  src/capture/ocr/main/extract_text.o
-  src/capture/ocr/main/ppocr_extract_text.o
   src/capture/params_from_ini.o
   src/capture/rail_screen_computation.o
   src/capture/rdp_ppocr/get_ocr_constants_from_locale_id.o
@@ -6091,11 +6084,13 @@ explicit
   src/lib/credis.o
   src/lib/do_recorder.o
   src/lib/scytale.o
+  src/main/extract_text.o
   src/main/headlessclient.o
   src/main/ini_checker.o
   src/main/main.o
   src/main/mwrm3_editor.o
   src/main/nla_server_cli.o
+  src/main/ppocr_extract_text.o
   src/main/proxy_recorder_cli.o
   src/mod/internal/bouncer2_mod.o
   src/mod/internal/close_mod.o
