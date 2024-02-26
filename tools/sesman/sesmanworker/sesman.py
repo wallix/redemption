@@ -913,7 +913,8 @@ class Sesman():
             is_empty_password = (
                 is_magic_password
                 or not self.shared.get('password')
-            )
+            ) and not self.engine.get_challenge()
+            # empty response allowed in challenge
 
             authenticated = False
 
