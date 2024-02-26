@@ -5469,7 +5469,7 @@ private:
     void auto_kill()
     {
         this->sharing_ctx.session_log->log6(LogId::SESSION_INVITE_GUEST_KILLED, {
-            KVLog("name"_av, "guest-1"_av),
+            KVLog("name"_av, this->sharing_ctx.name),
         });
         this->sharing_ctx.kill_fn(this->sharing_ctx.fn_ctx);
     }
