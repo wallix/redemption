@@ -367,17 +367,32 @@ exe display_learning :
 exe extract_text :
   src/capture/ocr/main/extract_text.o
 :
+  <library>crypto
+  <library>png
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/core/error.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 exe ppocr_extract_text :
   src/capture/ocr/main/ppocr_extract_text.o
 :
+  <library>crypto
   <library>log_print.o
+  <library>png
   <library>ppocr
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/core/error.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o

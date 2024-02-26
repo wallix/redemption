@@ -35,7 +35,7 @@ namespace internal {
     };
 
     inline
-    bool adjacent_rihgt(::mln::image2d<bool> const & input, unsigned row, unsigned nrows, unsigned col)
+    bool adjacent_right(::mln::image2d<bool> const & input, unsigned row, unsigned nrows, unsigned col)
     {
         for (; row < nrows; ++row) {
             if ( input.at(row, col)
@@ -98,7 +98,7 @@ void labelize(std::vector<label_attr_t> & attributes, const ::mln::image2d<bool>
             unsigned min_row = info.row_first;
             unsigned max_row = info.row_last+1;
             while (ccol < ncols-1) {
-                if (!internal::adjacent_rihgt(input, min_row, max_row, ccol)) {
+                if (!internal::adjacent_right(input, min_row, max_row, ccol)) {
                     break;
                 }
                 ++ccol;

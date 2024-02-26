@@ -1,21 +1,20 @@
 #include <mln/image/image2d.hh>
-#include <mln/io/ppm/load.hh>
 
 #include <iostream>
 #include <chrono>
 #include <cstring>
 #include <cerrno>
+#include <string_view>
 
 #include "capture/ocr/rgb8.hpp"
+#include "capture/ocr/bitmap_as_ocr_image.hpp"
 #include "capture/ocr/extract_bars.hh"
-#include "capture/ocr/image2dview.hpp"
 #include "capture/ocr/io_char_box.hpp"
 #include "capture/ocr/extract_text_classification.hh"
 #include "utils/sugar/chars_to_int.hpp"
+#include "utils/bitmap_from_file.hpp"
 
 using namespace std::string_view_literals;
-
-typedef ocr::Image2dView<ocr::rgb8> ImageView;
 
 struct Classification
 {
@@ -32,7 +31,7 @@ struct Classification
     , display_char(display_char_)
     {}
 
-    void operator()(ImageView const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
+    void operator()(ocr::BitmapAsOcrImage const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
     {
         ocr::image_view_to_image2d_bool(input, tid, this->ima, box);
 
@@ -89,7 +88,7 @@ struct Classification
 
 private:
     void display_result(
-        ImageView const & input, unsigned tid, unsigned font_id,
+        ocr::BitmapAsOcrImage const & input, unsigned tid, unsigned font_id,
         mln::box2d const & box, unsigned button_col, const ocr::classifier_type & res)
     {
         auto id = static_cast<unsigned>(this->locale_id);
@@ -119,7 +118,7 @@ struct ReferenceClassification
     : ref(ref_)
     {}
 
-    void operator()(ImageView const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
+    void operator()(ocr::BitmapAsOcrImage const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
     {
         this->ref(input, tid, box, button_col);
     }
@@ -128,7 +127,7 @@ struct ReferenceClassification
 
 inline void usage(char** argv)
 {
-    std::cerr << "Usage: " << argv[0] << " input.ppm/pnm [latin|cyrillic] [font_id|font_name] [d]\n";
+    std::cerr << "Usage: " << argv[0] << " input.png [latin|cyrillic] [font_id|font_name] [d]\n";
     const auto max = static_cast<unsigned>(ocr::fonts::LocaleId::max);
     for (unsigned locale_id = 0; locale_id < max; ++locale_id) {
         std::cout << "\nlocale (" << locale_id << "): " << &"latin\0cyrillic"[locale_id * 6] << "\n";
@@ -165,11 +164,11 @@ int main(int argc, char** argv)
 
         if (iarg < argc) {
             arg = argv[iarg];
-            if ('d' == arg[0] && !arg[1]) {
+            if (arg == "d"sv) {
                 display_char = true;
             }
             else {
-                if (arg != "all"sv && arg != "-1") {
+                if (arg != "all"sv && arg != "-1"sv) {
                     const auto n = parse_decimal_chars<int>(arg);
                     font_id = n.has_value
                         ? unsigned(n.value)
@@ -192,8 +191,8 @@ int main(int argc, char** argv)
         }
     }
 
-    mln::image2d<ocr::rgb8> input;
-    if (!mln::io::ppm::load(input, argv[1])) {
+    ocr::BitmapAsOcrImage input(argv[1]);
+    if (!input.is_valid()) {
         if (errno != 0) {
             std::cerr << argv[0] << ": " << strerror(errno) << std::endl;
         }
@@ -209,7 +208,7 @@ int main(int argc, char** argv)
     using resolution_clock = std::chrono::high_resolution_clock;
     auto t1 = resolution_clock::now();
     Classification classifiaction(font_id, display_char);
-    extract_titles.extract_titles(ImageView(input), ReferenceClassification(classifiaction));
+    extract_titles.extract_titles(input, ReferenceClassification(classifiaction));
     auto t2 = resolution_clock::now();
     std::cerr << '\n' << std::chrono::duration<double>(t2-t1).count() << "s\n";
 

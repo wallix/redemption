@@ -21,19 +21,18 @@
 #pragma once
 
 #include "utils/drawable.hpp"
-#include "mln/core/point.hh"
 
 class DrawableImageView
 {
-    const Drawable & drawable;
+    const Drawable * drawable;
     unsigned w;
     unsigned h;
 
 public:
-    DrawableImageView(const Drawable & drawable_)
-    : drawable(drawable_)
-    , w(drawable_.width())
-    , h(drawable_.height() > 50 ? drawable_.height() - 50 : 0)
+    DrawableImageView(const Drawable & drawable)
+    : drawable(&drawable)
+    , w(drawable.width())
+    , h(drawable.height() > 50 ? drawable.height() - 50 : 0) // ignore last lines
     {}
 
     [[nodiscard]] unsigned width() const
@@ -54,8 +53,7 @@ public:
     using value_type = Color;
 
     Color operator()(unsigned row, unsigned col) const
-    { return {this->drawable.data(int(col), int(row))}; }
-
-    Color operator[](::mln::point2d p) const
-    { return {this->drawable.data(p.col(), p.row())}; }
+    {
+        return {this->drawable->data(int(col), int(row))};
+    }
 };
