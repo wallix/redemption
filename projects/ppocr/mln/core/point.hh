@@ -32,7 +32,6 @@
 /// \brief Definition of the generic point2d class mln::point2d.
 ///
 
-# include <mln/core/contract.hh>
 # include <mln/core/def/coord.hh>
 
 # include <limits>
@@ -40,80 +39,11 @@
 
 namespace mln
 {
-
   struct point2d
   {
-    /// \var dim
-    /// Dimension of the space.
-    /// \invariant dim > 0
-    enum { dim =  2 };
-
-    /// coordoordinate associated type.
-    typedef ::mln::def::coord coord;
-
-    /// Read-only access to the \p i-th coordinate value.
-    /// \param[in] i The coordinate index.
-    /// \pre \p i < \c dim
-    const coord& operator[](unsigned i) const
-    {
-        mln_precondition(i < dim);
-        return this->coord_[i];
-    }
-
-    /// Read-write access to the \p i-th coordinate value.
-    /// \param[in] i The coordinate index.
-    /// \pre \p i < \c dim
-    coord& operator[](unsigned i)
-    {
-        mln_precondition(i < dim);
-        return this->coord_[i];
-    }
-
-    /// coordonstructor without argument.
-    point2d()
-    {
-    }
-
-    point2d(coord prow, coord pcol)
-    {
-        coord_[0] = prow;
-        coord_[1] = pcol;
-    }
-
-    /// Point with all coordinates set to the maximum value.
-    static point2d plus_infty()
-    {
-        return point2d(std::numeric_limits<coord>::max(), std::numeric_limits<coord>::max());
-    }
-
-    /// Point with all coordinates set to the mininum value.
-    static point2d minus_infty()
-    {
-        return point2d(std::numeric_limits<coord>::min(), std::numeric_limits<coord>::min());
-    }
-
-    const coord& row() const
-    {
-        return this->coord_[0];
-    }
-
-    coord& row()
-    {
-        return this->coord_[0];
-    }
-
-    const coord& col() const
-    {
-        return this->coord_[1];
-    }
-
-    coord& col()
-    {
-        return this->coord_[1];
-    }
-
-  protected:
-    coord coord_[dim];
+    using coord = ::mln::def::coord;
+    coord row;
+    coord col;
   };
 
   /// Equality comparison between a couple of grid point2d \p lhs
@@ -131,21 +61,8 @@ namespace mln
   inline
   bool operator==(const point2d& lhs, const point2d& rhs)
   {
-      return lhs.row() == rhs.row() && lhs.col() == rhs.col();
+      return lhs.row == rhs.row && lhs.col == rhs.col;
   }
-
-  /// Print a grid point2d \p p into the output stream \p ostr.
-  /*! \param[in,out] ostr An output stream.
-   * \param[in] p A grid point2d.
-   *
-   * \return The modified output stream \p ostr.
-   */
-  inline
-  std::ostream& operator<<(std::ostream& ostr, const point2d& p)
-  {
-      return ostr << '(' << p[0] << ',' << p[1] << ')';
-  }
-
 } // end of namespace mln
 
 

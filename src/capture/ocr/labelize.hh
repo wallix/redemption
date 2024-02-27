@@ -153,10 +153,10 @@ void labelize(std::vector<label_attr_t> & attributes, const ::mln::image2d<bool>
                 max_row = info2.row_last+1;
             }
 
-            tmp.bbox.pmin().col() = col;
-            tmp.bbox.pmax().col() = ccol;
-            tmp.bbox.pmin().row() = info.row_first;
-            tmp.bbox.pmax().row() = info.row_last;
+            tmp.bbox.pmin().col = col;
+            tmp.bbox.pmax().col = ccol;
+            tmp.bbox.pmin().row = info.row_first;
+            tmp.bbox.pmax().row = info.row_last;
 
             attributes.push_back(tmp);
 

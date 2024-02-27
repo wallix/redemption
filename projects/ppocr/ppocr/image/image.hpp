@@ -1,16 +1,16 @@
 /*
 * Copyright (C) 2016 Wallix
-* 
+*
 * This library is free software; you can redistribute it and/or modify it under
 * the terms of the GNU Lesser General Public License as published by the Free
 * Software Foundation; either version 2.1 of the License, or (at your option)
 * any later version.
-* 
+*
 * This library is distributed in the hope that it will be useful, but WITHOUT
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 * details.
-* 
+*
 * You should have received a copy of the GNU Lesser General Public License along
 * with this library; if not, write to the Free Software Foundation, Inc., 59
 * Temple Place, Suite 330, Boston, MA 02111-1307 USA
@@ -38,11 +38,11 @@ struct Image
 
     Image(Bounds const & bounds, PtrImageData data);
 
-    size_t width() const noexcept { return bounds_.w(); }
-    size_t height() const noexcept { return bounds_.h(); }
+    unsigned width() const noexcept { return bounds_.w(); }
+    unsigned height() const noexcept { return bounds_.h(); }
 
     Bounds const & bounds() const noexcept { return bounds_; }
-    size_t area() const noexcept { return bounds_.area(); }
+    unsigned area() const noexcept { return bounds_.area(); }
 
     Image section(Index const & section_idx, Bounds const & section_bnd) const;
 
@@ -61,7 +61,7 @@ struct Image
     Pixel const * data_end() const noexcept
     { return data() + width() * height(); }
 
-    size_t to_size_t(Index const & idx) const noexcept
+    unsigned to_size_t(Index const & idx) const noexcept
     { return idx.y() * this->width() + idx.x(); }
 
     explicit operator bool () const noexcept { return bool(this->data_); }
@@ -127,7 +127,7 @@ struct HorizontalRange
         {}
     };
 
-    HorizontalRange(Image const & img, Index idx, size_t w, PixelGetter pixel_get)
+    HorizontalRange(Image const & img, Index idx, unsigned w, PixelGetter pixel_get)
     : pixel_get_(pixel_get)
     , w_(w)
     , data_(img.data(idx))
@@ -135,26 +135,26 @@ struct HorizontalRange
 
     iterator begin() const { return {*this, data_}; }
     iterator end() const { return {*this, data_ + w_}; }
-    size_t size() const { return w_; }
+    unsigned size() const { return w_; }
 
 private:
     PixelGetter pixel_get_;
-    size_t w_;
+    unsigned w_;
     Pixel const * data_;
 };
 
 
 template<class PixelGetter>
-HorizontalRange<PixelGetter> hrange(Image const & img, Index pos, size_t w, PixelGetter pixel_get)
+HorizontalRange<PixelGetter> hrange(Image const & img, Index pos, unsigned w, PixelGetter pixel_get)
 { return {img, pos, w, pixel_get}; }
 
-inline HorizontalRange<NormalPixelGet> hrange(Image const & img, Index pos, size_t w)
+inline HorizontalRange<NormalPixelGet> hrange(Image const & img, Index pos, unsigned w)
 { return {img, pos, w, NormalPixelGet()}; }
 
 
 struct AnyPixelGet
 {
-    constexpr AnyPixelGet(size_t h, size_t step) noexcept
+    constexpr AnyPixelGet(unsigned h, unsigned step) noexcept
     : h_(h)
     , step_(step)
     {}
@@ -170,8 +170,8 @@ struct AnyPixelGet
     }
 
 private:
-    size_t h_;
-    size_t step_;
+    unsigned h_;
+    unsigned step_;
 };
 
 inline HorizontalRange<AnyPixelGet> hrange(Image const & img, Index pos, Bounds bounds)

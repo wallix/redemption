@@ -1,16 +1,16 @@
 /*
 * Copyright (C) 2016 Wallix
-* 
+*
 * This library is free software; you can redistribute it and/or modify it under
 * the terms of the GNU Lesser General Public License as published by the Free
 * Software Foundation; either version 2.1 of the License, or (at your option)
 * any later version.
-* 
+*
 * This library is distributed in the hope that it will be useful, but WITHOUT
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 * details.
-* 
+*
 * You should have received a copy of the GNU Lesser General Public License along
 * with this library; if not, write to the Free Software Foundation, Inc., 59
 * Temple Place, Suite 330, Boston, MA 02111-1307 USA
@@ -36,7 +36,7 @@ Image::Image(Bounds const& bounds, PtrImageData data)
 void section(Image const & from, Pixel * data, Index const & idx, Bounds const & bnd)
 {
     cP d = from.data(idx);
-    for (size_t y = 0; y != bnd.h(); ++y) {
+    for (unsigned y = 0; y != bnd.h(); ++y) {
         data = std::copy(d, d+bnd.w(), data);
         d += from.width();
     }
@@ -53,7 +53,7 @@ Image Image::section(Index const& section_idx, Bounds const& section_bnd) const
 
 void rotate90(Image const & from, Pixel * data)
 {
-    for (size_t x = from.width(); x; ) {
+    for (unsigned x = from.width(); x; ) {
         --x;
         for (cP d = from.data() + x, e = d + from.area(); d != e; d += from.width()) {
             *data++ = *d;
@@ -86,7 +86,7 @@ std::ostream & operator<<(std::ostream & os, Image const & image)
     os.width(image.width()+3);
     os << ":\n";
     cP p = image.data_.get();
-    for (size_t h = 0; h != image.height(); ++h) {
+    for (unsigned h = 0; h != image.height(); ++h) {
         os << ':';
         os.write(p, image.width());
         os << ":\n";

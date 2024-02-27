@@ -248,10 +248,10 @@ namespace ocr
 
             [[nodiscard]] ::mln::box2d box() const
             {
-                return ::mln::box2d(
-                    ::mln::point2d(this->row_first_text, this->col_first_text),
-                    ::mln::point2d(this->row_last_text, this->col_last_text)
-                );
+                return ::mln::box2d{
+                    ::mln::point2d{this->row_first_text, this->col_first_text},
+                    ::mln::point2d{this->row_last_text, this->col_last_text}
+                };
             }
         } context;
 
@@ -358,7 +358,7 @@ namespace ocr
             this->context.col_last_text = 0;
 
             if (iw - x < ocr::bbox_min_width - this->context.bbox_max_height*2) {
-                this->rect_deja_vu.emplace_back(mln::point2d(y,iw), mln::point2d(y+1,iw+1));
+                this->rect_deja_vu.emplace_back(mln::point2d{y,iw}, mln::point2d{y+1,iw+1});
                 this->deja_vu[y * input.width() + iw] = true;
                 return ;
             }
@@ -388,7 +388,9 @@ namespace ocr
                         p += width;
                     }
                     this->extract_titles.rect_deja_vu.emplace_back(
-                        mln::point2d(this->y,this->x), mln::point2d(this->y+h, this->x+this->w));
+                        mln::point2d{this->y, this->x},
+                        mln::point2d{this->y + h, this->x + this->w}
+                    );
                 }
             } set_deja_vu(*this, input, bx, y, iw - x, ih);
 

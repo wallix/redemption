@@ -56,7 +56,7 @@ namespace detail_ {
     }
 
     template<class ImageView, class TitlebarColor>
-    bool horizontal_empty(TitlebarColor const & tcolor, unsigned char const * d, size_t w) {
+    bool horizontal_empty(TitlebarColor const & tcolor, unsigned char const * d, unsigned w) {
         for (auto e = d+w*3; d != e; d += 3) {
             if (tcolor.threshold_chars(typename ImageView::Color{d})) {
                 return false;
@@ -66,7 +66,7 @@ namespace detail_ {
     }
 
     template<class ImageView, class TitlebarColor>
-    bool vertical_empty(TitlebarColor const & tcolor, unsigned char const * d, size_t w, size_t h) {
+    bool vertical_empty(TitlebarColor const & tcolor, unsigned char const * d, unsigned w, unsigned h) {
         for (auto e = d + w * h * 3; d != e; d += w * 3) {
             if (tcolor.threshold_chars(typename ImageView::Color{d})) {
                 return false;
@@ -81,7 +81,7 @@ namespace detail_ {
         ppocr::Index const & idx, ppocr::Bounds const & bnd
     ) {
         auto const W = input.width();
-        size_t x = idx.x();
+        unsigned x = idx.x();
 
         auto d = input(idx.y(), x).c;
         for (; x < bnd.w(); ++x) {
@@ -91,11 +91,11 @@ namespace detail_ {
             d += 3;
         }
 
-        size_t w = x;
+        unsigned w = x;
 
         while (w + 1 < bnd.w()) {
             ++w;
-            if ([&](unsigned char const * d, size_t /*w*/, size_t h) -> bool {
+            if ([&](unsigned char const * d, unsigned /*w*/, unsigned h) -> bool {
                 using Color = typename ImageView::Color;
                 for (auto e = d+W*h*3; d != e; d += W*3) {
                     if (tcolor.threshold_chars(Color{d}) && (
@@ -114,7 +114,7 @@ namespace detail_ {
         }
         w -= x;
 
-        size_t y = idx.y();
+        unsigned y = idx.y();
 
         d = input(y, x).c;
         for (; y < bnd.h(); ++y) {
@@ -124,7 +124,7 @@ namespace detail_ {
             d += W * 3;
         }
 
-        size_t h = bnd.h();
+        unsigned h = bnd.h();
 
         d = input(h, x).c;
         while (--h > y) {
@@ -143,7 +143,7 @@ namespace detail_ {
     template<class ImageView, class TColor>
     void shrink_box(
         ImageView const & input, TColor const & tcolor,
-        size_t & x, size_t & y, size_t & w, size_t & h
+        unsigned & x, unsigned & y, unsigned & w, unsigned & h
     ) {
         auto d = input(y, x).c;
         while (y < h && horizontal_empty<ImageView>(tcolor, d, w)) {
@@ -174,10 +174,10 @@ unsigned extract_text(
         /*chrono*///using resolution_clock = std::chrono::high_resolution_clock;
         /*chrono*///auto t1 = resolution_clock::now();
 
-        size_t x = box.min_col();
-        size_t y = box.min_row();
-        size_t w = static_cast<unsigned>(box.max_col()+1);
-        size_t h = static_cast<unsigned>(box.max_row()+1);
+        unsigned x = box.min_col();
+        unsigned y = box.min_row();
+        unsigned w = static_cast<unsigned>(box.max_col()+1);
+        unsigned h = static_cast<unsigned>(box.max_row()+1);
         detail_::shrink_box(input, tcolor, x, y, w, h);
         auto const bounds = ppocr::Bounds{w, h};
 
@@ -188,7 +188,7 @@ unsigned extract_text(
         boxes.clear();
         spaces.clear();
 
-        size_t const whitespace = (is_win2012 ? /*4*/5 : 3);
+        unsigned const whitespace = (is_win2012 ? /*4*/5 : 3);
 
         unsigned i_space = 0;
         while (auto const cbox = detail_::box_character(input, tcolor, {x, y}, bounds)) {
@@ -197,7 +197,10 @@ unsigned extract_text(
             //bounds_x = cbox.x() + cbox.w();
             //std::cerr << "\nbox(" << cbox << ")\n";
 
-            mln::box2d new_box(mln::point2d(cbox.y(), cbox.x()), mln::point2d(cbox.bottom(), cbox.right()));
+            mln::box2d new_box{
+                mln::point2d{cbox.y(), cbox.x()},
+                mln::point2d{cbox.bottom(), cbox.right()},
+            };
             auto & img_word = detail_::to_img(ocr_context.img_ctx, input, tcolor, new_box);
             //std::cout << img_word << std::endl;
 

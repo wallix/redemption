@@ -33,8 +33,8 @@
 ///
 /// \todo Test if the safety code in box2d::box2d() is not too slow.
 
-# include <mln/core/point.hh>
-# include <mln/core/contract.hh>
+#include <mln/core/point.hh>
+#include <cassert>
 
 namespace mln
 {
@@ -47,12 +47,6 @@ namespace mln
   //
   struct box2d
   {
-    /// Dimension.
-    enum { dim = point2d::dim };
-
-    /// Site associated type.
-    typedef point2d site;
-
     /// Minimum point.
     const point2d &  pmin() const
     {
@@ -77,28 +71,16 @@ namespace mln
         return pmax_;
     }
 
-    /// Constructor without argument.
     box2d()
-    : pmin_(point2d::plus_infty())
-    , pmax_(point2d::minus_infty())
-    {
-        // FIXME: The code above can be slow; think about removing it...
-    }
+    : box2d(point2d{}, point2d{})
+    {}
 
     /// Constructor of a box2d going from \p pmin to \p pmax.
-    box2d(const site& point_min, const site& point_max)
+    box2d(const point2d& point_min, const point2d& point_max)
     : pmin_(point_min)
     , pmax_(point_max)
     {
-        mln_precondition(is_valid());
-    }
-
-    box2d(point2d::coord nbrows, point2d::coord nbcols)
-    : pmin_(0, 0)
-    , pmax_(--nbrows, --nbcols)
-    {
-        mln_precondition(nbrows != 0 && nbcols != 0);
-        mln_postcondition(is_valid());
+        assert(is_valid());
     }
 
     /*! \brief Test if \p p belongs to the box2d.
@@ -107,8 +89,8 @@ namespace mln
      */
     bool has(const point2d& p) const
     {
-        mln_precondition(is_valid());
-        return !(p[0] < pmin_[0] || p[0] > pmax_[0] || p[1] < pmin_[1] || p[1] > pmax_[1]);
+        assert(is_valid());
+        return !(p.col < pmin_.col || p.col > pmax_.col || p.row < pmin_.row || p.row > pmax_.row);
     }
 
     /// Test that the box2d owns valid data, i.e., is initialized and
@@ -117,58 +99,46 @@ namespace mln
     {
         // Validity is: for all i, pmin_[i] <= pmax_[i].
         // Nota bene: a one-point box2d is valid.
-        return pmin_[0] <= pmax_[0] && pmin_[1] <= pmax_[1];
+        return pmin_.col <= pmax_.col && pmin_.row <= pmax_.row;
     }
 
     unsigned nrows() const
     {
-        return this->len(0);
+        return this->is_valid()
+        ? 1 + this->pmax().row - this->pmin().row
+        : 0u;
     }
 
     point2d::coord min_row() const
     {
-        return this->pmin()[0];
+        return this->pmin().row;
     }
 
     point2d::coord max_row() const
     {
-        return this->pmax()[0];
+        return this->pmax().row;
     }
 
     unsigned ncols() const
     {
-        return this->len(1);
+        return this->is_valid()
+        ? 1 + this->pmax().col - this->pmin().col
+        : 0u;
     }
 
     point2d::coord min_col() const
     {
-        return this->pmin()[1];
+        return this->pmin().col;
     }
 
     point2d::coord max_col() const
     {
-        return this->pmax()[1];
+        return this->pmax().col;
     }
 
-    unsigned len(unsigned i) const
-    {
-        return this->is_valid()
-        ? 1 + this->pmax()[i] - this->pmin()[i]
-        : 0u;
-    }
-
-    unsigned nsites() const
-    {
-        if (! this->is_valid())
-            return 0;
-        return this->len(0) * this->len(1);
-    }
-
-  protected:
-
+  private:
     point2d pmin_, pmax_;
   };
-
 
   inline bool operator==(const box2d& a, const box2d& b)
   {
@@ -177,23 +147,6 @@ namespace mln
         && a.max_row() == b.max_row()
         && a.max_col() == b.max_col();
   }
-
-
-  /*! \brief point2drint a generic box2d \p b into the output stream \p ostr.
-   *
-   * \param[in,out] ostr An output stream.
-   * \param[in] b A generic box2d.
-   *
-   * \return The modified output stream \p ostr.
-   *
-   * \relates mln::box2d
-   */
-  inline
-  std::ostream& operator<<(std::ostream& ostr, const box2d& b)
-  {
-      return ostr << "[" << b.pmin() << ".." << b.pmax() << ']';
-  }
-
 } // end of namespace mln
 
 

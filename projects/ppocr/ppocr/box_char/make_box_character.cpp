@@ -1,16 +1,16 @@
 /*
 * Copyright (C) 2016 Wallix
-* 
+*
 * This library is free software; you can redistribute it and/or modify it under
 * the terms of the GNU Lesser General Public License as published by the Free
 * Software Foundation; either version 2.1 of the License, or (at your option)
 * any later version.
-* 
+*
 * This library is distributed in the hope that it will be useful, but WITHOUT
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 * details.
-* 
+*
 * You should have received a copy of the GNU Lesser General Public License along
 * with this library; if not, write to the Free Software Foundation, Inc., 59
 * Temple Place, Suite 330, Boston, MA 02111-1307 USA
@@ -23,7 +23,7 @@
 namespace ppocr {
 
 namespace utils {
-    bool horizontal_empty(Pixel const * d, size_t w) {
+    bool horizontal_empty(Pixel const * d, unsigned w) {
         for (auto e = d+w; d != e; ++d) {
             if (is_pix_letter(*d)) {
                 return false;
@@ -45,7 +45,7 @@ namespace utils {
 
 Box make_box_character(Image const & image, Index const & idx, Bounds const & bnd)
 {
-    size_t x = idx.x();
+    unsigned x = idx.x();
 
     auto d = image.data({x, idx.y()});
     for (; x < bnd.w(); ++x) {
@@ -55,11 +55,11 @@ Box make_box_character(Image const & image, Index const & idx, Bounds const & bn
         ++d;
     }
 
-    size_t w = x;
+    unsigned w = x;
 
     while (w + 1 < bnd.w()) {
         ++w;
-        if ([&image](Pixel const * d, size_t w, size_t h) -> bool {
+        if ([&image](Pixel const * d, unsigned w, unsigned h) -> bool {
             for (auto e = d+w*h; d != e; d += w) {
                 if (is_pix_letter(*d) && (
                     (d+1 != e && is_pix_letter(*(d+1)))
@@ -77,7 +77,7 @@ Box make_box_character(Image const & image, Index const & idx, Bounds const & bn
     }
     w -= x;
 
-    size_t y = idx.y();
+    unsigned y = idx.y();
 
     d = image.data({x, y});
     for (; y < bnd.h(); ++y) {
@@ -87,7 +87,7 @@ Box make_box_character(Image const & image, Index const & idx, Bounds const & bn
         d += bnd.w();
     }
 
-    size_t h = bnd.h();
+    unsigned h = bnd.h();
 
     d = image.data({x, h});
     while (--h > y) {

@@ -1,16 +1,16 @@
 /*
 * Copyright (C) 2016 Wallix
-* 
+*
 * This library is free software; you can redistribute it and/or modify it under
 * the terms of the GNU Lesser General Public License as published by the Free
 * Software Foundation; either version 2.1 of the License, or (at your option)
 * any later version.
-* 
+*
 * This library is distributed in the hope that it will be useful, but WITHOUT
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 * details.
-* 
+*
 * You should have received a copy of the GNU Lesser General Public License along
 * with this library; if not, write to the Free Software Foundation, Inc., 59
 * Temple Place, Suite 330, Boston, MA 02111-1307 USA
@@ -39,16 +39,16 @@ struct Box
     : bounds_(bnd)
     {}
 
-    size_t x() const noexcept { return idx_.x(); }
-    size_t y() const noexcept { return idx_.y(); }
+    unsigned x() const noexcept { return idx_.x(); }
+    unsigned y() const noexcept { return idx_.y(); }
 
-    size_t w() const noexcept { return bounds_.w(); }
-    size_t h() const noexcept { return bounds_.h(); }
+    unsigned w() const noexcept { return bounds_.w(); }
+    unsigned h() const noexcept { return bounds_.h(); }
 
-    size_t bottom() const noexcept { return y()+h()-1; }
-    size_t right() const noexcept { return x()+w()-1; }
-    size_t left() const noexcept { return x(); }
-    size_t top() const noexcept { return y(); }
+    unsigned bottom() const noexcept { return y()+h()-1; }
+    unsigned right() const noexcept { return x()+w()-1; }
+    unsigned left() const noexcept { return x(); }
+    unsigned top() const noexcept { return y(); }
 
     Index const & index() const noexcept { return idx_; }
     Bounds const & bounds() const noexcept { return bounds_; }

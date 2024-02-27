@@ -40,7 +40,7 @@ namespace mln
 
 
     /// Definition of the default coordinate type: 'short'.
-    typedef short coord;
+    typedef unsigned coord;
 
 
   } // end of namespace mln::def

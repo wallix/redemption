@@ -16,6 +16,16 @@
 
 using namespace std::string_view_literals;
 
+inline std::ostream& operator<<(std::ostream& ostr, const ::mln::point2d& p)
+{
+    return ostr << '(' << p.row << ',' << p.col << ')';
+}
+
+inline std::ostream& operator<<(std::ostream& ostr, const ::mln::box2d& b)
+{
+    return ostr << "[" << b.pmin() << ".." << b.pmax() << ']';
+}
+
 struct Classification
 {
     std::vector<ocr::label_attr_t> attrs;

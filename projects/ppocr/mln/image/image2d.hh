@@ -148,14 +148,14 @@ namespace mln {
         const T& operator()(const point2d& p) const
         {
             assert(this->has_with_border(p));
-            return this->data_.buffer_[this->data_.index(p.row(), p.col())];
+            return this->data_.buffer_[this->data_.index(p.row, p.col)];
         }
 
         /// Read-write access to the image value located at point \p p.
         T& operator()(const point2d& p)
         {
             assert(this->has_with_border(p));
-            return this->data_.buffer_[this->data_.index(p.row(), p.col())];
+            return this->data_.buffer_[this->data_.index(p.row, p.col)];
         }
 
         // Specific methods:
@@ -164,14 +164,14 @@ namespace mln {
         /// Read-only access to the image value located at (\p row, \p col).
         const T& at(def::coord row, def::coord col) const
         {
-            assert(this->has_with_border(point2d(row, col)));
+            assert(this->has_with_border(point2d{row, col}));
             return this->data_.buffer_[this->data_.index(row, col)];
         }
 
         /// Read-write access to the image value located at (\p row, \p col).
         T& at(def::coord row, def::coord col)
         {
-            assert(this->has_with_border(point2d(row, col)));
+            assert(this->has_with_border(point2d{row, col}));
             return this->data_.buffer_[this->data_.index(row, col)];
         }
 
@@ -193,8 +193,8 @@ namespace mln {
         bool has_with_border(const point2d& p) const
         {
             assert(is_valid());
-            return 0 <= p.row() && p.row() < nrows()
-                && 0 <= p.col() && p.col() < ncols();
+            return 0 <= p.row && p.row < nrows()
+                && 0 <= p.col && p.col < ncols();
         }
     };
 }
