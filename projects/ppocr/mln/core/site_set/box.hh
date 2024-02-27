@@ -38,10 +38,6 @@
 
 namespace mln
 {
-
-  // Fwd decls.
-  struct box2d_fwd_piter_;
-
   /// \brief Generic box2d class: site set containing points of a
   /// regular grid.
   ///
@@ -56,12 +52,6 @@ namespace mln
 
     /// Site associated type.
     typedef point2d site;
-
-    /// Forward Site_Iterator associated type.
-    typedef box2d_fwd_piter_ fwd_piter;
-
-    /// Site_Iterator associated type.
-    typedef fwd_piter piter;
 
     /// Minimum point.
     const point2d &  pmin() const

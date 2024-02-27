@@ -30,7 +30,6 @@
 #include <mln/core/point.hh>
 #include <mln/core/def/coord.hh>
 #include <mln/core/site_set/box.hh>
-#include <mln/core/site_set/box_piter.hh>
 
 #include <cassert>
 
