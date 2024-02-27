@@ -6,6 +6,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
 #include "utils/bitmap_from_file.hpp"
+#include "utils/sugar/cast.hpp"
+
+#include <cassert>
 
 namespace ocr
 {
@@ -21,8 +24,8 @@ public:
 
     bool is_valid() const { return img.is_valid(); }
 
-    unsigned width() const { return img.cx() + 2; /* add a border */ }
-    unsigned height() const { return img.cy() + 2; /* add a border */ }
+    unsigned width() const { return img.cx(); }
+    unsigned height() const { return img.cy(); }
 
     struct Color
     {
@@ -37,13 +40,9 @@ public:
 
     Color operator()(unsigned row, unsigned col) const
     {
-        // when border -> black color
-        if (row > 0 && col > 0 && col < width() - 1 && row < height() - 1) {
-            --row;
-            --col;
-            return {img.data() + (img.cy() - row) * img.line_size() + col * 3};
-        }
-        return Color{reinterpret_cast<uint8_t const*>("\0\0\0")};
+        auto pos = (img.cy() - row) * img.line_size() - img.line_size() + col * 3;
+        assert(pos < img.bmp_size());
+        return {img.data() + pos};
     }
 };
 
