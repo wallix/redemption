@@ -43,7 +43,6 @@ namespace aux_ {
                 ima.at(y,x) = tcolor.threshold_chars(input(iy, ix));
             }
         }
-        ima.fill_border(false);
     }
 } // namespace aux_
 

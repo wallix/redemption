@@ -41,7 +41,6 @@ namespace mln {
     {
         struct data_type
         {
-            static const unsigned bdr_ = 1;
             T*  buffer_ = nullptr;
             std::size_t real_size = 0;
             unsigned row_ = 0;
@@ -50,8 +49,8 @@ namespace mln {
             data_type() = default;
 
             data_type(unsigned nrows, unsigned ncols)
-            : row_(nrows + this->bdr_ * 2)
-            , col_(ncols + this->bdr_ * 2)
+            : row_(nrows)
+            , col_(ncols)
             {
                 this->allocate_();
             }
@@ -74,8 +73,8 @@ namespace mln {
 
             void reallocate_(unsigned row, unsigned col)
             {
-                this->row_ = row + this->bdr_ * 2;
-                this->col_ = col + this->bdr_ * 2;
+                this->row_ = row;
+                this->col_ = col;
 
                 const std::size_t sz = this->row_ * this->col_;
 
@@ -89,7 +88,7 @@ namespace mln {
 
             int index(def::coord row, def::coord col) const
             {
-                return (row + this->bdr_) * this->col_ + col + this->bdr_;
+                return row * this->col_ + col;
             }
         };
 
@@ -99,20 +98,6 @@ namespace mln {
     public:
         /// Value associated type.
         typedef T         value;
-
-        /// Site_Set associated type.
-        typedef box2d domain_t;
-
-        /// Site associated type.
-        typedef box2d::site site;
-
-
-        /// Forward Site_Iterator associated type.
-        typedef box2d::fwd_piter fwd_piter;
-
-        /// Site_Iterator associated type; default definition is
-        /// fwd_piter.
-        typedef fwd_piter        piter;
 
     private:
         image2d(const image2d&) /* = delete*/;
@@ -157,14 +142,7 @@ namespace mln {
         bool has(const point2d& p) const
         {
             assert(this->is_valid());
-            return box2d(this->data_.row_ - this->data_.bdr_*2, this->data_.col_ - this->data_.bdr_*2).has(p);
-        }
-
-        /// Give the definition domain.
-        box2d domain() const
-        {
-            assert(this->is_valid());
-            return box2d(this->nrows(), this->ncols());
+            return box2d(this->data_.row_, this->data_.col_).has(p);
         }
 
         /// Read-only access to the image value located at point \p p.
@@ -202,43 +180,22 @@ namespace mln {
         unsigned nrows() const
         {
             assert(this->is_valid());
-            return this->data_.row_ - this->data_.bdr_ * 2;
+            return this->data_.row_;
         }
 
         /// Give the number of columns.
         unsigned ncols() const
         {
             assert(this->is_valid());
-            return this->data_.col_ - this->data_.bdr_ * 2;
-        }
-
-        /// Give the border thickness.
-        unsigned border() const
-        {
-            assert(this->is_valid());
-            return this->data_.bdr_;
-        }
-
-        void fill_border(value x)
-        {
-            if (this->data_.col_ && this->data_.row_) {
-                value * eptr = this->data_.buffer_ + this->data_.col_ * this->data_.bdr_ - this->data_.bdr_;
-                std::fill(this->data_.buffer_, eptr, x);
-                const unsigned nr = this->nrows();
-                for (unsigned r = 0; r < nr; ++r) {
-                    eptr[0] = x;
-                    eptr[1] = x;
-                    eptr += this->data_.col_;
-                }
-                std::fill(eptr, eptr + this->data_.col_ * this->data_.bdr_ + this->data_.bdr_, x);
-            }
+            return this->data_.col_;
         }
 
     private:
         bool has_with_border(const point2d& p) const
         {
-            assert(this->is_valid());
-            return box2d(this->data_.row_, this->data_.col_).has(mln::point2d(p.row()+1, p.col()+1));
+            assert(is_valid());
+            return 0 <= p.row() && p.row() < nrows()
+                && 0 <= p.col() && p.col() < ncols();
         }
     };
 }

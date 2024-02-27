@@ -37,16 +37,56 @@ namespace internal {
     inline
     bool adjacent_right(::mln::image2d<bool> const & input, unsigned row, unsigned nrows, unsigned col)
     {
-        for (; row < nrows; ++row) {
-            if ( input.at(row, col)
-              && ( input.at(row-1, col+1)
-                || input.at(row,   col+1)
-                || input.at(row+1, col+1)
-            )) {
-                return true;
+        /**      .... __ adjacent pixel (min-1 ; max+1)
+         vline __..x.   |
+              |  .xx.   |
+              |  .xx.   |
+              |__.xx.   |
+                 ..x. __|
+                 ....
+         */
+
+        auto inc_row = [&](unsigned& row, unsigned nrows, unsigned col) {
+            while (row < nrows && !input.at(row, col)) {
+                ++row;
+            }
+        };
+
+        inc_row(row, nrows, col);
+        if (row >= nrows) {
+            return false;
+        }
+
+        unsigned nrows2 = nrows < input.nrows() ? nrows + 1 : input.nrows();
+        unsigned row2 = row ? row - 1 : 0u;
+
+        inc_row(row2, nrows2, col + 1);
+        if (row2 >= nrows2) {
+            return false;
+        }
+
+        for (;;) {
+            if (row <= row2) {
+                if (row2 - row <= 1) {
+                    return true;
+                }
+                row = std::max(row + 1, row2 - 1);
+                inc_row(row, nrows, col);
+                if (row >= nrows) {
+                    return false;
+                }
+            }
+            else {
+                if (row - row2 <= 1) {
+                    return true;
+                }
+                row2 = std::max(row2 + 1, row - 1);
+                inc_row(row2, nrows2, col + 1);
+                if (row2 >= nrows2) {
+                    return false;
+                }
             }
         }
-        return false;
     }
 
     inline
