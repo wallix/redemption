@@ -80,7 +80,7 @@ unsigned proportionality_zone::relationship_type::operator()(const value_type& a
     return utils::compute_relationship(total, 50u, 100u);
 }
 
-std::size_t proportionality_zone::relationship_type::count() const
+unsigned proportionality_zone::relationship_type::count() const
 { return 101; }
 
 

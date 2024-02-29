@@ -1,16 +1,16 @@
 /*
 * Copyright (C) 2016 Wallix
-* 
+*
 * This library is free software; you can redistribute it and/or modify it under
 * the terms of the GNU Lesser General Public License as published by the Free
 * Software Foundation; either version 2.1 of the License, or (at your option)
 * any later version.
-* 
+*
 * This library is distributed in the hope that it will be useful, but WITHOUT
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 * details.
-* 
+*
 * You should have received a copy of the GNU Lesser General Public License along
 * with this library; if not, write to the Free Software Foundation, Inc., 59
 * Temple Place, Suite 330, Boston, MA 02111-1307 USA
@@ -31,7 +31,7 @@ namespace {
         int const h3 = int(img.height() * 3);
         int const w3 = int(img.width() * 3);
         int yp = 0;
-        for (size_t y = 0; y < img.height(); ++y, yp += w3) {
+        for (unsigned y = 0; y < img.height(); ++y, yp += w3) {
             //double const d = double(img.width())/3.;
             //double const xs = std::ceil(double(y+1)*w/h-d);
             //double const xe = std::floor(double(y )*w/h+d);

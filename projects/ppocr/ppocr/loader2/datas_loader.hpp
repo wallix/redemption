@@ -137,11 +137,11 @@ struct Data
         return ret;
     }
 
-    std::size_t count_posibilities() const {
+    unsigned count_posibilities() const {
         return get_relationship().count();
     }
 
-    std::size_t size() const noexcept {
+    unsigned size() const noexcept {
         return this->data_.values.size();
     }
 

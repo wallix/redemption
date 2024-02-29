@@ -1,16 +1,16 @@
 /*
 * Copyright (C) 2016 Wallix
-* 
+*
 * This library is free software; you can redistribute it and/or modify it under
 * the terms of the GNU Lesser General Public License as published by the Free
 * Software Foundation; either version 2.1 of the License, or (at your option)
 * any later version.
-* 
+*
 * This library is distributed in the hope that it will be useful, but WITHOUT
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 * details.
-* 
+*
 * You should have received a copy of the GNU Lesser General Public License along
 * with this library; if not, write to the Free Software Foundation, Inc., 59
 * Temple Place, Suite 330, Boston, MA 02111-1307 USA
@@ -79,13 +79,13 @@ void ppocr::ocr2::filter_by_lines(
     using iterator_base = std::vector<Box>::const_iterator;
     struct iterator_baseline : iterator_base
     {
-        using value_type = std::size_t;
+        using value_type = unsigned;
 
         iterator_baseline(iterator_base base)
         : iterator_base(base)
         {}
 
-        std::size_t operator*() const {
+        unsigned operator*() const {
             return iterator_base::operator*().bottom();
         }
     };
@@ -95,7 +95,7 @@ void ppocr::ocr2::filter_by_lines(
         iterator_baseline(boxes.end())
     );
 
-    std::map<size_t, size_t> meanline_map;
+    std::map<unsigned, unsigned> meanline_map;
 
     //for (rdp_ppocr::view_ref_list & vec : ambiguous) {
     //    for (ppocr::ppocr::loader2::View const & view : vec) {

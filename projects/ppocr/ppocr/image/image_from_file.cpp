@@ -209,10 +209,14 @@ Image image_from_file(const char * filename, unsigned luminance)
     constexpr char const* invalid_data_len
       = "image_from_file: invalid data len";
 
-    std::size_t img_size = header.width * header.height;
+    std::size_t img_size = static_cast<std::size_t>(header.width) * header.height;
 
     if (!img_size) {
         throw std::runtime_error("image_from_file: empty image");
+    }
+
+    if (img_size != static_cast<unsigned>(img_size)) {
+        throw std::runtime_error("image_from_file: too large");
     }
 
     PtrImageData vimg(new Pixel[img_size]);
