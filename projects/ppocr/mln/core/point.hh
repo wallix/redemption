@@ -32,8 +32,6 @@
 /// \brief Definition of the generic point2d class mln::point2d.
 ///
 
-# include <mln/core/def/coord.hh>
-
 # include <limits>
 # include <ostream>
 
@@ -41,11 +39,10 @@ namespace mln
 {
   struct point2d
   {
-    using coord = ::mln::def::coord;
-    coord row;
-    coord col;
+    unsigned row;
+    unsigned col;
 
-    friend bool operator==(const point2d& lhs, const point2d& rhs)
+    friend bool operator==(point2d const& lhs, point2d const& rhs)
     {
         return lhs.row == rhs.row && lhs.col == rhs.col;
     }

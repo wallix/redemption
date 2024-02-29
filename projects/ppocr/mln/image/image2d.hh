@@ -28,7 +28,6 @@
 # define MLN_IMAGE_IMAGE2D_HH
 
 #include <mln/core/point.hh>
-#include <mln/core/def/coord.hh>
 #include <mln/core/site_set/box.hh>
 
 #include <cassert>
