@@ -19,16 +19,6 @@ using namespace std::string_view_literals;
 
 using resolution_clock = std::chrono::high_resolution_clock;
 
-inline std::ostream& operator<<(std::ostream& ostr, const ::mln::point2d& p)
-{
-    return ostr << '(' << p.row << ',' << p.col << ')';
-}
-
-inline std::ostream& operator<<(std::ostream& ostr, const ::mln::box2d& b)
-{
-    return ostr << "[" << b.pmin() << ".." << b.pmax() << ']';
-}
-
 struct Classification
 {
     rdp_ppocr::OcrDatasConstant ocr_constant;
@@ -85,7 +75,7 @@ struct Classification
             unsigned char * p = ptr_data.get();
             for (unsigned row = 0; row < input.height(); ++row) {
                 for (unsigned col = 0; col < input.width(); ++col) {
-                    auto const & color = input(row, col);
+                    auto const & color = input[{row, col}];
                     *p++ = color.blue();
                     *p++ = color.green();
                     *p++ = color.red();

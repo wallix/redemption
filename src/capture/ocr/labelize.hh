@@ -47,7 +47,7 @@ namespace internal {
          */
 
         auto inc_row = [&](unsigned& row, unsigned nrows, unsigned col) {
-            while (row < nrows && !input.at(row, col)) {
+            while (row < nrows && !input[{row, col}]) {
                 ++row;
             }
         };
@@ -95,10 +95,10 @@ namespace internal {
         column_info_t ret = {0,nrows,0};
         unsigned brow = 0;
         for (; brow < nrows; ++brow) {
-            if (input.at(brow, col)) {
+            if (input[{brow, col}]) {
                 unsigned erow = nrows;
                 while (--erow >= brow) {
-                    if (input.at(erow, col)) {
+                    if (input[{erow, col}]) {
                         break;
                     }
                 }
@@ -106,7 +106,7 @@ namespace internal {
                 ret.row_last = erow;
                 ++ret.nb_pixel;
                 while (++brow <= erow) {
-                    if (input.at(brow, col)) {
+                    if (input[{brow, col}]) {
                         ++ret.nb_pixel;
                     }
                 }
@@ -153,10 +153,10 @@ void labelize(std::vector<label_attr_t> & attributes, const ::mln::image2d<bool>
                 max_row = info2.row_last+1;
             }
 
-            tmp.bbox.pmin().col = col;
-            tmp.bbox.pmax().col = ccol;
-            tmp.bbox.pmin().row = info.row_first;
-            tmp.bbox.pmax().row = info.row_last;
+            tmp.bbox.pmin.col = col;
+            tmp.bbox.pmax.col = ccol;
+            tmp.bbox.pmin.row = info.row_first;
+            tmp.bbox.pmax.row = info.row_last;
 
             attributes.push_back(tmp);
 

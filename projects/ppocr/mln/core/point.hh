@@ -44,25 +44,12 @@ namespace mln
     using coord = ::mln::def::coord;
     coord row;
     coord col;
-  };
 
-  /// Equality comparison between a couple of grid point2d \p lhs
-  ///  and \p rhs.
-  /*!
-   * \param[in] lhs A first grid point2d.
-   * \param[in] rhs A second grid point2d.
-   *
-   * \pre Both \p lhs and \p rhs have to be defined on the same
-   * topology; otherwise this test does not compile.
-   *
-   * \return True if both grid point2ds have the same
-   * coordinates, otherwise false.
-   */
-  inline
-  bool operator==(const point2d& lhs, const point2d& rhs)
-  {
-      return lhs.row == rhs.row && lhs.col == rhs.col;
-  }
+    friend bool operator==(const point2d& lhs, const point2d& rhs)
+    {
+        return lhs.row == rhs.row && lhs.col == rhs.col;
+    }
+  };
 } // end of namespace mln
 
 

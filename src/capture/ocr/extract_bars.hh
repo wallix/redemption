@@ -298,8 +298,8 @@ namespace ocr
                     if (!this->deja_vu[y * nx + x]) {
                         unsigned tid = title_id;
                         if (tid == -1u
-                          ? (tid = titlebar_color_id_by_bg(input(y, x))) == -1u
-                          : !titlebar_colors[tid].threshold_bars(input(y, x))
+                          ? (tid = titlebar_color_id_by_bg(input[{y, x}])) == -1u
+                          : !titlebar_colors[tid].threshold_bars(input[{y, x}])
                         ) {
                             continue ;
                         }
@@ -308,11 +308,11 @@ namespace ocr
 
                         unsigned xp = x;
                         unsigned min = x < ocr::bbox_min_width ? 0 : x - ocr::bbox_min_width;
-                        while (xp > min && !this->deja_vu[y * nx + xp-1] && tcolor.threshold_bars(input(y, xp-1))) {
+                        while (xp > min && !this->deja_vu[y * nx + xp-1] && tcolor.threshold_bars(input[{y, xp-1}])) {
                             --xp;
                         }
 
-                        if (!this->deja_vu[y * nx + xp] && tcolor.threshold_bars(input(y, xp))) {
+                        if (!this->deja_vu[y * nx + xp] && tcolor.threshold_bars(input[{y, xp}])) {
                             this->context.bbox_max_height += tcolor.adjust_height;
 
                             // title bar of width 4096 height 25...
@@ -350,7 +350,7 @@ namespace ocr
 
             unsigned iw = xx + 1;
 
-            while (iw < x_max && !this->deja_vu[y * input.width() + iw] && tcolor.threshold_bars(input(y, iw))) {
+            while (iw < x_max && !this->deja_vu[y * input.width() + iw] && tcolor.threshold_bars(input[{y, iw}])) {
                 ++iw;
             }
             x_max = iw;
@@ -394,16 +394,16 @@ namespace ocr
                 }
             } set_deja_vu(*this, input, bx, y, iw - x, ih);
 
-            while (ih < y_max && !this->deja_vu[ih * input.width() + xx] && tcolor.threshold_bars(input(ih, xx))) {
+            while (ih < y_max && !this->deja_vu[ih * input.width() + xx] && tcolor.threshold_bars(input[{ih, xx}])) {
                 unsigned w = x;
-                while (w < x_max && !this->deja_vu[ih * input.width() + w] && tcolor.threshold_bars(input(ih, w))) {
+                while (w < x_max && !this->deja_vu[ih * input.width() + w] && tcolor.threshold_bars(input[{ih, w}])) {
                     ++w;
                 }
                 if (w < x_max) {
                     if (this->deja_vu[ih * input.width() + w]) {
                         return ;
                     }
-                    if (!tcolor.threshold_bars(input(ih, w))) {
+                    if (!tcolor.threshold_bars(input[{ih, w}])) {
                         break;
                     }
                 }
@@ -415,7 +415,7 @@ namespace ocr
                 }
             }
 
-            if (ih < y_max && !this->deja_vu[ih * input.width() + xx] && !tcolor.is_color_bar(input(ih, xx))) {
+            if (ih < y_max && !this->deja_vu[ih * input.width() + xx] && !tcolor.is_color_bar(input[{ih, xx}])) {
                 return;
             }
 
@@ -426,14 +426,14 @@ namespace ocr
             unsigned last_char = x;
             unsigned prev_last_char = x;
 
-            while (ih < y_max && !this->deja_vu[ih * input.width() + xx] && tcolor.is_color_bar(input(ih, xx))) {
+            while (ih < y_max && !this->deja_vu[ih * input.width() + xx] && tcolor.is_color_bar(input[{ih, xx}])) {
                 unsigned w = x;
                 bool contains_char = false;
                 while (w < iw && !this->deja_vu[ih * input.width() + w]) {
-                    if (tcolor.threshold_bars(input(ih, w))) {
+                    if (tcolor.threshold_bars(input[{ih, w}])) {
                         //nada
                     }
-                    else if (tcolor.threshold_chars(input(ih, w))) {
+                    else if (tcolor.threshold_chars(input[{ih, w}])) {
                         contains_char = true;
                         if (w < x_no_title - 2 && w > last_char) {
                             prev_last_char = last_char;
@@ -480,7 +480,7 @@ namespace ocr
             }
 
             this->context.col_button = x_no_title - (
-                tcolor.threshold_bars(input(savih + hbarre/2, x_no_title-1)
+                tcolor.threshold_bars(input[{savih + hbarre/2, x_no_title-1}]
             ) ? 1u : 2u);
             this->context.row_last_text = savih + hbarre;
             this->context.col_last_text = std::min(last_char + 2, x_max);
@@ -491,7 +491,7 @@ namespace ocr
             for (; newx > bx; --newx) {
                 unsigned yy = 0;
                 for (; yy < hbarre; ++yy) {
-                    typename ImageView::value_type const & c = input(savih+yy, newx);
+                    typename ImageView::value_type const & c = input[{savih+yy, newx}];
                     if (tcolor.threshold_bars(c)) {
                         //nada
                     }
@@ -543,9 +543,9 @@ namespace ocr
             max_row = std::min<unsigned>(max_row + 5, input.height());
             unsigned y = min_row;
             for (; y < max_row; ++y) {
-                if (!(tcolor.threshold_bars(input(y, button_col))
-                 && cbutton == input(y, button_col+1)
-                 && tcolor.threshold_bars(input(y, button_col+2)))) {
+                if (!(tcolor.threshold_bars(input[{y, button_col}])
+                 && cbutton == input[{y, button_col+1}]
+                 && tcolor.threshold_bars(input[{y, button_col+2}]))) {
                     break;
                 }
             }
@@ -566,9 +566,9 @@ namespace ocr
                  */
                 y = min_row;
                 for (; y < max_row; ++y) {
-                    if (!(tcolor.threshold_bars(input(y, button_col))
-                     && rgb8(90, 56, 49) == input(y, button_col+1)
-                     && rgb8(198, 89, 82) == input(y, button_col+2))) {
+                    if (!(tcolor.threshold_bars(input[{y, button_col}])
+                     && rgb8(90, 56, 49) == input[{y, button_col+1}]
+                     && rgb8(198, 89, 82) == input[{y, button_col+2}])) {
                         break;
                     }
                 }
@@ -576,14 +576,14 @@ namespace ocr
                     return false;
                 }
 
-                return (tcolor.threshold_bars(input(y, button_col))
-                 && rgb8(90, 56, 49) == input(y, button_col+1)
-                 && rgb8(90, 56, 49) == input(y, button_col+2));
+                return (tcolor.threshold_bars(input[{y, button_col}])
+                 && rgb8(90, 56, 49) == input[{y, button_col+1}]
+                 && rgb8(90, 56, 49) == input[{y, button_col+2}]);
             }
 
-            return (tcolor.threshold_bars(input(y, button_col))
-                && cbutton == input(y, button_col+1)
-                && cbutton == input(y, button_col+2));
+            return (tcolor.threshold_bars(input[{y, button_col}])
+                && cbutton == input[{y, button_col+1}]
+                && cbutton == input[{y, button_col+2}]);
         }
 
         /*
@@ -616,23 +616,23 @@ namespace ocr
             constexpr rgb8 L(165, 162, 165);
             constexpr rgb8 G(107, 105, 107);
 
-            if (tcolor.threshold_bars(input(min_row, button_col))
-             && tcolor.threshold_bars(input(min_row, button_col+1))) {
+            if (tcolor.threshold_bars(input[{min_row, button_col}])
+             && tcolor.threshold_bars(input[{min_row, button_col+1}])) {
                 ++min_row;
             }
-            if (tcolor.threshold_bars(input(min_row, button_col))
-             && w == input(min_row, button_col+1)
-             && g == input(min_row, button_col+2)
-             && g == input(min_row, button_col+3)) {
+            if (tcolor.threshold_bars(input[{min_row, button_col}])
+             && w == input[{min_row, button_col+1}]
+             && g == input[{min_row, button_col+2}]
+             && g == input[{min_row, button_col+3}]) {
                 ++min_row;
             }
 
             //max_row = std::min<unsigned>(max_row + 5, input.height());
             for (; min_row < max_row; ++min_row) {
-                if (!(tcolor.threshold_bars(input(min_row, button_col))
-                 && w == input(min_row, button_col+1)
-                 && g == input(min_row, button_col+2)
-                 && l == input(min_row, button_col+3)
+                if (!(tcolor.threshold_bars(input[{min_row, button_col}])
+                 && w == input[{min_row, button_col+1}]
+                 && g == input[{min_row, button_col+2}]
+                 && l == input[{min_row, button_col+3}]
                 )) {
                    break;
                 }
@@ -643,21 +643,21 @@ namespace ocr
             }
 
             if (++min_row < max_row) {
-                if (!(tcolor.threshold_bars(input(min_row, button_col))
-                 && L == input(min_row, button_col+1)
-                 && L == input(min_row, button_col+2)
+                if (!(tcolor.threshold_bars(input[{min_row, button_col}])
+                 && L == input[{min_row, button_col+1}]
+                 && L == input[{min_row, button_col+2}]
                 )) {
                     return false;
                 }
                 if (++min_row < max_row) {
-                    if (!(G == input(min_row, button_col)
-                       && G == input(min_row, button_col+1)
+                    if (!(G == input[{min_row, button_col}]
+                       && G == input[{min_row, button_col+1}]
                     )) {
                         return false;
                     }
                     if (++min_row < max_row) {
-                        return tcolor.threshold_bars(input(min_row, button_col))
-                            && tcolor.threshold_bars(input(min_row, button_col+1));
+                        return tcolor.threshold_bars(input[{min_row, button_col}])
+                            && tcolor.threshold_bars(input[{min_row, button_col+1}]);
                     }
                 }
             }
@@ -682,22 +682,22 @@ namespace ocr
          *   x
          * bb
          */
-        if (tcolor.threshold_bars(input(min_row, button_col))) {
+        if (tcolor.threshold_bars(input[{min_row, button_col}])) {
             ++min_row;
         }
-        unsigned last_row = std::max<int>(int(min_row)-int(max_h/2u), 0);
+        unsigned last_row = static_cast<unsigned>(std::max(int(min_row) - int(max_h/2u), 0));
         for (; min_row >= last_row; --min_row) {
-            if (!(tcolor.threshold_bars(input(min_row, button_col))
-             && tcolor.threshold_chars(input(min_row, button_col+1)))) {
+            if (!(tcolor.threshold_bars(input[{min_row, button_col}])
+             && tcolor.threshold_chars(input[{min_row, button_col+1}]))) {
                 break;
             }
         }
         if (min_row != -1u) {
             if (!(
-                tcolor.threshold_bars(input(min_row, button_col))
-             && tcolor.threshold_bars(input(min_row, button_col+1))
-             //&& tcolor.threshold_bars(input(min_row, button_col+2))
-             && tcolor.threshold_chars(input(min_row+1, button_col+2))
+                tcolor.threshold_bars(input[{min_row, button_col}])
+             && tcolor.threshold_bars(input[{min_row, button_col+1}])
+             //&& tcolor.threshold_bars(input[{min_row, button_col+2}])
+             && tcolor.threshold_chars(input[{min_row+1, button_col+2}])
             )) {
                 return false;
             }
@@ -705,19 +705,19 @@ namespace ocr
 
         last_row = std::min<int>(int(max_row)+int(max_h/2u), input.height()) + 1;
         for (; max_row < last_row; ++max_row) {
-            if (!(tcolor.threshold_bars(input(max_row, button_col))
-             && tcolor.threshold_chars(input(max_row, button_col+1)))) {
+            if (!(tcolor.threshold_bars(input[{max_row, button_col}])
+             && tcolor.threshold_chars(input[{max_row, button_col+1}]))) {
                 break;
             }
         }
         if (max_row < last_row) {
-            if (tcolor.is_color_bar(input(max_row-1, button_col+2))) {
+            if (tcolor.is_color_bar(input[{max_row-1, button_col+2}])) {
                 return false;
             }
             if (max_row + 1 < last_row && !(
-                tcolor.threshold_bars(input(max_row+1, button_col))
-             && tcolor.threshold_bars(input(max_row+1, button_col+1))
-             //&& threshold_bars(input(max_row+1, button_col+2))
+                tcolor.threshold_bars(input[{max_row+1, button_col}])
+             && tcolor.threshold_bars(input[{max_row+1, button_col+1}])
+             //&& threshold_bars(input[{max_row+1, button_col+2}])
             )) {
                 return false;
             }

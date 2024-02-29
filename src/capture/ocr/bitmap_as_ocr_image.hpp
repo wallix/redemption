@@ -38,9 +38,15 @@ public:
 
     using value_type = Color;
 
-    Color operator()(unsigned row, unsigned col) const
+    struct Point
     {
-        auto pos = (img.cy() - row) * img.line_size() - img.line_size() + col * 3;
+        unsigned row;
+        unsigned col;
+    };
+
+    Color operator[](Point p) const
+    {
+        auto pos = (img.cy() - p.row) * img.line_size() - img.line_size() + p.col * 3;
         assert(pos < img.bmp_size());
         return {img.data() + pos};
     }

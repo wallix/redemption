@@ -49,7 +49,7 @@ namespace detail_ {
             for (unsigned y = 0, iy = box.min_row(); y < h; ++y, ++iy) {
                 auto * pline = &data[y * w];
                 for (unsigned x = 0, ix = icol; x < w; ++x, ++ix) {
-                    pline[x] = tcolor.threshold_chars(input(iy, ix)) ? 'x' : '-';
+                    pline[x] = tcolor.threshold_chars(input[{iy, ix}]) ? 'x' : '-';
                 }
             }
         });
@@ -83,7 +83,7 @@ namespace detail_ {
         auto const W = input.width();
         unsigned x = idx.x();
 
-        auto d = input(idx.y(), x).c;
+        auto d = input[{idx.y(), x}].c;
         for (; x < bnd.w(); ++x) {
             if (!vertical_empty<ImageView>(tcolor, d, W, bnd.h() - idx.y())) {
                 break;
@@ -100,7 +100,7 @@ namespace detail_ {
                 for (auto e = d+W*h*3; d != e; d += W*3) {
                     if (tcolor.threshold_chars(Color{d}) && (
                         (d+3 != e && tcolor.threshold_chars(Color{d+3}))
-                    || (d-W*3+3 >= input(0, 0).c && tcolor.threshold_chars(Color{d-W*3+3}))
+                    || (d-W*3+3 >= input[{0, 0}].c && tcolor.threshold_chars(Color{d-W*3+3}))
                     || (d+W*3+3 < e && tcolor.threshold_chars(Color{d+W*3+3}))
                     )) {
                         return false;
@@ -116,7 +116,7 @@ namespace detail_ {
 
         unsigned y = idx.y();
 
-        d = input(y, x).c;
+        d = input[{y, x}].c;
         for (; y < bnd.h(); ++y) {
             if (!horizontal_empty<ImageView>(tcolor, d, w)) {
                 break;
@@ -126,7 +126,7 @@ namespace detail_ {
 
         unsigned h = bnd.h();
 
-        d = input(h, x).c;
+        d = input[{h, x}].c;
         while (--h > y) {
             d -= W * 3;
             if (!horizontal_empty<ImageView>(tcolor, d, w)) {
@@ -145,12 +145,12 @@ namespace detail_ {
         ImageView const & input, TColor const & tcolor,
         unsigned & x, unsigned & y, unsigned & w, unsigned & h
     ) {
-        auto d = input(y, x).c;
+        auto d = input[{y, x}].c;
         while (y < h && horizontal_empty<ImageView>(tcolor, d, w)) {
             ++y;
             d += input.width() * 3;
         }
-        d = input(h, x).c - input.width() * 3;
+        d = input[{h, x}].c - input.width() * 3;
         while (h > y && horizontal_empty<ImageView>(tcolor, d, w)) {
             d -= input.width() * 3;
             --h;

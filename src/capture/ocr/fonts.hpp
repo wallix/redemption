@@ -47,8 +47,8 @@ namespace fonts {
         inline
         bool operator()(unsigned pos) const noexcept
         {
-            return this->ima_.at(this->bbox_.min_row() + pos / this->col_,
-                                 this->bbox_.min_col() + pos % this->col_);
+            return this->ima_[{this->bbox_.min_row() + pos / this->col_,
+                               this->bbox_.min_col() + pos % this->col_}];
         }
     };
 

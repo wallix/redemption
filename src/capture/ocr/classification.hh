@@ -89,7 +89,7 @@ public:
             std::string_view c = font.classify(bbox.ncols(), bbox.nrows(), first->area, fonts::Pixel(input, bbox, bbox.ncols()));
 
             if (!beginning) {
-                if (first->bbox.pmin().col - (first-1)->bbox.pmax().col >= int(font.whitespace_width)) {
+                if (first->bbox.pmin.col - (first-1)->bbox.max_col() >= int(font.whitespace_width)) {
                     this->out += ' ';
                 }
                 this->out += c;

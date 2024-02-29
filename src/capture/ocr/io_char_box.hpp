@@ -36,18 +36,28 @@ inline void display_char_box(
     iterator first = attrs.begin();
     iterator last = attrs.end();
     for (; first != last; ++first){
-        const unsigned maxcol = first->bbox.pmax().col;
-        const unsigned maxrow = first->bbox.pmax().row;
-        const unsigned mincol = first->bbox.pmin().col;
-        const unsigned minrow = first->bbox.pmin().row;
+        const unsigned maxcol = first->bbox.max_col();
+        const unsigned maxrow = first->bbox.max_row();
+        const unsigned mincol = first->bbox.min_col();
+        const unsigned minrow = first->bbox.min_row();
         os << std::setw(int(maxcol-mincol) + 4) << std::setfill('X') << "\n";
         for (unsigned row = minrow; row <= maxrow; ++row) {
             os << "X";
             for (unsigned col = mincol; col <= maxcol; ++col) {
-                os << (ima.at(row, col) ? '-' : 'X');
+                os << (ima[{row, col}] ? '-' : 'X');
             }
             os << "X\n";
         }
         os << std::setw(int(maxcol-mincol) + 5) << std::setfill('X') << "\n\n";
     }
+}
+
+inline std::ostream& operator<<(std::ostream& ostr, const ::mln::point2d& p)
+{
+    return ostr << '(' << p.row << ',' << p.col << ')';
+}
+
+inline std::ostream& operator<<(std::ostream& ostr, const ::mln::box2d& b)
+{
+    return ostr << "[" << b.pmin << ".." << b.pmax << ']';
 }

@@ -52,8 +52,14 @@ public:
 
     using value_type = Color;
 
-    Color operator()(unsigned row, unsigned col) const
+    struct Point
     {
-        return {this->drawable->data(int(col), int(row))};
+        unsigned row;
+        unsigned col;
+    };
+
+    Color operator[](Point p) const
+    {
+        return {this->drawable->data(static_cast<int>(p.col), static_cast<int>(p.row))};
     }
 };

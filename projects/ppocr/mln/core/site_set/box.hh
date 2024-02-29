@@ -47,106 +47,68 @@ namespace mln
   //
   struct box2d
   {
-    /// Minimum point.
-    const point2d &  pmin() const
-    {
-        return pmin_;
-    }
-
-    /// Reference to the minimum point.
-    point2d & pmin()
-    {
-        return pmin_;
-    }
-
-    /// Maximum point.
-    const point2d & pmax() const
-    {
-        return pmax_;
-    }
-
-    /// Reference to the maximum point.
-    point2d & pmax()
-    {
-        return pmax_;
-    }
+    point2d pmin;
+    point2d pmax;
 
     box2d()
     : box2d(point2d{}, point2d{})
     {}
 
     /// Constructor of a box2d going from \p pmin to \p pmax.
-    box2d(const point2d& point_min, const point2d& point_max)
-    : pmin_(point_min)
-    , pmax_(point_max)
+    box2d(point2d point_min, point2d point_max)
+    : pmin(point_min)
+    , pmax(point_max)
     {
         assert(is_valid());
-    }
-
-    /*! \brief Test if \p p belongs to the box2d.
-     *
-     * \param[in] p A point site.
-     */
-    bool has(const point2d& p) const
-    {
-        assert(is_valid());
-        return !(p.col < pmin_.col || p.col > pmax_.col || p.row < pmin_.row || p.row > pmax_.row);
     }
 
     /// Test that the box2d owns valid data, i.e., is initialized and
     /// with pmin being 'less-than' pmax.
     bool is_valid() const
     {
-        // Validity is: for all i, pmin_[i] <= pmax_[i].
+        // Validity is: for all i, pmin[i] <= pmax[i].
         // Nota bene: a one-point box2d is valid.
-        return pmin_.col <= pmax_.col && pmin_.row <= pmax_.row;
+        return pmin.col <= pmax.col && pmin.row <= pmax.row;
     }
 
     unsigned nrows() const
     {
-        return this->is_valid()
-        ? 1 + this->pmax().row - this->pmin().row
-        : 0u;
-    }
-
-    point2d::coord min_row() const
-    {
-        return this->pmin().row;
-    }
-
-    point2d::coord max_row() const
-    {
-        return this->pmax().row;
+        return 1 + this->pmax.row - this->pmin.row;
     }
 
     unsigned ncols() const
     {
-        return this->is_valid()
-        ? 1 + this->pmax().col - this->pmin().col
-        : 0u;
+        return 1 + this->pmax.col - this->pmin.col;
     }
 
-    point2d::coord min_col() const
+    unsigned min_col() const
     {
-        return this->pmin().col;
+        return pmin.col;
     }
 
-    point2d::coord max_col() const
+    unsigned min_row() const
     {
-        return this->pmax().col;
+        return pmin.row;
     }
 
-  private:
-    point2d pmin_, pmax_;
+    unsigned max_col() const
+    {
+        return pmax.col;
+    }
+
+    unsigned max_row() const
+    {
+        return pmax.row;
+    }
+
+    friend bool operator==(const box2d& a, const box2d& b)
+    {
+        return a.pmin.row == b.pmin.row
+            && a.pmin.col == b.pmin.col
+            && a.pmax.row == b.pmax.row
+            && a.pmax.col == b.pmax.col;
+    }
   };
-
-  inline bool operator==(const box2d& a, const box2d& b)
-  {
-    return a.min_row() == b.min_row()
-        && a.min_col() == b.min_col()
-        && a.max_row() == b.max_row()
-        && a.max_col() == b.max_col();
-  }
 } // end of namespace mln
 
 

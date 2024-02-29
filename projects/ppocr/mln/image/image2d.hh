@@ -85,9 +85,9 @@ namespace mln {
                 }
             }
 
-            int index(def::coord row, def::coord col) const
+            int index(point2d p) const
             {
-                return row * this->col_ + col;
+                return p.row * this->col_ + p.col;
             }
         };
 
@@ -117,7 +117,7 @@ namespace mln {
         /// Initialize an empty image.
         void init_(unsigned nbrows, unsigned nbcols)
         {
-            assert(! this->is_valid());
+            assert(!this->is_valid());
             new (&this->data_) data_type(nbrows, nbcols);
         }
 
@@ -137,42 +137,18 @@ namespace mln {
             return this->data_;
         }
 
-        /// Test if \p p is valid.
-        bool has(const point2d& p) const
-        {
-            assert(this->is_valid());
-            return box2d(this->data_.row_, this->data_.col_).has(p);
-        }
-
         /// Read-only access to the image value located at point \p p.
-        const T& operator()(const point2d& p) const
+        const T& operator[](point2d p) const
         {
-            assert(this->has_with_border(p));
-            return this->data_.buffer_[this->data_.index(p.row, p.col)];
+            assert(this->check_index(p));
+            return this->data_.buffer_[this->data_.index(p)];
         }
 
         /// Read-write access to the image value located at point \p p.
-        T& operator()(const point2d& p)
+        T& operator[](point2d p)
         {
-            assert(this->has_with_border(p));
-            return this->data_.buffer_[this->data_.index(p.row, p.col)];
-        }
-
-        // Specific methods:
-        // -----------------
-
-        /// Read-only access to the image value located at (\p row, \p col).
-        const T& at(def::coord row, def::coord col) const
-        {
-            assert(this->has_with_border(point2d{row, col}));
-            return this->data_.buffer_[this->data_.index(row, col)];
-        }
-
-        /// Read-write access to the image value located at (\p row, \p col).
-        T& at(def::coord row, def::coord col)
-        {
-            assert(this->has_with_border(point2d{row, col}));
-            return this->data_.buffer_[this->data_.index(row, col)];
+            assert(this->check_index(p));
+            return this->data_.buffer_[this->data_.index(p)];
         }
 
         /// Give the number of rows.
@@ -190,12 +166,14 @@ namespace mln {
         }
 
     private:
-        bool has_with_border(const point2d& p) const
+#ifndef NDEBUG
+        bool check_index(point2d p) const
         {
             assert(is_valid());
             return 0 <= p.row && p.row < nrows()
                 && 0 <= p.col && p.col < ncols();
         }
+#endif
     };
 }
 
