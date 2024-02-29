@@ -40,7 +40,7 @@ namespace aux_ {
         const unsigned icol = box.min_col();
         for (unsigned y = 0, iy = box.min_row(); y < h; ++y, ++iy) {
             for (unsigned x = 0, ix = icol; x < w; ++x, ++ix) {
-                ima[{y,x}] = tcolor.threshold_chars(input[{iy, ix}]);
+                ima[{x, y}] = tcolor.threshold_chars(input[{ix, iy}]);
             }
         }
     }

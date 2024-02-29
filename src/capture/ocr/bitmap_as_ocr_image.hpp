@@ -7,6 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "utils/bitmap_from_file.hpp"
 #include "utils/sugar/cast.hpp"
+#include "ppocr/image/coordinate.hpp"
 
 #include <cassert>
 
@@ -38,15 +39,9 @@ public:
 
     using value_type = Color;
 
-    struct Point
+    Color operator[](ppocr::Index p) const
     {
-        unsigned row;
-        unsigned col;
-    };
-
-    Color operator[](Point p) const
-    {
-        auto pos = (img.cy() - p.row) * img.line_size() - img.line_size() + p.col * 3;
+        auto pos = (img.cy() - p.y()) * img.line_size() - img.line_size() + p.x() * 3;
         assert(pos < img.bmp_size());
         return {img.data() + pos};
     }

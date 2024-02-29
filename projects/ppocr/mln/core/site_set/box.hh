@@ -1,4 +1,4 @@
-// Copyright (C) 2007, 2008, 2009, 2010 Epoint2dITA Research and Development
+// Copyright (C) 2007, 2008, 2009, 2010 Eppocr::IndexITA Research and Development
 // Laboratory (LRDE)
 //
 // This file is part of Olena.
@@ -33,7 +33,6 @@
 ///
 /// \todo Test if the safety code in box2d::box2d() is not too slow.
 
-#include <mln/core/point.hh>
 #include <cassert>
 
 namespace mln
@@ -41,21 +40,21 @@ namespace mln
   /// \brief Generic box2d class: site set containing points of a
   /// regular grid.
   ///
-  /// Parameter \c point2d is the corresponding type of point.
+  /// Parameter \c ppocr::Index is the corresponding type of point.
   ///
   /// \ingroup modsitesetbasic
   //
   struct box2d
   {
-    point2d pmin;
-    point2d pmax;
+    ppocr::Index pmin;
+    ppocr::Index pmax;
 
     box2d()
-    : box2d(point2d{}, point2d{})
+    : box2d(ppocr::Index{}, ppocr::Index{})
     {}
 
     /// Constructor of a box2d going from \p pmin to \p pmax.
-    box2d(point2d point_min, point2d point_max)
+    box2d(ppocr::Index point_min, ppocr::Index point_max)
     : pmin(point_min)
     , pmax(point_max)
     {
@@ -68,45 +67,45 @@ namespace mln
     {
         // Validity is: for all i, pmin[i] <= pmax[i].
         // Nota bene: a one-point box2d is valid.
-        return pmin.col <= pmax.col && pmin.row <= pmax.row;
+        return pmin.x() <= pmax.x() && pmin.y() <= pmax.y();
     }
 
     unsigned nrows() const
     {
-        return 1 + this->pmax.row - this->pmin.row;
+        return 1 + this->pmax.y() - this->pmin.y();
     }
 
     unsigned ncols() const
     {
-        return 1 + this->pmax.col - this->pmin.col;
+        return 1 + this->pmax.x() - this->pmin.x();
     }
 
     unsigned min_col() const
     {
-        return pmin.col;
+        return pmin.x();
     }
 
     unsigned min_row() const
     {
-        return pmin.row;
+        return pmin.y();
     }
 
     unsigned max_col() const
     {
-        return pmax.col;
+        return pmax.x();
     }
 
     unsigned max_row() const
     {
-        return pmax.row;
+        return pmax.y();
     }
 
     friend bool operator==(const box2d& a, const box2d& b)
     {
-        return a.pmin.row == b.pmin.row
-            && a.pmin.col == b.pmin.col
-            && a.pmax.row == b.pmax.row
-            && a.pmax.col == b.pmax.col;
+        return a.pmin.y() == b.pmin.y()
+            && a.pmin.x() == b.pmin.x()
+            && a.pmax.y() == b.pmax.y()
+            && a.pmax.x() == b.pmax.x();
     }
   };
 } // end of namespace mln

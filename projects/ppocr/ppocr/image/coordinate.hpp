@@ -25,7 +25,8 @@
 
 namespace ppocr {
 
-struct Index {
+struct Index
+{
     Index(unsigned x, unsigned y)
     : x_(x)
     , y_(y)
@@ -36,17 +37,18 @@ struct Index {
     unsigned x() const noexcept { return x_; }
     unsigned y() const noexcept { return y_; }
 
-    bool operator == (Index const & other) const noexcept
-    { return this->x_ == other.x_ && this->y_ == other.y_; }
-    bool operator != (Index const & other) const noexcept
-    { return !(*this == other); }
+    bool operator==(Index const & other) const noexcept
+    {
+        return this->x_ == other.x_ && this->y_ == other.y_;
+    }
 
 private:
     unsigned x_ = 0;
     unsigned y_ = 0;
 };
 
-struct Bounds {
+struct Bounds
+{
     Bounds(unsigned w, unsigned h)
     : w_(w)
     , h_(h)
@@ -59,12 +61,14 @@ struct Bounds {
     unsigned h() const noexcept { return h_; }
 
     unsigned contains(Index const & idx) const
-    { return idx.x() < w() && idx.y() < h(); }
+    {
+        return idx.x() < w() && idx.y() < h();
+    }
 
-    bool operator == (Bounds const & other) const noexcept
-    { return this->w_ == other.w_ && this->h_ == other.h_; }
-    bool operator != (Bounds const & other) const noexcept
-    { return !(*this == other); }
+    bool operator==(Bounds const & other) const noexcept
+    {
+        return this->w_ == other.w_ && this->h_ == other.h_;
+    }
 
 private:
     unsigned w_ = 0;

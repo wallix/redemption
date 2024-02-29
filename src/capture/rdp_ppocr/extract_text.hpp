@@ -49,7 +49,7 @@ namespace detail_ {
             for (unsigned y = 0, iy = box.min_row(); y < h; ++y, ++iy) {
                 auto * pline = &data[y * w];
                 for (unsigned x = 0, ix = icol; x < w; ++x, ++ix) {
-                    pline[x] = tcolor.threshold_chars(input[{iy, ix}]) ? 'x' : '-';
+                    pline[x] = tcolor.threshold_chars(input[{ix, iy}]) ? 'x' : '-';
                 }
             }
         });
@@ -83,7 +83,7 @@ namespace detail_ {
         auto const W = input.width();
         unsigned x = idx.x();
 
-        auto d = input[{idx.y(), x}].c;
+        auto d = input[{x, idx.y()}].c;
         for (; x < bnd.w(); ++x) {
             if (!vertical_empty<ImageView>(tcolor, d, W, bnd.h() - idx.y())) {
                 break;
@@ -116,7 +116,7 @@ namespace detail_ {
 
         unsigned y = idx.y();
 
-        d = input[{y, x}].c;
+        d = input[{x, y}].c;
         for (; y < bnd.h(); ++y) {
             if (!horizontal_empty<ImageView>(tcolor, d, w)) {
                 break;
@@ -126,7 +126,7 @@ namespace detail_ {
 
         unsigned h = bnd.h();
 
-        d = input[{h, x}].c;
+        d = input[{x, h}].c;
         while (--h > y) {
             d -= W * 3;
             if (!horizontal_empty<ImageView>(tcolor, d, w)) {
@@ -145,12 +145,12 @@ namespace detail_ {
         ImageView const & input, TColor const & tcolor,
         unsigned & x, unsigned & y, unsigned & w, unsigned & h
     ) {
-        auto d = input[{y, x}].c;
+        auto d = input[{x, y}].c;
         while (y < h && horizontal_empty<ImageView>(tcolor, d, w)) {
             ++y;
             d += input.width() * 3;
         }
-        d = input[{h, x}].c - input.width() * 3;
+        d = input[{x, h}].c - input.width() * 3;
         while (h > y && horizontal_empty<ImageView>(tcolor, d, w)) {
             d -= input.width() * 3;
             --h;
@@ -198,8 +198,8 @@ unsigned extract_text(
             //std::cerr << "\nbox(" << cbox << ")\n";
 
             mln::box2d new_box{
-                mln::point2d{cbox.y(), cbox.x()},
-                mln::point2d{cbox.bottom(), cbox.right()},
+                {cbox.x(), cbox.y()},
+                {cbox.right(), cbox.bottom()},
             };
             auto & img_word = detail_::to_img(ocr_context.img_ctx, input, tcolor, new_box);
             //std::cout << img_word << std::endl;

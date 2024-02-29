@@ -66,8 +66,8 @@ struct Classification
             Color operator()(unsigned row, unsigned col) const
             { return {this->drawable + (this->w * row + col) * 3}; }
 
-            Color operator[](::mln::point2d p) const
-            { return this->operator()(p.row, p.col); }
+            Color operator[](ppocr::Index p) const
+            { return this->operator()(p.y(), p.x()); }
         };
         std::unique_ptr<unsigned char[]> ptr_data(new unsigned char[input.width() * input.height() * 3]);
         auto t1 = resolution_clock::now();
@@ -75,7 +75,7 @@ struct Classification
             unsigned char * p = ptr_data.get();
             for (unsigned row = 0; row < input.height(); ++row) {
                 for (unsigned col = 0; col < input.width(); ++col) {
-                    auto const & color = input[{row, col}];
+                    auto const & color = input[ppocr::Index{col, row}];
                     *p++ = color.blue();
                     *p++ = color.green();
                     *p++ = color.red();

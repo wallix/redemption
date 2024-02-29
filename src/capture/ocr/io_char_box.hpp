@@ -44,7 +44,7 @@ inline void display_char_box(
         for (unsigned row = minrow; row <= maxrow; ++row) {
             os << "X";
             for (unsigned col = mincol; col <= maxcol; ++col) {
-                os << (ima[{row, col}] ? '-' : 'X');
+                os << (ima[{col, row}] ? '-' : 'X');
             }
             os << "X\n";
         }
@@ -52,12 +52,7 @@ inline void display_char_box(
     }
 }
 
-inline std::ostream& operator<<(std::ostream& ostr, const ::mln::point2d& p)
-{
-    return ostr << '(' << p.row << ',' << p.col << ')';
-}
-
 inline std::ostream& operator<<(std::ostream& ostr, const ::mln::box2d& b)
 {
-    return ostr << "[" << b.pmin << ".." << b.pmax << ']';
+    return ostr << "[(" << b.pmin.x() << "," << b.pmin.y() << ")..(" << b.pmax.x() << "," << b.pmax.y() << ")]";
 }

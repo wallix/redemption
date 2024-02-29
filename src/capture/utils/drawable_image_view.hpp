@@ -21,6 +21,7 @@
 #pragma once
 
 #include "utils/drawable.hpp"
+#include "ppocr/image/coordinate.hpp"
 
 class DrawableImageView
 {
@@ -52,14 +53,8 @@ public:
 
     using value_type = Color;
 
-    struct Point
+    Color operator[](ppocr::Index p) const
     {
-        unsigned row;
-        unsigned col;
-    };
-
-    Color operator[](Point p) const
-    {
-        return {this->drawable->data(static_cast<int>(p.col), static_cast<int>(p.row))};
+        return {this->drawable->data(static_cast<int>(p.x()), static_cast<int>(p.y()))};
     }
 };

@@ -27,7 +27,7 @@
 #ifndef MLN_IMAGE_IMAGE2D_HH
 # define MLN_IMAGE_IMAGE2D_HH
 
-#include <mln/core/point.hh>
+#include <ppocr/image/coordinate.hpp>
 #include <mln/core/site_set/box.hh>
 
 #include <cassert>
@@ -84,9 +84,9 @@ namespace mln {
                 }
             }
 
-            int index(point2d p) const
+            int index(ppocr::Index p) const
             {
-                return p.row * this->col_ + p.col;
+                return p.y() * this->col_ + p.x();
             }
         };
 
@@ -137,14 +137,14 @@ namespace mln {
         }
 
         /// Read-only access to the image value located at point \p p.
-        const T& operator[](point2d p) const
+        const T& operator[](ppocr::Index p) const
         {
             assert(this->check_index(p));
             return this->data_.buffer_[this->data_.index(p)];
         }
 
         /// Read-write access to the image value located at point \p p.
-        T& operator[](point2d p)
+        T& operator[](ppocr::Index p)
         {
             assert(this->check_index(p));
             return this->data_.buffer_[this->data_.index(p)];
@@ -166,11 +166,11 @@ namespace mln {
 
     private:
 #ifndef NDEBUG
-        bool check_index(point2d p) const
+        bool check_index(ppocr::Index p) const
         {
             assert(is_valid());
-            return 0 <= p.row && p.row < nrows()
-                && 0 <= p.col && p.col < ncols();
+            return 0 <= p.y() && p.y() < nrows()
+                && 0 <= p.x() && p.x() < ncols();
         }
 #endif
     };
