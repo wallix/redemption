@@ -24,6 +24,8 @@
 
 #include <memory>
 
+#include <cassert>
+
 
 namespace ppocr {
 
@@ -51,18 +53,31 @@ struct Image
     Image clone() const;
 
     Pixel operator[](Index const & idx) const noexcept
-    { return data()[to_size_t(idx)]; }
+    {
+        assert(to_size_t(idx) < width() * height());
+        return data()[to_size_t(idx)];
+    }
 
-    Pixel const * data() const noexcept { return this->data_.get(); }
+    Pixel const * data() const noexcept
+    {
+        return this->data_.get();
+    }
 
     Pixel const * data(Index const & idx) const noexcept
-    { return data() + to_size_t(idx); }
+    {
+        assert(to_size_t(idx) < width() * height());
+        return data() + to_size_t(idx);
+    }
 
     Pixel const * data_end() const noexcept
-    { return data() + width() * height(); }
+    {
+        return data() + width() * height();
+    }
 
     unsigned to_size_t(Index const & idx) const noexcept
-    { return idx.y() * this->width() + idx.x(); }
+    {
+        return idx.y() * this->width() + idx.x();
+    }
 
     explicit operator bool () const noexcept { return bool(this->data_); }
     PtrImageData release() { return std::move(data_); }
