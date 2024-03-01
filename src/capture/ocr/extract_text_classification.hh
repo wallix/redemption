@@ -32,13 +32,13 @@ namespace aux_ {
     template<class ImageView, class TitlebarColor>
     void image_view_to_image2d_bool(
         ImageView const & input, TitlebarColor const & tcolor,
-        mln::image2d<bool> & ima, mln::box2d const & box)
+        mln::image2d<bool> & ima, ppocr::Box const & box)
     {
-        ima.realloc(box.nrows(), box.ncols());
-        const unsigned h = box.nrows();
-        const unsigned w = box.ncols();
-        const unsigned icol = box.min_col();
-        for (unsigned y = 0, iy = box.min_row(); y < h; ++y, ++iy) {
+        ima.realloc(box.height(), box.width());
+        const unsigned h = box.height();
+        const unsigned w = box.width();
+        const unsigned icol = box.x();
+        for (unsigned y = 0, iy = box.y(); y < h; ++y, ++iy) {
             for (unsigned x = 0, ix = icol; x < w; ++x, ++ix) {
                 ima[{x, y}] = tcolor.threshold_chars(input[{ix, iy}]);
             }
@@ -49,7 +49,7 @@ namespace aux_ {
 template<class ImageView>
 void image_view_to_image2d_bool(
     ImageView const & input, unsigned tid,
-    mln::image2d<bool> & ima, mln::box2d const & box)
+    mln::image2d<bool> & ima, ppocr::Box const & box)
 {
     dispatch_title_color(tid, [&](auto const& tcolor, bool /*is_win2012*/){
         aux_::image_view_to_image2d_bool(input, tcolor, ima, box);
@@ -61,7 +61,7 @@ struct ExtractTextClassification
     template<class ImageView>
     const classifier_type & extract_text(
         ImageView const & input, unsigned tid,
-        mln::box2d const & box,
+        ppocr::Box const & box,
         ocr::fonts::LocaleId local_id,
         unsigned font_id = -1) /*NOLINT*/
     {

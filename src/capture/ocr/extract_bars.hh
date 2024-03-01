@@ -232,7 +232,6 @@ namespace ocr
     class ExtractTitles
     {
         std::vector<uint8_t> deja_vu;
-        std::vector<mln::box2d> rect_deja_vu;
         unsigned col_deja_vu{0};
         unsigned bbox_min_height;
         unsigned bbox_max_height;
@@ -246,11 +245,14 @@ namespace ocr
             unsigned bbox_min_height;
             unsigned bbox_max_height;
 
-            [[nodiscard]] ::mln::box2d box() const
+            [[nodiscard]] ppocr::Box box() const
             {
-                return ::mln::box2d{
+                assert(this->col_first_text <= this->col_last_text);
+                assert(this->row_first_text <= this->row_last_text);
+                return {
                     {this->col_first_text, this->row_first_text},
-                    {this->col_last_text, this->row_last_text},
+                    {this->col_last_text - this->col_first_text + 1,
+                     this->row_last_text - this->row_first_text + 1},
                 };
             }
         } context;
@@ -275,19 +277,11 @@ namespace ocr
                 return ;
             }
 
-            for (auto const& rect : this->rect_deja_vu) {
-                for (unsigned y = rect.min_row(), y_max = rect.max_row(); y != y_max; ++y) {
-                    std::fill(this->deja_vu.begin() + this->col_deja_vu * y + rect.min_col(),
-                              this->deja_vu.begin() + this->col_deja_vu * y + rect.max_col(),
-                              false);
-                }
-            }
-
             const unsigned nx = input.width();
             const unsigned ny = input.height();
 
+            this->deja_vu.clear();
             this->deja_vu.resize(nx * ny, 0);
-            this->rect_deja_vu.clear();
             this->col_deja_vu = nx;
 
             this->context.bbox_min_height = this->bbox_min_height;
@@ -358,7 +352,6 @@ namespace ocr
             this->context.col_last_text = 0;
 
             if (iw - x < ocr::bbox_min_width - this->context.bbox_max_height*2) {
-                this->rect_deja_vu.emplace_back(ppocr::Index{iw, y}, ppocr::Index{iw+1, y+1});
                 this->deja_vu[y * input.width() + iw] = true;
                 return ;
             }
@@ -387,10 +380,6 @@ namespace ocr
                         std::fill(p, p + this->w, uint8_t(1));
                         p += width;
                     }
-                    this->extract_titles.rect_deja_vu.emplace_back(
-                        ppocr::Index{this->x, this->y},
-                        ppocr::Index{this->x + this->w, this->y + h}
-                    );
                 }
             } set_deja_vu(*this, input, bx, y, iw - x, ih);
 

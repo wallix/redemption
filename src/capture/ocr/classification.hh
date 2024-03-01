@@ -85,11 +85,11 @@ public:
         const fonts::Font & font = fonts::fonts[static_cast<unsigned>(local_id)][font_id];
 
         for (; first < last; ++first) {
-            const ::mln::box2d & bbox = first->bbox;
-            std::string_view c = font.classify(bbox.ncols(), bbox.nrows(), first->area, fonts::Pixel(input, bbox, bbox.ncols()));
+            const ::ppocr::Box & bbox = first->bbox;
+            std::string_view c = font.classify(bbox.width(), bbox.height(), first->area, fonts::Pixel{input, bbox, bbox.width()});
 
             if (!beginning) {
-                if (first->bbox.pmin.x() - (first-1)->bbox.max_col() >= int(font.whitespace_width)) {
+                if (first->bbox.x() - (first-1)->bbox.right() >= int(font.whitespace_width)) {
                     this->out += ' ';
                 }
                 this->out += c;

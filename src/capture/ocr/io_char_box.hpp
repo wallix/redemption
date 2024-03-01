@@ -36,10 +36,10 @@ inline void display_char_box(
     iterator first = attrs.begin();
     iterator last = attrs.end();
     for (; first != last; ++first){
-        const unsigned maxcol = first->bbox.max_col();
-        const unsigned maxrow = first->bbox.max_row();
-        const unsigned mincol = first->bbox.min_col();
-        const unsigned minrow = first->bbox.min_row();
+        const unsigned mincol = first->bbox.x();
+        const unsigned minrow = first->bbox.y();
+        const unsigned maxcol = first->bbox.right();
+        const unsigned maxrow = first->bbox.bottom();
         os << std::setw(int(maxcol-mincol) + 4) << std::setfill('X') << "\n";
         for (unsigned row = minrow; row <= maxrow; ++row) {
             os << "X";
@@ -52,7 +52,13 @@ inline void display_char_box(
     }
 }
 
-inline std::ostream& operator<<(std::ostream& ostr, const ::mln::box2d& b)
+struct PrintableBox
 {
-    return ostr << "[(" << b.pmin.x() << "," << b.pmin.y() << ")..(" << b.pmax.x() << "," << b.pmax.y() << ")]";
-}
+    ppocr::Box box;
+
+    friend inline std::ostream& operator<<(std::ostream& ostr, PrintableBox const& pbox)
+    {
+        auto b = pbox.box;
+        return ostr << "[(" << b.x() << "," << b.y() << ")..(+" << b.width() << ",+" << b.height() << ")]";
+    }
+};

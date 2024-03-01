@@ -24,11 +24,11 @@
 #include "capture/ocr/extract_bars.hh"
 #include "capture/ocr/locale/latin_to_cyrillic.hpp"
 
-#include "ppocr/image/image.hpp"
-#include "ppocr/loader2/glyphs_loader.hpp"
-#include "ppocr/box_char/box.hpp"
+#include <ppocr/image/image.hpp>
+#include <ppocr/loader2/glyphs_loader.hpp>
+#include <ppocr/box_char/box.hpp>
 
-#include "ppocr/defined_loader.hpp"
+#include <ppocr/defined_loader.hpp>
 
 #include "capture/rdp_ppocr/ocr_datas_constant.hpp"
 #include "capture/rdp_ppocr/extract_text.hpp"
@@ -66,9 +66,9 @@ struct PpOcrTitlesExtractor
 
         auto process_title = [this, &drawable, &out_titles](
             const ImageView & input, unsigned tid,
-            mln::box2d const & box, unsigned button_col
+            ppocr::Box const & box, unsigned button_col
         ) {
-            Rect tracked_area(box.min_col(), box.min_row(), box.ncols(), box.nrows());
+            Rect tracked_area(box.x(), box.y(), box.width(), box.height());
             if ((drawable.tracked_area != tracked_area) || drawable.tracked_area_changed)
             {
                 /* TODO
@@ -131,10 +131,10 @@ struct PpOcrTitlesExtractor
 private:
     [[nodiscard]] static bool is_title_bar(
         const DrawableImageView & input, unsigned tid,
-        mln::box2d const & box, unsigned button_col)
+        ppocr::Box const & box, unsigned button_col)
     {
         return ::ocr::is_title_bar(
-            input, tid, box.min_row(), box.max_row(), button_col, ::ocr::bbox_max_height);
+            input, tid, box.y(), box.bottom(), button_col, ::ocr::bbox_max_height);
     }
 
     ocr::locale::latin_to_cyrillic_context latin_to_cyrillic;

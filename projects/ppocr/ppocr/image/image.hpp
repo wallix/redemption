@@ -38,8 +38,8 @@ struct Image
 
     Image(Bounds const & bounds, PtrImageData data);
 
-    unsigned width() const noexcept { return bounds_.w(); }
-    unsigned height() const noexcept { return bounds_.h(); }
+    unsigned width() const noexcept { return bounds_.width(); }
+    unsigned height() const noexcept { return bounds_.height(); }
 
     Bounds const & bounds() const noexcept { return bounds_; }
     unsigned area() const noexcept { return bounds_.area(); }
@@ -175,7 +175,7 @@ private:
 };
 
 inline HorizontalRange<AnyPixelGet> hrange(Image const & img, Index pos, Bounds bounds)
-{ return {img, pos, bounds.w(), AnyPixelGet(bounds.h(), img.width())}; }
+{ return {img, pos, bounds.width(), AnyPixelGet(bounds.height(), img.width())}; }
 
 
 namespace rng

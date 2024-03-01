@@ -57,7 +57,7 @@ namespace internal {
             return false;
         }
 
-        unsigned nrows2 = nrows < input.nrows() ? nrows + 1 : input.nrows();
+        unsigned nrows2 = nrows < input.height() ? nrows + 1 : input.height();
         unsigned row2 = row ? row - 1 : 0u;
 
         inc_row(row2, nrows2, col + 1);
@@ -119,15 +119,15 @@ namespace internal {
 
 struct label_attr_t
 {
-    ::mln::box2d bbox;
+    ::ppocr::Box bbox;
     unsigned area;
 };
 
 inline
 void labelize(std::vector<label_attr_t> & attributes, const ::mln::image2d<bool>& input)
 {
-    const unsigned nrows = input.nrows();
-    const unsigned ncols = input.ncols();
+    const unsigned nrows = input.height();
+    const unsigned ncols = input.width();
     label_attr_t tmp;
 
     for (unsigned col = 0; col < ncols; ++col) {
@@ -153,8 +153,7 @@ void labelize(std::vector<label_attr_t> & attributes, const ::mln::image2d<bool>
                 max_row = info2.row_last+1;
             }
 
-            tmp.bbox.pmin = {col, info.row_first};
-            tmp.bbox.pmax = {ccol, info.row_last};
+            tmp.bbox = {{col, info.row_first}, {ccol-col+1, info.row_last-info.row_first+1}};
 
             attributes.push_back(tmp);
 

@@ -23,6 +23,7 @@
 #include "mln/image/image2d.hh"
 #include "locale/locale_id.hpp"
 #include "utils/sugar/array_view.hpp"
+#include <ppocr/box_char/box.hpp>
 
 #include <type_traits>
 #include <string_view>
@@ -35,20 +36,13 @@ inline constexpr char unknown[2] = "?";
 namespace fonts {
     struct Pixel {
         const ::mln::image2d<bool>& ima_;
-        const ::mln::box2d & bbox_;
+        const ::ppocr::Box & bbox_;
         const unsigned col_;
 
-        Pixel(const ::mln::image2d<bool>& ima, const ::mln::box2d & bbox, unsigned ncols)
-        : ima_(ima)
-        , bbox_(bbox)
-        , col_(ncols)
-        {}
-
-        inline
-        bool operator()(unsigned pos) const noexcept
+        inline bool operator()(unsigned pos) const noexcept
         {
-            return this->ima_[{this->bbox_.min_col() + pos % this->col_,
-                               this->bbox_.min_row() + pos / this->col_}];
+            return this->ima_[{this->bbox_.x() + pos % this->col_,
+                               this->bbox_.y() + pos / this->col_}];
         }
     };
 

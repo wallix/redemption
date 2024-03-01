@@ -33,7 +33,7 @@ struct Classification
     , display_char(display_char)
     {}
 
-    void operator()(ocr::BitmapAsOcrImage const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
+    void operator()(ocr::BitmapAsOcrImage const & input, unsigned tid, ppocr::Box const & box, unsigned button_col)
     {
         if (this->display_char) {
             mln::image2d<bool> ima;
@@ -102,7 +102,7 @@ struct Classification
         }
 
         const bool is_title_bar = ocr::is_title_bar(
-            input, tid, box.min_row(), box.max_row(), button_col
+            input, tid, box.y(), box.bottom(), button_col
           , ::ocr::bbox_max_height
         );
         std::cout
@@ -131,7 +131,7 @@ struct ReferenceClassification
     : ref(ref_)
     {}
 
-    void operator()(ocr::BitmapAsOcrImage const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
+    void operator()(ocr::BitmapAsOcrImage const & input, unsigned tid, ppocr::Box const & box, unsigned button_col)
     {
         this->ref(input, tid, box, button_col);
     }

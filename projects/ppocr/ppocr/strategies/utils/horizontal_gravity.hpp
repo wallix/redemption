@@ -26,15 +26,15 @@
 namespace ppocr { namespace strategies { namespace utils {
 
 /**
- * Multiply each pixel with the distance [\a bnd.h(), y]
+ * Multiply each pixel with the distance [\a bnd.height(), y]
  */
 inline
 unsigned horizontal_box_gravity(Bounds const & bnd, Pixel const * p, Pixel const * ep, bool is_top)
 {
     unsigned /*long*/ g = 0;
-    unsigned h = is_top ? bnd.h() : 1;
+    unsigned h = is_top ? bnd.height() : 1;
     while (p != ep) {
-        for (auto epl = p + bnd.w(); p != epl; ++p) {
+        for (auto epl = p + bnd.width(); p != epl; ++p) {
             if (is_pix_letter(*p)) {
                 g += h;
             }
@@ -54,7 +54,7 @@ inline TopBottom horizontal_gravity(const Image& img)
 {
     Bounds const bnd(img.width(), img.height() / 2);
     auto p = img.data();
-    auto ep = img.data({0, bnd.h()});
+    auto ep = img.data({0, bnd.height()});
     unsigned const top = horizontal_box_gravity(bnd, p, ep, true);
     p = ep;
     if (img.height() & 1) {

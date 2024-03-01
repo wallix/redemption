@@ -33,7 +33,7 @@ namespace utils {
     }
 
     bool vertical_empty(Pixel const * d, Bounds const & bnd) {
-        for (auto e = d + bnd.area(); d != e; d += bnd.w()) {
+        for (auto e = d + bnd.area(); d != e; d += bnd.width()) {
             if (is_pix_letter(*d)) {
                 return false;
             }
@@ -48,7 +48,7 @@ Box make_box_character(Image const & image, Index const & idx, Bounds const & bn
     unsigned x = idx.x();
 
     auto d = image.data({x, idx.y()});
-    for (; x < bnd.w(); ++x) {
+    for (; x < bnd.width(); ++x) {
         if (!utils::vertical_empty(d, bnd)) {
             break;
         }
@@ -57,7 +57,7 @@ Box make_box_character(Image const & image, Index const & idx, Bounds const & bn
 
     unsigned w = x;
 
-    while (w + 1 < bnd.w()) {
+    while (w + 1 < bnd.width()) {
         ++w;
         if ([&image](Pixel const * d, unsigned w, unsigned h) -> bool {
             for (auto e = d+w*h; d != e; d += w) {
@@ -70,7 +70,7 @@ Box make_box_character(Image const & image, Index const & idx, Bounds const & bn
                 }
             }
             return true;
-        }(d, bnd.w(), bnd.h())) {
+        }(d, bnd.width(), bnd.height())) {
             break;
         }
         ++d;
@@ -80,18 +80,18 @@ Box make_box_character(Image const & image, Index const & idx, Bounds const & bn
     unsigned y = idx.y();
 
     d = image.data({x, y});
-    for (; y < bnd.h(); ++y) {
+    for (; y < bnd.height(); ++y) {
         if (!utils::horizontal_empty(d, w)) {
             break;
         }
-        d += bnd.w();
+        d += bnd.width();
     }
 
-    unsigned h = bnd.h();
+    unsigned h = bnd.height();
 
     d = image.data({x, h});
     while (--h > y) {
-        d -= bnd.w();
+        d -= bnd.width();
         if (!utils::horizontal_empty(d, w)) {
             break;
         }

@@ -42,18 +42,18 @@ struct Box
     unsigned x() const noexcept { return idx_.x(); }
     unsigned y() const noexcept { return idx_.y(); }
 
-    unsigned w() const noexcept { return bounds_.w(); }
-    unsigned h() const noexcept { return bounds_.h(); }
+    unsigned width() const noexcept { return bounds_.width(); }
+    unsigned height() const noexcept { return bounds_.height(); }
 
-    unsigned bottom() const noexcept { return y()+h()-1; }
-    unsigned right() const noexcept { return x()+w()-1; }
+    unsigned bottom() const noexcept { return y()+height()-1; }
+    unsigned right() const noexcept { return x()+width()-1; }
     unsigned left() const noexcept { return x(); }
     unsigned top() const noexcept { return y(); }
 
-    Index const & index() const noexcept { return idx_; }
-    Bounds const & bounds() const noexcept { return bounds_; }
+    Index index() const noexcept { return idx_; }
+    Bounds bounds() const noexcept { return bounds_; }
 
-    explicit operator bool() const noexcept { return w() && h(); }
+    explicit operator bool() const noexcept { return width() && height(); }
 
     bool operator == (Box const & other) const noexcept
     { return this->bounds_ == other.bounds_; }

@@ -40,13 +40,13 @@ namespace detail_ {
 
     template<class ImageView, class TitlebarColor>
     ppocr::Image const &
-    to_img(ppocr::ocr2::ImageContext & img_ctx, const ImageView & input, TitlebarColor const & tcolor, mln::box2d const & box)
+    to_img(ppocr::ocr2::ImageContext & img_ctx, const ImageView & input, TitlebarColor const & tcolor, ppocr::Box const & box)
     {
-        unsigned const h = box.nrows();
-        unsigned const w = box.ncols();
+        unsigned const h = box.height();
+        unsigned const w = box.width();
         return img_ctx.img({w, h}, [&](ppocr::Pixel * data) {
-            const unsigned icol = box.min_col();
-            for (unsigned y = 0, iy = box.min_row(); y < h; ++y, ++iy) {
+            const unsigned icol = box.x();
+            for (unsigned y = 0, iy = box.y(); y < h; ++y, ++iy) {
                 auto * pline = &data[y * w];
                 for (unsigned x = 0, ix = icol; x < w; ++x, ++ix) {
                     pline[x] = tcolor.threshold_chars(input[{ix, iy}]) ? 'x' : '-';
@@ -78,14 +78,14 @@ namespace detail_ {
     template<class ImageView, class TitlebarColor>
     ppocr::Box box_character(
         ImageView const & input, TitlebarColor const & tcolor,
-        ppocr::Index const & idx, ppocr::Bounds const & bnd
+        unsigned x1, unsigned y1, unsigned x2, unsigned y2
     ) {
         auto const W = input.width();
-        unsigned x = idx.x();
+        unsigned x = x1;
 
-        auto d = input[{x, idx.y()}].c;
-        for (; x < bnd.w(); ++x) {
-            if (!vertical_empty<ImageView>(tcolor, d, W, bnd.h() - idx.y())) {
+        auto d = input[{x, y1}].c;
+        for (; x < x2; ++x) {
+            if (!vertical_empty<ImageView>(tcolor, d, W, y2 - y1)) {
                 break;
             }
             d += 3;
@@ -93,7 +93,7 @@ namespace detail_ {
 
         unsigned w = x;
 
-        while (w + 1 < bnd.w()) {
+        while (w + 1 < x2) {
             ++w;
             if ([&](unsigned char const * d, unsigned /*w*/, unsigned h) -> bool {
                 using Color = typename ImageView::Color;
@@ -107,24 +107,24 @@ namespace detail_ {
                     }
                 }
                 return true;
-            }(d, bnd.w(), bnd.h() - idx.y())) {
+            }(d, x2, y2 - y1)) {
                 break;
             }
             d += 3;
         }
         w -= x;
 
-        unsigned y = idx.y();
+        unsigned y = y1;
 
         d = input[{x, y}].c;
-        for (; y < bnd.h(); ++y) {
+        for (; y < y2; ++y) {
             if (!horizontal_empty<ImageView>(tcolor, d, w)) {
                 break;
             }
             d += W * 3;
         }
 
-        unsigned h = bnd.h();
+        unsigned h = y2;
 
         d = input[{x, h}].c;
         while (--h > y) {
@@ -141,19 +141,22 @@ namespace detail_ {
     }
 
     template<class ImageView, class TColor>
-    void shrink_box(
+    void shrink_hbox(
         ImageView const & input, TColor const & tcolor,
-        unsigned & x, unsigned & y, unsigned & w, unsigned & h
+        unsigned x1, unsigned & y1, unsigned x2, unsigned & y2
     ) {
-        auto d = input[{x, y}].c;
-        while (y < h && horizontal_empty<ImageView>(tcolor, d, w)) {
-            ++y;
+        auto d = input[{x1, y1}].c;
+        while (y1 < y2 && horizontal_empty<ImageView>(tcolor, d, x2)) {
+            ++y1;
             d += input.width() * 3;
         }
-        d = input[{x, h}].c - input.width() * 3;
-        while (h > y && horizontal_empty<ImageView>(tcolor, d, w)) {
-            d -= input.width() * 3;
-            --h;
+
+        if (y2 > y1) {
+            d = input[{x1, y2}].c - input.width() * 3;
+            while (y2 > y1 && horizontal_empty<ImageView>(tcolor, d, x2)) {
+                d -= input.width() * 3;
+                --y2;
+            }
         }
     }
 } // namespace detail_
@@ -166,7 +169,7 @@ unsigned extract_text(
     rdp_ppocr::OcrDatasConstant const & ocr_constant,
     rdp_ppocr::OcrContext & ocr_context,
     const ImageView & input, unsigned tid,
-    mln::box2d const & box, unsigned button_col)
+    ppocr::Box const & box, unsigned button_col)
 {
     (void)button_col;
 
@@ -174,12 +177,11 @@ unsigned extract_text(
         /*chrono*///using resolution_clock = std::chrono::high_resolution_clock;
         /*chrono*///auto t1 = resolution_clock::now();
 
-        unsigned x = box.min_col();
-        unsigned y = box.min_row();
-        unsigned w = static_cast<unsigned>(box.max_col()+1);
-        unsigned h = static_cast<unsigned>(box.max_row()+1);
-        detail_::shrink_box(input, tcolor, x, y, w, h);
-        auto const bounds = ppocr::Bounds{w, h};
+        unsigned x1 = box.x();
+        unsigned y1 = box.y();
+        unsigned x2 = x1 + box.width();
+        unsigned y2 = y1 + box.height();
+        detail_::shrink_hbox(input, tcolor, x1, y1, x2, y2);
 
         ocr_context.ambiguous.clear();
 
@@ -191,20 +193,15 @@ unsigned extract_text(
         unsigned const whitespace = (is_win2012 ? /*4*/5 : 3);
 
         unsigned i_space = 0;
-        while (auto const cbox = detail_::box_character(input, tcolor, {x, y}, bounds)) {
+        while (auto const cbox = detail_::box_character(input, tcolor, x1, y1, x2, y2)) {
             //min_y = std::min(cbox.y(), min_y);
-            //bounds_y = std::max(cbox.y() + cbox.h(), bounds_y);
-            //bounds_x = cbox.x() + cbox.w();
+            //bounds_y = std::max(cbox.y() + cbox.height(), bounds_y);
+            //bounds_x = cbox.x() + cbox.width();
             //std::cerr << "\nbox(" << cbox << ")\n";
-
-            mln::box2d new_box{
-                {cbox.x(), cbox.y()},
-                {cbox.right(), cbox.bottom()},
-            };
-            auto & img_word = detail_::to_img(ocr_context.img_ctx, input, tcolor, new_box);
+            auto & img_word = detail_::to_img(ocr_context.img_ctx, input, tcolor, cbox);
             //std::cout << img_word << std::endl;
 
-            if (x + whitespace <= cbox.x()) {
+            if (x1 + whitespace <= cbox.x()) {
                 spaces.push_back(i_space);
             }
             ++i_space;
@@ -236,7 +233,7 @@ unsigned extract_text(
 
             boxes.push_back(cbox);
 
-            x = cbox.x() + cbox.w();
+            x1 = cbox.x() + cbox.width();
         }
     });
 

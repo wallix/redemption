@@ -31,7 +31,7 @@ struct Classification
     , display_char(display_char_)
     {}
 
-    void operator()(ocr::BitmapAsOcrImage const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
+    void operator()(ocr::BitmapAsOcrImage const & input, unsigned tid, ppocr::Box const & box, unsigned button_col)
     {
         ocr::image_view_to_image2d_bool(input, tid, this->ima, box);
 
@@ -65,7 +65,7 @@ struct Classification
                 normally_selected_id == - 1u
                 ? "(none)"
                 : ocr::fonts::fonts[static_cast<unsigned>(this->locale_id)][normally_selected_id].name
-            ) << "  " << box << " --------\n";
+            ) << "  " << PrintableBox{box} << " --------\n";
             if (normally_selected_id == -1u) {
                 normally_selected_id = unsigned(this->results.size() - 1);
             }
@@ -79,7 +79,7 @@ struct Classification
         else {
             std::cout << "-------- font: "
               << ocr::fonts::fonts[static_cast<unsigned>(this->locale_id)][font_id].name
-              << "  " << box << " --------\n"
+              << "  " << PrintableBox{box} << " --------\n"
             ;
             this->classifier.classify(this->attrs, this->ima, this->locale_id, this->font_id);
             display_result(input, tid, this->font_id, box, button_col, this->classifier);
@@ -89,11 +89,11 @@ struct Classification
 private:
     void display_result(
         ocr::BitmapAsOcrImage const & input, unsigned tid, unsigned font_id,
-        mln::box2d const & box, unsigned button_col, const ocr::classifier_type & res)
+        ppocr::Box const & box, unsigned button_col, const ocr::classifier_type & res)
     {
         auto id = static_cast<unsigned>(this->locale_id);
         const bool is_title_bar = ocr::is_title_bar(
-            input, tid, box.min_row(), box.max_row(), button_col
+            input, tid, box.y(), box.bottom(), button_col
           , ocr::fonts::fonts[id][res.font_id].max_height_char
         );
         std::cout
@@ -118,7 +118,7 @@ struct ReferenceClassification
     : ref(ref_)
     {}
 
-    void operator()(ocr::BitmapAsOcrImage const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
+    void operator()(ocr::BitmapAsOcrImage const & input, unsigned tid, ppocr::Box const & box, unsigned button_col)
     {
         this->ref(input, tid, box, button_col);
     }

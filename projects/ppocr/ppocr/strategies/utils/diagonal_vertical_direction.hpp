@@ -32,11 +32,11 @@ namespace details_ {
     ) {
         unsigned d = 0;
         unsigned ih = 0;
-        unsigned const wdiv2 = bnd.w()/2;
-        for (; p != ep; p += bnd.w(), ++ih) {
-            unsigned x = wdiv2 - bnd.w() / (!is_top ? bnd.h() - ih : 1 + ih) / 2;
+        unsigned const wdiv2 = bnd.width()/2;
+        for (; p != ep; p += bnd.width(), ++ih) {
+            unsigned x = wdiv2 - bnd.width() / (!is_top ? bnd.height() - ih : 1 + ih) / 2;
             auto leftp = p + x;
-            auto rightp = p + bnd.w() - x;
+            auto rightp = p + bnd.width() - x;
             for (; leftp != rightp; ++leftp) {
                 if (is_pix_letter(*leftp)) {
                     ++d;
@@ -51,10 +51,10 @@ namespace details_ {
     ) {
         unsigned d = 0;
         unsigned ih = 0;
-        unsigned const wdiv2 = bnd.w()/2;
-        for (; p != ep; p += bnd.w(), ++ih) {
-            unsigned x = wdiv2 - bnd.w() / (!is_top ? bnd.h() - ih : 1 + ih) / 2;
-            d += bnd.w() - x*2;
+        unsigned const wdiv2 = bnd.width()/2;
+        for (; p != ep; p += bnd.width(), ++ih) {
+            unsigned x = wdiv2 - bnd.width() / (!is_top ? bnd.height() - ih : 1 + ih) / 2;
+            d += bnd.width() - x*2;
         }
         return d;
     }
@@ -64,14 +64,14 @@ inline unsigned diagonal_vertical_direction_area(const Image& img)
 {
     Bounds const bnd(img.width(), img.height() / 2);
     auto p = img.data();
-    auto ep = img.data({0, bnd.h()});
+    auto ep = img.data({0, bnd.height()});
 
     unsigned area = 0;
     unsigned ih = 0;
-    unsigned const wdiv2 = bnd.w()/2;
-    for (; p != ep; p += bnd.w(), ++ih) {
-        unsigned x = wdiv2 - bnd.w() / (1 + ih) / 2;
-        area += bnd.w() - x*2;
+    unsigned const wdiv2 = bnd.width()/2;
+    for (; p != ep; p += bnd.width(), ++ih) {
+        unsigned x = wdiv2 - bnd.width() / (1 + ih) / 2;
+        area += bnd.width() - x*2;
     }
     return area * 2;
 }
@@ -81,7 +81,7 @@ TopBottom diagonal_vertical_direction(const Image& img)
 {
     Bounds const bnd(img.width(), img.height() / 2);
     auto p = img.data();
-    auto ep = img.data({0, bnd.h()});
+    auto ep = img.data({0, bnd.height()});
     auto const top = details_::count_diagonal_vertical_direction(bnd, p, ep, true);
 
     p = ep;

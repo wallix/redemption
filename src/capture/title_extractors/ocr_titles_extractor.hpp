@@ -71,9 +71,9 @@ struct OcrTitlesExtractor
 
         auto process_title = [this, &drawable, &out_titles](
             const ImageView & input, unsigned tid,
-            mln::box2d const & box, unsigned button_col
+            ppocr::Box const & box, unsigned button_col
         ) {
-            Rect tracked_area(box.min_col(), box.min_row(), box.ncols(), box.nrows());
+            Rect tracked_area(box.x(), box.y(), box.width(), box.height());
             if ((drawable.tracked_area != tracked_area) || drawable.tracked_area_changed)
             {
                 /* TODO
@@ -165,10 +165,10 @@ private:
 
     [[nodiscard]] bool is_title_bar(
         const DrawableImageView & input, unsigned tid,
-        mln::box2d const & box, unsigned button_col) const
+        ppocr::Box const & box, unsigned button_col) const
     {
         return ::ocr::is_title_bar(
-            input, tid, box.min_row(), box.max_row(), button_col,
+            input, tid, box.y(), box.bottom(), button_col,
             this->font_id == -1u ? ::ocr::bbox_max_height : this->font().max_height_char);
     }
 

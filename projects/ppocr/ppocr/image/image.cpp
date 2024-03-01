@@ -36,8 +36,8 @@ Image::Image(Bounds const& bounds, PtrImageData data)
 void section(Image const & from, Pixel * data, Index const & idx, Bounds const & bnd)
 {
     cP d = from.data(idx);
-    for (unsigned y = 0; y != bnd.h(); ++y) {
-        data = std::copy(d, d+bnd.w(), data);
+    for (unsigned y = 0; y != bnd.height(); ++y) {
+        data = std::copy(d, d+bnd.width(), data);
         d += from.width();
     }
 }
@@ -45,10 +45,10 @@ void section(Image const & from, Pixel * data, Index const & idx, Bounds const &
 Image Image::section(Index const& section_idx, Bounds const& section_bnd) const
 {
     assert(bounds_.contains(section_idx));
-    assert(section_bnd.w() + section_idx.x() <= width() && section_bnd.h() + section_idx.y() <= height());
+    assert(section_bnd.width() + section_idx.x() <= width() && section_bnd.height() + section_idx.y() <= height());
     PtrImageData data(new Pixel[section_bnd.area()]);
     ::ppocr::section(*this, data.get(), section_idx, section_bnd);
-    return {{section_bnd.w(), section_bnd.h()}, std::move(data)};
+    return {{section_bnd.width(), section_bnd.height()}, std::move(data)};
 }
 
 void rotate90(Image const & from, Pixel * data)

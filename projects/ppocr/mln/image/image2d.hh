@@ -28,7 +28,6 @@
 # define MLN_IMAGE_IMAGE2D_HH
 
 #include <ppocr/image/coordinate.hpp>
-#include <mln/core/site_set/box.hh>
 
 #include <cassert>
 
@@ -151,14 +150,14 @@ namespace mln {
         }
 
         /// Give the number of rows.
-        unsigned nrows() const
+        unsigned height() const
         {
             assert(this->is_valid());
             return this->data_.row_;
         }
 
         /// Give the number of columns.
-        unsigned ncols() const
+        unsigned width() const
         {
             assert(this->is_valid());
             return this->data_.col_;
@@ -169,8 +168,8 @@ namespace mln {
         bool check_index(ppocr::Index p) const
         {
             assert(is_valid());
-            return 0 <= p.y() && p.y() < nrows()
-                && 0 <= p.x() && p.x() < ncols();
+            return 0 <= p.y() && p.y() < height()
+                && 0 <= p.x() && p.x() < width();
         }
 #endif
     };

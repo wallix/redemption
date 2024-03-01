@@ -57,12 +57,12 @@ struct Bounds
     Bounds() = default;
 
     unsigned area() const noexcept { return w_ * h_; }
-    unsigned w() const noexcept { return w_; }
-    unsigned h() const noexcept { return h_; }
+    unsigned width() const noexcept { return w_; }
+    unsigned height() const noexcept { return h_; }
 
     unsigned contains(Index const & idx) const
     {
-        return idx.x() < w() && idx.y() < h();
+        return idx.x() < w_ && idx.y() < h_;
     }
 
     bool operator==(Bounds const & other) const noexcept

@@ -28,7 +28,7 @@ std::ostream & operator<<(std::ostream & os, Index const & idx) {
 }
 
 std::ostream & operator<<(std::ostream & os, Bounds const & bnd) {
-    return os << bnd.w() << ' ' << bnd.h();
+    return os << bnd.width() << ' ' << bnd.height();
 }
 
 std::istream & operator>>(std::istream & is, Index & idx) {
