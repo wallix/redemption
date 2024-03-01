@@ -60,7 +60,7 @@ fi
 echo -e "
 using gcc : 10.0 : g++-10 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
-using clang : : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
+using clang : : clang++-16 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 " > project-config.jam
 valgrind_compiler=gcc-8
 toolset_gcc=toolset=gcc-10
