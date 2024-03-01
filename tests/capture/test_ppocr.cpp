@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
     std::vector<OcrTitle> out_titles;
 
     {
-        draw_bitmap(drawable, FIXTURES_PATH "/m-21288-2.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/m-21288-2.png");
         extractor.extract_titles(drawable, out_titles);
 
         std::array expected{"Gestionnaire de serveur"_av};
@@ -67,14 +67,14 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, FIXTURES_PATH "/w7mediacentercapture.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/w7mediacentercapture.png");
         extractor.extract_titles(drawable, out_titles);
 
         RED_CHECK_EQUAL(out_titles.size(), 0);
     }
 
     {
-        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture2.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture2.png");
         extractor.extract_titles(drawable, out_titles);
 
         std::array expected{
@@ -91,7 +91,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture4.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture4.png");
         extractor.extract_titles(drawable, out_titles);
 
         std::array expected{
@@ -107,7 +107,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture.png");
         extractor.extract_titles(drawable, out_titles);
 
         std::array expected{
@@ -123,7 +123,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture3.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture3.png");
         extractor.extract_titles(drawable, out_titles);
 
         std::array expected{
@@ -140,7 +140,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture5.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture5.png");
         extractor.extract_titles(drawable, out_titles);
 
         std::array expected{
@@ -157,7 +157,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture6.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture6.png");
         extractor.extract_titles(drawable, out_titles);
 
         std::array expected{
@@ -173,7 +173,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture9.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture9.png");
         extractor.extract_titles(drawable, out_titles);
 
         std::array expected{
@@ -189,7 +189,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
     }
 
     {
-        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture10.bmp");
+        draw_bitmap(drawable, FIXTURES_PATH "/win2008capture10.png");
         extractor.extract_titles(drawable, out_titles);
 
         std::array expected{

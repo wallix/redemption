@@ -68,7 +68,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
 
     drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
 
-    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
+    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.png", BLACK);
     int const bmp_x = 200;
     int const bmp_y = 200;
     Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_3.png");
 
-    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
+    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.png", BLACK);
     int const bmp_x = 200;
     int const bmp_y = 200;
     Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());

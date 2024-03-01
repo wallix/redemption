@@ -2489,7 +2489,7 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
         };
 
         // gestionnaire de serveur
-        draw_img(FIXTURES_PATH "/m-21288-2.bmp");
+        draw_img(FIXTURES_PATH "/m-21288-2.png");
         capture.periodic_snapshot(now, 0, 0);
 
         now += 100s;
@@ -2509,7 +2509,7 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
         });
 
         // qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes
-        draw_img(FIXTURES_PATH "/win2008capture10.bmp");
+        draw_img(FIXTURES_PATH "/win2008capture10.png");
         capture.periodic_snapshot(now, 0, 0);
         now += 100s;
         capture.session_update(now, LogId::FOREGROUND_WINDOW_CHANGED, {
@@ -2534,7 +2534,7 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
 
         now += 100s;
         // Gestionnaire de licences TS
-        draw_img(FIXTURES_PATH "/win2008capture.bmp");
+        draw_img(FIXTURES_PATH "/win2008capture.png");
         capture.periodic_snapshot(now, 0, 0);
     });
 
