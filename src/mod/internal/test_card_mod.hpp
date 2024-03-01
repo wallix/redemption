@@ -40,16 +40,12 @@ class TestCardMod : public mod_api
 
     Font const & font;
 
-    bool unit_test;
-
     gdi::GraphicApi & gd;
 
     [[nodiscard]] Rect get_screen_rect() const;
 
 public:
-    TestCardMod(
-        gdi::GraphicApi & gd, uint16_t width, uint16_t height,
-        Font const & font, bool unit_test = true); /*NOLINT*/
+    TestCardMod(gdi::GraphicApi & gd, uint16_t width, uint16_t height, Font const & font);
 
     void rdp_input_invalidate(Rect /*rect*/) override
     {}

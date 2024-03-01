@@ -256,8 +256,7 @@ void ModFactory::create_test_card_mod()
         this->graphics,
         this->client_info.screen_info.width,
         this->client_info.screen_info.height,
-        this->glyphs,
-        false
+        this->glyphs
     );
     Impl::set_mod(*this, ModuleName::card, mod_pack_from_widget(new_mod), false);
 }

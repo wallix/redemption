@@ -33,14 +33,10 @@
 #include "utils/strutils.hpp"
 
 
-TestCardMod::TestCardMod(
-    gdi::GraphicApi & gd,
-    uint16_t width, uint16_t height,
-    Font const & font, bool unit_test)
+TestCardMod::TestCardMod(gdi::GraphicApi & gd, uint16_t width, uint16_t height, Font const & font)
 : front_width(width)
 , front_height(height)
 , font(font)
-, unit_test(unit_test)
 , gd(gd)
 {
     draw_event();
@@ -149,49 +145,42 @@ void TestCardMod::draw_event()
         Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx(), bloc64x64.cy()), 0xCC,
             32, 32, 0), clip, bloc64x64);
 
-    Bitmap logo = bitmap_from_file(str_concat(app_path(AppPath::Share), "/ad8b.png").c_str(), BLACK);
-    gd.draw(RDPMemBlt(0,
-        Rect(100, 100, 26, 32),
-        0xCC,
-        80, 50, 0), clip, logo);
-
-    if (!this->unit_test) {
-        //gd.draw(RDPOpaqueRect(this->get_screen_rect(), RED), clip, depth);
-        Bitmap wab_logo_blue = bitmap_from_file(app_path(AppPath::LoginWabBlue), BLACK);
+    //gd.draw(RDPOpaqueRect(this->get_screen_rect(), RED), clip, depth);
+    Bitmap wab_logo_blue = bitmap_from_file(app_path(AppPath::LoginWabBlue), BLACK);
 
 
-        const uint16_t startx = 5;
-        const uint16_t starty = 5;
+    const uint16_t startx = 5;
+    const uint16_t starty = 5;
 
-        const uint16_t tile_width_height = 32;
+    const uint16_t tile_width_height = 32;
 
-        for (uint16_t y = 0; y < wab_logo_blue.cy(); y += tile_width_height) {
-            uint16_t cy = std::min<uint16_t>(tile_width_height, wab_logo_blue.cy() - y);
+    for (uint16_t y = 0; y < wab_logo_blue.cy(); y += tile_width_height) {
+        uint16_t cy = std::min<uint16_t>(tile_width_height, wab_logo_blue.cy() - y);
 
-            for (uint16_t x = 0; x < wab_logo_blue.cx(); x += tile_width_height) {
-                uint16_t cx = std::min<uint16_t>(tile_width_height, wab_logo_blue.cx() - x);
+        for (uint16_t x = 0; x < wab_logo_blue.cx(); x += tile_width_height) {
+            uint16_t cx = std::min<uint16_t>(tile_width_height, wab_logo_blue.cx() - x);
 
-                Bitmap tile(wab_logo_blue, Rect(x, y, cx, cy));
+            Bitmap tile(wab_logo_blue, Rect(x, y, cx, cy));
 
-                RDPBitmapData bitmap_data;
+            RDPBitmapData bitmap_data;
 
-                bitmap_data.dest_left       = startx + x;
-                bitmap_data.dest_top        = starty + y;
-                bitmap_data.dest_right      = bitmap_data.dest_left + cx - 1;
-                bitmap_data.dest_bottom     = bitmap_data.dest_top + cy - 1;
-                bitmap_data.width           = tile.cx();
-                bitmap_data.height          = tile.cy();
-                bitmap_data.bits_per_pixel  = 24;
-                bitmap_data.flags           = 0;
-                bitmap_data.bitmap_length   = tile.bmp_size();
+            bitmap_data.dest_left       = startx + x;
+            bitmap_data.dest_top        = starty + y;
+            bitmap_data.dest_right      = bitmap_data.dest_left + cx - 1;
+            bitmap_data.dest_bottom     = bitmap_data.dest_top + cy - 1;
+            bitmap_data.width           = tile.cx();
+            bitmap_data.height          = tile.cy();
+            bitmap_data.bits_per_pixel  = 24;
+            bitmap_data.flags           = 0;
+            bitmap_data.bitmap_length   = tile.bmp_size();
 
-                bitmap_data.log(LOG_INFO);
+            // bitmap_data.log(LOG_INFO);
 
-                gd.draw(bitmap_data, tile);
-            }
+            gd.draw(bitmap_data, tile);
         }
+    }
 
-        uint8_t pointer_data[] =
+    uint8_t pointer_data[] =
 /* 0000 */ "\x02\x00\x02\x00\x05\x00\x05\x00\x0a\x00\x64\x00\x00\x00\x00\x00" // ..........d.....
 /* 0010 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00" // ................
 /* 0020 */ "\xff\xff\xff\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff" // ................
@@ -200,12 +189,11 @@ void TestCardMod::draw_event()
 /* 0050 */ "\x00\x00\x00\xff\x00\x00\x00\xff\xff\xff\xff\xff\x00\x00\x00\x00" // ................
 /* 0060 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00" // ................
 /* 0070 */ "\x88\x00\x00\x00\x00\x00\x00\x00\x88\x00"                         // ..........
-            ;
-        InStream pointer_stream(pointer_data);
-        RdpPointerView pointer = pointer_loader_new(BitsPerPixel{32}, pointer_stream);
+        ;
+    InStream pointer_stream(pointer_data);
+    RdpPointerView pointer = pointer_loader_new(BitsPerPixel{32}, pointer_stream);
 
-        auto cache_idx = gdi::CachePointerIndex(9);
-        gd.new_pointer(cache_idx, pointer);
-        gd.cached_pointer(cache_idx);
-    }
+    auto cache_idx = gdi::CachePointerIndex(9);
+    gd.new_pointer(cache_idx, pointer);
+    gd.cached_pointer(cache_idx);
 }
