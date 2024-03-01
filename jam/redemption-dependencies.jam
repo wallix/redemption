@@ -24,7 +24,8 @@ obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
 ;
 
 obj app_path_test.o : $(REDEMPTION_TEST_PATH)/includes/test_only/app_path_test.cpp :
-    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
+    <define>SHARE_PATH='\"$(FIXTURES_SHARE_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
     <include>$(REDEMPTION_TEST_PATH)/includes
     <variant>san:<define>RED_COMPILE_TYPE=san

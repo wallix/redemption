@@ -25,6 +25,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "core/app_path.hpp"
 #include "core/font.hpp"
 
 using namespace std::string_view_literals;
@@ -53,7 +54,7 @@ RED_AUTO_TEST_CASE(TestCreateFont)
 {
     RED_CHECK(!FontData().is_loaded());
 
-    FontData data(FIXTURES_PATH "/dejavu_14.rbf2");
+    FontData data(app_path(AppPath::DefaultFontFile));
     RED_CHECK(data.is_loaded());
 
     Font f = data.font();

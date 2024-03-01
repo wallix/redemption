@@ -191,6 +191,7 @@ exe extract_text :
 :
   <library>crypto
   <library>png
+  <library>ppocr
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/core/error.o
   <library>src/utils/bitmap.o
@@ -866,6 +867,7 @@ test-run tests/capture/test_ocr :
 :
   <library>crypto
   <library>png
+  <library>ppocr
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/core/error.o
   <library>src/utils/bitmap.o
@@ -2054,6 +2056,7 @@ test-run tests/core/test_events :
 test-run tests/core/test_font :
   $(REDEMPTION_TEST_PATH)/core/test_font.cpp
 :
+  <library>app_path_test.o
   <library>src/core/font.o
 ;
 test-run tests/core/test_glyph_to_24_bitmap :
@@ -2221,6 +2224,7 @@ test-run tests/gdi/test_protected_graphics :
 test-run tests/gdi/test_text_metrics :
   $(REDEMPTION_TEST_PATH)/gdi/test_text_metrics.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -2506,6 +2510,7 @@ test-run tests/mod/internal/test_close_mod :
 test-run tests/mod/internal/test_copy_paste :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_copy_paste.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -2809,6 +2814,7 @@ test-run tests/mod/internal/test_test_card_mod :
 test-run tests/mod/internal/widget/test_button :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_button.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -2867,6 +2873,7 @@ test-run tests/mod/internal/widget/test_composite :
 test-run tests/mod/internal/widget/test_delegated_copy :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_delegated_copy.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -2941,6 +2948,7 @@ test-run tests/mod/internal/widget/test_dialog :
 test-run tests/mod/internal/widget/test_edit :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_edit.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -2977,6 +2985,7 @@ test-run tests/mod/internal/widget/test_edit :
 test-run tests/mod/internal/widget/test_edit_valid :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_edit_valid.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3053,6 +3062,7 @@ test-run tests/mod/internal/widget/test_form :
 test-run tests/mod/internal/widget/test_grid :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_grid.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3085,6 +3095,7 @@ test-run tests/mod/internal/widget/test_grid :
 test-run tests/mod/internal/widget/test_group_box :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_group_box.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3119,6 +3130,7 @@ test-run tests/mod/internal/widget/test_group_box :
 test-run tests/mod/internal/widget/test_image :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_image.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3144,6 +3156,7 @@ test-run tests/mod/internal/widget/test_image :
 test-run tests/mod/internal/widget/test_interactive_target :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_interactive_target.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3180,6 +3193,7 @@ test-run tests/mod/internal/widget/test_interactive_target :
 test-run tests/mod/internal/widget/test_label :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_label.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3211,6 +3225,7 @@ test-run tests/mod/internal/widget/test_label :
 test-run tests/mod/internal/widget/test_labelgrid :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_labelgrid.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3290,6 +3305,7 @@ test-run tests/mod/internal/widget/test_login :
 test-run tests/mod/internal/widget/test_multiline :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_multiline.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3317,6 +3333,7 @@ test-run tests/mod/internal/widget/test_multiline :
 test-run tests/mod/internal/widget/test_number_edit :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_number_edit.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3349,6 +3366,7 @@ test-run tests/mod/internal/widget/test_number_edit :
 test-run tests/mod/internal/widget/test_password :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_password.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3382,6 +3400,7 @@ test-run tests/mod/internal/widget/test_password :
 test-run tests/mod/internal/widget/test_screen :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_screen.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3418,6 +3437,7 @@ test-run tests/mod/internal/widget/test_screen :
 test-run tests/mod/internal/widget/test_scroll :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_scroll.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3490,6 +3510,7 @@ test-run tests/mod/internal/widget/test_selector :
 test-run tests/mod/internal/widget/test_tooltip :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_tooltip.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3524,6 +3545,7 @@ test-run tests/mod/internal/widget/test_tooltip :
 test-run tests/mod/internal/widget/test_vertical_scroll_text :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_vertical_scroll_text.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
@@ -3637,6 +3659,7 @@ test-run tests/mod/internal/widget/test_wait :
 test-run tests/mod/internal/widget/test_widget_rect :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget_rect.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
