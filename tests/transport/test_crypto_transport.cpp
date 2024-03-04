@@ -339,9 +339,10 @@ RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
 }
 
 // This sample was generated using udevrandom on Linux
-static const uint8_t randomSample[8192] = {
-#include "fixtures/randomdata.hpp"
-};
+constexpr chars_view randomSample =
+    #include "fixtures/randomdata.hpp"
+;
+static_assert(randomSample.size() == 8192);
 
 RED_AUTO_TEST_CASE(TestEncryptionLarge1)
 {
@@ -369,14 +370,14 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     // Let's send a large block of pseudo random data
     // with that kind of data I expect poor compression results
     {
-        ocrypto::Result res2 = encrypter.write(make_array_view(randomSample));
+        ocrypto::Result res2 = encrypter.write(randomSample);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         RED_CHECK_EQUAL(res2.buf.size(), 0);
     }
 
     {
-        ocrypto::Result res2 = encrypter.write(make_array_view(randomSample));
+        ocrypto::Result res2 = encrypter.write(randomSample);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         RED_CHECK_EQUAL(res2.buf.size(), 8612);
@@ -384,7 +385,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
 
     // I write the same block *again* now I should reach some compression
 //    size_t towrite = 0;
-//    encrypter.write(result+offset, sizeof(result)-offset, towrite, make_array_view(randomSample));
+//    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample);
 //    offset += towrite;
 //    RED_CHECK_EQUAL(towrite, 8612);
 
@@ -409,7 +410,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     WorkingFile wf("tmp.enc");
     RED_TEST(write_file(wf, array_view{&result[0], offset}) == 8660);
 
-    char clear[sizeof(randomSample)+sizeof(randomSample)] = {};
+    char clear[randomSample.size() * 2] = {};
 
     InCryptoTransport decrypter(cctx, InCryptoTransport::EncryptionMode::Encrypted);
     decrypter.open(wf, {derivator, sizeof(derivator)});
@@ -418,8 +419,8 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     decrypter.close();
 
 
-    RED_CHECK(make_array_view(clear, sizeof(randomSample)) == make_array_view(randomSample));
-    RED_CHECK(make_array_view(clear).from_offset(sizeof(randomSample)) == make_array_view(randomSample));
+    RED_CHECK(make_array_view(clear).first(randomSample.size()) == randomSample);
+    RED_CHECK(make_array_view(clear).from_offset(randomSample.size()) == randomSample);
 
 
     unsigned char fhash2[MD_HASH::DIGEST_LENGTH];
@@ -494,22 +495,22 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     // Let's send a large block of pseudo random data
     // with that kind of data I expect poor compression results
     {
-        ocrypto::Result res2 = encrypter.write(make_array_view(randomSample));
+        ocrypto::Result res2 = encrypter.write(randomSample);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
-        RED_CHECK_EQUAL(res2.buf.size(), sizeof(randomSample));
+        RED_CHECK_EQUAL(res2.buf.size(), randomSample.size());
     }
 
     {
-        ocrypto::Result res2 = encrypter.write(make_array_view(randomSample));
+        ocrypto::Result res2 = encrypter.write(randomSample);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
-        RED_CHECK_EQUAL(res2.buf.size(), sizeof(randomSample));
+        RED_CHECK_EQUAL(res2.buf.size(), randomSample.size());
     }
 
     // I write the same block *again* now I should reach some compression
 //    size_t towrite = 0;
-//    encrypter.write(result+offset, sizeof(result)-offset, towrite, make_array_view(randomSample));
+//    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample);
 //    offset += towrite;
 //    RED_CHECK_EQUAL(towrite, 8612);
 
@@ -528,7 +529,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
         RED_CHECK_EQUAL(res2.buf.size(), 0);
         RED_CHECK_EQUAL(res2.consumed, 0);
     }
-    RED_CHECK_EQUAL(offset, sizeof(randomSample)*2);
+    RED_CHECK_EQUAL(offset, randomSample.size()*2);
 
     auto expected_qhash =
         "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97"
@@ -547,13 +548,13 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
 
     SslHMAC_Sha256_Delayed hmac;
     hmac.init(make_array_view(cctx.get_hmac_key()));
-    hmac.update(make_array_view(randomSample));
-    hmac.update(make_array_view(randomSample));
+    hmac.update(randomSample);
+    hmac.update(randomSample);
     hmac.final(make_writable_sized_array_view(fhash2));
 
     SslHMAC_Sha256_Delayed quick_hmac;
     quick_hmac.init(make_array_view(cctx.get_hmac_key()));
-    quick_hmac.update({randomSample, 4096});
+    quick_hmac.update(randomSample.first(4096));
     quick_hmac.final(make_writable_sized_array_view(qhash2));
 
     RED_CHECK(make_array_view(fhash2) == make_array_view(expected_fhash));
@@ -585,23 +586,23 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     // Let's send a large block of pseudo random data
     // with that kind of data I expect poor compression results
     {
-        ocrypto::Result res2 = encrypter.write(make_array_view(randomSample));
+        ocrypto::Result res2 = encrypter.write(randomSample);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
-        RED_CHECK_EQUAL(res2.buf.size(), sizeof(randomSample));
+        RED_CHECK_EQUAL(res2.buf.size(), randomSample.size());
     }
 
     {
-        ocrypto::Result res2 = encrypter.write(make_array_view(randomSample));
+        ocrypto::Result res2 = encrypter.write(randomSample);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
-        RED_CHECK_EQUAL(res2.buf.size(), sizeof(randomSample));
+        RED_CHECK_EQUAL(res2.buf.size(), randomSample.size());
     }
 
 
     // I write the same block *again* now I should reach some compression
 //    size_t towrite = 0;
-//    encrypter.write(result+offset, sizeof(result)-offset, towrite, make_array_view(randomSample));
+//    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample);
 //    offset += towrite;
 //    RED_CHECK_EQUAL(towrite, 8612);
 
@@ -631,7 +632,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
         RED_CHECK_EQUAL(res2.buf.size(), 0);
         RED_CHECK_EQUAL(res2.consumed, 0);
     }
-    RED_CHECK_EQUAL(offset, sizeof(randomSample)*2);
+    RED_CHECK_EQUAL(offset, randomSample.size()*2);
 
     // Check qhash and fhash are left unchanged if no checksum is enabled
     RED_CHECK(make_array_view(qhash) == make_array_view(expected_qhash));
@@ -953,7 +954,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
 
         OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
         ct.open(finalname, hash_finalname, FilePermissions(0777));
-        ct.send(make_array_view(randomSample));
+        ct.send(randomSample);
         ct.close(qhash, fhash);
     }
 
@@ -971,7 +972,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
     RED_CHECK(make_array_view(fhash) == expected_fhash);
 
     {
-        char buffer[sizeof(randomSample)];
+        char buffer[randomSample.size()];
         InCryptoTransport ct(cctx, InCryptoTransport::EncryptionMode::Auto);
         ct.open(finalname);
         RED_CHECK(ct.is_encrypted());
@@ -983,7 +984,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[sizeof(buffer)], 1));
         RED_CHECK(ct.is_eof());
         ct.close();
-        RED_CHECK(make_array_view(buffer) == make_array_view(randomSample));
+        RED_CHECK(make_array_view(buffer) == randomSample);
 
         InCryptoTransport::HASH fh;
         InCryptoTransport::HASH qh;

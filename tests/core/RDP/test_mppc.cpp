@@ -33,14 +33,11 @@ RED_AUTO_TEST_CASE(TestMPPC)
     // Load compressed_rd5 and decompressed_rd5
     #include "fixtures/test_mppc_TestMPPC.hpp"
 
-    for (int x = 0; x < 1000 ; x++){
-        rdp_mppc_unified_dec rmppc_d;
-        rdp_mppc_dec & rmppc = rmppc_d;
+    rdp_mppc_unified_dec rmppc_d;
+    rdp_mppc_dec & rmppc = rmppc_d;
 
-        /* uncompress data */
-        RED_CHECK(make_array_view(decompressed_rd5) == rmppc.decompress(
-            make_array_view(compressed_rd5), int(PACKET_COMPRESSED) | int(PACKET_COMPR_TYPE_64K)));
-    }
+    /* uncompress data */
+    RED_CHECK(decompressed_rd5 == rmppc.decompress(compressed_rd5, int(PACKET_COMPRESSED) | int(PACKET_COMPR_TYPE_64K)));
 }
 
 RED_AUTO_TEST_CASE(TestMPPC_enc)
@@ -55,16 +52,15 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
     /* setup encoder for RDP 5.0 */
     rdp_mppc_50_enc enc;
 
-    int data_len = sizeof(decompressed_rd5_data);
-
     uint8_t  compressionFlags = 0;
     uint16_t datalen          = 0;
 
-    enc.compress(decompressed_rd5_data, data_len, compressionFlags, datalen,
-        rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
+    enc.compress(
+        byte_ptr_cast(decompressed_rd5_data.data()), decompressed_rd5_data.size(),
+        compressionFlags, datalen, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     RED_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
-    RED_CHECK(make_array_view(decompressed_rd5_data) ==
+    RED_CHECK(decompressed_rd5_data ==
         rmppc.decompress({enc.outputBuffer, enc.bytes_in_opb}, enc.flags));
 }
 
