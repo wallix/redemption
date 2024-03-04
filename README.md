@@ -72,11 +72,6 @@ To compile Redemption you need the following packages:
 apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng-dev libbz2-dev libhyperscan-dev
 ```
 
-Submodule ($ `git submodule update --init`):
-
-- https://github.com/wallix/ppocr
-
-
 ## FFmpeg
 
 If your goal is to use the proxy without doing any video conversion (the recording is still available), you can disable FFmpeg by adding `NO_FFMPEG=1` to your environment variables before compiling.
