@@ -123,6 +123,11 @@ inline char const* apply_tls_config(
         CHECK_CALL(SSL_CTX_set_cipher_list, ctx, tls_config.cipher_list.c_str());
     }
 
+    if (not tls_config.key_exchange_groups.empty()) {
+        CHECK_CALL(SSL_CTX_set1_groups_list, ctx,
+            const_cast<char*>(tls_config.key_exchange_groups.c_str()));
+    }
+
     // when not defined, use system default
     if (not tls_config.tls_1_3_ciphersuites.empty()) {
         CHECK_CALL(SSL_CTX_set_ciphersuites, ctx, tls_config.tls_1_3_ciphersuites.c_str());

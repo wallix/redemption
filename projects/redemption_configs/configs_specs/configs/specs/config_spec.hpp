@@ -162,6 +162,12 @@ std::string_view tls_1_3_ciphersuites_desc =
     "The format used is described in the third paragraph of this page: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html#DESCRIPTION"
 ;
 
+std::string_view tls_key_exchange_groups =
+    "Configure the supported key exchange groups.\n"
+    "Empty to apply system-wide configuration.\n"
+    "The format used is described in this page: https://www.openssl.org/docs/man3.2/man3/SSL_CONF_cmd.html#groups-groups"
+;
+
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wc99-designator")
 
@@ -606,6 +612,16 @@ _.section("client", [&]
     });
 
     _.member(MemberInfo{
+        .name = names{
+            .all = "tls_key_exchange_groups",
+            .display = "TLS key exchange groups",
+        },
+        .value = value<std::string>(""),
+        .spec = global_spec(no_acl),
+        .desc = tls_key_exchange_groups,
+    });
+
+    _.member(MemberInfo{
         .name = "show_common_cipher_list",
         .value = value(false),
         .spec = global_spec(no_acl, spec::advanced),
@@ -890,6 +906,16 @@ _.section(names{.all="mod_rdp", .connpolicy="rdp"}, [&]
         .value = value<std::string>(""),
         .spec = connpolicy(rdp_and_jh, L),
         .desc = tls_1_3_ciphersuites_desc,
+    });
+
+    _.member(MemberInfo{
+        .name = names{
+            .all = "tls_key_exchange_groups",
+            .display = "TLS key exchange groups",
+        },
+        .value = value<std::string>(""),
+        .spec = connpolicy(rdp_and_jh, L),
+        .desc = tls_key_exchange_groups,
     });
 
     _.member(MemberInfo{

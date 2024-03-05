@@ -97,6 +97,12 @@ ssl_cipher_list = string(default="HIGH:!ADH:!3DES:!SHA")
 #_display_name=TLS 1.3 cipher suites
 tls_1_3_ciphersuites = string(default="")
 
+# Configure the supported key exchange groups.
+# Empty to apply system-wide configuration.
+# The format used is described in this page: https://www.openssl.org/docs/man3.2/man3/SSL_CONF_cmd.html#groups-groups
+#_display_name=TLS key exchange groups
+tls_key_exchange_groups = string(default="")
+
 # Show in the logs the common cipher list supported by client and server
 # ⚠ Only for debug purposes
 #_advanced

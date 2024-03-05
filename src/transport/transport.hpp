@@ -26,6 +26,7 @@ struct TlsConfig
     uint32_t max_level = 0;
     std::string cipher_list;
     std::string tls_1_3_ciphersuites;
+    std::string key_exchange_groups;
     bool show_common_cipher_list = false;
 };
 

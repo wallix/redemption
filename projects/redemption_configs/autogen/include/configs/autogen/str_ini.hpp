@@ -165,6 +165,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_display_name=TLS 1.3 cipher suites
 #tls_1_3_ciphersuites = 
 
+# Configure the supported key exchange groups.
+# Empty to apply system-wide configuration.
+# The format used is described in this page: https://www.openssl.org/docs/man3.2/man3/SSL_CONF_cmd.html#groups-groups
+#_display_name=TLS key exchange groups
+#tls_key_exchange_groups = 
+
 # Show in the logs the common cipher list supported by client and server
 # ⚠ Only for debug purposes
 # (type: boolean (0/no/false or 1/yes/true))
@@ -386,6 +392,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_display_name=TLS 1.3 cipher suites
 # (acl config: proxy ⇐ mod_rdp:tls_1_3_ciphersuites)
 #tls_1_3_ciphersuites = 
+
+# Configure the supported key exchange groups.
+# Empty to apply system-wide configuration.
+# The format used is described in this page: https://www.openssl.org/docs/man3.2/man3/SSL_CONF_cmd.html#groups-groups
+#_display_name=TLS key exchange groups
+# (acl config: proxy ⇐ mod_rdp:tls_key_exchange_groups)
+#tls_key_exchange_groups = 
 
 # Show in the logs the common cipher list supported by client and server
 # ⚠ Only for debug purposes

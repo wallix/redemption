@@ -1609,6 +1609,7 @@ public:
                      .max_level = this->ini.get<cfg::client::tls_max_level>(),
                      .cipher_list = this->ini.get<cfg::client::ssl_cipher_list>(),
                      .tls_1_3_ciphersuites = this->ini.get<cfg::client::tls_1_3_ciphersuites>(),
+                     .key_exchange_groups = this->ini.get<cfg::client::tls_key_exchange_groups>(),
                      .show_common_cipher_list = this->ini.get<cfg::client::show_common_cipher_list>(),
                 }
             );

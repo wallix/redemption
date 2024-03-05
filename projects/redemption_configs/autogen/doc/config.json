@@ -479,6 +479,15 @@
     },
     {
       "section": "client",
+      "name": "tls_key_exchange_groups",
+      "type": "str",
+      "value": "",
+      "description": "Configure the supported key exchange groups.\nEmpty to apply system-wide configuration.\nThe format used is described in this page: https://www.openssl.org/docs/man3.2/man3/SSL_CONF_cmd.html#groups-groups",
+      "displayName": "TLS key exchange groups",
+      "globalSpec": true
+    },
+    {
+      "section": "client",
       "name": "show_common_cipher_list",
       "type": "bool",
       "value": false,
@@ -790,6 +799,18 @@
       "value": "",
       "description": "Configure the available TLSv1.3 ciphersuites.\nEmpty to apply system-wide configuration.\nThe format used is described in the third paragraph of this page: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html#DESCRIPTION",
       "displayName": "TLS 1.3 cipher suites",
+      "rdp": true,
+      "jh": true,
+      "aclToProxy": true,
+      "logStategy": "1"
+    },
+    {
+      "section": "mod_rdp",
+      "name": "tls_key_exchange_groups",
+      "type": "str",
+      "value": "",
+      "description": "Configure the supported key exchange groups.\nEmpty to apply system-wide configuration.\nThe format used is described in this page: https://www.openssl.org/docs/man3.2/man3/SSL_CONF_cmd.html#groups-groups",
+      "displayName": "TLS key exchange groups",
       "rdp": true,
       "jh": true,
       "aclToProxy": true,

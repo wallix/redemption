@@ -159,6 +159,7 @@ int main(int argc, char** argv)
         .max_level = profile.tls_max_level,
         .cipher_list = profile.cipher_string,
         // TODO .tls_1_3_ciphersuites
+        // TODO .key_exchange_groups
         .show_common_cipher_list = true,
     };
 

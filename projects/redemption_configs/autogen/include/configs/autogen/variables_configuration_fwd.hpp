@@ -55,6 +55,7 @@ namespace cfg
         struct tls_max_level;
         struct ssl_cipher_list;
         struct tls_1_3_ciphersuites;
+        struct tls_key_exchange_groups;
         struct show_common_cipher_list;
         struct enable_nla;
         struct disable_tsk_switch_shortcuts;
@@ -96,6 +97,7 @@ namespace cfg
         struct tls_max_level;
         struct cipher_string;
         struct tls_1_3_ciphersuites;
+        struct tls_key_exchange_groups;
         struct show_common_cipher_list;
         struct persistent_disk_bitmap_cache;
         struct cache_waiting_list;

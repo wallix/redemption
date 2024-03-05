@@ -89,6 +89,7 @@ void ProxyRecorder::front_step1(Transport & frontConn)
         frontConn.enable_server_tls("inquisition", TlsConfig{
             .cipher_list = {},
             .tls_1_3_ciphersuites = {},
+            .key_exchange_groups = {},
             .show_common_cipher_list = true,
         });
     }
