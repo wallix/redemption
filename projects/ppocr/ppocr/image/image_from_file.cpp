@@ -81,7 +81,7 @@ namespace
             throw_error(filename);
         }
 
-        if (int err = fstat(file.fd, &st)) {
+        if (fstat(file.fd, &st)) {
             throw_error(filename);
         }
 

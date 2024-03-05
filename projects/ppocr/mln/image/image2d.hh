@@ -168,8 +168,8 @@ namespace mln {
         bool check_index(ppocr::Index p) const
         {
             assert(is_valid());
-            return 0 <= p.y() && p.y() < height()
-                && 0 <= p.x() && p.x() < width();
+            return p.y() < height()
+                && p.x() < width();
         }
 #endif
     };
