@@ -1806,6 +1806,7 @@ class Sesman():
 
             # register signal
             signal.signal(signal.SIGUSR1, self.kill_handler)
+            signal.signal(signal.SIGTERM, self.kill_handler)
             signal.signal(signal.SIGUSR2, self.check_handler)
 
             Logger().info(u"Starting Session, effective login='%s'" %
@@ -2265,6 +2266,10 @@ class Sesman():
         # launched successfully
         self.engine.stop_session(title=u"End session")
 
+        # unregister signals
+        signal.signal(signal.SIGUSR1, signal.SIG_DFL)
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        signal.signal(signal.SIGUSR2, signal.SIG_DFL)
         Logger().info(u"Stop session done.")
         if self.shared.get(u"module") == u"close":
             if close_box and self.back_selector:
@@ -2706,10 +2711,9 @@ class Sesman():
         return connectionpolicy_kv
 
     def kill_handler(self, signum, frame):
-        # Logger().info("KILL_HANDLER = %s" % signum)
-        if signum == signal.SIGUSR1:
+        # Logger().info(f"KILL_HANDLER = {signum}")
+        if signum in (signal.SIGUSR1, signal.SIGTERM):
             self.kill()
-            raise BastionSignal()
 
     def check_handler(self, signum, frame):
         # Logger().info("CHECK_HANDLER = %s" % signum)
@@ -2721,6 +2725,10 @@ class Sesman():
         try:
             Logger().info(u"Closing a RDP/VNC connection")
             self.proxy_conx.close()
+            self.engine.set_session_status(
+                result=False,
+                diag="Interrupt: Process terminated"
+            )
         except Exception:
             pass
 
