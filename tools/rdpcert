@@ -69,13 +69,13 @@ if ($key){
         if ($keyfile){
             print STDERR "Setting RDP proxy server user defined private key\n";
             -e $keyfile or die "User private key file not found\n";
-            `openssl pkey -in $keyfile -out $pkey -des3 -passout "pass:$pass"`;
+            `openssl pkey -in $keyfile -out $pkey -aes256 -passout "pass:$pass"`;
             die "rdpproxy:failed to set ReDemPtion server private key\n" if $?;
         }
         else {
             my $gen_opts = $eckey ? $ec_gen_opts : $rsa_gen_opts;
             print STDERR "Setting new RDP proxy server private key\n";
-            `openssl genpkey -out $pkey -des3 -pass "pass:$pass" $gen_opts`;
+            `openssl genpkey -out $pkey -aes256 -pass "pass:$pass" $gen_opts`;
              die "rdpproxy:failed to create ReDemPtion server private key" if $?;
         }
         $x509 = 1; # force regeneration of key
