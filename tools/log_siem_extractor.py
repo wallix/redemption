@@ -335,6 +335,28 @@ def print_log_siem_constants(proxy_logs: Iterable[str],
     show('SIEM_FILTERS_VNC_SESSION', vnc_logs)
 
 
+def check_docs(xml_doc_files: Iterable[str],
+               doc_checker: DocSiemChecker,
+               no_check_missing_or_unknown: bool,
+               no_check_quote: bool,
+               color: bool) -> bool:
+    color_file = color_builder('33') if color else identity
+    insert_nl = False
+    for docfile in xml_doc_files:
+        doc_siems = extract_doc_siem(docfile)
+        err1 = '' if no_check_missing_or_unknown \
+            else doc_checker.check_missing_or_unknown(*doc_siems)
+        err2 = '' if no_check_quote \
+            else doc_checker.check_bad_quote(*doc_siems)
+        if err1 or err2:
+            nl = '\n\n' if insert_nl else ''
+            sep = '\n\n' if err1 and err2 else ''
+            print(f'{nl}{color_file(docfile)}:\n\n{err1}{sep}{err2}')
+            insert_nl = True
+
+    return not insert_nl
+
+
 if __name__ == '__main__':
     import argparse
 
@@ -358,20 +380,11 @@ if __name__ == '__main__':
         has_action = True
 
     if args.check_doc:
-        color_file = color_builder('33') if args.color else identity
-        doc_checker = DocSiemChecker(*siems, args.color)
-        insert_nl = False
-        for docfile in args.check_doc:
-            doc_siems = extract_doc_siem(docfile)
-            err1 = '' if args.no_check_missing_or_unknown \
-                else doc_checker.check_missing_or_unknown(*doc_siems)
-            err2 = '' if args.no_check_quote \
-                else doc_checker.check_bad_quote(*doc_siems)
-            if err1 or err2:
-                nl = '\n\n' if insert_nl else ''
-                sep = '\n\n' if err1 and err2 else ''
-                print(f'{nl}{color_file(docfile)}:\n\n{err1}{sep}{err2}')
-                insert_nl = True
+        check_docs(args.check_doc,
+                   DocSiemChecker(*siems, args.color),
+                   no_check_missing_or_unknown=args.no_check_missing_or_unknown,
+                   no_check_quote=args.no_check_quote,
+                   color=args.color)
         has_action = True
 
     if not has_action or args.python_ids:
