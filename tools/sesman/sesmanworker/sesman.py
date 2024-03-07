@@ -1940,6 +1940,7 @@ class Sesman():
 
             # register signal
             signal.signal(signal.SIGUSR1, self.kill_handler)
+            signal.signal(signal.SIGTERM, self.kill_handler)
             signal.signal(signal.SIGUSR2, self.check_handler)
 
             Logger().info(u"Starting Session, effective login='%s'" %
@@ -2394,7 +2395,11 @@ class Sesman():
         Logger().info(u"Stop session ...")
         # Notify WabEngine to stop connection if it has been
         # launched successfully
-        self.engine.stop_session(title=u"End session")
+        self.engine.stop_session(title="End session")
+        # unregister signals
+        signal.signal(signal.SIGUSR1, signal.SIG_DFL)
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        signal.signal(signal.SIGUSR2, signal.SIG_DFL)
         if self.tun_process:
             self.tun_process.stop()
             self.tun_process = None
@@ -2859,8 +2864,8 @@ class Sesman():
             for section_name, value_infos in conn_spec.items())
 
     def kill_handler(self, signum, frame):
-        # Logger().info("KILL_HANDLER = %s" % signum)
-        if signum == signal.SIGUSR1:
+        # Logger().info(f"KILL_HANDLER = {signum}")
+        if signum in (signal.SIGUSR1, signal.SIGTERM):
             self.kill()
             raise BastionSignal()
 
