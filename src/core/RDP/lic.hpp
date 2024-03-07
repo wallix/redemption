@@ -39,6 +39,8 @@
 #include "core/error.hpp"
 #include "system/ssl_rc4.hpp"
 
+#include <vector>
+
 
 // Sent by server:
 // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
