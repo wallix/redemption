@@ -2867,7 +2867,6 @@ class Sesman():
         # Logger().info(f"KILL_HANDLER = {signum}")
         if signum in (signal.SIGUSR1, signal.SIGTERM):
             self.kill()
-            raise BastionSignal()
 
     def check_handler(self, signum, frame):
         # Logger().info("CHECK_HANDLER = %s" % signum)
@@ -2879,6 +2878,10 @@ class Sesman():
         try:
             Logger().info(u"Closing a RDP/VNC connection")
             self.proxy_conx.close()
+            self.engine.set_session_status(
+                result=False,
+                diag="Interrupt: Process terminated"
+            )
         except Exception:
             pass
 
