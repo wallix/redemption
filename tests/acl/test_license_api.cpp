@@ -262,12 +262,34 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
         do_work = false;
 
         try {
+            std::array<uint8_t, LIC::LICENSE_HWID_SIZE> test_hwid = {
+                '0', '1', '2', '3', '4', '5', '6', '7',
+                '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+            };
+
+
 #ifdef GENERATE_TESTING_DATA
             class CaptureLicenseStore : public LicenseApi
             {
             public:
+                bytes_view get_license_v1(char const* client_name, char const* target_ip, uint32_t version, char const* scope,
+                    char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE>& hwid, writable_bytes_view out,
+                    bool enable_log) override
+                {
+                    (void)client_name;
+                    (void)target_ip;
+                    (void)version;
+                    (void)scope;
+                    (void)company_name;
+                    (void)product_id;
+                    (void)hwid;
+                    (void)enable_log;
+
+                    return bytes_view(out.data(), 0);
+                }
+
                 // The functions shall return empty bytes_view to indicate the error.
-                bytes_view get_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, writable_bytes_view out, bool enable_log) override
+                bytes_view get_license_v0(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, writable_bytes_view out, bool enable_log) override
                 {
                     (void)client_name;
                     (void)version;
@@ -280,12 +302,16 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                     return bytes_view { out.data(), 0 };
                 }
 
-                bool put_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, bytes_view in, bool enable_log) override
+                bool put_license(char const* client_name, char const* target_ip, uint32_t version, char const* scope, char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE> const& hwid, bytes_view in, bool enable_log) override
                 {
                     (void)enable_log;
 
                     LOG(LOG_INFO, "/*CaptureLicenseStore */ const char license_client_name[] =");
                     hexdump_c(client_name, ::strlen(client_name));
+                    LOG(LOG_INFO, "/*CaptureLicenseStore */ ;");
+
+                    LOG(LOG_INFO, "/*CaptureLicenseStore */ const char target_ip[] =");
+                    hexdump_c(target_ip, ::strlen(target_ip));
                     LOG(LOG_INFO, "/*CaptureLicenseStore */ ;");
 
                     LOG(LOG_INFO, "/*CaptureLicenseStore */ uint32_t license_version = %u", version);
@@ -303,6 +329,10 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                     hexdump_c(product_id, ::strlen(product_id));
                     LOG(LOG_INFO, "/*CaptureLicenseStore */ ;");
 
+                    LOG(LOG_INFO, "/*CaptureLicenseStore */ const uint8_t hwid[%zu] = {", hwid.size());
+                    hexdump_d(hwid);
+                    LOG(LOG_INFO, "/*CaptureLicenseStore */ };");
+
                     LOG(LOG_INFO, "/*CaptureLicenseStore */ const uint8_t license_data[%zu] = {", in.size());
                     hexdump_d(in);
                     LOG(LOG_INFO, "/*CaptureLicenseStore */ };");
@@ -314,16 +344,33 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             class CompareLicenseStore : public LicenseApi
             {
             public:
-                CompareLicenseStore(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, bytes_view license_data) :
+                CompareLicenseStore(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, bytes_view hwid, bytes_view license_data) :
                     expected_client_name(client_name),
                     expected_version(version),
                     expected_scope(scope),
                     expected_company_name(company_name),
                     expected_product_id(product_id),
+                    expected_hwid(hwid),
                     expected_license_data(license_data) {}
 
+                bytes_view get_license_v1(char const* client_name, char const* target_ip, uint32_t version, char const* scope,
+                    char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE>& hwid, writable_bytes_view out,
+                    bool enable_log) override
+                {
+                    (void)client_name;
+                    (void)target_ip;
+                    (void)version;
+                    (void)scope;
+                    (void)company_name;
+                    (void)product_id;
+                    (void)hwid;
+                    (void)enable_log;
+
+                    return bytes_view(out.data(), 0);
+                }
+
                 // The functions shall return empty bytes_view to indicate the error.
-                bytes_view get_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, writable_bytes_view out, bool enable_log) override
+                bytes_view get_license_v0(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, writable_bytes_view out, bool enable_log) override
                 {
                     (void)client_name;
                     (void)version;
@@ -336,15 +383,20 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                     return bytes_view { out.data(), 0 };
                 }
 
-                bool put_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, bytes_view in, bool enable_log) override
+                bool put_license(char const* client_name, char const* target_ip, uint32_t version, char const* scope, char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE> const& hwid, bytes_view in, bool enable_log) override
                 {
                     (void)enable_log;
+                    (void)target_ip;
 
                     RED_CHECK_EQ(client_name,  this->expected_client_name);
                     RED_CHECK_EQ(version,      this->expected_version);
                     RED_CHECK_EQ(scope,        this->expected_scope);
                     RED_CHECK_EQ(company_name, this->expected_company_name);
                     RED_CHECK_EQ(product_id,   this->expected_product_id);
+
+                    RED_REQUIRE_EQ(hwid.size(), this->expected_hwid.size());
+
+                    RED_CHECK(hwid == this->expected_hwid);
 
                     RED_REQUIRE_EQ(in.size(), this->expected_license_data.size());
 
@@ -359,9 +411,10 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                 std::string_view expected_scope;
                 std::string_view expected_company_name;
                 std::string_view expected_product_id;
+                bytes_view       expected_hwid;
                 bytes_view       expected_license_data;
             } license_store(license_client_name, license_version, license_scope, license_company_name,
-                  license_product_id, bytes_view(license_data, sizeof(license_data)));
+                  license_product_id, test_hwid, bytes_view(license_data, sizeof(license_data)));
 #endif
 
 #ifdef GENERATE_TESTING_DATA
@@ -414,16 +467,39 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             class ReplayLicenseStore : public LicenseApi
             {
             public:
-                ReplayLicenseStore(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, bytes_view license_data) :
+                ReplayLicenseStore(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, bytes_view hwid, bytes_view license_data) :
                     expected_client_name(client_name),
                     expected_version(version),
                     expected_scope(scope),
                     expected_company_name(company_name),
                     expected_product_id(product_id),
+                    expected_hwid(hwid),
                     expected_license_data(license_data) {}
 
+                bytes_view get_license_v1(char const* client_name, char const* target_ip, uint32_t version, char const* scope, char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE>& hwid, writable_bytes_view out, bool enable_log) override
+                {
+                    (void)enable_log;
+                    (void)target_ip;
+
+                    RED_CHECK_EQ(client_name,  this->expected_client_name);
+                    RED_CHECK_EQ(version,      this->expected_version);
+                    RED_CHECK_EQ(scope,        this->expected_scope);
+                    RED_CHECK_EQ(company_name, this->expected_company_name);
+                    RED_CHECK_EQ(product_id,   this->expected_product_id);
+
+                    ::memcpy(hwid.data(), this->expected_hwid.data(), hwid.size());
+
+                    RED_REQUIRE_GE(out.size(), this->expected_license_data.size());
+
+                    size_t const effective_license_size = std::min(out.size(), this->expected_license_data.size());
+
+                    ::memcpy(out.data(), this->expected_license_data.data(), effective_license_size);
+
+                    return bytes_view { out.data(), effective_license_size };
+                }
+
                 // The functions shall return empty bytes_view to indicate the error.
-                bytes_view get_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, writable_bytes_view out, bool enable_log) override
+                bytes_view get_license_v0(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, writable_bytes_view out, bool enable_log) override
                 {
                     (void)enable_log;
 
@@ -442,10 +518,12 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
                     return bytes_view { out.data(), effective_license_size };
                 }
 
-                bool put_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, bytes_view in, bool enable_log) override
+                bool put_license(char const* client_name, char const* target_ip, uint32_t version, char const* scope, char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE> const& hwid, bytes_view in, bool enable_log) override
                 {
                     (void)enable_log;
+                    (void)hwid;
                     (void)in;
+                    (void)target_ip;
 
                     RED_CHECK_EQ(client_name,  this->expected_client_name);
                     RED_CHECK_EQ(version,      this->expected_version);
@@ -462,6 +540,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
                 std::string_view expected_scope;
                 std::string_view expected_company_name;
                 std::string_view expected_product_id;
+                bytes_view       expected_hwid;
                 bytes_view       expected_license_data;
             };
 
@@ -471,6 +550,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
                 license_scope,
                 license_company_name,
                 license_product_id,
+                make_array_view(license_hwdi),
                 make_array_view(license_data)
             );
 

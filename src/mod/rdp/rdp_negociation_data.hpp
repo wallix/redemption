@@ -51,9 +51,12 @@ struct RdpLogonInfo
     [[nodiscard]] std::string const& domain() const noexcept { return this->_domain; }
     [[nodiscard]] static_string<HOST_NAME_MAX> const& hostname() const noexcept { return this->_hostname; }
 
+    [[nodiscard]] bool client_name_is_hidden() const noexcept { return this->hide_client_name; }
+
 private:
+    bool const hide_client_name;
+
     std::string _username;
     std::string _domain;
     static_string<HOST_NAME_MAX> _hostname;
 };
-

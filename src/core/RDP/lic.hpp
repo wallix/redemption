@@ -30,6 +30,7 @@
 
 #include <cinttypes>
 
+#include <vector>
 
 #include "utils/log.hpp"
 #include "utils/crypto/ssl_lib.hpp"
