@@ -26,7 +26,6 @@
 #include "core/log_id.hpp"
 #include "core/app_path.hpp"
 #include "core/RDP/autoreconnect.hpp"
-#include "core/RDP/lic.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "core/RDP/gcc/userdata/mcs_channels.hpp"
 #include "core/RDP/gcc/userdata/sc_core.hpp"
@@ -253,9 +252,10 @@ RdpNegociation::RdpNegociation(
     , has_managed_drive(has_managed_drive)
     , convert_remoteapp_to_desktop(convert_remoteapp_to_desktop)
     , send_channel_index(0)
-    , license_client_name(info.hostname)
+    , real_client_name(info.hostname)
     , license_store(license_store)
     , use_license_store(mod_rdp_params.use_license_store)
+    , target_ip(mod_rdp_params.target_ip)
     , build_number(info.build)
     , forward_build_number(mod_rdp_params.forward_client_build_number)
 {
@@ -1368,8 +1368,25 @@ bool RdpNegociation::get_license(InStream & stream)
                     ::UTF16toUTF8_buf(SvrLicReq.ProductInfo.ProductId, writable_bytes_view{ProductIdU8, sizeof(ProductIdU8)});
 
                     for (uint32_t i = 0; i < SvrLicReq.ScopeList.ScopeCount; ++i) {
-                        bytes_view out = this->license_store.get_license(
-                                this->license_client_name.c_str(),
+                        bytes_view out = this->license_store.get_license_v1(
+                                logon_info.client_name_is_hidden() ? "localhost" : logon_info.hostname().c_str(),
+                                this->target_ip.c_str(),
+                                SvrLicReq.ProductInfo.dwVersion,
+                                ::char_ptr_cast(SvrLicReq.ScopeList.ScopeArray[i].blobData.data()),
+                                ::char_ptr_cast(CompanyNameU8),
+                                ::char_ptr_cast(ProductIdU8),
+                                this->hwid,
+                                writable_bytes_view(this->lic_layer_license_data, sizeof(lic_layer_license_data)),
+                                bool(this->verbose & RDPVerbose::license)
+                            );
+                        if (not out.empty())
+                        {
+                            this->has_hwid = true;
+                        }
+                        else
+                        {
+                            out = this->license_store.get_license_v0(
+                                this->real_client_name.c_str(),
                                 SvrLicReq.ProductInfo.dwVersion,
                                 ::char_ptr_cast(SvrLicReq.ScopeList.ScopeArray[i].blobData.data()),
                                 ::char_ptr_cast(CompanyNameU8),
@@ -1377,8 +1394,17 @@ bool RdpNegociation::get_license(InStream & stream)
                                 writable_bytes_view(this->lic_layer_license_data, sizeof(lic_layer_license_data)),
                                 bool(this->verbose & RDPVerbose::license)
                             );
+                            if (not out.empty())
+                            {
+                                this->get_hwid_by_client_name(this->hwid, this->logon_info.hostname());
+                                this->has_hwid = true;
+                            }
+                        }
+
                         if (not out.empty())
                         {
+                            assert(this->has_hwid);
+
                             this->lic_layer_license_size = out.size();
 
                             LOG(LOG_INFO, "RdpNegociation: LicenseSize=%zu", this->lic_layer_license_size);
@@ -1394,41 +1420,35 @@ bool RdpNegociation::get_license(InStream & stream)
                 [this, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
                     if (this->lic_layer_license_size > 0) {
                         LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: Client License Info");
-                        uint8_t hwid[LIC::LICENSE_HWID_SIZE];
-                        OutStream(hwid).out_uint32_le(2);
-
-                        auto const& hostname = this->logon_info.hostname();
-                        std::size_t const pktlen = LIC::LICENSE_HWID_SIZE - 4;
-                        std::size_t const slen = std::min(pktlen, hostname.size());
-                        memcpy(hwid + 4, hostname.data(), slen);
-                        memset(hwid + 4, 0, pktlen - slen);
 
                         /* Generate a signature for the HWID buffer */
                         uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
 
                         uint8_t lenhdr[4];
-                        OutStream(lenhdr).out_uint32_le(sizeof(hwid));
+                        OutStream(lenhdr).out_uint32_le(this->hwid.size());
 
                         Sign sign(make_array_view(this->lic_layer_license_sign_key));
                         sign.update(make_array_view(lenhdr));
-                        sign.update(make_array_view(hwid));
+                        sign.update(make_array_view(this->hwid));
 
                         static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE));
                         sign.final(make_writable_sized_array_view(signature));
 
                         /* Now encrypt the HWID */
+                        uint8_t crypt_hwid[LIC::LICENSE_HWID_SIZE];
+                        memcpy(crypt_hwid, this->hwid.data(), LIC::LICENSE_HWID_SIZE);
 
                         SslRC4 rc4;
                         rc4.set_key(make_array_view(this->lic_layer_license_key));
 
                         // in, out
-                        rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
+                        rc4.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
 
                         LIC::ClientLicenseInfo_Send(
                             lic_data, this->negociation_result.use_rdp5 ? 3 : 2,
                             this->lic_layer_license_size,
                             this->lic_layer_license_data,
-                            hwid, signature
+                            crypt_hwid, signature
                         );
                     }
                     else {
@@ -1454,7 +1474,6 @@ bool RdpNegociation::get_license(InStream & stream)
 
                 uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
                 uint8_t decrypt_token[LIC::LICENSE_TOKEN_SIZE];
-                uint8_t hwid[LIC::LICENSE_HWID_SIZE];
                 uint8_t crypt_hwid[LIC::LICENSE_HWID_SIZE];
                 uint8_t out_sig[LIC::LICENSE_SIGNATURE_SIZE];
 
@@ -1466,18 +1485,15 @@ bool RdpNegociation::get_license(InStream & stream)
                 // size, in, out
                 rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
 
-                /* Generate a signature for a buffer of token and HWID */
-                OutStream(hwid).out_uint32_le(2);
+                if (!this->has_hwid)
+                {
+                    this->get_hwid_by_client_name(this->hwid, this->logon_info.hostname());
+                    this->has_hwid = true;
+                }
 
-                auto const& hostname = this->logon_info.hostname();
-                std::size_t const pktlen = LIC::LICENSE_HWID_SIZE - 4;
-                std::size_t const slen = std::min(pktlen, hostname.size());
-                memcpy(hwid + 4, hostname.data(), slen);
-                memset(hwid + 4, 0, pktlen - slen);
-
-                uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
+                 uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
                 memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
-                memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
+                memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, this->hwid.data(), this->hwid.size());
 
                 uint8_t lenhdr[4];
                 OutStream(lenhdr).out_uint32_le(sizeof(sealed_buffer));
@@ -1490,7 +1506,7 @@ bool RdpNegociation::get_license(InStream & stream)
                 sign.final(make_writable_sized_array_view(out_sig));
 
                 /* Now encrypt the HWID */
-                memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
+                memcpy(crypt_hwid, this->hwid.data(), this->hwid.size());
                 SslRC4 rc4_hwid;
                 rc4_hwid.set_key(make_array_view(this->lic_layer_license_key));
                 // size, in, out
@@ -1533,11 +1549,13 @@ bool RdpNegociation::get_license(InStream & stream)
                     ::UTF16toUTF8_buf(bytes_view(lic.licenseInfo.pbProductId, lic.licenseInfo.cbProductId), writable_bytes_view{ProductIdU8, sizeof(ProductIdU8)});
 
                     license_saved = this->license_store.put_license(
-                            this->license_client_name.c_str(),
+                            logon_info.client_name_is_hidden() ? "localhost" : logon_info.hostname().c_str(),
+                            this->target_ip.c_str(),
                             lic.licenseInfo.dwVersion,
                             ::char_ptr_cast(lic.licenseInfo.pbScope),
                             ::char_ptr_cast(CompanyNameU8),
                             ::char_ptr_cast(ProductIdU8),
+                            this->hwid,
                             bytes_view(lic.licenseInfo.pbLicenseInfo, lic.licenseInfo.cbLicenseInfo),
                             bool(this->verbose & RDPVerbose::license)
                         );
@@ -1725,4 +1743,18 @@ RdpNegociationResult const& RdpNegociation::get_result() const noexcept
 {
     assert(this->state == State::TERMINATED);
     return this->negociation_result;
+}
+
+void RdpNegociation::get_hwid_by_client_name(std::array<uint8_t, LIC::LICENSE_HWID_SIZE>& hwid_out,
+    static_string<HOST_NAME_MAX> const& client_name)
+{
+    /* Generate a signature for a buffer of token and HWID */
+    OutStream os({hwid_out.data(), hwid_out.size()});
+
+    os.out_uint32_le(2);
+
+    std::size_t const pktlen = LIC::LICENSE_HWID_SIZE - 4;
+    std::size_t const slen = std::min(pktlen, client_name.size());
+    os.out_copy_bytes(client_name.data(), slen);
+    os.out_clear_bytes(pktlen - slen);
 }

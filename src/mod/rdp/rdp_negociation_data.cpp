@@ -27,7 +27,8 @@
 #include "mod/rdp/rdp_negociation_data.hpp"
 
 RdpLogonInfo::RdpLogonInfo(bounded_chars_view<0, HOST_NAME_MAX> hostname, bool hide_client_name,
-                           char const* target_user, bool split_domain) noexcept
+                           char const* target_user, bool split_domain) noexcept :
+    hide_client_name(hide_client_name)
 {
     if (hide_client_name) {
         this->_hostname.delayed_build([](auto& array) {

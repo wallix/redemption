@@ -28,6 +28,7 @@
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor_ex.hpp"
+#include "core/RDP/lic.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/nego.hpp"
 #include "core/channel_names.hpp"
@@ -187,9 +188,11 @@ private:
 
     uint8_t client_random[SEC_RANDOM_SIZE] = { 0 };
 
-    std::string license_client_name;
+    std::string const real_client_name;
     LicenseApi& license_store;
     const bool use_license_store;
+
+    std::string const target_ip;
 
     /// Client build number.
     /// Represents the 'clientBuild' field of Client Core Data (TS_UD_CS_CORE)
@@ -201,6 +204,9 @@ private:
     /// Indicates whether to forward the client build number to the server.
     /// If set to 'false' the default (static) build number will be used.
     const bool forward_build_number;
+
+    std::array<uint8_t, LIC::LICENSE_HWID_SIZE> hwid;
+    bool                                        has_hwid = false;
 
 public:
     RdpNegociation(
@@ -250,4 +256,6 @@ private:
     template<class... WriterData>
     void send_data_request(uint16_t channelId, WriterData... writer_data);
     void send_client_info_pdu();
+
+    static void get_hwid_by_client_name(std::array<uint8_t, LIC::LICENSE_HWID_SIZE>& hwid_out, static_string<HOST_NAME_MAX> const& client_name);
 };

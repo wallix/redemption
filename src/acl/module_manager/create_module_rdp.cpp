@@ -571,6 +571,7 @@ ModPack create_mod_rdp(
 
     mod_rdp_params.large_pointer_support               = ini.get<cfg::globals::large_pointer_support>();
     mod_rdp_params.load_balance_info                   = ini.get<cfg::mod_rdp::load_balance_info>().c_str();
+    mod_rdp_params.target_ip                           = ini.get<cfg::context::ip_target>().c_str();
 
     // ======================= File System Params ===================
     {

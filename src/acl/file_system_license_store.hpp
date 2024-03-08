@@ -27,22 +27,73 @@
 
 #include <algorithm>
 #include <string>
+#include <cstring>
 
 #include <sys/stat.h>
 
 class FileSystemLicenseStore : public LicenseApi
 {
 public:
-    FileSystemLicenseStore(std::string license_path_) : license_path(std::move(license_path_)) {}
+    FileSystemLicenseStore(std::string license_path_)
+    : license_path(std::move(license_path_))
+    {}
 
     // The functions shall return empty bytes_view to indicate the error.
-    bytes_view get_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, writable_bytes_view out, bool enable_log) override
+    bytes_view get_license_v1(char const* client_name, char const* target_ip, uint32_t version, char const* scope, char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE>& hwid, writable_bytes_view out, bool enable_log) override
+    {
+        char license_index[2048] = {};
+        ::snprintf(license_index, sizeof(license_index) - 1, "%s_0x%08X_%s_%s_%s", target_ip, version, scope, company_name, product_id);
+        license_index[sizeof(license_index) - 1] = '\0';
+        std::replace(std::begin(license_index), std::end(license_index), ' ', '-');
+        LOG_IF(enable_log, LOG_INFO, "FileSystemLicenseStore::get_license_v1(): LicenseIndex=\"%s\"", license_index);
+
+        char filename[4096] = {};
+        ::snprintf(filename, sizeof(filename) - 1, "%s/%s/%s",
+            license_path.c_str(), client_name, license_index);
+        filename[sizeof(filename) - 1] = '\0';
+
+        if (unique_fd ufd{::open(filename, O_RDONLY)}) {
+            size_t number_of_bytes_read = ::read(ufd.fd(), hwid.data(), hwid.size());
+            if (number_of_bytes_read != sizeof(hwid)) {
+                LOG(LOG_ERR, "FileSystemLicenseStore::get_license_v1: license file truncated (1) : expected %zu, got %zu", sizeof(hwid), number_of_bytes_read);
+            }
+            else {
+                uint32_t license_size = 0;
+                number_of_bytes_read = ::read(ufd.fd(), &license_size, sizeof(license_size));
+                if (number_of_bytes_read != sizeof(license_size)) {
+                    LOG(LOG_ERR, "FileSystemLicenseStore::get_license_v1: license file truncated (2) : expected %zu, got %zu", sizeof(license_size), number_of_bytes_read);
+                }
+                else {
+                    if (out.size() >= license_size)
+                    {
+                        number_of_bytes_read = ::read(ufd.fd(), out.data(), license_size);
+                        if (number_of_bytes_read != license_size) {
+                            LOG(LOG_ERR, "FileSystemLicenseStore::get_license_v1: license file truncated (3) : expected %u, got %zu", license_size, number_of_bytes_read);
+                        }
+                        else {
+                            LOG(LOG_INFO, "FileSystemLicenseStore::get_license_v1: LicenseSize=%u", license_size);
+
+                            return bytes_view { out.data(), license_size };
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            LOG(LOG_WARNING, "FileSystemLicenseStore::get_license_v1: Failed to open license file! Path=\"%s\" errno=%s(%d)", filename, strerror(errno), errno);
+        }
+
+        return bytes_view { out.data(), 0 };
+    }
+
+    // The functions shall return empty bytes_view to indicate the error.
+    bytes_view get_license_v0(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, writable_bytes_view out, bool enable_log) override
     {
         char license_index[2048] = {};
         ::snprintf(license_index, sizeof(license_index) - 1, "0x%08X_%s_%s_%s", version, scope, company_name, product_id);
         license_index[sizeof(license_index) - 1] = '\0';
         std::replace(std::begin(license_index), std::end(license_index), ' ', '-');
-        LOG_IF(enable_log, LOG_INFO, "FileSystemLicenseStore::get_license(): LicenseIndex=\"%s\"", license_index);
+        LOG_IF(enable_log, LOG_INFO, "FileSystemLicenseStore::get_license_v0(): LicenseIndex=\"%s\"", license_index);
 
         char filename[4096] = {};
         ::snprintf(filename, sizeof(filename) - 1, "%s/%s/%s",
@@ -53,17 +104,17 @@ public:
             uint32_t license_size = 0;
             size_t number_of_bytes_read = ::read(ufd.fd(), &license_size, sizeof(license_size));
             if (number_of_bytes_read != sizeof(license_size)) {
-                LOG(LOG_ERR, "FileSystemLicenseStore::get_license: license file truncated (1) : expected %zu, got %zu", sizeof(license_size), number_of_bytes_read);
+                LOG(LOG_ERR, "FileSystemLicenseStore::get_license_v0: license file truncated (1) : expected %zu, got %zu", sizeof(license_size), number_of_bytes_read);
             }
             else {
                 if (out.size() >= license_size)
                 {
                     number_of_bytes_read = ::read(ufd.fd(), out.data(), license_size);
                     if (number_of_bytes_read != license_size) {
-                        LOG(LOG_ERR, "FileSystemLicenseStore::get_license: license file truncated (2) : expected %u, got %zu", license_size, number_of_bytes_read);
+                        LOG(LOG_ERR, "FileSystemLicenseStore::get_license_v0: license file truncated (2) : expected %u, got %zu", license_size, number_of_bytes_read);
                     }
                     else {
-                        LOG(LOG_INFO, "FileSystemLicenseStore::get_license: LicenseSize=%u", license_size);
+                        LOG(LOG_INFO, "FileSystemLicenseStore::get_license_v0: LicenseSize=%u", license_size);
 
                         return bytes_view { out.data(), license_size };
                     }
@@ -71,16 +122,16 @@ public:
             }
         }
         else {
-            LOG(LOG_WARNING, "FileSystemLicenseStore::get_license: Failed to open license file! Path=\"%s\" errno=%s(%d)", filename, strerror(errno), errno);
+            LOG(LOG_WARNING, "FileSystemLicenseStore::get_license_v0: Failed to open license file! Path=\"%s\" errno=%s(%d)", filename, strerror(errno), errno);
         }
 
         return bytes_view { out.data(), 0 };
     }
 
-    bool put_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, bytes_view in, bool enable_log) override
+    bool put_license(char const* client_name, char const* target_ip, uint32_t version, char const* scope, char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE> const& hwid, bytes_view in, bool enable_log) override
     {
         char license_index[2048] = {};
-        ::snprintf(license_index, sizeof(license_index) - 1, "0x%08X_%s_%s_%s", version, scope, company_name, product_id);
+        ::snprintf(license_index, sizeof(license_index) - 1, "%s_0x%08X_%s_%s_%s", target_ip, version, scope, company_name, product_id);
         license_index[sizeof(license_index) - 1] = '\0';
         std::replace_if(std::begin(license_index), std::end(license_index),
                         [](unsigned char c) { return (' ' == c); }, '-');
@@ -109,31 +160,38 @@ public:
         if (fd != -1) {
             unique_fd ufd{fd};
             uint32_t const license_size = in.size();
-            if (sizeof(license_size) == ::write(ufd.fd(), &license_size, sizeof(license_size))) {
-                if (license_size == ::write(ufd.fd(), in.data(), in.size())) {
-                    char filename[6145] = {};
-                    ::snprintf(filename, sizeof(filename) - 1, "%s/%s", license_dir_path, license_index);
-                    filename[sizeof(filename) - 1] = '\0';
+            if (hwid.size() == ::write(ufd.fd(), hwid.data(), hwid.size())) {
+                if (sizeof(license_size) == ::write(ufd.fd(), &license_size, sizeof(license_size))) {
+                    if (license_size == ::write(ufd.fd(), in.data(), in.size())) {
+                        char filename[6145] = {};
+                        ::snprintf(filename, sizeof(filename) - 1, "%s/%s", license_dir_path, license_index);
+                        filename[sizeof(filename) - 1] = '\0';
 
-                    if (::rename(filename_temporary, filename) == 0) {
-                        return true;
+                        if (::rename(filename_temporary, filename) == 0) {
+                            return true;
+                        }
+
+                        LOG( LOG_ERR
+                            , "FileSystemLicenseStore::put_license: failed to rename the (temporary) license file! "
+                                "temporary_filename=\"%s\" filename=\"%s\" errno=%s(%d)"
+                            , filename_temporary, filename, strerror(errno), errno);
+                        ::unlink(filename_temporary);
                     }
-
-                    LOG( LOG_ERR
-                        , "FileSystemLicenseStore::put_license: failed to rename the (temporary) license file! "
-                            "temporary_filename=\"%s\" filename=\"%s\" errno=%s(%d)"
-                        , filename_temporary, filename, strerror(errno), errno);
-                    ::unlink(filename_temporary);
+                    else {
+                        LOG( LOG_ERR
+                           , "FileSystemLicenseStore::put_license: Failed to write (temporary) license file (1)! filename=\"%s\" errno=%s(%d)"
+                           , filename_temporary, strerror(errno), errno);
+                    }
                 }
                 else {
                     LOG( LOG_ERR
-                       , "FileSystemLicenseStore::put_license: Failed to write (temporary) license file (1)! filename=\"%s\" errno=%s(%d)"
+                       , "FileSystemLicenseStore::put_license: Failed to write (temporary) license file (2)! filename=\"%s\" errno=%s(%d)"
                        , filename_temporary, strerror(errno), errno);
                 }
             }
             else {
                 LOG( LOG_ERR
-                   , "FileSystemLicenseStore::put_license: Failed to write (temporary) license file (2)! filename=\"%s\" errno=%s(%d)"
+                   , "FileSystemLicenseStore::put_license: Failed to write (temporary) license file (3)! filename=\"%s\" errno=%s(%d)"
                    , filename_temporary, strerror(errno), errno);
             }
         }
