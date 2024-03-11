@@ -25,7 +25,7 @@
 #include "utils/sugar/zstring_view.hpp"
 
 
-enum class LogCategoryId : uint16_t
+enum class LogCategoryId : uint8_t
 {
     None,
     Clipboard,
