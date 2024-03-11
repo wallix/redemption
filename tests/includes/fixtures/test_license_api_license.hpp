@@ -1,7 +1,7 @@
 const char license_client_name[] =
 /* 0000 */ "\x43\x4c\x54\x30\x32"                                             // CLT02
 ;
-uint32_t license_version = 393218
+constexpr uint32_t license_version = 393218
 ;
 const char license_scope[] =
 /* 0000 */ "\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74\x2e\x63\x6f\x6d"             // microsoft.com

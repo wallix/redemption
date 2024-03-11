@@ -47,6 +47,15 @@
 // include "system/linux/system/tls_context.hpp"
 // include "transport/socket_transport.hpp"
 
+#ifndef GENERATE_TESTING_DATA
+#   include "fixtures/test_license_api_wel_1.hpp"
+#   include "fixtures/test_license_api_wel_2.hpp"
+#   include "fixtures/test_license_api_woel_1.hpp"
+#   include "fixtures/test_license_api_woel_2.hpp"
+#   include "fixtures/test_license_api_license.hpp"
+#endif
+
+
 using namespace std::chrono_literals;
 
 namespace
@@ -251,13 +260,6 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
     bool already_redirected = false;
 
-#ifndef GENERATE_TESTING_DATA
-    // Comment the code block below to generate testing data.
-    #include "fixtures/test_license_api_woel_1.hpp"
-    #include "fixtures/test_license_api_woel_2.hpp"
-    #include "fixtures/test_license_api_license.hpp"
-#endif
-
     for (bool do_work = true; do_work; ) {
         do_work = false;
 
@@ -452,13 +454,6 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
     LicenseTestContext ctx;
 
     bool already_redirected = false;
-
-#ifndef GENERATE_TESTING_DATA
-    // Comment the code block below to generate testing data.
-    #include "fixtures/test_license_api_wel_1.hpp"
-    #include "fixtures/test_license_api_wel_2.hpp"
-#endif
-    #include "fixtures/test_license_api_license.hpp"
 
     for (bool do_work = true; do_work; ) {
         do_work = false;
