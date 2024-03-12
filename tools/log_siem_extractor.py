@@ -117,9 +117,18 @@ def extract_siem_format(src_path: str, color: bool) -> tuple[LogFormatType,   # 
 
     server_cert_regex = re.compile(r'\{\n\s*LogId::(\w+),\s*("[^"]+")')
 
-    log_id_sesprobe_regex = re.compile(r'EXECUTABLE_LOG6_ID_AND_NAME\(\s*([A-Z0-9_]+)\s*\)([^)]*)')
+    log_id_sesprobe_regex = re.compile(
+        r'executable_log6_if\(\s*(?:'
+            r'"[A-Z0-9_]+"_ascii_upper,\s*LogId::([A-Z0-9_]+)'
+            '|'
+            r'EXECUTABLE_LOG6_ID_AND_NAME\(\s*([A-Z0-9_]+)\s*\)'
+        r')([^)]*)')
     kv_sesprobe_regex = re.compile(r'"([^"]+)"()')  # capture an empty value
-    sesprob_process = to_process(log_id_sesprobe_regex, kv_sesprobe_regex)
+    def sesprob_process(d, text):
+        return update_dict(d,
+                           ((m.group(1) or m.group(2), m.group(3))
+                            for m in log_id_sesprobe_regex.finditer(text)),
+                           kv_sesprobe_regex)
 
     sesman_regex = re.compile(r'self\.rdplog\.log\("([^"]+)"([^)]*)')
     kv_sesman_regex = re.compile(r',\s*(\w+)\s*=\s*(\w+|[^,)]+)')
@@ -275,14 +284,14 @@ def extract_doc_siem(docfile: str) -> tuple[LogFormatType,   # proxy
     }
 
     for m in block_regex.finditer(read_xmlfile(docfile)):
-        logkeys = set()
+        previous_logkey = None
         for m in log_regex.finditer(m.group(0)):
             note = m.group(3)
             if not note:
                 data = m.group(0)
                 cat = m.group(1)
                 t = m.group(2)
-                logkeys.add((cat, t))
+                previous_logkey = (cat, t)
                 kvs = kv_siem_cpp_regex.findall(data.replace('”', '"'))
                 datalog = d[cat][t]
                 datalog.formated_logs.add(data)
@@ -290,9 +299,8 @@ def extract_doc_siem(docfile: str) -> tuple[LogFormatType,   # proxy
             else:
                 optional_values = optional_values_regex.findall(note)
                 if optional_values:
-                    for cat, t in logkeys:
-                        d[cat][t].optional_params.update(optional_values)
-                logkeys = set()
+                    datalog = d[previous_logkey[0]][previous_logkey[1]]
+                    datalog.optional_params.update(optional_values)
 
     for logs in d.values():
         inject_optional_param_from_used_params(logs)
