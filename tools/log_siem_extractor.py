@@ -2,7 +2,7 @@
 import os
 import re
 import sys
-from typing import Iterable, Set, Dict, Tuple, TextIO, Callable, Any, NewType, TypeVar
+from typing import Iterable, TextIO, Callable, Any, NewType, TypeVar
 from itertools import chain
 from os.path import join as path_join
 
@@ -19,7 +19,10 @@ def identity(x: T) -> T:
 # {logtype: formats}
 # {'SESSION_SHARING_GUEST_DISCONNECTION': {
 #   'type="AUTHENTICATION_FAILURE" method="Kerberos"'}}
-LogFormatType = NewType('LogFormatType', Dict[str, Set[str]])
+Params = list[str]
+OriginalOrFormatedKVS = str
+DataLog = list[tuple[OriginalOrFormatedKVS, Params]]
+LogFormatType = NewType('LogFormatType', dict[str, DataLog])
 
 
 def read_pyfile(filename: str) -> str:
@@ -41,27 +44,26 @@ def color_builder(ansi_color: str) -> Callable[[Any], str]:
     return lambda x: f'\x1b[{ansi_color}m{x}\x1b[0m'
 
 
-def update_dict(d: LogFormatType,
-                logid_and_kvs: Iterable[Tuple[str, str]],
-                patt: re.Pattern,
-                colored: Callable[[str], str]) -> None:
-    cat = colored('type')
-    for logid, kvs in logid_and_kvs:
-        data = ''.join(f' {colored(k)}={v}' for k, v in patt.findall(kvs))
-        d.setdefault(logid, set()).add(f'{cat}="{logid}"{data}')
-
-
 def print_alert_on_list(msg: str, texts: Iterable[str], color: bool) -> None:
     colored = color_builder('33') if color else identity
     print(colored(msg), ':\n - ', '\n - '.join(texts), file=sys.stderr, sep='')
 
 
-
-def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # proxy
+def extract_siem_format(src_path: str, color: bool) -> tuple[LogFormatType,   # proxy
                                                              LogFormatType,   # rdp
                                                              LogFormatType]:  # vnc
     src_path = src_path.rstrip('/')
     colored = color_builder('35') if color else identity
+    cat = colored('type')
+
+    def update_dict(d: LogFormatType,
+                    logid_and_kvs: Iterable[tuple[str, str]],
+                    patt: re.Pattern) -> None:
+        for logid, kvs in logid_and_kvs:
+            kvs_list = patt.findall(kvs)
+            data = ''.join(f' {colored(k)}={v}' for k, v in kvs_list)
+            data = f'{cat}="{logid}"{data}'
+            d.setdefault(logid, []).append((data, [k for k, v in kvs_list]))
 
     proxy_logs: LogFormatType = LogFormatType({})
     vnc_logs: LogFormatType = LogFormatType({})
@@ -69,13 +71,13 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
     rdp_and_vnc_logs: LogFormatType = LogFormatType({})
     capture_logs: LogFormatType = LogFormatType({})
     other_logs: LogFormatType = LogFormatType({})
-    declared_log_ids: Set[str] = set()
+    declared_log_ids: set[str] = set()
 
     def to_process(log_extractor, kv_extractor):  # noqa: ANN001, ANN202
-        return lambda d, text: update_dict(d, log_extractor.findall(text), kv_extractor, colored)
+        return lambda d, text: update_dict(d, log_extractor.findall(text), kv_extractor)
 
     # log6 call with or without ternary
-    log6_regex = re.compile(r'\blog6\((?:(?!\bLogId:|[?]|;).)*(?:[?])?\s*\bLogId::([A-Z0-9_]+)[^,:)]*(?::\s*LogId::([A-Z0-9_]+)\s*\)?)?,\s*(\{(?:[^)]+|[)][^;])*)?', re.DOTALL)
+    log6_regex = re.compile(r'\blog6\((?:(?!\bLogId:|[?]|;).)*(?:[?])?\s*\bLogId::([A-Z0-9_]+)[^,:)]*(?::\s*LogId::([A-Z0-9_]+)\s*\)?)?,\s*(?:KVLogList)?(\{(?:[^)]+|[)][^;])*)?', re.DOTALL)
     # KVLog("key"_av, value) with value "..." | "..."_av | ...
     kv_log6_regex = re.compile(r'KVLog[{(]"([^"]+)"_av,\s*((?:(?!"_av|[)}]?,?\n).)*(?:"(?=_av))?)')
     def log6_process(d, text):  # noqa: ANN001, ANN202
@@ -84,7 +86,7 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
                                ((t[0], t[2]), (t[1], t[2])) if t[1] else ((t[0], t[2]),)
                                for t in log6_regex.findall(text)
                            ),
-                           kv_log6_regex, colored)
+                           kv_log6_regex)
 
     server_cert_regex = re.compile(r'\{\n\s*LogId::(\w+),\s*("[^"]+")')
 
@@ -101,7 +103,7 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
     def siem_cpp_process(d, text):  # noqa: ANN001, ANN202
         return update_dict(d, ((m.group(1), m.group(2)) for m in
                                log_siem_cpp_regex.finditer(text)),
-                           kv_siem_cpp_regex, colored)
+                           kv_siem_cpp_regex)
 
     log_id_enum_regex = re.compile(r'\n    f\(([A-Z0-9_]+),')
 
@@ -116,8 +118,6 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
         for text in map(cppfile_from_dirpath, filenames):
             process(d, text)
 
-    cat = colored('type')
-
     for dirpath, _, filenames_ in os.walk(src_path):
         filenames = filter(filter_valid_cpp, filenames_)
 
@@ -128,7 +128,8 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
                 sesprob_process(rdp_logs, text)
                 if filename == 'rdp_negociation.cpp' and dirpath == f'{src_path}/mod/rdp':
                     for (logid, desc) in server_cert_regex.findall(text):
-                        rdp_logs.setdefault(logid, set()).add(f'{cat}="{logid}" description={desc}')
+                        data = f'{cat}="{logid}" {colored("description")}={desc}'
+                        rdp_logs.setdefault(logid, []).append((data, ['description']))
 
         elif dirpath.startswith(f'{src_path}/mod/vnc'):
             update(vnc_logs, log6_process, filenames)
@@ -170,8 +171,8 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
 
     # merge rdp_and_vnc_logs into rdp_logs and vnc_logs
     for k, l in rdp_and_vnc_logs.items():
-        rdp_logs.setdefault(k, set()).update(l)
-        vnc_logs.setdefault(k, set()).update(l)
+        rdp_logs.setdefault(k, []).extend(l)
+        vnc_logs.setdefault(k, []).extend(l)
 
     # for d in (rdp_logs, vnc_logs, capture_logs, other_logs):
     #     for k,l in d.items():
@@ -193,18 +194,32 @@ def extract_siem_format(src_path: str, color: bool) -> Tuple[LogFormatType,   # 
             capture_logs.pop(k, None)
 
     for k, l in capture_logs.items():
-        rdp_logs.setdefault(k, set()).update(l)
-        vnc_logs.setdefault(k, set()).update(l)
+        rdp_logs.setdefault(k, []).extend(l)
+        vnc_logs.setdefault(k, []).extend(l)
+
+    # remove duplicate
+    for d in (proxy_logs, rdp_logs, vnc_logs):
+        for logid, values in d.items():
+            dejavu = set()
+            datalogs = []
+            d[logid] = datalogs
+            for datalog in values:
+                k = (logid, datalog[0])
+                if k in dejavu:
+                    continue
+                datalogs.append(datalog)
+                dejavu.add(k)
 
     return proxy_logs, rdp_logs, vnc_logs
 
 
-def extract_doc_siem(docfile: str) -> Tuple[LogFormatType,   # proxy
+def extract_doc_siem(docfile: str) -> tuple[LogFormatType,   # proxy
                                             LogFormatType,   # rdp
                                             LogFormatType]:  # vnc
     type_regex = re.compile(r'<para><literal>(rdpproxy: \[rdpproxy\]|(?:rdpproxy: )?\[(?:RDP|VNC) Session\])'
-                            r' (?:(?!type=|<).)*type=["”]([^"”]+)["”][^<]*',
+                            r' (?:(?!type=|<).)*type=["”]([^"”]+)["”]([^<]*)',
                             re.DOTALL)
+    kv_siem_cpp_regex = re.compile(r'(\w+)=["”][^"”]+["”]')
 
     proxy_logs: LogFormatType = LogFormatType({})
     rdp_logs: LogFormatType = LogFormatType({})
@@ -218,8 +233,15 @@ def extract_doc_siem(docfile: str) -> Tuple[LogFormatType,   # proxy
         '[VNC Session]': vnc_logs,
     }
 
+    dejavu = set()
+
     for m in type_regex.finditer(read_xmlfile(docfile)):
-        d[m.group(1)].setdefault(m.group(2), set()).add(m.group(0))
+        data = m.group(0)
+        if data in dejavu:
+            continue
+        kvs = kv_siem_cpp_regex.findall(m.group(0).replace('”', '"'))
+        d[m.group(1)].setdefault(m.group(2), []).append((data, kvs))
+        dejavu.add(data)
 
     return proxy_logs, rdp_logs, vnc_logs
 
@@ -241,6 +263,7 @@ class DocSiemChecker:
 
         self.colored = color_builder('31;1') if color else identity
         self.colored2 = color_builder('34;3;1') if color else identity
+        self.colored_key = color_builder('35') if color else identity
 
     def check_bad_quote(self,  # noqa: PLR6301
                         doc_proxy_logs: LogFormatType,
@@ -250,7 +273,7 @@ class DocSiemChecker:
         it = chain(doc_proxy_logs.values(),
                    doc_rdp_logs.values(),
                    doc_vnc_logs.values())
-        bad_logs = {log for log in chain.from_iterable(it) if '”' in log}
+        bad_logs = {datalog[0] for datalog in chain.from_iterable(it) if '”' in datalog[0]}
         if bad_logs:
             l = '\n - '.join(sorted(bad_logs))
             return f'Log with ” instead of ":\n - {l}'
@@ -273,15 +296,20 @@ class DocSiemChecker:
         rdp_unknown = doc_rdp_ids - self.rdp_ids
         vnc_unknown = doc_vnc_ids - self.vnc_ids
 
+        proxy_known = doc_proxy_ids & self.proxy_ids
+        rdp_known = doc_rdp_ids & self.rdp_ids
+        vnc_known = doc_vnc_ids & self.vnc_ids
+
         colored = self.colored
         colored2 = self.colored2
+        colored_key = self.colored_key
 
         msgs = []
 
         def append_missing(msg, l, d):  # noqa: ANN001, ANN202
             if l:
                 sep = "\n      "
-                formats = ''.join(f'\n - {colored(k)}:\n      {sep.join(sorted(d[k]))}'
+                formats = ''.join(f'\n - {colored(k)}:\n      {sep.join({data for data,_ in d[k]})}'
                                   for k in sorted(l))
                 msgs.append(f'{colored2(msg)}:{formats}')
 
@@ -298,6 +326,39 @@ class DocSiemChecker:
         append_unknown('Unknown log SIEM for [RDP Session]', rdp_unknown)
         append_unknown('Unknown log SIEM for [VNC Session]', vnc_unknown)
 
+        proxy_keys = ', '.join(colored_key(key) for key in (
+            'psid', 'user', 'type',
+        ))
+        session_keys = ', '.join(colored_key(key) for key in (
+            'session_id', 'client_ip', 'target_ip', 'user', 'device', 'service', 'account', 'type',
+        ))
+        def append_malformated_params(msg, ids, doc_logs, logs, keys):  # noqa: ANN001, ANN202
+            def format_line(s, keys):
+                s = ', '.join(colored_key(x) for x in s)
+                if keys:
+                    return f'{keys}, {s}' if s else keys
+                return s
+
+            def to_str(logs, keys):  # noqa: ANN001, ANN202
+                return '\n    '.join(set(format_line(datalog[1], keys) for datalog in logs))
+
+            for logid in sorted(ids):
+                a = to_str(logs[logid], keys)
+                b = to_str(doc_logs[logid], '')
+                # if a != b:
+                if sorted(a) != sorted(b):  # ignore key ordering
+                    msg2 = f'{msg} with {logid}'
+                    msgs.append(f'{colored2(msg2)}:\n  source code:\n    {a}\n  doc:\n    {b}')
+
+        append_malformated_params('SIEM Parameters differ for [rdpproxy]',
+                                  (logid for logid in proxy_known if logid not in {
+                                      'DISCONNECT', 'INCOMING_CONNECTION', 'TIME_METRICS'}),
+                                  doc_proxy_logs, self.proxy_logs, proxy_keys)
+        append_malformated_params('SIEM Parameters differ for [RDP Session]',
+                                  rdp_known, doc_rdp_logs, self.rdp_logs, session_keys)
+        append_malformated_params('SIEM Parameters differ for [VNC Session]',
+                                  vnc_known, doc_vnc_logs, self.vnc_logs, session_keys)
+
         return '\n\n'.join(msgs)
 
 
@@ -305,7 +366,7 @@ def print_siem_format(proxy_logs: LogFormatType,
                       rdp_logs: LogFormatType,
                       vnc_logs: LogFormatType) -> None:
     def show(logs, prefix):  # noqa: ANN001, ANN202
-        for log in sorted(chain.from_iterable(logs.values())):
+        for log in sorted(datalog[0] for values in logs.values() for datalog in values):
             print(prefix, log)
         print()
 
