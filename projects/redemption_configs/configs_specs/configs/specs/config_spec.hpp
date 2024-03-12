@@ -463,6 +463,8 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"use_license_store"}, desc{"Stores CALs issued by the terminal servers."}, set(true));
 
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"store_license_with_target_ip"}, desc{"Stores the IP addresses of the terminal servers that issued the CALs."}, set(false));
+
         W.member(hidden_in_gui, rdp_without_jh_connpolicy, L, type_<bool>(), names{"enable_remotefx"}, desc{"Enables support of the remoteFX codec."}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"accept_monitor_layout_change_if_capture_is_not_started"}, set(false));

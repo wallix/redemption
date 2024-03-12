@@ -975,6 +975,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "store_license_with_target_ip"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::store_license_with_target_ip&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
         else if (key == "enable_remotefx"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),

@@ -471,6 +471,10 @@ session_shadowing_support = boolean(default=True)
 #_advanced
 use_license_store = boolean(default=True)
 
+# Stores the IP addresses of the terminal servers that issued the CALs.
+#_advanced
+store_license_with_target_ip = boolean(default=False)
+
 # Enables support of the remoteFX codec.
 #_hidden
 enable_remotefx = boolean(default=False)

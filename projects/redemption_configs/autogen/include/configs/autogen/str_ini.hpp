@@ -549,6 +549,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #use_license_store = 1
 
+# Stores the IP addresses of the terminal servers that issued the CALs.
+# value: 0 or 1
+#_advanced
+#store_license_with_target_ip = 0
+
 # Enables support of the remoteFX codec.
 # value: 0 or 1
 #_hidden

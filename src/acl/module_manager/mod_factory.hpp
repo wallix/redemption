@@ -65,7 +65,8 @@ class ModFactory
     Theme & theme;
     ClientExecute & rail_client_execute;
     Keymap & keymap;
-    FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
+    FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string(),
+                                                      ini.get<cfg::mod_rdp::store_license_with_target_ip>() };
     Random & gen;
     CryptoContext & cctx;
     std::array<uint8_t, 28> server_auto_reconnect_packet {};

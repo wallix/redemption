@@ -147,6 +147,7 @@ namespace cfg
         struct wabam_uses_translated_remoteapp;
         struct session_shadowing_support;
         struct use_license_store;
+        struct store_license_with_target_ip;
         struct enable_remotefx;
         struct accept_monitor_layout_change_if_capture_is_not_started;
         struct enable_restricted_admin_mode;

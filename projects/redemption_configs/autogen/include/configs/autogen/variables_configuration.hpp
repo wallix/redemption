@@ -1659,6 +1659,17 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { true };
     };
+    /// Stores the IP addresses of the terminal servers that issued the CALs. <br/>
+    /// type: bool <br/>
+    /// default: false <br/>
+    struct mod_rdp::store_license_with_target_ip {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { false };
+    };
     /// Enables support of the remoteFX codec. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
@@ -5760,6 +5771,7 @@ struct mod_rdp
 , cfg::mod_rdp::wabam_uses_translated_remoteapp
 , cfg::mod_rdp::session_shadowing_support
 , cfg::mod_rdp::use_license_store
+, cfg::mod_rdp::store_license_with_target_ip
 , cfg::mod_rdp::enable_remotefx
 , cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started
 , cfg::mod_rdp::enable_restricted_admin_mode
