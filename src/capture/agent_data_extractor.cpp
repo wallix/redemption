@@ -52,9 +52,10 @@ namespace
     // TODO sould be a hash map
     inline auto const sorted_log_id_strings = []() noexcept {
         REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wdeprecated-declarations")
         REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
         std::array pairs{
-            #define f(x, cat) Pair(#x "", LogId::x),
+            #define f(x, cat, attr) Pair(#x "", LogId::x),
             X_LOG_ID(f)
             #undef f
         };
@@ -273,6 +274,7 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
 
         REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wdeprecated-declarations")
         switch (this->id) {
             // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // !!!!! This function is only used for the old data format !!!!!
@@ -448,6 +450,8 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
 
 bool AgentDataExtractor::is_relevant_log_id(LogId id) noexcept
 {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wdeprecated-declarations")
     switch (id) {
         // extracted by OCR / FOREGROUND_WINDOW_CHANGED
         case LogId::TITLE_BAR:
@@ -532,5 +536,6 @@ bool AgentDataExtractor::is_relevant_log_id(LogId id) noexcept
         case LogId::SESSION_INVITE_GUEST_VIEW_CHANGED:
             ;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
     return true;
 }

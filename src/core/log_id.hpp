@@ -57,92 +57,98 @@ struct utils::enum_as_flag<LogCategoryId>
 
 using LogCategoryFlags = utils::flags_t<LogCategoryId>;
 
-#define X_LOG_ID(f)                                              \
-    f(BUTTON_CLICKED, Widget)                                    \
-    f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION, Clipboard)    \
-    f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX, Clipboard) \
-    f(CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION, Clipboard)      \
-    f(CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX, Clipboard)   \
-    f(CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION, Clipboard)    \
-    f(CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION, Clipboard)      \
-    f(CERTIFICATE_CHECK_SUCCESS, ServerCertificate)              \
-    f(CHECKBOX_CLICKED, Widget)                                  \
-    f(CLIENT_EXECUTE_REMOTEAPP, Protocol)                        \
-    f(COMPLETED_PROCESS, Application)                            \
-    f(CONNECTION_FAILED, Protocol)                               \
-    f(DRIVE_REDIRECTION_DELETE, Drive)                           \
-    f(DRIVE_REDIRECTION_READ, Drive)                             \
-    f(DRIVE_REDIRECTION_READ_EX, Drive)                          \
-    f(DRIVE_REDIRECTION_RENAME, Drive)                           \
-    f(DRIVE_REDIRECTION_USE, Drive)                              \
-    f(DRIVE_REDIRECTION_WRITE, Drive)                            \
-    f(DRIVE_REDIRECTION_WRITE_EX, Drive)                         \
-    f(EDIT_CHANGED, Widget)                                      \
-    f(FILE_VERIFICATION, FileVerification)                       \
-    f(FILE_VERIFICATION_ERROR, FileVerification)                 \
-    f(FOREGROUND_WINDOW_CHANGED, TitleBar)                       \
-    f(GROUP_MEMBERSHIP, Probe)                                   \
-    f(INPUT_LANGUAGE, Kbd)                                       \
-    f(KBD_INPUT, Kbd)                                            \
-    f(KERBEROS_TICKET_CREATION, Application)                     \
-    f(KERBEROS_TICKET_DELETION, Application)                     \
-    f(KILL_PATTERN_DETECTED, PatternDetected)                    \
-    f(NEW_PROCESS, Application)                                  \
-    f(NOTIFY_PATTERN_DETECTED, PatternDetected)                  \
-    f(OUTBOUND_CONNECTION_BLOCKED, OutboundConnection)           \
-    f(OUTBOUND_CONNECTION_BLOCKED_2, OutboundConnection)         \
-    f(OUTBOUND_CONNECTION_DETECTED, OutboundConnection)          \
-    f(OUTBOUND_CONNECTION_DETECTED_2, OutboundConnection)        \
-    f(PASSWORD_TEXT_BOX_GET_FOCUS, Widget)                       \
-    f(PROCESS_BLOCKED, Application)                              \
-    f(PROCESS_DETECTED, Application)                             \
-    /* internal, used from front to capture for enabled ocr */   \
-    f(PROBE_STATUS, Probe)                                       \
-    f(SERVER_CERTIFICATE_ERROR, ServerCertificate)               \
-    f(SERVER_CERTIFICATE_MATCH_FAILURE, ServerCertificate)       \
-    f(SERVER_CERTIFICATE_MATCH_SUCCESS, ServerCertificate)       \
-    f(SERVER_CERTIFICATE_NEW, ServerCertificate)                 \
-    f(SESSION_CREATION_FAILED, Session)                          \
-    f(SESSION_DISCONNECTION, Session)                            \
-    f(SESSION_ENDING_IN_PROGRESS, Probe)                         \
-    f(SESSION_ESTABLISHED_SUCCESSFULLY, Session)                 \
-    f(STARTUP_APPLICATION_FAIL_TO_RUN, Application)              \
-    f(STARTUP_APPLICATION_FAIL_TO_RUN_2, Application)            \
-    f(TITLE_BAR, TitleBar)                                       \
-    f(UAC_PROMPT_BECOME_VISIBLE, Widget)                         \
-    f(UNIDENTIFIED_INPUT_FIELD_GET_FOCUS, Widget)                \
-    f(WEB_ATTEMPT_TO_PRINT, Web)                                 \
-    f(WEB_BEFORE_NAVIGATE, Web)                                  \
-    f(WEB_DOCUMENT_COMPLETE, Web)                                \
-    f(WEB_ENCRYPTION_LEVEL_CHANGED, Web)                         \
-    f(WEB_NAVIGATE_ERROR, Web)                                   \
-    f(WEB_NAVIGATION, Web)                                       \
-    f(WEB_PRIVACY_IMPACTED, Web)                                 \
-    f(WEB_THIRD_PARTY_URL_BLOCKED, Web)                          \
-    f(ACCOUNT_MANIPULATION_BLOCKED, AccountManipulation)         \
-    f(ACCOUNT_MANIPULATION_DETECTED, AccountManipulation)        \
-    f(TEXT_VERIFICATION, FileVerification)                       \
-    f(BESTSAFE_SERVICE_LOG, BestSafe)                            \
-    f(DYNAMIC_CHANNEL_CREATION_ALLOWED, DynamicChannel)          \
-    f(DYNAMIC_CHANNEL_CREATION_REJECTED, DynamicChannel)         \
-    f(FILE_BLOCKED, FileVerification)                            \
-    f(SESSION_LOCKED, Session)                                   \
-    f(EDIT_CHANGED_2, Widget)                                    \
-    f(SELECT_CHANGED, Widget)                                    \
-    f(SESSION_EVENT, Session)                                    \
-    f(SESSION_INVITE_GUEST_CONNECTION, SessionSharing)          \
-    f(SESSION_INVITE_GUEST_CONNECTION_REJECTED, SessionSharing) \
-    f(SESSION_INVITE_GUEST_DISCONNECTION, SessionSharing)       \
-    f(SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, SessionSharing) \
-    f(SESSION_INVITE_GUEST_KILLED, SessionSharing)              \
-    f(SESSION_INVITE_GUEST_VIEW_CHANGED, SessionSharing)
+#define X_LOG_ID(f)                                                          \
+    f(BUTTON_CLICKED, Widget, _)                                             \
+    f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION, Clipboard, _)             \
+    f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX, Clipboard, DEPRECATED) \
+    f(CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION, Clipboard, _)               \
+    f(CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX, Clipboard, DEPRECATED)   \
+    f(CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION, Clipboard, _)             \
+    f(CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION, Clipboard, _)               \
+    f(CERTIFICATE_CHECK_SUCCESS, ServerCertificate, _)                       \
+    f(CHECKBOX_CLICKED, Widget, _)                                           \
+    f(CLIENT_EXECUTE_REMOTEAPP, Protocol, _)                                 \
+    f(COMPLETED_PROCESS, Application, _)                                     \
+    f(CONNECTION_FAILED, Protocol, _)                                        \
+    f(DRIVE_REDIRECTION_DELETE, Drive, _)                                    \
+    f(DRIVE_REDIRECTION_READ, Drive, _)                                      \
+    f(DRIVE_REDIRECTION_READ_EX, Drive, DEPRECATED)                          \
+    f(DRIVE_REDIRECTION_RENAME, Drive, _)                                    \
+    f(DRIVE_REDIRECTION_USE, Drive, _)                                       \
+    f(DRIVE_REDIRECTION_WRITE, Drive, _)                                     \
+    f(DRIVE_REDIRECTION_WRITE_EX, Drive, DEPRECATED)                         \
+    f(EDIT_CHANGED, Widget, _)                                               \
+    f(FILE_VERIFICATION, FileVerification, _)                                \
+    f(FILE_VERIFICATION_ERROR, FileVerification, _)                          \
+    f(FOREGROUND_WINDOW_CHANGED, TitleBar, _)                                \
+    f(GROUP_MEMBERSHIP, Probe, _)                                            \
+    f(INPUT_LANGUAGE, Kbd, _)                                                \
+    f(KBD_INPUT, Kbd, _)                                                     \
+    f(KERBEROS_TICKET_CREATION, Application, _)                              \
+    f(KERBEROS_TICKET_DELETION, Application, _)                              \
+    f(KILL_PATTERN_DETECTED, PatternDetected, _)                             \
+    f(NEW_PROCESS, Application, _)                                           \
+    f(NOTIFY_PATTERN_DETECTED, PatternDetected, _)                           \
+    f(OUTBOUND_CONNECTION_BLOCKED, OutboundConnection, _)                    \
+    f(OUTBOUND_CONNECTION_BLOCKED_2, OutboundConnection, DEPRECATED)         \
+    f(OUTBOUND_CONNECTION_DETECTED, OutboundConnection, _)                   \
+    f(OUTBOUND_CONNECTION_DETECTED_2, OutboundConnection, DEPRECATED)        \
+    f(PASSWORD_TEXT_BOX_GET_FOCUS, Widget, _)                                \
+    f(PROCESS_BLOCKED, Application, _)                                       \
+    f(PROCESS_DETECTED, Application, _)                                      \
+    /* internal, used from front to capture for enabled ocr */               \
+    f(PROBE_STATUS, Probe, _)                                                \
+    f(SERVER_CERTIFICATE_ERROR, ServerCertificate, _)                        \
+    f(SERVER_CERTIFICATE_MATCH_FAILURE, ServerCertificate, _)                \
+    f(SERVER_CERTIFICATE_MATCH_SUCCESS, ServerCertificate, _)                \
+    f(SERVER_CERTIFICATE_NEW, ServerCertificate, _)                          \
+    f(SESSION_CREATION_FAILED, Session, _)                                   \
+    f(SESSION_DISCONNECTION, Session, _)                                     \
+    f(SESSION_ENDING_IN_PROGRESS, Probe, _)                                  \
+    f(SESSION_ESTABLISHED_SUCCESSFULLY, Session, _)                          \
+    f(STARTUP_APPLICATION_FAIL_TO_RUN, Application, _)                       \
+    f(STARTUP_APPLICATION_FAIL_TO_RUN_2, Application, DEPRECATED)            \
+    f(TITLE_BAR, TitleBar, _)                                                \
+    f(UAC_PROMPT_BECOME_VISIBLE, Widget, _)                                  \
+    f(UNIDENTIFIED_INPUT_FIELD_GET_FOCUS, Widget, _)                         \
+    f(WEB_ATTEMPT_TO_PRINT, Web, _)                                          \
+    f(WEB_BEFORE_NAVIGATE, Web, _)                                           \
+    f(WEB_DOCUMENT_COMPLETE, Web, _)                                         \
+    f(WEB_ENCRYPTION_LEVEL_CHANGED, Web, _)                                  \
+    f(WEB_NAVIGATE_ERROR, Web, _)                                            \
+    f(WEB_NAVIGATION, Web, _)                                                \
+    f(WEB_PRIVACY_IMPACTED, Web, _)                                          \
+    f(WEB_THIRD_PARTY_URL_BLOCKED, Web, _)                                   \
+    f(ACCOUNT_MANIPULATION_BLOCKED, AccountManipulation, _)                  \
+    f(ACCOUNT_MANIPULATION_DETECTED, AccountManipulation, _)                 \
+    f(TEXT_VERIFICATION, FileVerification, _)                                \
+    f(BESTSAFE_SERVICE_LOG, BestSafe, _)                                     \
+    f(DYNAMIC_CHANNEL_CREATION_ALLOWED, DynamicChannel, _)                   \
+    f(DYNAMIC_CHANNEL_CREATION_REJECTED, DynamicChannel, _)                  \
+    f(FILE_BLOCKED, FileVerification, _)                                     \
+    f(SESSION_LOCKED, Session, _)                                            \
+    f(EDIT_CHANGED_2, Widget, DEPRECATED)                                    \
+    f(SELECT_CHANGED, Widget, _)                                             \
+    f(SESSION_EVENT, Session, _)                                             \
+    f(SESSION_INVITE_GUEST_CONNECTION, SessionSharing, _)                    \
+    f(SESSION_INVITE_GUEST_CONNECTION_REJECTED, SessionSharing, _)           \
+    f(SESSION_INVITE_GUEST_DISCONNECTION, SessionSharing, _)                 \
+    f(SESSION_INVITE_CONTROL_OWNERSHIP_CHANGED, SessionSharing, _)           \
+    f(SESSION_INVITE_GUEST_KILLED, SessionSharing, _)                        \
+    f(SESSION_INVITE_GUEST_VIEW_CHANGED, SessionSharing, _)
 
 
 enum class LogId : uint16_t
 {
-#define f(x, cat) x,
+#define LOG_ID_ATTR_
+#define LOG_ID_ATTRDEPRECATED [[deprecated("only for old trace")]]
+#define LOG_ID_ATTR_DISPATCH(attr) LOG_ID_ATTR##attr
+#define f(x, cat, attr) x LOG_ID_ATTR_DISPATCH(attr),
     X_LOG_ID(f)
 #undef f
+#undef LOG_ID_ATTR
+#undef LOG_ID_ATTR_
+#undef LOG_ID_ATTRDEPRECATED
 };
 
 namespace detail
@@ -150,19 +156,19 @@ namespace detail
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
     constexpr inline zstring_view log_id_string_map[]{
-        #define f(x, cat) #x ""_zv,
+        #define f(x, cat, attr) #x ""_zv,
         X_LOG_ID(f)
         #undef f
     };
 
     constexpr inline LogCategoryId log_id_category_map[]{
-        #define f(x, cat) LogCategoryId::cat,
+        #define f(x, cat, attr) LogCategoryId::cat,
         X_LOG_ID(f)
         #undef f
     };
     REDEMPTION_DIAGNOSTIC_POP()
 
-#define f(x, cat) +1
+#define f(x, cat, attr) +1
     inline constexpr std::size_t log_id_max = 0u X_LOG_ID(f);
 #undef f
 } // namespace detail

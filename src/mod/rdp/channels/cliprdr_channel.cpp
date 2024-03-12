@@ -2588,8 +2588,8 @@ struct ClipboardVirtualChannel::ClipCtx::D
         }
         else {
             self.session_log.log6(is_client_to_server
-                ? LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX
-                : LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX,
+                ? LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION
+                : LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION,
             {
                 KVLog("format"_av, format_av),
                 KVLog("size"_av, size_av),

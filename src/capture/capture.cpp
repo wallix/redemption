@@ -768,8 +768,11 @@ bool is_logable_kvlist(LogId id, KVLogList kv_list, MetaParams meta_params)
                 {
                     case LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION:
                     case LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION:
+                    REDEMPTION_DIAGNOSTIC_PUSH()
+                    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wdeprecated-declarations")
                     case LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX:
                     case LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX:
+                    REDEMPTION_DIAGNOSTIC_POP()
                         if (not kv_list.empty()
                          && (insensitive_starts_with(kv_list[0].value, "Preferred DropEffect("_ascii_upper)
                           || insensitive_starts_with(kv_list[0].value, "FileGroupDescriptorW("_ascii_upper)

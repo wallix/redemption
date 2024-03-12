@@ -30,6 +30,7 @@ int main(int /*ac*/, char** av)
 
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_ERROR("-Wswitch")
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wdeprecated-declarations")
     switch (LogId(av[0][0]))
     {
         CASE(LogId::BUTTON_CLICKED, 0);

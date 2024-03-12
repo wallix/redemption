@@ -1583,7 +1583,7 @@ public:
                                     file_size_str, digest_str);
 
                                 this->session_log.log6(
-                                    LogId::DRIVE_REDIRECTION_READ_EX, {
+                                    LogId::DRIVE_REDIRECTION_READ, {
                                     KVLog("file_name"_av, file_path),
                                     KVLog("size"_av, file_size_str),
                                     KVLog("sha256"_av, digest_str),
@@ -1607,7 +1607,7 @@ public:
                                     = int_to_decimal_zchars(target_iter->end_of_file);
 
                                 this->session_log.log6(
-                                    LogId::DRIVE_REDIRECTION_WRITE_EX, {
+                                    LogId::DRIVE_REDIRECTION_WRITE, {
                                     KVLog("file_name"_av, file_path),
                                     KVLog("size"_av, file_size_str),
                                     KVLog("sha256"_av, digest_str),

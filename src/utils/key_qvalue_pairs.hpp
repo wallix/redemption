@@ -50,7 +50,7 @@ namespace qvalue_table_formats
     }
 
     constexpr inline chars_view log_id_as_type_strings[]{
-        #define f(x, cat) "type=\"" #x "\""_av,
+        #define f(x, cat, attr) "type=\"" #x "\""_av,
         X_LOG_ID(f)
         #undef f
     };

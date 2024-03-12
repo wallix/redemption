@@ -1195,53 +1195,40 @@ public:
                         message_format_invalid = true;
                     }
                 }
-                else if (upper_order == "STARTUP_APPLICATION_FAIL_TO_RUN"_ascii_upper) {
-                    if (parameters_.size() == 2) {
-                        std::string transformed_app_name(parameters_[0].data(),
-                                                         parameters_[0].size());
+                else if (upper_order == "STARTUP_APPLICATION_FAIL_TO_RUN"_ascii_upper
+                      || upper_order == "STARTUP_APPLICATION_FAIL_TO_RUN_2"_ascii_upper
+                ) {
+                    if (parameters_.size() == 2 || parameters_.size() == 3) {
+                        std::string transformed_app_name(parameters_[0]);
 
                         utils::str_replace_inplace_between_pattern(transformed_app_name,
                                                                    TAG_HIDE,
                                                                    REPLACEMENT_HIDE);
 
-                        this->log6(LogId::STARTUP_APPLICATION_FAIL_TO_RUN, {
-                            KVLog("application_name"_av, transformed_app_name),
-                            KVLog("raw_result"_av,       parameters_[1]),
-                        });
+                        bool has_raw_result = (parameters_.size() == 3);
 
-                        LOG(LOG_ERR,
-                            "Session Probe failed to run startup application: "
-                            "raw_result=%.*s",
-                            int(parameters_[1].size()), parameters_[1].data());
-
-                        this->session_log.report(
-                            "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
-                    }
-                    else {
-                        message_format_invalid = true;
-                    }
-                }
-                else if (upper_order == "STARTUP_APPLICATION_FAIL_TO_RUN_2"_ascii_upper) {
-                    if (parameters_.size() == 3) {
-                        std::string transformed_app_name(parameters_[0].data(),
-                                                         parameters_[0].size());
-
-                        utils::str_replace_inplace_between_pattern(transformed_app_name,
-                                                                   TAG_HIDE,
-                                                                   REPLACEMENT_HIDE);
-
-                        this->log6(
-                            LogId::STARTUP_APPLICATION_FAIL_TO_RUN_2, {
-                            KVLog("application_name"_av,   transformed_app_name),
-                            KVLog("raw_result"_av,         parameters_[1]),
-                            KVLog("raw_result_message"_av, parameters_[2]),
-                        });
+                        if (has_raw_result) {
+                            this->log6(
+                                LogId::STARTUP_APPLICATION_FAIL_TO_RUN, {
+                                KVLog("app_name"_av,   transformed_app_name),
+                                KVLog("raw_result"_av,         parameters_[1]),
+                                KVLog("raw_result_message"_av, parameters_[2]),
+                            });
+                        }
+                        else
+                        {
+                            this->log6(LogId::STARTUP_APPLICATION_FAIL_TO_RUN, {
+                                KVLog("app_name"_av, transformed_app_name),
+                                KVLog("raw_result"_av,       parameters_[1]),
+                            });
+                        }
 
                         LOG(LOG_ERR,
                             "Session Probe failed to run startup application: "
                             "raw_result=%.*s  raw_result_message=%.*s",
                             int(parameters_[1].size()), parameters_[1].data(),
-                            int(parameters_[2].size()), parameters_[2].data());
+                            int(has_raw_result ? parameters_[2].size() : 0),
+                            has_raw_result ? parameters_[2].data() : nullptr);
 
                         this->session_log.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
@@ -1254,7 +1241,7 @@ public:
                     if (parameters_.size() == 2) {
                         this->log6(LogId::OUTBOUND_CONNECTION_DETECTED, {
                             KVLog("rule"_av,             parameters_[0]),
-                            KVLog("application_name"_av, parameters_[1]),
+                            KVLog("app_name"_av, parameters_[1]),
                         });
 
                         char message[4096];
@@ -1283,8 +1270,8 @@ public:
                         if (rule) {
                             this->log6(
                                 deny
-                                    ? LogId::OUTBOUND_CONNECTION_BLOCKED_2
-                                    : LogId::OUTBOUND_CONNECTION_DETECTED_2, {
+                                    ? LogId::OUTBOUND_CONNECTION_BLOCKED
+                                    : LogId::OUTBOUND_CONNECTION_DETECTED, {
                                 KVLog("rule"_av,         rule->description()),
                                 KVLog("app_name"_av,     parameters_[1]),
                                 KVLog("app_cmd_line"_av, parameters_[2]),
@@ -1590,14 +1577,14 @@ public:
                     [this](LogId logid, KVLogList kvlist) { this->log6(logid, kvlist); },
                     executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(OUTBOUND_CONNECTION_BLOCKED),
                         "rule"_av,
-                        "application_name"_av),
+                        "app_name"_av),
                     executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(BUTTON_CLICKED),
                         "window"_av,
                         "button"_av),
                     executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(EDIT_CHANGED),
                         "window"_av,
                         "edit"_av),
-                    executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(EDIT_CHANGED_2),
+                    executable_log6_if("EDIT_CHANGED_2"_ascii_upper, LogId::EDIT_CHANGED,
                         "window"_av,
                         "edit"_av,
                         "value"_av),

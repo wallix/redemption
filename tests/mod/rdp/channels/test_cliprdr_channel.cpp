@@ -1185,7 +1185,7 @@ RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrChannelFilterDataFileWithoutLock, ClipData
             "\x00\x01\x00\x09""format_id\x00\x02""13"_av
         }),
         TEST_BUF(Msg::Log6{
-            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"
+            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"
             " format=CF_UNICODETEXT(13) size=6 partial_data=abc"_av
         }),
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
@@ -2909,7 +2909,7 @@ RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrTextValidationBeforeTransfer, ClipDataTest
             "\x00\x01\x00\x09""format_id\x00\x02""13"_av
         }),
         TEST_BUF(Msg::Log6{
-            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"
+            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"
             " format=CF_UNICODETEXT(13) size=6 partial_data=abc"_av
         }),
         TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0a\x00\x00\x00\x01"_av}),
@@ -2957,7 +2957,7 @@ RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrTextValidationBeforeTransfer, ClipDataTest
             "\x00\x01\x00\x09""format_id\x00\x02""13"_av
         }),
         TEST_BUF(Msg::Log6{
-            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"
+            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"
             " format=CF_UNICODETEXT(13) size=6 partial_data=x"_av
         }),
         TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x06\x00\x00\x00\x02"_av}),
@@ -3007,7 +3007,7 @@ RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrTextValidationBeforeTransfer, ClipDataTest
             channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF(Msg::Log6{
-            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"
+            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"
             " format=CF_UNICODETEXT(13) size=34 partial_data=abcdefghijklmnopq"_av
         }),
         TEST_BUF(response_error)
