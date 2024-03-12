@@ -30,6 +30,7 @@
 
 #include <cinttypes>
 
+#include <vector>
 
 #include "utils/log.hpp"
 #include "utils/crypto/ssl_lib.hpp"
@@ -3923,4 +3924,3 @@ namespace LIC
     // version 5.0 and later clients SHOULD advertise support for large (6.5 KB
     // or higher) licenses by setting the detail level to LICENSE_DETAIL_DETAIL
     // (0x0003). The following table lists valid values for this field.
-
