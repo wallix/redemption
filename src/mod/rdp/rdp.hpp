@@ -964,7 +964,7 @@ public:
             executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(EDIT_CHANGED),
                 "window"_av,
                 "edit"_av),
-            executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(EDIT_CHANGED_2),
+            executable_log6_if("EDIT_CHANGED_2"_ascii_upper, LogId::EDIT_CHANGED,
                 "window"_av,
                 "edit"_av,
                 "value"_av),
