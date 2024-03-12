@@ -51,6 +51,7 @@ public:
         ::snprintf(filename, sizeof(filename) - 1, "%s/%s/%s",
             license_path.c_str(), client_name, license_index);
         filename[sizeof(filename) - 1] = '\0';
+        LOG_IF(enable_log, LOG_INFO, "FileSystemLicenseStore::get_license_v1(): Filename=\"%s\"", filename);
 
         if (unique_fd ufd{::open(filename, O_RDONLY)}) {
             size_t number_of_bytes_read = ::read(ufd.fd(), hwid.data(), hwid.size());
@@ -72,6 +73,10 @@ public:
                         }
                         else {
                             LOG(LOG_INFO, "FileSystemLicenseStore::get_license_v1: LicenseSize=%u", license_size);
+                            if (enable_log)
+                            {
+                                hexdump(hwid.data(), hwid.size());
+                            }
 
                             return bytes_view { out.data(), license_size };
                         }
@@ -99,6 +104,7 @@ public:
         ::snprintf(filename, sizeof(filename) - 1, "%s/%s/%s",
             license_path.c_str(), client_name, license_index);
         filename[sizeof(filename) - 1] = '\0';
+        LOG_IF(enable_log, LOG_INFO, "FileSystemLicenseStore::get_license_v0(): Filename=\"%s\"", filename);
 
         if (unique_fd ufd{::open(filename, O_RDONLY)}) {
             uint32_t license_size = 0;
@@ -160,12 +166,19 @@ public:
         if (fd != -1) {
             unique_fd ufd{fd};
             uint32_t const license_size = in.size();
+            LOG(LOG_INFO, "FileSystemLicenseStore::put_license: LicenseSize=%u", license_size);
             if (hwid.size() == ::write(ufd.fd(), hwid.data(), hwid.size())) {
+                if (enable_log)
+                {
+                    hexdump(hwid.data(), hwid.size());
+                }
+
                 if (sizeof(license_size) == ::write(ufd.fd(), &license_size, sizeof(license_size))) {
                     if (license_size == ::write(ufd.fd(), in.data(), in.size())) {
                         char filename[6145] = {};
                         ::snprintf(filename, sizeof(filename) - 1, "%s/%s", license_dir_path, license_index);
                         filename[sizeof(filename) - 1] = '\0';
+                        LOG_IF(enable_log, LOG_INFO, "FileSystemLicenseStore::put_license(): Filename=\"%s\"", filename);
 
                         if (::rename(filename_temporary, filename) == 0) {
                             return true;

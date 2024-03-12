@@ -1398,6 +1398,11 @@ bool RdpNegociation::get_license(InStream & stream)
                             {
                                 this->get_hwid_by_client_name(this->hwid, this->logon_info.hostname());
                                 this->has_hwid = true;
+                                if (bool(this->verbose & RDPVerbose::license))
+                                {
+                                    LOG(LOG_INFO, "RdpNegociation: hwid");
+                                    hexdump(this->hwid.data(), this->hwid.size());
+                                }
                             }
                         }
 
@@ -1489,6 +1494,11 @@ bool RdpNegociation::get_license(InStream & stream)
                 {
                     this->get_hwid_by_client_name(this->hwid, this->logon_info.hostname());
                     this->has_hwid = true;
+                    if (bool(this->verbose & RDPVerbose::license))
+                    {
+                        LOG(LOG_INFO, "RdpNegociation: hwid");
+                        hexdump(this->hwid.data(), this->hwid.size());
+                    }
                 }
 
                  uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
