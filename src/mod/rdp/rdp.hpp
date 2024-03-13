@@ -2505,6 +2505,15 @@ public:
         }
     }
 
+    void rdp_input_mouse_ex(uint16_t device_flags, uint16_t x, uint16_t y) override
+    {
+        if (UP_AND_RUNNING == this->connection_finalization_state
+         && !this->input_event_disabled
+        ) {
+            this->send_input_mouse_ex(device_flags, x, y);
+        }
+    }
+
     // TODO: move to channels (and also remains here as it is mod API)
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
@@ -6398,6 +6407,18 @@ private:
         }
         else {
             this->send_input_slowpath(0, RDP_INPUT_MOUSE, flags, x, y);
+        }
+    }
+
+    void send_input_mouse_ex(uint16_t flags, uint16_t x, uint16_t y)
+    {
+        if (this->enable_fastpath_client_input_event) {
+            this->send_input_fastpath([&](OutStream & stream) {
+                FastPath::MouseExEvent_Send(stream, flags, x, y);
+            });
+        }
+        else {
+            this->send_input_slowpath(0, RDP_INPUT_MOUSE_EX, flags, x, y);
         }
     }
 

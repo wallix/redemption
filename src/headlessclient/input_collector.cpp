@@ -55,6 +55,14 @@ InputCollector::ConsumedInput InputCollector::send_next_input(RdpInput& mod, Key
                     input.y
                 );
                 break;
+
+            case InputType::MouseEx:
+                mod.rdp_input_mouse_ex(
+                    checked_int(input.flags_or_locks),
+                    input.sc_or_uc_or_x,
+                    input.y
+                );
+                break;
         }
 
         ++current_input_index;
