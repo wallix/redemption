@@ -76,6 +76,12 @@ public:
         this->mouse_y = y;
     }
 
+    void rdp_input_mouse_ex(uint16_t /*device_flags*/, uint16_t x, uint16_t y) override
+    {
+        this->mouse_x = x;
+        this->mouse_y = y;
+    }
+
     void rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap) override;
 
     void rdp_input_unicode(KbdFlags flag, uint16_t unicode) override

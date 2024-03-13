@@ -198,6 +198,11 @@ void ModWrapper::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
     this->get_mod().rdp_input_mouse(device_flags, x, y);
 }
 
+void ModWrapper::rdp_input_mouse_ex(uint16_t device_flags, uint16_t x, uint16_t y)
+{
+    this->get_mod().rdp_input_mouse_ex(device_flags, x, y);
+}
+
 void ModWrapper::rdp_input_invalidate(Rect r)
 {
     if (this->get_protected_rect().isempty() || !r.has_intersection(this->get_protected_rect())) {

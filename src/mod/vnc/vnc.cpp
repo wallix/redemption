@@ -322,6 +322,11 @@ void mod_vnc::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
     this->t.send(out_stream.get_produced_bytes());
 }
 
+void mod_vnc::rdp_input_mouse_ex(uint16_t /*device_flags*/, uint16_t /*x*/, uint16_t /*y*/)
+{
+     // this->mouse seems that cannot handle extended mouse events, so do nothing
+}
+
 void mod_vnc::rdp_input_scancode(KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {
     (void)event_time;

@@ -39,6 +39,12 @@ struct null_mod : public mod_api
         [[maybe_unused]] uint16_t y) override
     {}
 
+    void rdp_input_mouse_ex(
+        [[maybe_unused]] uint16_t device_flags,
+        [[maybe_unused]] uint16_t x,
+        [[maybe_unused]] uint16_t y) override
+    {}
+
     void rdp_input_scancode(
         [[maybe_unused]] KbdFlags flags,
         [[maybe_unused]] Scancode scancode,

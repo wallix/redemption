@@ -21,6 +21,7 @@ private:
         Unicode,
         KeyLock,
         Mouse,
+        MouseEx,
     };
 
     struct InputData
@@ -58,6 +59,11 @@ public:
     void rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y) override
     {
         push_data(InputData{InputType::Mouse, device_flags, x, y});
+    }
+
+    void rdp_input_mouse_ex(uint16_t device_flags, uint16_t x, uint16_t y) override
+    {
+        push_data(InputData{InputType::MouseEx, device_flags, x, y});
     }
 
     void rdp_input_synchronize(KeyLocks locks) override

@@ -91,6 +91,20 @@ void RailModBase::rdp_input_mouse(uint16_t device_flags, uint16_t x, uint16_t y)
     }
 }
 
+void RailModBase::rdp_input_mouse_ex(uint16_t device_flags, uint16_t x, uint16_t y)
+{
+    if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
+        x = this->old_mouse_x;
+        y = this->old_mouse_y;
+    }
+    else {
+        this->old_mouse_x = x;
+        this->old_mouse_y = y;
+    }
+
+    this->screen.rdp_input_mouse_ex(device_flags, x, y);
+}
+
 void RailModBase::rdp_input_scancode(
     KbdFlags flags, Scancode scancode, uint32_t event_time, Keymap const& keymap)
 {

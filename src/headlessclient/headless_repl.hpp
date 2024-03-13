@@ -148,6 +148,15 @@ private:
         input_mod->rdp_input_mouse(device_flags, x, y);
     }
 
+    void rdp_input_mouse_ex(uint16_t device_flags, uint16_t x, uint16_t y) override
+    {
+        x = std::min(x, client_info.screen_info.width);
+        y = std::min(y, client_info.screen_info.height);
+        cmd_ctx.mouse_x = x;
+        cmd_ctx.mouse_x = y;
+        input_mod->rdp_input_mouse_ex(device_flags, x, y);
+    }
+
     void rdp_input_synchronize(KeyLocks locks) override
     {
         input_mod->rdp_input_synchronize(locks);

@@ -180,6 +180,14 @@ public:
         (void)y;
     }
 
+    // - mouve extended event (mouse exta button went up or down)
+    void rdp_input_mouse_ex(uint16_t device_flags, uint16_t x, uint16_t y) override
+    {
+        (void)device_flags;
+        (void)x;
+        (void)y;
+    }
+
     // - synchronisation of capslock, numlock, etc state.
     void rdp_input_synchronize(KeyLocks locks) override
     {
