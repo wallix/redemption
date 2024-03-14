@@ -233,7 +233,7 @@ if (( $fast == 0 )); then
             echo 'coverage: '$i
         done
         break
-    done < <(gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/ | tail -n2)
+    done < <(gcovr --gcov-executable $gcovbin -r . -f src/ bin/gcc*/debug/ --gcov-ignore-parse-errors | tail -n2)
     rm -r bin/gcc*
 
     show_duration $toolset_gcc debug
