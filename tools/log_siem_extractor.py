@@ -262,7 +262,7 @@ def extract_doc_siem(docfile: str) -> tuple[LogFormatType,   # proxy
     # )+
     # </section>
     reg_base = (
-        r'<para><literal>(rdpproxy: \[rdpproxy\]|(?:rdpproxy: )?\[(?:RDP|VNC) Session\])'
+        r'<para(?: role="[^"]*")?><literal>(rdpproxy: \[rdpproxy\]|(?:rdpproxy: )?\[(?:RDP|VNC) Session\])'
         r' (?:(?!type=|<).)*type=["”]([^"”]+)["”][^<]*'
     )
     block_regex = re.compile(reg_base + r'((?:(?!</section>).)*)', re.DOTALL)
