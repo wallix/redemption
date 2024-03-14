@@ -64,15 +64,14 @@ std::string TflSuffixGenerator::name_at(uint64_t i)
 
 FdxNameGenerator::FdxNameGenerator(
     std::string_view record_path, std::string_view hash_path, std::string_view sid)
+: record_path(str_concat(record_path, '/', sid, '/', sid))
+, hash_path(str_concat(hash_path,
+        array_view(this->record_path).drop_front(record_path.size())))
+, pos_start_basename(checked_int(this->record_path.size() - sid.size()))
+, pos_start_relative_path(checked_int(this->pos_start_basename - sid.size() - 1))
+, pos_end_record_suffix(checked_int(this->record_path.size()))
+, pos_end_hash_suffix(checked_int(this->hash_path.size()))
 {
-    str_append(this->record_path, record_path, '/', sid, '/', sid);
-    str_append(this->hash_path, hash_path,
-        array_view(this->record_path).drop_front(record_path.size()));
-
-    this->pos_end_record_suffix = checked_int(this->record_path.size());
-    this->pos_end_hash_suffix = checked_int(this->hash_path.size());
-    this->pos_start_basename = checked_int(this->pos_end_record_suffix - sid.size());
-    this->pos_start_relative_path = checked_int(this->pos_start_basename - sid.size() - 1);
 }
 
 void FdxNameGenerator::next_tfl()

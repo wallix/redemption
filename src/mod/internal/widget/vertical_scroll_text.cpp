@@ -308,7 +308,7 @@ void WidgetVerticalScrollText::rdp_input_invalidate(Rect clip)
             auto const sx = int16_t(rx + rw - bw);
             auto const cy = int16_t(this->cursor_button_y + ry);
 
-            auto draw_button_borders = [=, this](int16_t y, uint16_t bh){
+            auto draw_button_borders = [this, sx, bw, opaque_rect](int16_t y, uint16_t bh){
                 // top
                 opaque_rect(Rect(sx,            y,            bw,  2), this->fg_color);
                 // bottom
