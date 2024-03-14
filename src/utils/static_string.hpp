@@ -77,10 +77,12 @@ struct delayed_build_string_buffer
     }
 
     /// Compute len with strlen().
-    /// \pre buffer is initialized with a valid null terminated c-string
+    /// \pre buffer should be initialized with a valid null terminated c-string
     ResultLen compute_strlen() noexcept
     {
-        return ResultLen(strlen(null_terminated_buffer.data()));
+        auto len = strlen(null_terminated_buffer.data());
+        assert(len < null_terminated_buffer.size());
+        return ResultLen(len);
     }
 
     /// Length of the final string.
