@@ -26,24 +26,7 @@
 #define NOT_UNDEF_EACH_ERROR
 #include "core/error.hpp"
 #include "cxx/cxx.hpp"
-
-#if __cplusplus >= REDEMPTION_CXX_STD_17
-# include "utils/string_c.hpp"
-#else
-namespace
-{
-    template<std::size_t n>
-    struct ErrorCbuf
-    {
-        char buf[n+30];
-
-        ErrorCbuf(char const* s, unsigned e) noexcept
-        {
-            std::sprintf(buf, "Exception %s no: %u", s, e);
-        }
-    };
-}
-#endif
+#include "utils/string_c.hpp"
 
 #ifndef NDEBUG
 # include "utils/stacktrace.hpp"
@@ -173,7 +156,6 @@ zstring_view Error::errmsg(bool with_id) const noexcept
             return with_id                                          \
                 ? "Exception " #e " no: " RED_PP_STRINGIFY(x) ""_zv \
                 : "Exception " #e ""_zv;
-#if __cplusplus >= REDEMPTION_CXX_STD_17
         using namespace jln::literals;
         #define MAKE_CASE(e) case e:                           \
             return with_id                                     \
@@ -181,11 +163,6 @@ zstring_view Error::errmsg(bool with_id) const noexcept
                     decltype("Exception " #e " no: "_c),       \
                     jln::ull_to_string_c_t<int(e)>>::zstring() \
                 : "Exception " #e ""_zv;
-#else
-        #define MAKE_CASE(e) case e:                               \
-            static ErrorCbuf<sizeof(#e)> buf_##e(#e, unsigned(e)); \
-            return with_id ? buf_##e.buf : "Exception " #e ""_zv;
-#endif
         switch (this->id) {
             EACH_ERROR(MAKE_CASE, MAKE_CASE_V)
         }
