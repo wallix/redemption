@@ -3480,7 +3480,7 @@ public:
         while (this->buf.next(TpduBuffer::PDU)) {
             InStream x224_data(this->buf.current_pdu_buffer());
 
-            try{
+            try {
                 gdi::GraphicApi & drawable =
 #ifndef __EMSCRIPTEN__
                     this->channels.remote_programs_session_manager
@@ -3497,7 +3497,7 @@ public:
                     this->connected_slow_path(drawable, x224_data);
                 }
             }
-            catch(Error const & e){
+            catch (Error const & e) {
                 LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception = %s", e.errmsg());
 
                 if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED
@@ -3508,7 +3508,8 @@ public:
 
 #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe_virtual_channel
-                &&  this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required()) {
+                 && this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required()
+                ) {
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
 #endif
@@ -3527,16 +3528,13 @@ public:
                     this->session_log.report(reason, e.errmsg());
                 }
 
-                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
-                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
-                    (e.id == ERR_NLA_AUTHENTICATION_FAILED)) {
-                    throw;
-                }
-
-                if (e.id == ERR_MCS_APPID_IS_MCS_DPUM)
-                {
+                if (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED
+                 || e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED
+                 || e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED
+                 || e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE
+                 || e.id == ERR_NLA_AUTHENTICATION_FAILED
+                 || e.id == ERR_MCS_APPID_IS_MCS_DPUM
+                ) {
                     throw;
                 }
 
@@ -3560,16 +3558,18 @@ public:
                 }
 #endif
 
-                if ((e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT) ||
-                    (e.id == ERR_RAIL_CLIENT_EXECUTE) ||
-                    (e.id == ERR_RAIL_STARTING_PROGRAM) ||
-                    (e.id == ERR_RAIL_UNAUTHORIZED_PROGRAM)) {
+                if (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT
+                 || e.id == ERR_RAIL_CLIENT_EXECUTE
+                 || e.id == ERR_RAIL_STARTING_PROGRAM
+                 || e.id == ERR_RAIL_UNAUTHORIZED_PROGRAM
+                ) {
                     throw;
                 }
 
                 if (UP_AND_RUNNING != this->connection_finalization_state
-                && DISCONNECTED != this->connection_finalization_state
-                && !this->already_upped_and_running) {
+                 && DISCONNECTED != this->connection_finalization_state
+                 && !this->already_upped_and_running
+                ) {
                     const char * statedescr = TR(trkeys::err_mod_rdp_connected, this->lang);
                     str_append(
                         this->close_box_extra_message_ref,
@@ -5022,7 +5022,7 @@ public:
             str_append(this->close_box_extra_message_ref, " (", errorInfo_name, ')');
         }
 
-        switch (errorInfo){
+        switch (errorInfo) {
         case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
             this->vars.set<cfg::context::auth_error_message>(
                 TR(trkeys::disconnected_by_otherconnection, this->lang));
