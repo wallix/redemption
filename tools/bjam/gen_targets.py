@@ -3,7 +3,7 @@
 import glob
 import os
 import sys
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 includes = set((
     'src/',
@@ -68,9 +68,23 @@ target_requirements = dict((
 ))
 
 # because include a .cpp file...
-remove_requirements = dict((
-    # ('tests/capture/test_capture.cpp', ['<library>src/capture/capture.o']),
-))
+remove_requirements = defaultdict(set, {
+    # 'tests/capture/test_capture.cpp': {'<library>src/capture/capture.o'}
+})
+
+# because include a .cpp file with special macro...
+remove_incompatible_requirements = {
+    'src/capture/capture_without_ffmpeg.cpp': {
+        '$(FFMPEG_CXXFLAGS)'
+    },
+    '<library>src/capture/capture_without_ffmpeg.o': {
+        '<library>src/capture/capture.o',
+        '<library>src/capture/video_capture.o',
+        '<library>src/capture/video_recorder.o',
+        '<library>ffmpeg'
+    },
+}
+remove_incompatible_requirements_keys = set(remove_incompatible_requirements)
 
 # This is usefull if several source files have the same name to disambiguate tests
 target_pre_renames = dict((
@@ -448,10 +462,11 @@ for name, f in all_files.items():
     f.user_includes, f.system_includes, f.unknown_user_includes = get_includes(f.path)
 
 # remove .cpp include from user_includes
-for f in tests:
-    l = ['<library>{fp}o'.format(fp=finc.path[:-3]) for finc in f.user_includes if finc.path.endswith('.cpp')]
-    if l:
-        remove_requirements.setdefault(f.path, []).extend(l)
+for fgroup in (sources, exes, mains, libs, tests):
+    for f in fgroup:
+        l = ['<library>{fp}o'.format(fp=finc.path[:-3]) for finc in f.user_includes if finc.path.endswith('.cpp')]
+        if l:
+            remove_requirements[f.path].update(l)
 
 #for f in sources:
     #print("--", f.path, [a.path for a in f.user_includes], f.system_includes, f.unknown_user_includes)
@@ -543,6 +558,11 @@ def compute_all_source_deps(f):
 
 for f in all_files.values():
     compute_all_source_deps(f)
+    remove = remove_incompatible_requirements.get(f.path)
+    if remove:
+        f.all_source_deps -= remove
+        f.all_link_deps -= remove
+        f.all_cxx_deps -= remove
 
 
 ###
@@ -578,16 +598,16 @@ app_path_cpp_test = all_files.get('tests/includes/test_only/app_path_test.cpp')
 #log_hpp = all_files['src/utils/log.hpp']
 
 def get_sources_deps(f, cat, exclude):
-    a = []
+    a = set()
     for pf in f.all_source_deps:
         pf.used = True
         if pf == app_path_cpp:
             if cat == 'test-run':
-                a.append('<library>app_path_test.o')
+                a.add('<library>app_path_test.o')
             else:
-                a.append('<library>app_path_exe.o')
+                a.add('<library>app_path_exe.o')
         elif pf != exclude:
-            a.append('<library>'+cpp_to_obj(pf))
+            a.add('<library>'+cpp_to_obj(pf))
     return a
 
 def generate(type, files, requirements, get_target_cb = get_target):
@@ -596,11 +616,11 @@ def generate(type, files, requirements, get_target_cb = get_target):
         src = f.path
         target = get_target_cb(f)
         deps = get_sources_deps(f, type, f)
-        deps += f.all_link_deps
-        deps += f.all_cxx_deps
-        deps += requirements
+        deps.update(f.all_link_deps)
+        deps.update(f.all_cxx_deps)
+        deps.update(requirements)
         if target in target_requirements:
-            deps += target_requirements[target]
+            deps.update(target_requirements[target])
 
         if type == 'test-run':
             iright = len(f.root)
@@ -613,17 +633,14 @@ def generate(type, files, requirements, get_target_cb = get_target):
 
         print(type, ' ', target, ' :\n  ', src, '\n:', sep='')
 
-        # <library> following by <...other...>
-        deps = sorted(set(deps), key=lambda s: s if s.startswith('<library>') else 'Z'+s)
+        deps -= remove_requirements[f.path]
+        for k in deps & remove_incompatible_requirements_keys:
+            deps -= remove_incompatible_requirements[k]
 
-        if f.path in remove_requirements:
-            l = remove_requirements[f.path]
-            for s in deps:
-                if s not in l:
-                    print(' ', s)
-        else:
-            for s in deps:
-                print(' ', s)
+        if deps:
+            # <library> following by <...other...>
+            ordered_deps = sorted(deps, key=lambda s: s if s.startswith('<library>') else 'Z'+s)
+            print('  ', '\n  '.join(ordered_deps), sep='')
         print(';')
 
 def inject_variable_prefix(path):

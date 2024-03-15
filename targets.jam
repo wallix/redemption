@@ -10,7 +10,6 @@ exe rdpproxy :
 :
   <library>app_path_exe.o
   <library>crypto
-  <library>ffmpeg
   <library>gssapi_krb5
   <library>hyperscan
   <library>krb5
@@ -29,7 +28,7 @@ exe rdpproxy :
   <library>src/acl/module_manager/mod_factory.o
   <library>src/acl/session_logfile.o
   <library>src/capture/agent_data_extractor.o
-  <library>src/capture/capture.o
+  <library>src/capture/capture_without_ffmpeg.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -41,8 +40,6 @@ exe rdpproxy :
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
-  <library>src/capture/video_capture.o
-  <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
@@ -2094,7 +2091,6 @@ test-run tests/front/test_front :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>ffmpeg
   <library>gssapi_krb5
   <library>hyperscan
   <library>krb5
@@ -2105,7 +2101,7 @@ test-run tests/front/test_front :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/kv_list_from_strings.o
-  <library>src/capture/capture.o
+  <library>src/capture/capture_without_ffmpeg.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -2116,8 +2112,6 @@ test-run tests/front/test_front :
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
-  <library>src/capture/video_capture.o
-  <library>src/capture/video_recorder.o
   <library>src/client/common/new_mod_rdp.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -4008,7 +4002,6 @@ test-run tests/server/test_mstsc_client :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>ffmpeg
   <library>gssapi_krb5
   <library>hyperscan
   <library>krb5
@@ -4017,7 +4010,7 @@ test-run tests/server/test_mstsc_client :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/capture/capture.o
+  <library>src/capture/capture_without_ffmpeg.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
@@ -4027,8 +4020,6 @@ test-run tests/server/test_mstsc_client :
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
-  <library>src/capture/video_capture.o
-  <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
@@ -4084,7 +4075,6 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>ffmpeg
   <library>gssapi_krb5
   <library>hyperscan
   <library>krb5
@@ -4093,7 +4083,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/capture/capture.o
+  <library>src/capture/capture_without_ffmpeg.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
@@ -4103,8 +4093,6 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
-  <library>src/capture/video_capture.o
-  <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
@@ -4160,7 +4148,6 @@ test-run tests/server/test_rdesktop_client :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>ffmpeg
   <library>gssapi_krb5
   <library>hyperscan
   <library>krb5
@@ -4169,7 +4156,7 @@ test-run tests/server/test_rdesktop_client :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/capture/capture.o
+  <library>src/capture/capture_without_ffmpeg.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
@@ -4179,8 +4166,6 @@ test-run tests/server/test_rdesktop_client :
   <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/pattern_searcher.o
   <library>src/capture/utils/pattutils.o
-  <library>src/capture/video_capture.o
-  <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
@@ -4954,6 +4939,7 @@ obj src/acl/module_manager/mod_factory.o : $(REDEMPTION_SRC_PATH)/acl/module_man
 obj src/acl/session_logfile.o : $(REDEMPTION_SRC_PATH)/acl/session_logfile.cpp ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(FFMPEG_CXXFLAGS) <define>ZLIB_CONST ;
+obj src/capture/capture_without_ffmpeg.o : $(REDEMPTION_SRC_PATH)/capture/capture_without_ffmpeg.cpp : <define>ZLIB_CONST ;
 obj src/capture/fdx_capture.o : $(REDEMPTION_SRC_PATH)/capture/fdx_capture.cpp ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
@@ -6053,6 +6039,7 @@ explicit
   src/acl/session_logfile.o
   src/capture/agent_data_extractor.o
   src/capture/capture.o
+  src/capture/capture_without_ffmpeg.o
   src/capture/fdx_capture.o
   src/capture/file_to_graphic.o
   src/capture/ocr/locale/latin_to_cyrillic.o

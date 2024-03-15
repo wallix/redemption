@@ -99,7 +99,12 @@ class SequencedVideoCaptureImpl {};
 
 using std::begin;
 using std::end;
+
+REDEMPTION_DIAGNOSTIC_PUSH()
+// skip warning because capture.cpp is included by capture_without_ffmpeg.cpp
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
 using namespace std::chrono_literals;
+REDEMPTION_DIAGNOSTIC_POP()
 
 namespace
 {

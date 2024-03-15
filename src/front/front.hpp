@@ -26,7 +26,7 @@
 #pragma once
 
 #include "core/log_id.hpp"
-#include "capture/capture.hpp"
+#include "capture/capture_without_ffmpeg.hpp"
 #include "capture/params_from_ini.hpp"
 #include "capture/capture_params.hpp"
 #include "capture/drawable_params.hpp"
