@@ -24,7 +24,7 @@ do
 
     Log6 = P{
         Ct((
-            Until(P'log6(' + 'executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME(')
+            Until(P'log6(' + P'executable_log6_if(' * (P'EXECUTABLE_LOG6_ID_AND_NAME(' + '"'))
           * (
             -- log6(LogId::{ID}, KVLogList{KVLog({key}, value), ...})
             -- log6(cond ? LogId::{ID} : LogId::{ID}, KVLogList{KVLog({key}, value), ...})
@@ -36,6 +36,12 @@ do
             + 'executable_log6_if(EXECUTABLE_LOG6_ID_AND_NAME'
               * Ct( Cp
                   * '(' * Ct(idname) * ')'
+                  * Ct((',' * ws0 * '"' * idname * '"_av')^0))
+            -- executable_log6_if("{ID}"_ascii_upper, LogId::{key}, ...)
+            + 'executable_log6_if("'
+              * Ct( Cp
+                  * After('"')
+                  * '_ascii_upper, LogId::' * Ct(idname)
                   * Ct((',' * ws0 * '"' * idname * '"_av')^0))
             -- no match
             + 1
@@ -92,12 +98,27 @@ function file(content, filename)
         local iline = 1
         for _,t in pairs(r) do
             iline = lower_bound(poslines, t[1], iline, #poslines+1)
-            strkvlog = table.concat(t[3], ' ')
+            strkvlog = table.concat(t[3], ', ')
             for _,id in pairs(t[2]) do
                 logs[#logs+1] = {filename, iline, id, strkvlog}
             end
         end
     end
+end
+
+function string.starts_with(self, subs)
+    if #self == #subs then return self == subs end
+    if #self < #subs then return false end
+    return self:sub(0, #subs) == subs
+end
+
+function check_prefix_parameters(kvs_list, kvs_log)
+    for _, s in ipairs(kvs_list) do
+        if not s:starts_with(kvs_log) and not kvs_log:starts_with(s) then
+            return false
+        end
+    end
+    return true
 end
 
 function terminate()
@@ -118,18 +139,24 @@ function terminate()
         end
     end
 
-    previouslog = logs[1]
-    errcount = 0
+    local previouslog = logs[1]
+    local errcount = 0
+    local kvs_list = {}
     ids[previouslog[3]] = 1
     for i=2,#logs do
         log = logs[i]
         ids[log[3]] = 1
-        if previouslog[3] == log[3] and previouslog[4] ~= log[4] then
-            utils.print_error('log6 differ:\n')
+        -- when id differ
+        if previouslog[3] ~= log[3] then
+            kvs_list = {}
+        -- when kv log differ from prefix
+        elseif not check_prefix_parameters(kvs_list, log[4]) then
+            utils.print_error('--- log6 differ:\n')
             printlog(previouslog)
             printlog(logs[i])
             errcount = errcount + 1
         end
+        kvs_list[#kvs_list+1] = log[4]
         previouslog = log
     end
 
@@ -144,6 +171,17 @@ function terminate()
         'CERTIFICATE_CHECK_SUCCESS',
         'SERVER_CERTIFICATE_NEW',
         'SERVER_CERTIFICATE_MATCH_FAILURE',
+        -- @}
+        -- obsolete, not used
+        -- @{
+        'DRIVE_REDIRECTION_READ_EX',
+        'CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX',
+        'OUTBOUND_CONNECTION_DETECTED_2',
+        'OUTBOUND_CONNECTION_BLOCKED_2',
+        'EDIT_CHANGED_2',
+        'STARTUP_APPLICATION_FAIL_TO_RUN_2',
+        'DRIVE_REDIRECTION_WRITE_EX',
+        'CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX',
         -- @}
     }) do
         if ids[id] ~= 0 then
