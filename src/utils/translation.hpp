@@ -142,7 +142,7 @@ namespace trkeys
     TR_KV(err_transport_tls_certificate_changed, "TLS certificate changed!");
     TR_KV(err_transport_tls_certificate_missed, "TLS certificate missed!");
     TR_KV(err_transport_tls_certificate_corrupted, "TLS certificate corrupted!");
-    TR_KV(err_transport_tls_certificate_inaccessible, "TLS certificate  is inaccessible!");
+    TR_KV(err_transport_tls_certificate_inaccessible, "TLS certificate is inaccessible!");
     TR_KV(err_vnc_connection_error, "VNC connection error!");
     TR_KV(err_rdp_unsupported_monitor_layout, "Unsupported client display monitor layout!");
     TR_KV(err_rdp_negotiation, "RDP negotiation phase failure.");
