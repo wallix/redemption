@@ -174,9 +174,7 @@ ${CLANG_TIDY:=clang-tidy} $fix -checks="$checkers" \
 -Wno-macro-redefined \
 -fbracket-depth=512 \
 -I'include' \
--I'modules/includes' \
--I'modules/ppocr/includes/mln' \
--I'modules/ppocr/src' \
+-I'projects/ppocr' \
 -I'projects/ocr1/include' \
 -I'projects/redemption_configs/autogen/include' \
 -I'projects/redemption_configs/redemption_src' \
