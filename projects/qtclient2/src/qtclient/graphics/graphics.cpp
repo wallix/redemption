@@ -579,7 +579,7 @@ void Graphics::draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ct
         uint8_t data = variable_bytes.in_uint8();
 
         if (data <= 0xFD) {
-            FontChar const & fc = gly_cache.glyphs[cmd.cache_id][data].font_item;
+            RDPFontChar const & fc = gly_cache.glyphs[cmd.cache_id][data].font_item;
             if (!fc)
             {
                 LOG( LOG_INFO

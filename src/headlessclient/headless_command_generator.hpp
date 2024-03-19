@@ -169,6 +169,12 @@ struct RdpInputHeadlessCommandGenerator : RdpInput
         command_generator.mouse(MonotonicTimePoint::clock::now(), device_flags, x, y);
     }
 
+    void rdp_input_mouse_ex(uint16_t device_flags, uint16_t x, uint16_t y) override
+    {
+        rdp_input.rdp_input_mouse_ex(device_flags, x, y);
+        command_generator.mouse(MonotonicTimePoint::clock::now(), device_flags, x, y);
+    }
+
     void rdp_input_synchronize(KeyLocks locks) override
     {
         rdp_input.rdp_input_synchronize(locks);

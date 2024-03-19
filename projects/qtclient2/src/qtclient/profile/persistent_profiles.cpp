@@ -15,16 +15,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include "utils/redemption_info_version.hpp"
 #include "utils/log.hpp"
 
-#include <iostream>
-
 namespace
 {
 
 static_string<15> screen_info_to_chars(ScreenInfo screen_info)
 {
     static_string<15> str;
-    str.delayed_build([&](auto& array){
-        auto* p = array.data();
+    str.delayed_build([&](auto buffer){
+        auto* p = buffer.data();
         auto cpy = [&](chars_view str){
             memcpy(p, str.data(), str.size());
             return p + str.size();
@@ -34,7 +32,7 @@ static_string<15> screen_info_to_chars(ScreenInfo screen_info)
         p = cpy(int_to_decimal_chars(screen_info.height));
         *p++ = 'x';
         p = cpy(int_to_decimal_chars(underlying_cast(screen_info.bpp)));
-        return checked_int(p - array.data());
+        return buffer.set_end_string_ptr(p);
     });
     return str;
 }
