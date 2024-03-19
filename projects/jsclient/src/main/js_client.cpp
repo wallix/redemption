@@ -504,9 +504,15 @@ public:
         this->mod->rdp_input_unicode(kbdtypes::KbdFlags(flag), unicode);
     }
 
-    void write_mouse_event(int x, int y, int device_flags)
+    void write_mouse_event(uint16_t x, uint16_t y, uint32_t device_flags)
     {
-        this->mod->rdp_input_mouse(device_flags, x, y);
+        if (REDEMPTION_UNLIKELY(bool(device_flags & 0xf'0000))) {
+            auto extended_flags = (device_flags >> 4) | (device_flags & 0x8000);
+            this->mod->rdp_input_mouse_ex(checked_int(extended_flags), x, y);
+        }
+        else {
+            this->mod->rdp_input_mouse(checked_int(device_flags), x, y);
+        }
     }
 
     void sync_kbd_locks(uint8_t locks)

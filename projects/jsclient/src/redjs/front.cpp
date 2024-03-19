@@ -118,8 +118,8 @@ RED_JS_BINDING_CONSTANTS(
     (("MiddleButton", 0x4000))
 
     // 2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET): INPUT_FLAG_MOUSEX
-    (("Button4", 0x0001))
-    (("Button5", 0x0002))
+    (("Button4", 0x1'0000))
+    (("Button5", 0x2'0000))
 );
 
 //@{
