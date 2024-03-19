@@ -5365,21 +5365,10 @@ public:
     void input_extended_mouse(uint16_t x, uint16_t y, uint16_t pointer_flags, Callback & cb)
     {
         this->has_user_activity = true;
-        cb.rdp_input_mouse_ex(pointer_flags, x, y);
 
-        // TODO unimplemented
-
-        // if (this->state == FRONT_UP_AND_RUNNING && this->sharing_ctx.has_input()) {
-        // }
-
-        // if (this->sharing_ctx.has_input()) {
-        //     if ((pointer_flags & (SlowPath::PTRXFLAGS_BUTTON1 |
-        //                           SlowPath::PTRXFLAGS_BUTTON2))
-        //      && !(pointer_flags & SlowPath::PTRXFLAGS_DOWN)
-        //     ) {
-        //         this->possible_active_window_change();
-        //     }
-        // }
+        if (this->state == FRONT_UP_AND_RUNNING && this->sharing_ctx.has_input()) {
+            cb.rdp_input_mouse_ex(pointer_flags, x, y);
+        }
     }
 
 private:
