@@ -647,17 +647,6 @@ class Engine:
         for target_info in self.displaytargets:
             temp_service_login = target_info.service_login
             temp_resource_service_protocol_cn = target_info.protocol
-            if target_info.protocol != "APP" \
-                and target_info.target_name in {'autotest',
-                                                'bouncer2',
-                                                'widget2_message',
-                                                'widgettest',
-                                                'card',
-                                               }:
-                temp_service_login = target_info.service_login.replace(
-                    ':RDP',
-                    ':INTERNAL', 1)
-                temp_resource_service_protocol_cn = 'INTERNAL'
 
             if (fc(group_filter) not in fc(target_info.group)
                 or fc(protocol_filter) not in fc(temp_resource_service_protocol_cn)):

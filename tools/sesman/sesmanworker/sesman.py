@@ -72,6 +72,7 @@ EXPECTING_KEYS = list(KEYMAPPING.keys())
 MAGICASK = ('UNLIKELYVALUEMAGICASPICONSTANTS'
             '3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED')
 
+MAGIC_INTERNAL_SERVICE = 'INTERNAL'
 KEEPALIVE_INTERVAL = 30
 KEEPALIVE_GRACEDELAY = 30
 KEEPALIVE_TIMEOUT = KEEPALIVE_INTERVAL + KEEPALIVE_GRACEDELAY
@@ -1085,7 +1086,9 @@ class Sesman():
                     'target_service': self.target_service_name,
                 }
                 if not self.internal_target:
-                    self.internal_target = (self.target_service_name == 'INTERNAL')
+                    self.internal_target = (
+                        self.target_service_name == MAGIC_INTERNAL_SERVICE
+                    )
                 self.send_data(data_to_send)
                 _status = True
             elif self.shared.get('selector') == MAGICASK:
@@ -1242,7 +1245,9 @@ class Sesman():
                     data_to_send['target_service'] = service_name
                     self._full_user_device_account = f"{target_login}@{device_name}:{wab_login}"
                     if not self.internal_target:
-                        self.internal_target = (s[2] == 'INTERNAL')
+                        self.internal_target = (
+                            service_name == MAGIC_INTERNAL_SERVICE
+                        )
                     self.send_data(data_to_send)
                     self.target_service_name = service_name
                     self.target_group = s[0]
@@ -1391,10 +1396,7 @@ class Sesman():
         selected_target = None
         target_device = self.shared.get('target_device')
         target_login = self.shared.get('target_login')
-        target_service = (
-            self.target_service_name if self.target_service_name != 'INTERNAL'
-            else 'RDP'
-        )
+        target_service = self.target_service_name
         target_group = self.target_group
 
         Logger().info(f"selected target ==> {target_login} {target_device} {target_service}")
@@ -1837,7 +1839,7 @@ class Sesman():
 
         if _status:
             module = kv.get('proto_dest')
-            if module not in {'RDP', 'VNC', 'INTERNAL'}:
+            if module not in {'RDP', 'VNC'}:
                 module = 'RDP'
             if self.internal_target:
                 module = 'INTERNAL'
