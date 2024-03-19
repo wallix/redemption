@@ -36,6 +36,11 @@ namespace {
         return first;
     }
 
+    constexpr auto view_equal_to(unsigned word)
+    {
+        return [=](View const & view) { return view.word != word; };
+    }
+
     template<class Predicate, class Counter>
     Counter filter_line(view_ref_list & vec, Predicate pred, Counter count) {
         auto first = next_word(vec);
@@ -46,15 +51,13 @@ namespace {
             auto last = vec.end();
             if (!pred(*(first-1))) {
                 do {
-                    auto word = first->get().word;
-                    first = std::find_if(first+1, last, [&](View const & view) { return view.word != word; });
+                    first = std::find_if(first+1, last, view_equal_to(first->get().word));
                     ++count;
                 } while (first != last && !pred(*first));
                 out = first;
             }
             while (first != last) {
-                auto word = first->get().word;
-                auto rlast = std::find_if(first+1, last, [&](View const & view) { return view.word != word; });
+                auto rlast = std::find_if(first+1, last, view_equal_to(first->get().word));
                 if (!pred(*first)) {
                     out = std::copy(std::make_move_iterator(first), std::make_move_iterator(rlast), out);
                     ++count;
