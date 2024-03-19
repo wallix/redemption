@@ -19,8 +19,6 @@
 #include "ppocr/ocr2/filter_by_lines.hpp"
 #include "ppocr/ocr2/words_infos.hpp"
 
-#include "ppocr/filters/best_baseline.hpp"
-
 #include <cassert>
 
 namespace {
@@ -69,6 +67,28 @@ namespace {
 
         return count;
     }
+
+    struct MinMaxBox
+    {
+        unsigned min_top;
+        unsigned max_top = 0;
+        unsigned min_bottom;
+        unsigned max_bottom = 0;
+
+        using iterator = std::vector<ppocr::Box>::const_iterator;
+
+        MinMaxBox(iterator first, iterator last)
+        : min_top(first->top())
+        , min_bottom(first->bottom())
+        {
+            while (++first != last) {
+                min_top = std::min(min_top, first->top());
+                max_top = std::max(max_top, first->top());
+                min_bottom = std::min(min_bottom, first->bottom());
+                max_bottom = std::max(max_bottom, first->bottom());
+            }
+        }
+    };
 }
 
 void ppocr::ocr2::filter_by_lines(
@@ -76,26 +96,30 @@ void ppocr::ocr2::filter_by_lines(
     WordsInfos const & words_infos,
     std::vector<ppocr::Box> const & boxes
 ) {
-    using iterator_base = std::vector<Box>::const_iterator;
-    struct iterator_baseline : iterator_base
-    {
-        using value_type = unsigned;
+    assert(boxes.size() == ambiguous.size());
 
-        iterator_baseline(iterator_base base)
-        : iterator_base(base)
-        {}
+    if (boxes.empty()) {
+        return;
+    }
 
-        value_type operator*() const {
-            return iterator_base::operator*().bottom();
+    MinMaxBox const min_max_box{boxes.begin(), boxes.end()};
+    unsigned bottom_ys_len = min_max_box.max_bottom - min_max_box.min_bottom + 1u;
+    unsigned top_ys_len = min_max_box.max_top - min_max_box.min_top + 1u;
+
+    std::vector<unsigned> uint_buffer(std::max(bottom_ys_len, top_ys_len), 0u);
+
+    auto const baseline = [&]{
+        auto& ys = uint_buffer;
+        for (auto const& box : boxes) {
+            ++ys[box.bottom() - min_max_box.min_bottom];
         }
-    };
+        auto max_value_idx = std::max_element(ys.begin(), ys.begin() + bottom_ys_len) - ys.begin();
+        return static_cast<unsigned>(max_value_idx) + min_max_box.min_bottom;
+    }();
 
-    auto const baseline = filters::best_baseline(
-        iterator_baseline(boxes.begin()),
-        iterator_baseline(boxes.end())
-    );
-
-    std::map<unsigned, unsigned> meanline_map;
+    std::fill(uint_buffer.begin(), uint_buffer.begin() + std::min(bottom_ys_len, top_ys_len), 0u);
+    auto& meanline_map = uint_buffer;
+    bool has_meanline = false;
 
     //for (rdp_ppocr::view_ref_list & vec : ambiguous) {
     //    for (ppocr::ppocr::loader2::View const & view : vec) {
@@ -105,30 +129,33 @@ void ppocr::ocr2::filter_by_lines(
     //}
     //std::cout << "#######\n";
 
+    auto line_pred = [](uint16_t line_flags, unsigned ypos, unsigned line_pos){
+        switch (line_flags) {
+            case WordLines::Upper:
+                return ypos + 1 >= line_pos;
+            case WordLines::Below:
+                return (ypos < line_pos ? line_pos - ypos : ypos - line_pos) > 1u;
+            case WordLines::Above:
+                return ypos <= line_pos + 1;
+            case WordLines::Upper | WordLines::Below:
+                return ypos + 1 > line_pos;
+            case WordLines::Below | WordLines::Above:
+                return ypos < line_pos + 1;
+        }
+        return false;
+    };
+
     auto it = boxes.cbegin();
-    assert(boxes.size() == ambiguous.size());
     for (ppocr::ocr2::view_ref_list & vec : ambiguous) {
         if (filter_line(vec, [&](View const & view) -> bool {
-            if (auto p = words_infos.get(view.word)) {
-                switch (p->lines.baseline) {
-                    case WordLines::Upper:
-                        return it->bottom() + 1 >= baseline;
-                    case WordLines::Below:
-                        return (it->bottom() < baseline ? baseline - it->bottom() : it->bottom() - baseline) > 1u;
-                    case WordLines::Above:
-                        return it->bottom() <= baseline + 1;
-                    case WordLines::Upper | WordLines::Below:
-                        return it->bottom() + 1 > baseline;
-                    case WordLines::Below | WordLines::Above:
-                        return it->bottom() < baseline + 1;
-                }
-            }
-            return false;
+            auto p = words_infos.get(view.word);
+            return p && line_pred(p->lines.baseline, it->bottom(), baseline);
         }, 0u) == 1u) {
             if (auto p = words_infos.get(vec[0].get().word)) {
                 auto const & lines = p->lines;
                 if (lines.baseline == WordLines::Below && lines.meanline == WordLines::Below) {
-                    ++meanline_map[it->top()];
+                    ++meanline_map[it->top() - min_max_box.min_top];
+                    has_meanline = true;
                 }
             }
         }
@@ -136,31 +163,16 @@ void ppocr::ocr2::filter_by_lines(
         ++it;
     }
 
-    if (!meanline_map.empty()) {
-        using cP = decltype(meanline_map)::value_type const;
-        auto meanline = std::max_element(meanline_map.begin(), meanline_map.end(), [](cP & a, cP & b) {
-            return a.second < b.second;
-        })->first;
+    if (has_meanline) {
+        auto max_value_idx = std::max_element(meanline_map.begin(), meanline_map.begin() + top_ys_len) - meanline_map.begin();
+        auto meanline = static_cast<unsigned>(max_value_idx) + min_max_box.min_top;
 
         it = boxes.cbegin();
         for (view_ref_list & vec : ambiguous) {
             struct empty_counter { empty_counter & operator++() { return *this; } };
             filter_line(vec, [&](View const & view) -> bool {
-                if (auto p = words_infos.get(view.word)) {
-                    switch (p->lines.meanline) {
-                        case WordLines::Upper:
-                            return it->top() + 1 >= meanline;
-                        case WordLines::Below:
-                            return (it->top() < meanline ? meanline - it->top() : it->top() - meanline) > 1u;
-                        case WordLines::Above:
-                            return it->top() <= meanline + 1;
-                        case WordLines::Upper | WordLines::Below:
-                            return it->top() + 1 > meanline;
-                        case WordLines::Below | WordLines::Above:
-                            return it->top() < meanline + 1;
-                    }
-                }
-                return false;
+                auto p = words_infos.get(view.word);
+                return p && line_pred(p->lines.meanline, it->top(), meanline);
             }, empty_counter{});
             ++it;
         }
