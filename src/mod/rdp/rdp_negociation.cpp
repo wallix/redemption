@@ -254,7 +254,6 @@ RdpNegociation::RdpNegociation(
     , real_client_name(info.hostname)
     , license_store(license_store)
     , use_license_store(mod_rdp_params.use_license_store)
-    , target_ip(mod_rdp_params.target_ip)
     , build_number(info.build)
     , forward_build_number(mod_rdp_params.forward_client_build_number)
 {
@@ -1278,7 +1277,6 @@ bool RdpNegociation::get_license(InStream & stream, TpduBuffer& buf)
                     for (uint32_t i = 0; i < SvrLicReq.ScopeList.ScopeCount; ++i) {
                         bytes_view out = this->license_store.get_license_v1(
                                 logon_info.client_name_is_hidden() ? "localhost" : logon_info.hostname().c_str(),
-                                this->target_ip.c_str(),
                                 SvrLicReq.ProductInfo.dwVersion,
                                 ::char_ptr_cast(SvrLicReq.ScopeList.ScopeArray[i].blobData.data()),
                                 ::char_ptr_cast(CompanyNameU8),
@@ -1458,7 +1456,6 @@ bool RdpNegociation::get_license(InStream & stream, TpduBuffer& buf)
 
                     license_saved = this->license_store.put_license(
                             logon_info.client_name_is_hidden() ? "localhost" : logon_info.hostname().c_str(),
-                            this->target_ip.c_str(),
                             lic.licenseInfo.dwVersion,
                             ::char_ptr_cast(lic.licenseInfo.pbScope),
                             ::char_ptr_cast(CompanyNameU8),
