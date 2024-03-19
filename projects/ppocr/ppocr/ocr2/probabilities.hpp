@@ -19,9 +19,8 @@
 #ifndef PPOCR_SRC_OCR2_PROBABILITIES_HPP
 #define PPOCR_SRC_OCR2_PROBABILITIES_HPP
 
-#include <new>
+#include <cstdlib>
 #include <utility>
-#include <algorithm>
 
 namespace ppocr { namespace ocr2 {
 
@@ -29,15 +28,6 @@ struct Probability
 {
     unsigned i;
     double prob;
-
-    Probability(unsigned i) noexcept
-    : i(i)
-    {}
-
-    Probability(unsigned i, double prob) noexcept
-    : i(i)
-    , prob(prob)
-    {}
 };
 
 struct Probabilities
@@ -46,18 +36,13 @@ struct Probabilities
     using size_type = unsigned;
 
     Probabilities(size_type sz)
-    : data(static_cast<Probability*>(::operator new(sz * sizeof(Probability))))
+    : data(static_cast<Probability*>(
+        aligned_alloc(alignof(Probability), sz * sizeof(Probability))))
     , current(data)
     {}
 
-    template<class It>
-    Probabilities(It first, It last)
-    : data(static_cast<Probability*>(::operator new((last-first) * sizeof(Probability))))
-    , current(data + (last-first))
-    { std::copy(first, last, data); }
-
-    Probabilities(Probabilities &&) = delete;
     Probabilities(Probabilities const &) = delete;
+    Probabilities& operator=(Probabilities const &) = delete;
 
     void swap(Probabilities & p) noexcept
     {
@@ -65,24 +50,26 @@ struct Probabilities
         std::swap(p.current, current);
     }
 
-    ~Probabilities() {
-      ::operator delete(this->data);
+    ~Probabilities()
+    {
+        free(this->data);
     }
 
     iterator begin() const { return data; }
     iterator end() const { return current; }
-    size_type size() const { return current - data; }
+    size_type size() const { return static_cast<size_type>(current - data); }
     bool empty() const { return current == data; }
     void push_back(Probability const & p) { *current++ = p; }
-    template<class... Args>
-    void emplace_back(Args const & ... args) { *current++ = {args...}; }
+    void emplace_back(unsigned i) { current->i = i; ++current; }
+    void emplace_back(unsigned i, double prob) { *current++ = {i, prob}; }
     void clear() { current = data; }
 
     Probability const & front() const { return *data; }
     Probability const & back() const { return *(current-1); }
     Probability const & operator[](size_type i) const { return data[i]; }
 
-    void resize(size_type n) {
+    void resize(size_type n)
+    {
         current = data + n;
     }
 
@@ -95,8 +82,8 @@ inline void swap(Probabilities & a, Probabilities & b) noexcept
 { a.swap(b); }
 
 struct GtProb {
-    GtProb() {}
-    bool operator()(Probability const & a, Probability const & b) const {
+    bool operator()(Probability const & a, Probability const & b) const
+    {
         return a.prob > b.prob;
     }
 };
