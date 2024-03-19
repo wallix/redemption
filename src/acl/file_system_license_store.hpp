@@ -39,10 +39,10 @@ public:
     {}
 
     // The functions shall return empty bytes_view to indicate the error.
-    bytes_view get_license_v1(char const* client_name, char const* target_ip, uint32_t version, char const* scope, char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE>& hwid, writable_bytes_view out, bool enable_log) override
+    bytes_view get_license_v1(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE>& hwid, writable_bytes_view out, bool enable_log) override
     {
         char license_index[2048] = {};
-        ::snprintf(license_index, sizeof(license_index) - 1, "%s_0x%08X_%s_%s_%s", target_ip, version, scope, company_name, product_id);
+        ::snprintf(license_index, sizeof(license_index) - 1, "0.0.0.0_0x%08X_%s_%s_%s", version, scope, company_name, product_id);
         license_index[sizeof(license_index) - 1] = '\0';
         std::replace(std::begin(license_index), std::end(license_index), ' ', '-');
         LOG_IF(enable_log, LOG_INFO, "FileSystemLicenseStore::get_license_v1(): LicenseIndex=\"%s\"", license_index);
@@ -128,10 +128,10 @@ public:
         return bytes_view { out.data(), 0 };
     }
 
-    bool put_license(char const* client_name, char const* target_ip, uint32_t version, char const* scope, char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE> const& hwid, bytes_view in, bool enable_log) override
+    bool put_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE> const& hwid, bytes_view in, bool enable_log) override
     {
         char license_index[2048] = {};
-        ::snprintf(license_index, sizeof(license_index) - 1, "%s_0x%08X_%s_%s_%s", target_ip, version, scope, company_name, product_id);
+        ::snprintf(license_index, sizeof(license_index) - 1, "0.0.0.0_0x%08X_%s_%s_%s", version, scope, company_name, product_id);
         license_index[sizeof(license_index) - 1] = '\0';
         std::replace_if(std::begin(license_index), std::end(license_index),
                         [](unsigned char c) { return (' ' == c); }, '-');

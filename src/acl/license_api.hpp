@@ -29,7 +29,7 @@ struct LicenseApi : noncopyable
     virtual ~LicenseApi() = default;
 
     // The functions shall return empty bytes_view to indicate the error.
-    virtual bytes_view get_license_v1(char const* client_name, char const* target_ip, uint32_t version, char const* scope,
+    virtual bytes_view get_license_v1(char const* client_name, uint32_t version, char const* scope,
         char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE>& hwid, writable_bytes_view out,
         bool enable_log) = 0;
 
@@ -38,18 +38,17 @@ struct LicenseApi : noncopyable
         char const* company_name, char const* product_id, writable_bytes_view out,
         bool enable_log) = 0;
 
-    virtual bool put_license(char const* client_name, char const* target_ip, uint32_t version, char const* scope, char const* company_name,
+    virtual bool put_license(char const* client_name, uint32_t version, char const* scope, char const* company_name,
         char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE> const& hwid, bytes_view in, bool enable_log) = 0;
 };
 
 struct NullLicenseStore : LicenseApi
 {
-    bytes_view get_license_v1(char const* client_name, char const* target_ip, uint32_t version, char const* scope,
+    bytes_view get_license_v1(char const* client_name, uint32_t version, char const* scope,
         char const* company_name, char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE>& hwid, writable_bytes_view out,
         bool enable_log) override
     {
         (void)client_name;
-        (void)target_ip;
         (void)version;
         (void)scope;
         (void)company_name;
@@ -74,11 +73,10 @@ struct NullLicenseStore : LicenseApi
         return bytes_view(out.data(), 0);
     }
 
-    bool put_license(char const* client_name, char const* target_ip, uint32_t version, char const* scope, char const* company_name,
+    bool put_license(char const* client_name, uint32_t version, char const* scope, char const* company_name,
         char const* product_id, std::array<uint8_t, LIC::LICENSE_HWID_SIZE> const& hwid, bytes_view in, bool enable_log) override
     {
         (void)client_name;
-        (void)target_ip;
         (void)version;
         (void)scope;
         (void)company_name;

@@ -185,8 +185,6 @@ struct ModRDPParams
 
     const char * load_balance_info = "";
 
-    const char * target_ip = "";
-
     bool support_connection_redirection_during_recording = true;
 
     bool split_domain = false;
@@ -426,8 +424,6 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             large_pointer_support);
 
         RDP_PARAMS_LOG("%s",     s_or_none,             load_balance_info);
-
-        RDP_PARAMS_LOG("%s",     s_or_none,             target_ip);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         remote_app_params.rail_disconnect_message_delay);
 
