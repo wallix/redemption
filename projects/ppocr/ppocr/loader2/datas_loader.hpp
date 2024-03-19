@@ -141,7 +141,7 @@ struct Data
         return get_relationship().count();
     }
 
-    unsigned size() const noexcept {
+    std::size_t size() const noexcept {
         return this->data_.values.size();
     }
 

@@ -53,41 +53,37 @@
 
 namespace ppocr {
 
+template<class... Strategies>
+struct mp_list
+{
+    static constexpr std::size_t size = sizeof...(Strategies);
+};
+
+namespace details_
+{
+    template<class L1, class L2 = mp_list<>, class L3 = mp_list<>>
+    struct ppocr_to_datas;
+
+    template<class... Strategies>
+    struct DefaultDatas : loader2::Datas<Strategies...>
+    {
+        using loader2::Datas<Strategies...>::Datas;
+    };
+
+    template<class... T1, class... T2, class... T3>
+    struct ppocr_to_datas<mp_list<T1...>, mp_list<T2...>, mp_list<T3...>>
+    {
+        using type = DefaultDatas<T1..., T2..., T3...>;
+    };
+}
+
 #define REGISTRY(name) \
     loader2::Strategy<strategies::name, loader2::PolicyLoader::img>
 #define REGISTRY2(name) \
     loader2::Strategy<strategies::name, loader2::PolicyLoader::img>, \
     loader2::Strategy<strategies::name, loader2::PolicyLoader::img90>
 
-template<class... Strategies>
-struct mpl_strategies_list_t
-{ static constexpr std::size_t size = sizeof...(Strategies); };
-
-namespace details_ {
-    template<class Strategies1, class Strategies2>
-    struct pp_ocr_merge_strategies;
-
-    template<class... Strategies1, class... Strategies2>
-    struct pp_ocr_merge_strategies<mpl_strategies_list_t<Strategies1...>, mpl_strategies_list_t<Strategies2...>>
-    { using type = mpl_strategies_list_t<Strategies1..., Strategies2...>; };
-
-    template<class Strategies>
-    struct pp_ocr_to_datas;
-
-    template<class... Strategies>
-    struct DefaultDatas : loader2::Datas<Strategies...>
-    { using loader2::Datas<Strategies...>::Datas; };
-
-    template<class... Strategies>
-    struct pp_ocr_to_datas<mpl_strategies_list_t<Strategies...>>
-    { using type = DefaultDatas<Strategies...>; };
-}
-
-#ifdef IN_IDE_PARSER
-using PpOcrDatas = loader2::Datas<
-#else
-using PpOcrSimpleDatas = mpl_strategies_list_t<
-#endif
+using PpOcrSimpleDatas = mp_list<
     loader2::Strategy<strategies::dvgravity2,   loader2::PolicyLoader::img90>,
     loader2::Strategy<strategies::dvdirection2, loader2::PolicyLoader::img90>,
     REGISTRY2(dzdensity),
@@ -116,35 +112,27 @@ using PpOcrSimpleDatas = mpl_strategies_list_t<
     REGISTRY2(dvgravity),
 
     REGISTRY (density)
-#ifdef IN_IDE_PARSER
-,
-#else
 >;
 
-using PpOcrComplexDatas = mpl_strategies_list_t<
-#endif
+using PpOcrComplexDatas = mp_list<
     REGISTRY2(hbar),
 
     REGISTRY (alternations)
-#ifdef IN_IDE_PARSER
-,
-#else
 >;
 
-using PpOcrExclusiveDatas = mpl_strategies_list_t<
-#endif
+using PpOcrExclusiveDatas = mp_list<
     REGISTRY (zone),
     REGISTRY (proportionality_zone)
 >;
 
-#ifndef IN_IDE_PARSER
-using PpOcrDatas = details_::pp_ocr_to_datas<
-    details_::pp_ocr_merge_strategies<
-        PpOcrSimpleDatas,
-        details_::pp_ocr_merge_strategies<PpOcrComplexDatas, PpOcrExclusiveDatas>::type
-    >::type
+#undef REGISTRY2
+#undef REGISTRY
+
+using PpOcrDatas = details_::ppocr_to_datas<
+    PpOcrSimpleDatas,
+    PpOcrComplexDatas,
+    PpOcrExclusiveDatas
 >::type;
-#endif
 
 
 // TODO other file
@@ -261,8 +249,5 @@ namespace details_ {
 }
 
 }
-
-#undef REGISTRY2
-#undef REGISTRY
 
 #endif

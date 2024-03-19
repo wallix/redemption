@@ -22,7 +22,6 @@
 #include "ppocr/strategies/utils/relationship.hpp"
 
 #include <algorithm>
-#include <functional>
 #include <numeric>
 
 namespace ppocr { namespace strategies {
@@ -33,30 +32,27 @@ proportionality_zone::value_type proportionality_zone::load(Image const & img, I
 
     utils::ZoneInfo zone_info = utils::count_zone(img);
 
-    for (unsigned i = 0; i < zone_info.len; ++i) {
-        if (zone_info.top()[i]) {
-            // skip
-        }
-        if (zone_info.right()[i]) {
-            zone_info.top()[i] = zone_info.right()[i];
-        }
-        else if (zone_info.bottom()[i]) {
-            zone_info.top()[i] = zone_info.bottom()[i];
-        }
-        else if (zone_info.left()[i]) {
-            zone_info.top()[i] = zone_info.left()[i];
-        }
-    }
+    ret.resize(zone_info.count_zone());
+    auto it = ret.begin();
 
     unsigned area = 0;
-    for (auto n : zone_info.top()) {
-        area += n;
+    for (unsigned i = 0; i < zone_info.count_zone(); ++i) {
+        unsigned value
+          = zone_info.top()[i] ? zone_info.top()[i]
+          : zone_info.right()[i] ? zone_info.right()[i]
+          : zone_info.bottom()[i] ? zone_info.bottom()[i]
+          : zone_info.left()[i];
+
+        if (value) {
+            area += value;
+            *it++ = value;
+        }
     }
 
-    for (auto n : zone_info.top()) {
-        if (n) {
-            ret.push_back(n * 100 / area);
-        }
+    ret.resize(static_cast<std::size_t>(it - ret.begin()));
+
+    for (unsigned& n : ret) {
+        n = n * 100 / area;
     }
 
     std::sort(ret.begin(), ret.end());

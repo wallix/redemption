@@ -30,7 +30,7 @@ struct Box
 {
     Box() = default;
 
-    Box(Index const & idx,  Bounds const & bnd)
+    Box(Index const & idx, Bounds const & bnd)
     : idx_(idx)
     , bounds_(bnd)
     {}

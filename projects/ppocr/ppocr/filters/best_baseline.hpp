@@ -19,30 +19,28 @@
 #ifndef PPOCR_SRC_FILTERS_BEST_BASELINE_HPP
 #define PPOCR_SRC_FILTERS_BEST_BASELINE_HPP
 
+#include <type_traits>
 #include <algorithm>
-#include <map>
 
 
 namespace ppocr { namespace filters {
 
-using std::size_t;
-
-template<class FwIt>
-typename std::iterator_traits<FwIt>::value_type
-best_baseline(FwIt first, FwIt last)
+template<class RandomIt>
+inline unsigned best_baseline(RandomIt first, RandomIt last)
 {
-    using value_type = typename std::iterator_traits<FwIt>::value_type;
     if (first == last) {
-        return ~value_type{};
+        return ~0u;
     }
-    std::map<value_type, size_t> ys;
+
+    auto max_value = *std::max_element(first, last);
+    static_assert(std::is_same_v<decltype(max_value), unsigned>);
+
+    std::vector<unsigned> ys(max_value + 1, 0);
     for (; first != last; ++first) {
         ++ys[*first];
     }
-    using cP = std::pair<value_type, size_t> const;
-    return std::max_element(ys.begin(), ys.end(), [](cP & a, cP & b) {
-        return a.second < b.second;
-    })->first;
+
+    return static_cast<unsigned>(std::max_element(ys.begin(), ys.end()) - ys.begin());
 }
 
 } }

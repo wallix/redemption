@@ -22,53 +22,120 @@
 #include "ppocr/image/image.hpp"
 
 #include <vector>
+#include <memory>
 #include <cassert>
 
 namespace ppocr { namespace strategies { namespace utils
 {
-    struct unsigned_array_view
+    struct MappingZoneView
     {
-        unsigned* data;
-        unsigned len;
-
-        unsigned* begin() const { return data; }
-        unsigned* end() const { return data + len; }
-
-        unsigned count_non_zero() const
-        {
-            unsigned n = 0;
-            for (unsigned x : *this) {
-                n += x ? 1 : 0;
-            }
-            return n;
-        }
+        MappingZoneView(unsigned* zones, unsigned len)
+        : zones(zones)
+        , len(len)
+        {}
 
         unsigned& operator[](unsigned i)
         {
             assert(i < len);
-            return data[i];
+            return zones[i];
         }
+
+        unsigned operator[](unsigned i) const
+        {
+            assert(i < len);
+            return zones[i];
+        }
+
+        unsigned* begin() const
+        {
+            return zones;
+        }
+
+        unsigned* end() const
+        {
+            return begin() + len;
+        }
+
+        unsigned count_used_zone() const
+        {
+            unsigned ret = 0;
+            for (unsigned i : *this) {
+                if (i) {
+                    ++ret;
+                }
+            }
+            return ret;
+        }
+
+    private:
+        unsigned* zones;
+        unsigned len;
     };
 
-    struct ZoneInfo {
-        std::unique_ptr<unsigned[]> stack;
-        unsigned len = 0;
-        unsigned count_zone = 1;
+    struct ZoneInfo
+    {
+        ZoneInfo(unsigned count_zone)
+        : _buffer(std::make_unique<unsigned[]>(count_zone * 4))
+        , _count_zone(count_zone)
+        {}
 
-        unsigned_array_view top() { return {stack.get(), len}; }
-        unsigned_array_view right() { return {top().end(), len}; }
-        unsigned_array_view bottom() { return {right().end(), len}; }
-        unsigned_array_view left() { return {bottom().end(), len}; }
-
-        void alloc(unsigned n)
+        unsigned count_zone() const
         {
-            len = n;
-            stack = std::make_unique<unsigned[]>(n);
+            return _count_zone;
+        }
+
+        MappingZoneView top()
+        {
+            return view(0);
+        }
+
+        MappingZoneView right()
+        {
+            return view(1);
+        }
+
+        MappingZoneView bottom()
+        {
+            return view(2);
+        }
+
+        MappingZoneView left()
+        {
+            return view(3);
+        }
+
+        unsigned count_total_used_zone() const
+        {
+            unsigned used_zone = 0;
+            for (unsigned i = 0; i < count_zone(); ++i) {
+                if (data(0)[i]
+                 || data(1)[i]
+                 || data(2)[i]
+                 || data(3)[i]
+                ) {
+                    ++used_zone;
+                }
+            }
+            return used_zone;
+        }
+
+    private:
+        std::unique_ptr<unsigned[]> _buffer;
+        unsigned _count_zone;
+
+        MappingZoneView view(unsigned d)
+        {
+            return MappingZoneView{data(d), _count_zone};
+        }
+
+        unsigned* data(unsigned d) const
+        {
+            return _buffer.get() + _count_zone * d;
         }
     };
 
     inline ZoneInfo count_zone(const Image& img) {
-        ZoneInfo zone;
+        unsigned count_zone = 1;
         std::vector<unsigned> mirror(img.area() * 2, 0);
         unsigned* const stack = mirror.data() + img.area();
 
@@ -79,14 +146,14 @@ namespace ppocr { namespace strategies { namespace utils
 
             unsigned idx = i;
             auto stack_it = stack;
-            mirror[idx] = zone.count_zone;
+            mirror[idx] = count_zone;
             for (;;) {
                 auto x = idx % img.width();
                 auto y = idx / img.width();
 
                 auto push_if = [&](unsigned idx){
                     if (!mirror[idx] && !is_pix_letter(img.data()[idx])) {
-                        mirror[idx] = zone.count_zone;
+                        mirror[idx] = count_zone;
                         *stack_it++ = idx;
                     }
                 };
@@ -111,15 +178,15 @@ namespace ppocr { namespace strategies { namespace utils
                 idx = *--stack_it;
             }
 
-            zone.count_zone++;
+            count_zone++;
         }
 
-        zone.alloc(zone.count_zone - 1);
+        ZoneInfo zone{count_zone - 1};
 
-        auto insert = [&](unsigned_array_view av, unsigned x, unsigned y) {
+        auto insert = [&](MappingZoneView m, unsigned x, unsigned y) {
             auto i = img.to_size_t({x, y});
             if (mirror[i]) {
-                ++av[mirror[i] - 1];
+                ++m[mirror[i]-1];
             }
         };
 

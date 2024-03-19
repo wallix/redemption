@@ -85,7 +85,7 @@ void ppocr::ocr2::filter_by_lines(
         : iterator_base(base)
         {}
 
-        unsigned operator*() const {
+        value_type operator*() const {
             return iterator_base::operator*().bottom();
         }
     };

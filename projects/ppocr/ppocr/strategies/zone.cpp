@@ -31,16 +31,11 @@ zone::value_type zone::load(const Image& img, const Image& /*img*/) const
 
     ret[top_left_is_letter] = is_pix_letter(img[{0, 0}]);
     ret[bottom_right_is_letter] = is_pix_letter(img[{img.width()-1, img.height()-1}]);
-    ret[number_top_alternations] = zone_info.top().count_non_zero();
-    ret[number_right_alternations] = zone_info.right().count_non_zero();
-    ret[number_bottom_alternations] = zone_info.bottom().count_non_zero();
-    ret[number_left_alternations] = zone_info.left().count_non_zero();
-
-    for (unsigned i = 0; i < zone_info.len; ++i) {
-        zone_info.top()[i] += zone_info.right()[i] + zone_info.bottom()[i] + zone_info.left()[i];
-    }
-
-    ret[number_internal_alternations] = zone_info.count_zone - 1 - zone_info.top().count_non_zero();
+    ret[number_top_alternations] = zone_info.top().count_used_zone();
+    ret[number_right_alternations] = zone_info.right().count_used_zone();
+    ret[number_bottom_alternations] = zone_info.bottom().count_used_zone();
+    ret[number_left_alternations] = zone_info.left().count_used_zone();
+    ret[number_internal_alternations] = zone_info.count_zone() - zone_info.count_total_used_zone();
 
     return ret;
 }
