@@ -192,8 +192,6 @@ private:
     LicenseApi& license_store;
     const bool use_license_store;
 
-    std::string const target_ip;
-
     /// Client build number.
     /// Represents the 'clientBuild' field of Client Core Data (TS_UD_CS_CORE)
     /// as specified in [MS-RDPBCGR] §2.2.1.3.2.
