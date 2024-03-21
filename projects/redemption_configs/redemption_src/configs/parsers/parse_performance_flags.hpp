@@ -16,7 +16,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 inline char const* parse_performance_flags(RdpPerformanceFlags& x, chars_view flags)
 {
-    struct P { uint32_t flag; bool enable; std::string_view name; };
+    struct P { uint32_t flag; bool enabled_by_default; std::string_view name; };
     static constexpr P pairs[] {
         {0x001, true, "wallpaper"},
         {0x002, true, "full_window_drag"},
@@ -51,7 +51,7 @@ inline char const* parse_performance_flags(RdpPerformanceFlags& x, chars_view fl
         if (flag[0] < '0' || '9' < flag[0]) {
             for (auto p : pairs) {
                 if (p.name == flag.as<std::string_view>()) {
-                    if (enable == p.enable) {
+                    if (enable == p.enabled_by_default) {
                         force_not_present |= p.flag;
                     }
                     else {

@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <cstdint>
 
 
+// see also parse_performance_flags()
 struct RdpPerformanceFlags
 {
     uint32_t force_present = 0;
