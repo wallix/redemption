@@ -351,7 +351,7 @@ Some of these options can be modified by `passthrough.py` by filling in the dict
 
 ## Migrate the configuration to the next version
 
-Between 2 versions, some options can be moved or deleted. `tools/conf_migration_tool/conf_migrate.py` allows to automatically migrate a file from an old version.
+Between 2 versions, some options can be moved or deleted. `tools/conf_migration_tool/rdp_conf_migrate.py` allows to automatically migrate a file from an old version.
 
 
 # Session recording
