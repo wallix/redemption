@@ -910,7 +910,7 @@ migration_defs: Iterable[MigrationType] = (
     }),
     # Remove sections after moving keys from these sections
     (RedemptionVersion("12.0.1"), {
-        'video': RemoveItem(reason="no more keys"),
+        'video': RemoveItem(reason="No more keys"),
         'crypto': RemoveItem(reason="Never used"),
     }),
 )

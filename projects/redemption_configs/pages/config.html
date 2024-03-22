@@ -406,6 +406,12 @@ const makeHtmlHistory = (migrate, sections, historyTransformations) => {
   const h = '<p>Change by ReDemPtion versions (rename and remove only):</p><ul>';
   const histFragments = [h];
   const histIniOnyFragments = [h];
+
+  let prevVersion = '';
+  // indexes used for merged two migrate config with same version
+  let iHistFragments = 0;
+  let iHistIniOnyFragments = 0;
+
   for (const {version, data} of migrate.reverse()) {
     const histGlobalSpec = [];
     const histIniOnly = [];
@@ -472,8 +478,25 @@ const makeHtmlHistory = (migrate, sections, historyTransformations) => {
         hist.push(`<li>Remove <span class="hist-old-name">[${oldDisplayName}]</span>${formatReason(sectionData.reason)}</li>`);
       }
     }
-    if (histGlobalSpec.length) histFragments.push(`<li>${version}<ul>`, ...histGlobalSpec.sort(), '</ul></li>');
-    if (histIniOnly.length) histIniOnyFragments.push(`<li>${version}<ul>`, ...histIniOnly.sort(), '</ul></li>');
+
+    const updateHistString = (hist, fragments, i) => {
+      if (hist.length) {
+        // same version, inject history in previous fragments
+        // after <ul> and before other history elements for this version
+        if (prevVersion === version) {
+          fragments.splice(i, 0, ...hist.sort());
+        }
+        else {
+          i = fragments.length + 1;
+          fragments.push(`<li>${version}<ul>`, ...hist.sort(), '</ul></li>');
+        }
+      }
+      return i;
+    };
+
+    iHistFragments = updateHistString(histGlobalSpec, histFragments, iHistFragments);
+    iHistIniOnyFragments = updateHistString(histIniOnly, histIniOnyFragments, iHistIniOnyFragments);
+    prevVersion = version;
   }
   histFragments.push('</ul>');
   histIniOnyFragments.push('</ul>');
