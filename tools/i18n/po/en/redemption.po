@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-23 11:43+0100\n"
+"POT-Creation-Date: 2024-03-22 11:35+0100\n"
 "PO-Revision-Date: 2021-03-01 14:06+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -351,8 +351,8 @@ msgid "TLS certificate corrupted!"
 msgstr "TLS certificate corrupted!"
 
 #: ../../src/utils/translation.hpp:145
-msgid "TLS certificate  is inaccessible!"
-msgstr "TLS certificate  is inaccessible!"
+msgid "TLS certificate is inaccessible!"
+msgstr "TLS certificate is inaccessible!"
 
 #: ../../src/utils/translation.hpp:146
 msgid "VNC connection error!"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-23 11:43+0100\n"
+"POT-Creation-Date: 2024-03-22 11:35+0100\n"
 "PO-Revision-Date: 2021-03-01 15:52+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -352,7 +352,7 @@ msgid "TLS certificate corrupted!"
 msgstr "Certificat TLS est corrompu!"
 
 #: ../../src/utils/translation.hpp:145
-msgid "TLS certificate  is inaccessible!"
+msgid "TLS certificate is inaccessible!"
 msgstr "Certificat TLS est inaccessible!"
 
 #: ../../src/utils/translation.hpp:146
