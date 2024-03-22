@@ -119,13 +119,13 @@ class TestMigration(unittest.TestCase):
         c2 = (RedemptionVersion('9.1.32'), {})
         c3 = (RedemptionVersion('9.1.34'), {})
         desc = (c1, c2, c3)
-        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.29')), [c1,c2,c3])
-        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.30')), [c2,c3])
-        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.31')), [c2,c3])
-        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.32')), [c3])
-        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.33')), [c3])
-        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.34')), [])
-        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.35')), [])
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.29')), (c1,c2,c3))
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.30')), (c2,c3))
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.31')), (c2,c3))
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.32')), (c3,))
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.33')), (c3,))
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.34')), ())
+        self.assertEqual(migration_filter(desc, RedemptionVersion('9.1.35')), ())
 
     def test_fragments_to_spans_of_sections(self):
         ini = '''
@@ -372,7 +372,6 @@ class TestMigration(unittest.TestCase):
                 '[mod_rdp]\n'
                 'depth=15\n'
                 '\n'
-                '[video]\n'
                 '\n'
                 '[all_target_mod]\n'
                 '\n'
@@ -414,7 +413,6 @@ class TestMigration(unittest.TestCase):
                 '\n'
                 'depth=15\n'
                 '\n'
-                '[video]\n'
                 '\n'
                 '[all_target_mod]\n'
                 '\n'

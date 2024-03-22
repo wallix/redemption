@@ -186,17 +186,22 @@ ValuesInjectionsDescType = Dict[str, Dict[str, Iterable[InjectionValue]]]
 
 InjectionsType = Dict[str, Dict[str, str]]
 
-def migration_filter(migration_defs: Iterable[MigrationType],
-                     previous_version: RedemptionVersion) -> List[MigrationType]:
-    migration_defs = sorted(migration_defs, key=lambda t: t[0])
+
+def migration_filter(migration_defs: Sequence[MigrationType],
+                     previous_version: RedemptionVersion) -> Sequence[MigrationType]:
 
     for i, t in enumerate(migration_defs):
         if previous_version >= t[0]:
             continue
 
-        return migration_defs[i:]
+        effective_migration_defs = migration_defs[i:]
+        assert all(
+            a[0] <= b[0]
+            for a, b in itertools.pairwise(effective_migration_defs)
+        ), "Migration definition must be sorted by version !"
+        return effective_migration_defs
 
-    return []
+    return type(migration_defs)()
 
 
 def migration_def_to_actions(fragments: Iterable[ConfigurationFragment],
@@ -458,7 +463,7 @@ def build_with_injected_values(injections: InjectionsType,
     return new_fragments
 
 
-def migrate_file(migration_defs: Iterable[MigrationType],
+def migrate_file(migration_defs: Sequence[MigrationType],
                  value_injections_desc: ValuesInjectionsDescType,
                  version: RedemptionVersion,
                  ini_filename: str,
@@ -592,7 +597,7 @@ def dump_json(defs: List[MigrationType]) -> List[Any]:
     return json_array
 
 
-def main(migration_defs: Iterable[MigrationType],
+def main(migration_defs: Sequence[MigrationType],
          value_injections_desc: ValuesInjectionsDescType,
          argv: List[str]) -> int:
     if len(argv) != 4 or argv[1] not in {'-s', '-f'}:
@@ -902,6 +907,11 @@ migration_defs: Iterable[MigrationType] = (
             'record_path': UpdateItem(section='audit'),
             'hash_path': UpdateItem(section='audit'),
         },
+    }),
+    # Remove sections after moving keys from these sections
+    (RedemptionVersion("12.0.1"), {
+        'video': RemoveItem(reason="no more keys"),
+        'crypto': RemoveItem(reason="Never used"),
     }),
 )
 
