@@ -71,11 +71,11 @@ class ConfigKind(IntEnum):
 
 
 rgx_ini_parser = re.compile(
-    r'(\n)|'
-    r'[ \t]*(#)[^\n]*|'
-    r'[ \t]*\[[ \t]*(.+?)[ \t]*\][ \t]*|'
-    r'[ \t]*([^\s]+)[ \t]*=[ \t]*(.*?)[ \t]*(?=\n|$)|'
-    r'[^\n]+')
+    r'(\n)|'  # NewLine
+    r'[ \t]*(#)[^\n]*|'  # Comment
+    r'[ \t]*\[[ \t]*(.+?)[ \t]*\][ \t]*|'  # Section
+    r'[ \t]*([^\s]+)[ \t]*=[ \t]*(.*?)[ \t]*(?=\n|$)|'  # KeyValue
+    r'[^\n]+')  # Unknown
 
 
 novalue = ''
