@@ -127,7 +127,9 @@ def parse_configuration(content: str) -> ConfigurationFragmentListType:
     return list(map(_to_fragment, rgx_ini_parser.finditer(content)))
 
 
-def parse_configuration_from_file(filename: str) -> Tuple[str, ConfigurationFragmentListType]:
+def parse_configuration_from_file(
+        filename: str
+) -> Tuple[str, ConfigurationFragmentListType]:
     with open(filename, encoding='utf-8') as f:
         content = f.read()
         return (content, parse_configuration(content))
@@ -560,13 +562,14 @@ def dump_json(defs: List[MigrationType]) -> List[Any]:
         update_if(d, 'toIniOnly', item.to_ini_only)
         return d
 
-    def dict_to_dict(values: Dict[str, MigrationKeyOrderType]) -> Dict[str, MigrationKeyOrderType]:
+    def dict_to_dict(values: Dict[str, MigrationKeyOrderType]
+                     ) -> Dict[str, MigrationKeyOrderType | str]:
         data = {}
         for k, item in values.items():
-            obj = visitor[type(item)](item)
+            obj = visitor[type(item)](item)  # type: ignore
             if obj:
                 data[k] = obj
-        return {'kind': 'values', 'values': data}
+        return {'kind': 'values', 'values': data}  # type: ignore
 
     visitor = {
         RemoveItem: remove_to_dict,
@@ -580,7 +583,7 @@ def dump_json(defs: List[MigrationType]) -> List[Any]:
     for version, desc in defs:
         data = {}
         for section, values_or_item in desc.items():
-            obj = visitor[type(values_or_item)](values_or_item)
+            obj = visitor[type(values_or_item)](values_or_item)  # type: ignore
             if obj:
                 data[section] = obj
         if data:
@@ -589,13 +592,13 @@ def dump_json(defs: List[MigrationType]) -> List[Any]:
     return json_array
 
 
-def main(migration_defs: List[MigrationType],
+def main(migration_defs: Iterable[MigrationType],
          value_injections_desc: ValuesInjectionsDescType,
          argv: List[str]) -> int:
     if len(argv) != 4 or argv[1] not in {'-s', '-f'}:
         if len(argv) == 2 and argv[1] == '--dump=json':
             import json  # noqa: PLC0415
-            print(json.dumps(dump_json(migration_defs)))
+            print(json.dumps(dump_json(migration_defs)))  # type: ignore
             return 0
 
         print(f'{argv[0]} {{-s|-f}} old_version ini_filename\n'

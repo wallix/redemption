@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import unittest
 
-from conf_migrate import RedemptionVersion, RedemptionVersionError
+from rdp_conf_migrate import RedemptionVersion, RedemptionVersionError
 
 class Test_RedemptionVersion(unittest.TestCase):
     def test_invalid_version(self):

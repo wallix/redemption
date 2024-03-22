@@ -3,29 +3,32 @@ import unittest
 import os
 
 from typing import Tuple
-from conf_migrate import (parse_configuration,
-                          migration_filter,
-                          migration_def_to_actions,
-                          fragments_to_spans_of_sections,
-                          migrate,
-                          migrate_file,
-                          RedemptionVersion,
-                          UpdateItem,
-                          RemoveItem,
-                          MoveSection,
-                          ConfigKind,
-                          ConfigurationFragment,
-                          MigrationDescType,
-                          migration_defs,
-                          extract_value_injections,
-                          build_with_injected_values,
-                          _merge_session_log_format_10_5_31,
-                          _merge_performance_flags_10_5_31)
+from rdp_conf_migrate import (
+    parse_configuration,
+    migration_filter,
+    migration_def_to_actions,
+    fragments_to_spans_of_sections,
+    migrate,
+    migrate_file,
+    RedemptionVersion,
+    UpdateItem,
+    RemoveItem,
+    MoveSection,
+    ConfigKind,
+    ConfigurationFragment,
+    MigrationDescType,
+    migration_defs,
+    extract_value_injections,
+    build_with_injected_values,
+    _merge_session_log_format_10_5_31,
+    _merge_performance_flags_10_5_31
+)
 
 
 def process_migrate(migrate_def: MigrationDescType, ini: str) -> Tuple[bool, str]:
     r = migrate(parse_configuration(ini), migrate_def)
     return (r[0], ''.join(fragment.text for fragment in r[1]))
+
 
 def find_migrade_def(version: RedemptionVersion) -> MigrationDescType:
     return next(migrate_def for def_version, migrate_def in migration_defs
