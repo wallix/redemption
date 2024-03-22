@@ -30,7 +30,7 @@ branch-pages:
     GIT_BRANCH: pages
   script:
     - mkdir "tmp"
-    - tools/conf_migration_tool/conf_migrate.py --dump=json > tmp/migrate.json
+    - tools/conf_migration_tool/rdp_conf_migrate.py --dump=json > tmp/migrate.json
     - cp projects/redemption_configs/autogen/doc/*.json docs/theme/*.png tmp
     - cp projects/redemption_configs/pages/config.html tmp/index.html
     - git config user.email "cipipeline@wallix.com"
