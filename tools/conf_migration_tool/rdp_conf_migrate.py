@@ -717,7 +717,7 @@ def _server_cert_notif_12_0_1(value: str, _fragments: Iterable[ConfigurationFrag
 _update_server_cert_notif_12_0_1 = UpdateItem(value_transformation=_server_cert_notif_12_0_1)
 
 
-migration_defs: Iterable[MigrationType] = (
+migration_defs: Sequence[MigrationType] = (
     (RedemptionVersion('9.1.39'), {
         'globals': {
             'session_timeout': UpdateItem(key='base_inactivity_timeout'),
