@@ -24,15 +24,28 @@
 
 namespace ppocr { namespace strategies { namespace utils {
 
-inline
-TopBottom horizontal_direction(const Image& img)
+struct horizontal_direction_fn
 {
-    unsigned top = 0;
-    unsigned bottom = 0;
+    TopBottom value() const
+    {
+        return top_bottom;
+    }
+
+    void compute(const Image& img);
+
+private:
+    TopBottom top_bottom;
+};
+
+inline
+void horizontal_direction_fn::compute(const Image& img)
+{
+    top_bottom.top = 0;
+    top_bottom.bottom = 0;
     auto p = img.data();
     for (auto ep = img.data({0, img.height() / 2}); p != ep; ++p) {
         if (is_pix_letter(*p)) {
-            ++top;
+            ++top_bottom.top;
         }
     }
     if (img.height() & 1) {
@@ -40,11 +53,9 @@ TopBottom horizontal_direction(const Image& img)
     }
     for (auto ep = img.data_end(); p != ep; ++p) {
         if (is_pix_letter(*p)) {
-            ++bottom;
+            ++top_bottom.bottom;
         }
     }
-
-    return {top, bottom};
 }
 
 } } }

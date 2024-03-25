@@ -89,7 +89,7 @@ Box make_box_character(Image const & image, Index const & idx, Bounds const & bn
 
     unsigned h = bnd.height();
 
-    d = image.data({x, h});
+    d = image.data() + image.to_size_t({x, h});
     while (--h > y) {
         d -= bnd.width();
         if (!utils::horizontal_empty(d, w)) {

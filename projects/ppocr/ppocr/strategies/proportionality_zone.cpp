@@ -18,7 +18,6 @@
 
 #include "ppocr/strategies/proportionality_zone.hpp"
 #include "ppocr/image/image.hpp"
-#include "ppocr/strategies/utils/count_zone.hpp"
 #include "ppocr/strategies/utils/relationship.hpp"
 
 #include <algorithm>
@@ -26,11 +25,11 @@
 
 namespace ppocr { namespace strategies {
 
-proportionality_zone::value_type proportionality_zone::load(Image const & img, Image const & /*img90*/) const
+proportionality_zone::value_type proportionality_zone::load(Image const & img, Image const & /*img90*/, ctx_type& ctx)
 {
     proportionality_zone::value_type ret;
 
-    utils::ZoneInfo zone_info = utils::count_zone(img);
+    utils::ZoneInfo const& zone_info = ctx.compute(img);
 
     ret.resize(zone_info.count_zone());
     auto it = ret.begin();
@@ -60,7 +59,7 @@ proportionality_zone::value_type proportionality_zone::load(Image const & img, I
     return ret;
 }
 
-unsigned proportionality_zone::relationship_type::operator()(const value_type& a, const value_type& b) const
+unsigned proportionality_zone::relationship_type::compute(const value_type& a, const value_type& b)
 {
     if (a.size() != b.size()) {
         return 0;
@@ -76,23 +75,23 @@ unsigned proportionality_zone::relationship_type::operator()(const value_type& a
     return utils::compute_relationship(total, 50u, 100u);
 }
 
-unsigned proportionality_zone::relationship_type::count() const
+unsigned proportionality_zone::relationship_type::count()
 { return 101; }
 
 
 double proportionality_zone::relationship_type::dist(
     proportionality_zone::relationship_type::value_type const & a,
     proportionality_zone::relationship_type::value_type const & b
-) const {
-    return static_cast<double>(operator()(a, b)) / 100.;
+) {
+    return static_cast<double>(compute(a, b)) / 100.;
 }
 
 bool proportionality_zone::relationship_type::in_dist(
     proportionality_zone::relationship_type::value_type const & a,
     proportionality_zone::relationship_type::value_type const & b,
     unsigned d
-) const {
-    return operator()(a, b) >= d;
+) {
+    return compute(a, b) >= d;
 }
 
 } }

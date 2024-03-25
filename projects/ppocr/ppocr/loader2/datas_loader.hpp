@@ -24,6 +24,7 @@
 #include <type_traits>
 
 #include "ppocr/image/image.hpp"
+#include "ppocr/strategies/utils/context.hpp"
 #include <cassert>
 
 namespace ppocr {
@@ -36,11 +37,36 @@ using std::size_t;
 
 enum class PolicyLoader { img, img90 };
 
+template<PolicyLoader Policy, class Ctx>
+struct MakeRotatedCtx
+{
+    struct type : Ctx {};
+};
+
+template<PolicyLoader Policy>
+struct MakeRotatedCtx<Policy, no_context>
+{
+    using type = no_context;
+};
+
 template<class Strategy_, PolicyLoader Policy>
 struct Strategy
 {
-    using strategy_type = Strategy_;
+    using value_type = typename Strategy_::value_type;
+    using relationship_type = typename Strategy_::relationship_type;
+    using ctx_type = typename MakeRotatedCtx<Policy, typename Strategy_::ctx_type>::type;
+
     constexpr static PolicyLoader policy = Policy;
+
+    static value_type load(Image const & img, Image const & img90, ctx_type& ctx)
+    {
+        if constexpr (policy == PolicyLoader::img) {
+            return Strategy_::load(img, img90, ctx);
+        }
+        else {
+            return Strategy_::load(img90, img, ctx);
+        }
+    }
 };
 
 namespace details_ {
@@ -75,17 +101,23 @@ namespace details_ {
     is_contiguous(unsigned) { return {}; }
 }
 
-template<class Strategy_>
-typename Strategy_::value_type
-load(Strategy_ const & strategy, PolicyLoader policy, Image const & img, Image const & img90)
-{ return policy == PolicyLoader::img ? strategy.load(img, img90) : strategy.load(img90, img); }
+template<class Strategy>
+typename Strategy::value_type
+load(Strategy const & strategy, PolicyLoader policy, Image const & img, Image const & img90, typename Strategy::ctx_type& ctx)
+{
+    auto& real_ctx = static_cast<typename Strategy::ctx_type&>(ctx);
+    return policy == PolicyLoader::img
+        ? strategy.load(img, img90, real_ctx)
+        : strategy.load(img90, img, real_ctx);
+}
 
 template<class Strategy>
 struct Data
 {
-    using strategy_type = typename Strategy::strategy_type;
+    using strategy_type = Strategy;
     using value_type = typename strategy_type::value_type;
     using relationship_type = typename strategy_type::relationship_type;
+    using ctx_type = typename strategy_type::ctx_type;
 
     using container_type = std::vector<value_type>;
     using iterator = typename container_type::const_iterator;
@@ -107,38 +139,27 @@ struct Data
         return std::move(this->data_.values);
     }
 
-    void load(Image const & img, Image const & img90) {
-        this->data_.values.push_back(::ppocr::loader2::load(
-            get_strategy(),
-            Strategy::policy, img, img90)
-        );
+    void load(Image const & img, Image const & img90, ctx_type& ctx) {
+        this->data_.values.push_back(Strategy::load(img, img90, ctx));
     }
 
     value_type const & operator[](size_t i) const {
         return data_.values[i];
     }
 
-    relationship_type const & get_relationship() const {
-        return static_cast<relationship_type const &>(data_);
-    }
-
-    strategy_type const & get_strategy() const {
-        return static_cast<strategy_type const &>(this->data_);
-    }
-
-    typename relationship_type::result_type
-    relationship(value_type const & a, value_type const & b) const {
-        return get_relationship()(a, b);
-    }
-
-    double dist(value_type const & a, value_type const & b) const {
-        double const ret = get_relationship().dist(a, b);
+    double dist_with(size_t i, value_type const & value) const {
+        double const ret = relationship_type::dist(value, (*this)[i]);
         assert(0. <= ret && ret <= 1.);
         return ret;
     }
 
+    bool in_dist_with(size_t i, value_type const & value, unsigned d) const
+    {
+        return relationship_type::in_dist((*this)[i], value, d);
+    }
+
     unsigned count_posibilities() const {
-        return get_relationship().count();
+        return relationship_type::count();
     }
 
     std::size_t size() const noexcept {
@@ -153,13 +174,13 @@ struct Data
     iterator end() const { return this->data().end(); }
 
 private:
-    struct impl : strategy_type, relationship_type /*empty class optimization*/ {
+    struct impl
+    {
         container_type values;
 
         template<class... Args>
         impl(Args && ... args)
-        : relationship_type(static_cast<strategy_type const &>(*this).relationship())
-        , values(std::forward<Args>(args)...)
+        : values(std::forward<Args>(args)...)
         {}
     } data_;
 };
@@ -193,9 +214,10 @@ struct Datas : private Data<Strategies>...
 
     void load(Image const & img) {
         auto img90 = img.rotate90();
-        (void(std::initializer_list<char>{
-            (static_cast<Data<Strategies>&>(*this).load(img, img90), char())...
-        }));
+        ctx.reset();
+        (..., static_cast<Data<Strategies>&>(*this).load(
+            img, img90, static_cast<typename Strategies::ctx_type&>(ctx)
+        ));
     }
 
     bool lt(size_t i1, size_t i2) const {
@@ -205,6 +227,9 @@ struct Datas : private Data<Strategies>...
     bool eq(size_t i1, size_t i2) const {
         return details_::cmp_datas(i1, i2, details_::Eq(), details_::Noop(), get<Strategies>()...);
     }
+
+private:
+    unique_contexts_t<typename Strategies::ctx_type...> ctx;
 };
 
 
@@ -215,12 +240,12 @@ Data<Strategy> const & get_data(Datas<Strategies...> const & datas) {
 
 template<class Fn, class... Strategies>
 void apply_from_datas(Datas<Strategies...> const & datas, Fn fn) {
-    (void)std::initializer_list<char>{((void)(fn(datas.template get<Strategies>())), char())...};
+    (..., fn(datas.template get<Strategies>()));
 }
 
 template<class Fn, class... Strategies>
 void apply_from_datas(Datas<Strategies...> & datas, Fn fn) {
-    (void)std::initializer_list<char>{((void)(fn(datas.template get<Strategies>())), char())...};
+    (..., fn(datas.template get<Strategies>()));
 }
 
 } }

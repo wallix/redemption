@@ -21,7 +21,6 @@
 
 #include <type_traits>
 
-#include "ppocr/strategies/utils/cardinal_direction.hpp"
 #include <cassert>
 
 
@@ -35,32 +34,6 @@ unsigned compute_relationship(T const & a, T const & b, U const & interval)
     assert(0 <= d && d <= 100);
     return unsigned(d);
 }
-
-inline
-unsigned mask_relationship(unsigned a, unsigned b, unsigned mask, unsigned rbit, unsigned interval)
-{
-    unsigned const a1 = a & mask;
-    unsigned const a2 = b & mask;
-    unsigned const b1 = (a & (mask << rbit)) >> rbit;
-    unsigned const b2 = (b & (mask << rbit)) >> rbit;
-
-    unsigned dist = 100 - (
-        (a1 < a2 ? a2 - a1 : a1 - a2)
-      + (b1 < b2 ? b2 - b1 : b1 - b2)
-    ) * 50 / interval;
-    assert(dist <= 100);
-    return dist;
-}
-
-
-inline
-unsigned cardinal_relationship(CardinalDirection a, CardinalDirection b)
-{ return mask_relationship(static_cast<unsigned>(a), static_cast<unsigned>(b), 3, 2, 2); }
-
-inline
-unsigned cardinal_relationship(CardinalDirection2 a, CardinalDirection2 b)
-{ return mask_relationship(static_cast<unsigned>(a), static_cast<unsigned>(b), 7, 3, 4); }
-
 
 } } }
 

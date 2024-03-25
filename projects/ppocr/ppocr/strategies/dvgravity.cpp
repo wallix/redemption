@@ -18,23 +18,15 @@
 
 #include "ppocr/strategies/dvgravity.hpp"
 
-#include "ppocr/strategies/utils/diagonal_vertical_gravity.hpp"
-
 #include "ppocr/image/image.hpp"
 
 namespace ppocr { namespace strategies {
 
-dvgravity::value_type dvgravity::load(Image const & img, Image const & /*img90*/) const
+dvgravity::value_type dvgravity::load(Image const & img, Image const & /*img90*/, ctx_type& ctx)
 {
-    auto const top_bottom = utils::diagonal_vertical_gravity(img);
+    auto const top_bottom = ctx.compute(img);
     auto const sum = top_bottom.top + top_bottom.bottom;
     return sum ? (sum + top_bottom.top - top_bottom.bottom) * 100 / sum : 100;
 }
-
-dvgravity::relationship_type dvgravity::relationship() const
-{ return 200; }
-
-unsigned dvgravity::best_difference() const
-{ return 10; }
 
 } }

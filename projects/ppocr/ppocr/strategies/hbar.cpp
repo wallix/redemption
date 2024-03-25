@@ -23,7 +23,7 @@
 
 namespace ppocr { namespace strategies {
 
-hbar::value_type hbar::load(const Image& img, const Image& /*img90*/) const
+hbar::value_type hbar::load(const Image& img, const Image& /*img90*/, ctx_type& /*ctx*/)
 {
     hbar::value_type n{};
     auto p = img.data();

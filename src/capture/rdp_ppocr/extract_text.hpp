@@ -211,6 +211,7 @@ unsigned extract_text(
                 ocr_context.ambiguous.emplace_back(it->second);
             }
             else {
+                ppocr::PpOcrDataCtxs ctx;
                 auto it = ocr_context.images_cache.emplace(
                     img_word.clone(),
                     ppocr::ocr2::compute_image(
@@ -225,7 +226,8 @@ unsigned extract_text(
                         ocr_constant.glyphs,
                         ocr_constant.id_views,
                         img_word,
-                        ocr_context.img_ctx.img90()
+                        ocr_context.img_ctx.img90(),
+                        ctx
                     )
                 ).first;
                 ocr_context.ambiguous.emplace_back(it->second);

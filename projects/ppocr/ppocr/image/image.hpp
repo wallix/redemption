@@ -145,8 +145,10 @@ struct HorizontalRange
     HorizontalRange(Image const & img, Index idx, unsigned w, PixelGetter pixel_get)
     : pixel_get_(pixel_get)
     , w_(w)
-    , data_(img.data(idx))
-    {}
+    , data_(img.data() + img.to_size_t(idx))
+    {
+        assert(img.to_size_t(idx) <= img.width() * img.height());
+    }
 
     iterator begin() const { return {*this, data_}; }
     iterator end() const { return {*this, data_ + w_}; }

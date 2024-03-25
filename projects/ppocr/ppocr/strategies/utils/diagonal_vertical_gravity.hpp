@@ -63,21 +63,32 @@ inline unsigned diagonal_vertical_gravity_area(const Image& img)
     return area * 2;
 }
 
+struct diagonal_vertical_gravity_fn
+{
+    TopBottom value() const
+    {
+        return top_bottom;
+    }
+
+    void compute(const Image& img);
+
+private:
+    TopBottom top_bottom;
+};
+
 inline
-TopBottom diagonal_vertical_gravity(const Image& img)
+void diagonal_vertical_gravity_fn::compute(const Image& img)
 {
     Bounds const bnd(img.width(), img.height() / 2);
     auto p = img.data();
     auto ep = img.data({0, bnd.height()});
-    auto const top = details_::count_diagonal_vertical_gravity(bnd, p, ep, true);
+    top_bottom.top = details_::count_diagonal_vertical_gravity(bnd, p, ep, true);
 
     p = ep;
     if (img.height() & 1) {
         p += img.width();
     }
-    auto const bottom = details_::count_diagonal_vertical_gravity(bnd, p, img.data_end(), false);
-
-    return {top, bottom};
+    top_bottom.bottom = details_::count_diagonal_vertical_gravity(bnd, p, img.data_end(), false);
 }
 
 } } }

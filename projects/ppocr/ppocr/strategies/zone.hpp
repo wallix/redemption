@@ -22,6 +22,8 @@
 #include <array>
 
 #include "ppocr/strategies/relationship/array_compare.hpp"
+#include "ppocr/strategies/utils/count_zone.hpp"
+#include "ppocr/strategies/utils/context.hpp"
 
 namespace ppocr {
 
@@ -44,12 +46,9 @@ struct zone {
     using relationship_type = array_compare_relationship<unsigned, number_index>;
     using value_type = relationship_type::value_type;
 
-    static constexpr bool one_axis = false;
+    using ctx_type = cache_context<utils::count_zone_fn>;
 
-    value_type load(const Image & img, const Image & /*img90*/) const;
-
-    constexpr relationship_type relationship() const { return {}; }
-    constexpr unsigned best_difference() const { return 20; }
+    static value_type load(const Image & img, const Image & img90, ctx_type& ctx);
 };
 
 } }

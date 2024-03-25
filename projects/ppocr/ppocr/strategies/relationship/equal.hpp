@@ -31,19 +31,26 @@ struct equal_relationship
 
     constexpr static bool is_contiguous = true;
 
-    constexpr equal_relationship() noexcept {}
-
-    result_type operator()(value_type const & a, value_type const & b) const
-    { return a == b; }
+    static result_type compute(value_type const & a, value_type const & b)
+    {
+        return a == b;
+    }
 
     /// \return [0, 1]
-    double dist(value_type const & a, value_type const & b) const
-    { return a == b ? 1. : 0.; }
+    static double dist(value_type const & a, value_type const & b)
+    {
+        return a == b ? 1. : 0.;
+    }
 
-    bool in_dist(value_type const & a, value_type const & b, value_type const &) const
-    { return a == b; }
+    static bool in_dist(value_type const & a, value_type const & b, unsigned)
+    {
+        return a == b;
+    }
 
-    unsigned count() const { return 2; }
+    static unsigned count()
+    {
+        return 2;
+    }
 };
 
 } }

@@ -20,7 +20,6 @@
 #define PPOCR_SRC_OCR2_COMPUTE_IMAGE_HPP
 
 #include "ppocr/ocr2/reduce_universe.hpp"
-#include "ppocr/ocr2/data_strategy_loader.hpp"
 #include "ppocr/ocr2/data_indexes_ordered.hpp"
 #include "ppocr/ocr2/sort_probabilities.hpp"
 #include "ppocr/ocr2/insert_views.hpp"
@@ -28,80 +27,63 @@
 
 #include "ppocr/image/image.hpp"
 #include "ppocr/loader2/datas_loader.hpp"
+#include "ppocr/strategies/utils/context.hpp"
 
 namespace ppocr { namespace ocr2 {
 
-#ifndef IN_IDE_PARSER
-# define UNPACK(...) void(std::initializer_list<char>{(void(__VA_ARGS__), char())...})
-#else
-# define UNPACK(a) void(std::initializer_list<char>{(void(a), char())...})
-#endif
 
-template<template<class...> class Temp, class... Strategies, class Datas>
+template<template<class...> class Tpl, class... Strategies, class Datas, class Ctx>
 void reduce_complexe_universe(
-    Temp<Strategies...>,
+    Tpl<Strategies...>,
     Probabilities & probabilities,
     Datas const & datas,
     Image const & img,
-    Image const & img90
+    Image const & img90,
+    Ctx& ctx
 ) {
-    UNPACK(reduce_universe_and_update_probability(
+    (..., reduce_universe_and_update_probability(
         probabilities,
         datas.template get<Strategies>(),
-        data_strategy_loader<Strategies>().load(img, img90),
+        Strategies::load(img, img90, ctx),
         0.5
     ));
 }
 
 template<class Strategy>
-struct data_exclusive_universe : data_strategy_loader<Strategy> {
-    size_t limit;
+struct value_for_strategy
+{
+    typename Strategy::value_type value;
 };
 
-template<template<class...> class Temp, class Store, class Datas>
-bool has_value(Temp<>, Datas const &, unsigned, Store const &) {
-    return true;
-}
+template<class... Strategy>
+struct value_for_strategies : value_for_strategy<Strategy>...
+{
+    template<class Ctx>
+    value_for_strategies(Image const & img, Image const & img90, Ctx& ctx)
+      : value_for_strategy<Strategy>{Strategy::load(img, img90, ctx)}...
+    {}
+};
 
-template<template<class...> class Temp, class Store, class Strategy, class... Strategies, class Datas>
-bool has_value(
-    Temp<Strategy, Strategies...>,
-    Datas const & datas,
-    unsigned i, Store const & store
-) {
-    if (datas.template get<Strategy>().get_relationship().in_dist(
-        datas.template get<Strategy>()[i],
-        static_cast<data_strategy_loader<Strategy> const&>(store).x,
-        static_cast<data_exclusive_universe<Strategy> const&>(store).limit
-    )) {
-        return has_value(Temp<Strategies...>(), datas, i, store);
-    }
-    return false;
-}
-
-template<template<class...> class Temp, class... Strategies, class Datas>
+template<template<class...> class Tpl, class... Strategies, class Datas, class Ctx>
 void reduce_exclusive_universe(
-    Temp<Strategies...>,
+    Tpl<Strategies...>,
     Probabilities & probabilities,
     Datas const & datas,
-    Image const & img, Image const & img90,
+    Image const & img, Image const & img90, Ctx& ctx,
     DataIndexesByWords const & data_indexes_by_words
 ) {
     if (probabilities.empty()) {
         return ;
     }
 
-    struct
-    :  data_exclusive_universe<Strategies>...
-    {} store;
-    UNPACK((
-        static_cast<data_strategy_loader<Strategies>&>(store).load(img, img90),
-        (static_cast<data_exclusive_universe<Strategies>&>(store).limit
-         = datas.template get<Strategies>().count_posibilities()/2)
-    ));
+    value_for_strategies<Strategies...> const store(img, img90, ctx);
 
     reduce_universe_by_word(probabilities, data_indexes_by_words, [&](unsigned i) {
-        return has_value(Temp<Strategies...>(), datas, i, store);
+        return (true && ... && datas.template get<Strategies>().in_dist_with(
+            i,
+            static_cast<value_for_strategy<Strategies> const&>(store).value,
+            Strategies::relationship_type::count() / 2
+        ));
     });
 }
 
@@ -114,8 +96,7 @@ void initialize_universe(
     unsigned value
 ) {
     probabilities.clear();
-    auto & data = datas.template get<Strategy>();
-    auto d = (data.count_posibilities()-1)/10u;
+    auto d = (Strategy::relationship_type::count()-1) / 10u;
     for (auto idx : first_strategy_ordered.get_range(datas, value, d)) {
         probabilities.emplace_back(idx);
     }
@@ -124,75 +105,80 @@ void initialize_universe(
 template<class Data>
 void initialize_probability(Probabilities & probabilities, unsigned value, Data const & data) {
     for (auto & prob : probabilities) {
-        prob.prob = data.dist(data[prob.i], value);
+        prob.prob = Data::relationship_type::dist(data[prob.i], value);
     }
 }
 
 template<class Data>
 void update_probability(Probabilities & probabilities, unsigned value, Data const & data) {
     for (auto & prob : probabilities) {
-        prob.prob *= data.dist(data[prob.i], value);
+        prob.prob *= Data::relationship_type::dist(data[prob.i], value);
     }
 }
 
 template<
-    template<class...> class Temp,
+    template<class...> class Tpl,
     class FirstStrategyOrdered,
     class FirstStrategy,
     class... Strategies,
-    class Datas
+    class Datas,
+    class Ctx
 >
 void compute_simple_universe(
-    Temp<FirstStrategy, Strategies...>,
+    Tpl<FirstStrategy, Strategies...>,
     Probabilities & probabilities,
     Datas const & datas,
     DataIndexesOrdered<FirstStrategyOrdered> const & first_strategy_ordered,
     Image const & img,
-    Image const & img90
+    Image const & img90,
+    Ctx& ctx
 ) {
-    struct
-    : data_strategy_loader<FirstStrategy>
-    , data_strategy_loader<Strategies>...
-    {} store;
-
     static_assert(std::is_same<FirstStrategyOrdered, FirstStrategy>::value, "is different");
+
+    auto first_value = FirstStrategy::load(img, img90, ctx);
 
     initialize_universe<FirstStrategy>(
         probabilities,
         datas,
         first_strategy_ordered,
-        static_cast<data_strategy_loader<FirstStrategy>&>(store).load(img, img90)
+        first_value
     );
 
-    UNPACK(reduce_universe_with_distance(
+    value_for_strategies<Strategies...> store(img, img90, ctx);
+
+    (..., reduce_universe_with_distance(
         probabilities,
         datas.template get<Strategies>(),
-        static_cast<data_strategy_loader<Strategies>&>(store).load(img, img90),
-        (datas.template get<Strategies>().count_posibilities()-1)/10u
+        static_cast<value_for_strategy<Strategies>&>(store).value,
+        (Strategies::relationship_type::count()-1) / 10u
     ));
 
     initialize_probability(
         probabilities,
-        static_cast<data_strategy_loader<FirstStrategy>&>(store).x,
+        first_value,
         datas.template get<FirstStrategy>()
     );
 
-    UNPACK(update_probability(
+    (..., update_probability(
         probabilities,
-        static_cast<data_strategy_loader<Strategies>&>(store).x,
+        static_cast<value_for_strategy<Strategies>&>(store).value,
         datas.template get<Strategies>()
     ));
 }
+
 
 template<
     class SimpleAlgos,
     class ComplexAlgos,
     class ExclusifAlgos,
     class FirstStrategyOrdered,
-    class... DatasStrategies
+    class... DatasStrategies,
+    class Ctx
 >
 view_ref_list compute_image(
-    SimpleAlgos, ComplexAlgos, ExclusifAlgos,
+    SimpleAlgos,
+    ComplexAlgos,
+    ExclusifAlgos,
     Probabilities & probabilities,
     Probabilities & tmp_probabilities,
     loader2::Datas<DatasStrategies...> const & datas,
@@ -202,9 +188,12 @@ view_ref_list compute_image(
     std::vector<unsigned> const & id_views,
     Image const & img,
     Image const & img90,
+    Ctx& ctx,
     double limit_prob_for_insert = 0.5
 ) {
-    compute_simple_universe(SimpleAlgos{}, probabilities, datas, first_strategy_ordered, img, img90);
+    ctx.reset();
+
+    compute_simple_universe(SimpleAlgos{}, probabilities, datas, first_strategy_ordered, img, img90, ctx);
 
     view_ref_list cache_element;
 
@@ -222,8 +211,8 @@ view_ref_list compute_image(
             return cache_element;
         }
         else {
-            reduce_complexe_universe(ComplexAlgos(), probabilities, datas, img, img90);
-            reduce_exclusive_universe(ExclusifAlgos(), probabilities, datas, img, img90, data_indexes_by_words);
+            reduce_complexe_universe(ComplexAlgos(), probabilities, datas, img, img90, ctx);
+            reduce_exclusive_universe(ExclusifAlgos(), probabilities, datas, img, img90, ctx, data_indexes_by_words);
 
             ocr2::sort_by_views(probabilities, id_views);
         }
@@ -237,8 +226,6 @@ view_ref_list compute_image(
 
     return cache_element;
 }
-
-#undef UNPACK
 
 } }
 

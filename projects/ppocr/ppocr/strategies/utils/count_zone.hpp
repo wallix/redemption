@@ -21,24 +21,43 @@
 
 #include "ppocr/image/image.hpp"
 
-#include <vector>
 #include <memory>
 #include <cassert>
+#include <cstring>
 
 namespace ppocr { namespace strategies { namespace utils
 {
+    struct count_zone_fn;
+
+    template<class T>
+    struct Buffer
+    {
+        T* alloc_and_init_to_zero(std::size_t n)
+        {
+            if (n > _capacity) {
+                _buffer.reset(new T[n * 2]);
+                _capacity = n * 2;
+            }
+            std::memset(data(), 0, n * sizeof(T));
+            return data();
+        }
+
+        T* data() const
+        {
+            return _buffer.get();
+        }
+
+    private:
+        std::unique_ptr<T[]> _buffer;
+        std::size_t _capacity = 0;
+    };
+
     struct MappingZoneView
     {
         MappingZoneView(unsigned* zones, unsigned len)
         : zones(zones)
         , len(len)
         {}
-
-        unsigned& operator[](unsigned i)
-        {
-            assert(i < len);
-            return zones[i];
-        }
 
         unsigned operator[](unsigned i) const
         {
@@ -70,36 +89,47 @@ namespace ppocr { namespace strategies { namespace utils
     private:
         unsigned* zones;
         unsigned len;
+
+        friend class count_zone_fn;
+
+        unsigned& writable_get(unsigned i)
+        {
+            assert(i < len);
+            return zones[i];
+        }
     };
 
     struct ZoneInfo
     {
-        ZoneInfo(unsigned count_zone)
-        : _buffer(std::make_unique<unsigned[]>(count_zone * 4))
-        , _count_zone(count_zone)
-        {}
+        ZoneInfo() = default;
+
+        void alloc(unsigned count_zone)
+        {
+            _buffer.alloc_and_init_to_zero(count_zone * 4);
+            _count_zone = count_zone;
+        }
 
         unsigned count_zone() const
         {
             return _count_zone;
         }
 
-        MappingZoneView top()
+        MappingZoneView top() const
         {
             return view(0);
         }
 
-        MappingZoneView right()
+        MappingZoneView right() const
         {
             return view(1);
         }
 
-        MappingZoneView bottom()
+        MappingZoneView bottom() const
         {
             return view(2);
         }
 
-        MappingZoneView left()
+        MappingZoneView left() const
         {
             return view(3);
         }
@@ -120,24 +150,40 @@ namespace ppocr { namespace strategies { namespace utils
         }
 
     private:
-        std::unique_ptr<unsigned[]> _buffer;
-        unsigned _count_zone;
+        Buffer<unsigned> _buffer;
+        unsigned _count_zone = 0;
 
-        MappingZoneView view(unsigned d)
+        MappingZoneView view(unsigned d) const
         {
             return MappingZoneView{data(d), _count_zone};
         }
 
         unsigned* data(unsigned d) const
         {
-            return _buffer.get() + _count_zone * d;
+            return _buffer.data() + _count_zone * d;
         }
     };
 
-    inline ZoneInfo count_zone(const Image& img) {
+    struct count_zone_fn
+    {
+        ZoneInfo const& value() const
+        {
+            return zone;
+        }
+
+        void compute(const Image& img);
+
+    private:
+        ZoneInfo zone;
+        Buffer<unsigned> _buffer;
+    };
+
+    inline void count_zone_fn::compute(const Image& img)
+    {
+        unsigned* mirror = _buffer.alloc_and_init_to_zero(img.area() * 2 + 2);
+        unsigned* const stack = mirror + img.area();
+
         unsigned count_zone = 1;
-        std::vector<unsigned> mirror(img.area() * 2, 0);
-        unsigned* const stack = mirror.data() + img.area();
 
         for (unsigned i = 0; i < img.area(); ++i) {
             if (mirror[i] || is_pix_letter(img.data()[i])) {
@@ -181,12 +227,12 @@ namespace ppocr { namespace strategies { namespace utils
             count_zone++;
         }
 
-        ZoneInfo zone{count_zone - 1};
+        zone.alloc(count_zone - 1);
 
         auto insert = [&](MappingZoneView m, unsigned x, unsigned y) {
             auto i = img.to_size_t({x, y});
             if (mirror[i]) {
-                ++m[mirror[i]-1];
+                ++m.writable_get(mirror[i]-1);
             }
         };
 
@@ -199,8 +245,6 @@ namespace ppocr { namespace strategies { namespace utils
             insert(zone.left(), 0, y);
             insert(zone.right(), img.width()-1, y);
         }
-
-        return zone;
     }
 
 } } }

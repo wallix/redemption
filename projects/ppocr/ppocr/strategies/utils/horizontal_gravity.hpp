@@ -50,19 +50,30 @@ unsigned horizontal_box_gravity(Bounds const & bnd, Pixel const * p, Pixel const
     return g;
 }
 
-inline TopBottom horizontal_gravity(const Image& img)
+struct horizontal_gravity_fn
+{
+    TopBottom value() const
+    {
+        return top_bottom;
+    }
+
+    void compute(const Image& img);
+
+private:
+    TopBottom top_bottom;
+};
+
+inline void horizontal_gravity_fn::compute(const Image& img)
 {
     Bounds const bnd(img.width(), img.height() / 2);
     auto p = img.data();
     auto ep = img.data({0, bnd.height()});
-    unsigned const top = horizontal_box_gravity(bnd, p, ep, true);
+    top_bottom.top = horizontal_box_gravity(bnd, p, ep, true);
     p = ep;
     if (img.height() & 1) {
         p += img.width();
     }
-    unsigned const bottom = horizontal_box_gravity(bnd, p, img.data_end(), false);
-
-    return {top, bottom};
+    top_bottom.bottom = horizontal_box_gravity(bnd, p, img.data_end(), false);
 }
 
 } } }

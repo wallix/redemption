@@ -21,16 +21,10 @@
 
 #include "ppocr/loader2/datas_loader.hpp"
 
-#include "ppocr/strategies/alternation.hpp"
-// #include "ppocr/strategies/direction.hpp"
+#include "ppocr/strategies/alternations.hpp"
 #include "ppocr/strategies/hdirection.hpp"
 #include "ppocr/strategies/hdirection2.hpp"
-// #include "ppocr/strategies/agravity.hpp"
-// #include "ppocr/strategies/gravity.hpp"
-// #include "ppocr/strategies/compass.hpp"
-// #include "ppocr/strategies/dcompass.hpp"
 #include "ppocr/strategies/proportionality.hpp"
-// #include "ppocr/strategies/gravity2.hpp"
 #include "ppocr/strategies/hgravity.hpp"
 #include "ppocr/strategies/hgravity2.hpp"
 
@@ -75,6 +69,33 @@ namespace details_
     {
         using type = DefaultDatas<T1..., T2..., T3...>;
     };
+
+
+    template<
+        class SimpleAlgos,
+        class ComplexAlgos,
+        class ExclusifAlgos
+    >
+    struct context_from_algos
+    {};
+
+    template<
+        class... SimpleAlgos,
+        class... ComplexAlgos,
+        class... ExclusifAlgos
+    >
+    struct context_from_algos<
+        mp_list<SimpleAlgos...>,
+        mp_list<ComplexAlgos...>,
+        mp_list<ExclusifAlgos...>
+    >
+    {
+        using type = unique_contexts_t<
+            typename SimpleAlgos::ctx_type...,
+            typename ComplexAlgos::ctx_type...,
+            typename ExclusifAlgos::ctx_type...
+        >;
+    };
 }
 
 #define REGISTRY(name) \
@@ -93,19 +114,10 @@ using PpOcrSimpleDatas = mp_list<
     REGISTRY2(hdirection),
     REGISTRY2(hdirection2),
 
-    //REGISTRY(direction),
-
-    //REGISTRY(agravity),
-    //REGISTRY(gravity),
-
     REGISTRY2(hgravity),
     REGISTRY2(hgravity2),
 
-    //REGISTRY(compass),
-    //REGISTRY(dcompass),
-
     REGISTRY (proportionality),
-    //REGISTRY(gravity2),
 
     REGISTRY2(dvdirection),
 
@@ -129,6 +141,12 @@ using PpOcrExclusiveDatas = mp_list<
 #undef REGISTRY
 
 using PpOcrDatas = details_::ppocr_to_datas<
+    PpOcrSimpleDatas,
+    PpOcrComplexDatas,
+    PpOcrExclusiveDatas
+>::type;
+
+using PpOcrDataCtxs = details_::context_from_algos<
     PpOcrSimpleDatas,
     PpOcrComplexDatas,
     PpOcrExclusiveDatas

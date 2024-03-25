@@ -19,6 +19,9 @@
 #ifndef PPOCR_SRC_STRATEGIES_PROPORTIONALITY_ZONE_HPP
 #define PPOCR_SRC_STRATEGIES_PROPORTIONALITY_ZONE_HPP
 
+#include "ppocr/strategies/utils/context.hpp"
+#include "ppocr/strategies/utils/count_zone.hpp"
+
 #include <vector>
 
 namespace ppocr {
@@ -27,29 +30,27 @@ class Image;
 
 namespace strategies {
 
-struct proportionality_zone {
-    struct relationship_type {
+struct proportionality_zone
+{
+    struct relationship_type
+    {
         using value_type = std::vector<unsigned>;
         using result_type = unsigned;
 
-        constexpr relationship_type() noexcept {}
-
-        result_type operator()(value_type const & a, value_type const & b) const;
+        static result_type compute(value_type const & a, value_type const & b);
 
         /// \return [0, 1]
-        double dist(value_type const & a, value_type const & b) const;
+        static double dist(value_type const & a, value_type const & b);
 
-        bool in_dist(value_type const & a, value_type const & b, unsigned d) const;
+        static bool in_dist(value_type const & a, value_type const & b, unsigned d);
 
-        unsigned count() const;
+        static unsigned count();
     };
     using value_type = relationship_type::value_type;
 
-    value_type load(Image const & img, Image const & /*img90*/) const;
+    using ctx_type = cache_context<utils::count_zone_fn>;
 
-    static constexpr bool one_axis() { return false; }
-    constexpr relationship_type relationship() const { return {}; }
-    constexpr unsigned best_difference() const { return 20u; }
+    static value_type load(Image const & img, Image const & img90, ctx_type& ctx);
 };
 
 } }

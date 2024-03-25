@@ -23,32 +23,34 @@
 
 namespace ppocr { namespace strategies {
 
-template<class T, class R = T>
+template<class T, T interval>
 struct interval_relationship
 {
     using value_type = T;
-    using result_type = R;
+    using result_type = T;
 
     constexpr static bool is_contiguous = true;
 
-    constexpr interval_relationship(T const & interval) noexcept
-    : interval_(interval)
-    {}
-
-    result_type operator()(value_type const & a, value_type const & b) const
-    { return utils::compute_relationship(a, b, interval_); }
+    static result_type compute(value_type const & a, value_type const & b)
+    {
+        return utils::compute_relationship(a, b, interval);
+    }
 
     /// \return [0, 1]
-    double dist(value_type const & a, value_type const & b) const
-    { return static_cast<double>(operator()(a, b)) / 100.; }
+    static double dist(value_type const & a, value_type const & b)
+    {
+        return static_cast<double>(compute(a, b)) / 100.;
+    }
 
-    bool in_dist(value_type const & a, value_type const & b, value_type const & d) const
-    { return (a < b ? (b > a + d) : (a > b + d)); }
+    static bool in_dist(value_type const & a, value_type const & b, unsigned d)
+    {
+        return (a < b) ? (b > a + d) : (a > b + d);
+    }
 
-    unsigned count() const { return static_cast<unsigned>(this->interval_) + 1u; }
-
-private:
-    value_type interval_;
+    static unsigned count()
+    {
+        return static_cast<unsigned>(interval) + 1u;
+    }
 };
 
 } }

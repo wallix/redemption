@@ -27,16 +27,28 @@
 
 namespace ppocr { namespace ocr2 {
 
+inline void resize_probabilities(
+    ocr2::Probabilities& probabilities,
+    ocr2::Probabilities::iterator& to_it)
+{
+    probabilities.resize(static_cast<ocr2::Probabilities::size_type>(
+        to_it - probabilities.begin()
+    ));
+}
+
 template<class Strategy, class T, class Dist>
 void reduce_universe_with_distance(
-    ocr2::Probabilities & a,
+    ocr2::Probabilities & probabilities,
     loader2::Data<Strategy> const & data,
     T const & value,
     Dist const & d
 ) {
-    a.resize(std::remove_if(a.begin(), a.end(), [&](ocr2::Probability const & prop) {
-        return data.get_relationship().in_dist(value, data[prop.i], d);
-    }) - a.begin());
+    auto it = std::remove_if(
+        probabilities.begin(), probabilities.end(),
+        [&](ocr2::Probability const & prop) {
+            return data.in_dist_with(prop.i, value, d);
+        });
+    resize_probabilities(probabilities, it);
 }
 
 template<class Strategy, class T>
@@ -48,13 +60,13 @@ void reduce_universe_and_update_probability(
 ) {
     auto it = probabilities.begin();
     for (auto & prob : probabilities) {
-        auto const x = data.dist(data[prob.i], value);
+        auto const x = data.dist_with(prob.i, value);
         if (x >= prob_limit) {
             *it = {prob.i, prob.prob * x};
             ++it;
         }
     }
-    probabilities.resize(it - probabilities.begin());
+    resize_probabilities(probabilities, it);
 }
 
 template<class Predicate>
@@ -79,7 +91,7 @@ void reduce_universe_by_word(
             }
         }
     }
-    probabilities.resize(it - probabilities.begin());
+    resize_probabilities(probabilities, it);
 }
 
 } }

@@ -23,6 +23,7 @@
 #include <iosfwd>
 
 #include "ppocr/strategies/relationship/array_compare.hpp"
+#include "ppocr/strategies/utils/context.hpp"
 
 namespace ppocr {
 
@@ -101,12 +102,9 @@ struct alternations
     using relationship_type = array_compare_relationship<alternations_type, 7>;
     using value_type = relationship_type::value_type;
 
-    static constexpr bool one_axis = false;
+    using ctx_type = no_context;
 
-    value_type load(Image const & img, Image const & /*img90*/) const;
-
-    constexpr relationship_type relationship() const { return {}; }
-    unsigned best_difference() const;
+    static value_type load(Image const & img, Image const & img90, ctx_type& ctx);
 };
 
 std::ostream & operator<<(std::ostream &, alternations::alternations_type const &);

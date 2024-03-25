@@ -38,19 +38,13 @@ create_ppocr_rule
     $(PPOCR_SRC_PATH)/ppocr/ocr2/replacement.cpp
     $(PPOCR_SRC_PATH)/ppocr/ocr2/word_lines.cpp
     $(PPOCR_SRC_PATH)/ppocr/spell/dictionary.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/agravity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/alternation.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/compass.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dcompass.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/alternations.cpp
     $(PPOCR_SRC_PATH)/ppocr/strategies/density.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/direction.cpp
     $(PPOCR_SRC_PATH)/ppocr/strategies/dvdirection.cpp
     $(PPOCR_SRC_PATH)/ppocr/strategies/dvdirection2.cpp
     $(PPOCR_SRC_PATH)/ppocr/strategies/dvgravity.cpp
     $(PPOCR_SRC_PATH)/ppocr/strategies/dvgravity2.cpp
     $(PPOCR_SRC_PATH)/ppocr/strategies/dzdensity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/gravity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/gravity2.cpp
     $(PPOCR_SRC_PATH)/ppocr/strategies/hbar.cpp
     $(PPOCR_SRC_PATH)/ppocr/strategies/hdirection.cpp
     $(PPOCR_SRC_PATH)/ppocr/strategies/hdirection2.cpp
