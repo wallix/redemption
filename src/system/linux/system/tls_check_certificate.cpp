@@ -81,9 +81,8 @@ struct ZStringName
         {
             result.len = BIO_number_written(outBIO);
             result.buffer = std::make_unique<char[]>(result.len + 1);
-            memset(result.buffer.get(), 0, result.len + 1);
-            BIO_read(outBIO, result.buffer.get(), result.len);
             result.ptr = result.buffer.get();
+            BIO_read(outBIO, result.buffer.get(), result.len);
         }
 
         return result;
@@ -222,7 +221,6 @@ private:
                 if (error_message) {
                     str_assign(*error_message, "Failed to read stored certificate: \"", filename, "\"\n");
                 }
-                certificate_matches = false;
 
                 server_notifier.server_cert_status(ServerNotifier::Status::CertError, strerror(errno));
                 checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED;
@@ -273,8 +271,6 @@ private:
                     if (error_message) {
                         str_assign(*error_message, "The certificate has changed: \"", filename, "\"\n");
                     }
-                    certificate_exists  = true;
-                    certificate_matches = false;
 
                     if (ensure_server_certificate_match) {
                         server_notifier.server_cert_status(ServerNotifier::Status::CertFailure);
