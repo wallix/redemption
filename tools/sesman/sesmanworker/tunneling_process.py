@@ -8,14 +8,12 @@ import shlex
 import binascii
 import pexpect
 import tempfile
+from typing import AnyStr, Tuple, Optional, Dict, Union, Any
+from subprocess import Popen, PIPE
 from time import (
     monotonic as get_time,
     sleep,
 )
-from wallix.logger import Logger
-from subprocess import Popen, PIPE
-from wallixconst.misc import VOLATILE_FOLDER
-
 try:
     import Cryptodome
 except ImportError:
@@ -26,56 +24,77 @@ except ImportError:
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Random import get_random_bytes
 
-from typing import AnyStr, Tuple, Optional, Dict, Union, Any
+from wallix.logger import Logger
+from wallixconst.misc import VOLATILE_FOLDER
 
 
-try:
-    from wabsshkeys.utils import openssh_pkcs1_passphrase_private
-except Exception:
-    class OpenSSLException(Exception):
-        pass
+class OpenSSLException(Exception):
+    pass
 
-    SSH_KEYGEN = "/usr/bin/ssh-keygen"
 
-    def openssh_pkcs1_passphrase_private(key, passphrase=None):
-        """
-        transform an internal representation (pem) of a private key to an openssh
-        pkcs1 format with/without passphrase encryption
-        :param key: a string representing the key in pkcs1 pem format
-        :param passphrase: a string representing the passphrase used to cypher the
-            exported key
-        :return: a string representing the key in openssh pkcs1 pem format
-        """
-        if not passphrase:
-            return key
-        prk_fd, prk_path = tempfile.mkstemp(dir=VOLATILE_FOLDER)
-        if not isinstance(key, bytes):
-            key = key.encode('utf-8')
-        os.write(prk_fd, key)
-        os.close(prk_fd)
-        command = f"{SSH_KEYGEN} -f {prk_path} -p"
-        new_passphrase = ".*Enter new passphrase.*"
-        confirm_passphrase = ".*Enter same passphrase again:"
-        ssh_keygen = pexpect.spawn(command)
-        i = ssh_keygen.expect([new_passphrase, pexpect.EOF])
-        if i == 0:
-            ssh_keygen.sendline(passphrase)
-        else:
-            os.remove(prk_path)
-            raise OpenSSLException("Error setting the passphrase for the exported private key")
-        i = ssh_keygen.expect([confirm_passphrase, pexpect.EOF])
-        if i == 0:
-            ssh_keygen.sendline(passphrase)
-        else:
-            os.remove(prk_path)
-            raise OpenSSLException("Error setting the passphrase for the exported private key")
-        ssh_keygen.expect([pexpect.EOF])
-        if ssh_keygen.isalive():
-            ssh_keygen.wait()
-        with open(prk_path) as f:
-            pem_key = f.read()
+SSH_KEYGEN = "/usr/bin/ssh-keygen"
+
+
+def sshkeygen_add_passphrase_private(
+        key: str,
+        passphrase: Optional[str] = None
+) -> str:
+    """
+    Transform an internal representation (openssh or pkcs1/pem) of a private key to an openssh
+    or pkcs1/pem format with/without passphrase encryption
+    :param key: a string representing the key in openssh or pkcs1/pem format
+    :param passphrase: a string representing the passphrase used to cypher the
+        exported key
+    :return: a string representing the key in openssh or pkcs1/pem format
+
+    pkcs1 format (the type - RSA, DSA - and the length are encoded in the ASN.1
+    structure represented below by the base64 encoded DER:
+
+    -----BEGIN DSA PRIVATE KEY-----
+    MIIBugIBAAKBgQCBiEnMXvBFt6fXtPSpoMNNy4VK2a2RsPjBN9YSRxL+rAHnh6Z9
+    VwccRi9Oa+4jhmU4POSEnzDqh52igs2S6YTt5QVPj7usiwYvQFYAmaLBKdOAWaGV
+    9XoZ5BKcIoRkCK5lcRKHMksR+O1SmiEOv3+KhJUi0OKGD4vPkU5f9uLKFwIVAPGm
+    uhM1NUIPFWRoR8YLWFTrjH+9AoGAE4BMlEaC9cjgsIMOhkfQkynVsCqDVsFTdlta
+    xPfkFQb4ZIs3XTGnxTFiSRyzI4IwKD5R/JIzvdVXUONgp83ajRmDhzq1l8rF2x8p
+    1T5yjZxQHeyCqWIpUj2ry+7/9+f3uKjmzQlSiNNbRATX+WBelMsT6FhZm6zwbtlk
+    seAy1CQCgYAhR6lsnbShE6x/9c/UwOWA+DXcs0j0IwgN907BhwdjMt7gx2uo7EQh
+    cDebNDnci5en9alQCmyKll6xlrOXLD+BOBTGc0mXN+dVQd1awjZ/aR15vuneg/A8
+    VrmhrpcIr4EFBEueJlSUkG/xu2AhxxMv1jgSeWRiTG+Q6kihUEQ8lAIUTkUJJGFi
+    Qn7Oy594TzrT89Y/qms=
+    -----END DSA PRIVATE KEY-----
+    """
+    prk_fd, prk_path = tempfile.mkstemp(dir='/tmp')
+    if not isinstance(key, bytes):
+        key = key.encode('utf-8')
+    if passphrase is None:
+        passphrase = ""
+    os.write(prk_fd, key)
+    os.close(prk_fd)
+    command = f"{SSH_KEYGEN} -f {prk_path} -p"
+    new_passphrase = ".*Enter new passphrase.*"
+    confirm_passphrase = ".*Enter same passphrase again:"
+    ssh_keygen = pexpect.spawn(command)
+    i = ssh_keygen.expect([new_passphrase, pexpect.EOF])
+    if i == 0:
+        ssh_keygen.sendline(passphrase)
+    else:
+        msg = "Error setting the passphrase for the exported private key"
         os.remove(prk_path)
-        return pem_key
+        raise OpenSSLException(msg)
+    i = ssh_keygen.expect([confirm_passphrase, pexpect.EOF])
+    if i == 0:
+        ssh_keygen.sendline(passphrase)
+    else:
+        msg = "Error setting the passphrase for the exported private key"
+        os.remove(prk_path)
+        raise OpenSSLException(msg)
+    ssh_keygen.expect([pexpect.EOF])
+    if ssh_keygen.isalive():
+        ssh_keygen.wait()
+    with open(prk_path, 'r') as f:
+        pem_key = f.read()
+    os.remove(prk_path)
+    return pem_key
 
 
 RANDOM_NAME_SIZE = 10
@@ -153,7 +172,7 @@ def add_passphrase_to_private_key(private_key: AnyStr, passphrase: str) -> str:
         in_key = RSA.importKey(private_key)
         return in_key.exportKey(passphrase=passphrase).decode("utf-8")
     except Exception:
-        return openssh_pkcs1_passphrase_private(private_key, passphrase)
+        return sshkeygen_add_passphrase_private(private_key, passphrase)
 
 
 class TunnelingProcessInterface:
