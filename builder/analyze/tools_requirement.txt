@@ -3,6 +3,7 @@ clang-tidy
 emscripten
 gawk
 gcovr
+gettext
 parallel
 time
 valgrind
