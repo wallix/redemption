@@ -857,7 +857,7 @@ namespace
         {
             ReportMessageTest report_message;
             ValidatorTransportTest validator_transport;
-            FileValidatorService file_validator_service{validator_transport};
+            FileValidatorService file_validator_service{validator_transport, FileValidatorService::Verbose::No};
 
             FrontSenderTest to_client_sender;
             ModSenderTest to_server_sender;
@@ -876,7 +876,6 @@ namespace
                 ClipDataTest const& d, RDPVerbose verbose)
             : report_message(msg_comparator)
             , validator_transport(msg_comparator)
-            , file_validator_service(validator_transport)
             , to_client_sender(msg_comparator)
             , to_server_sender(msg_comparator)
             , cliprdr_vc_filter(&to_client_sender, &to_server_sender)

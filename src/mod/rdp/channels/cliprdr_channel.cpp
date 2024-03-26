@@ -1987,8 +1987,6 @@ struct ClipboardVirtualChannel::ClipCtx::D
         auto new_file_validator_id = [&self, &clip](std::string_view file_name){
             FileValidatorId file_validator_id{};
             if (!clip.validator_target_name.empty()) {
-                LOG_IF(bool(self.verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::Validator::open_file");
                 file_validator_id = self.file_validator->open_file(
                     file_name, clip.validator_target_name);
             }

@@ -365,66 +365,70 @@ inline void send_infos(OutTransport trans, std::initializer_list<bytes_view> dat
 
 struct FileValidatorService
 {
-    FileValidatorService(Transport& trans) noexcept
-    : trans(trans)
-    {}
-
-    template<class... Ts>
-    static std::array<bytes_view, sizeof...(Ts)> data_map_array(Ts&&... xs)
+    enum class Verbose : bool
     {
-        return std::array{bytes_view(xs)...};
-    }
+        No,
+        Yes
+    };
+
+    FileValidatorService(Transport& trans, Verbose verbose) noexcept
+    : trans(trans)
+    , verbose(bool(verbose))
+    {}
 
     FileValidatorId open_file(std::string_view filename, std::string_view target_name)
     {
-        return this->open_raw_data(target_name, data_map_array("filename"_av, filename));
+        auto file_id = this->open_raw_data(target_name, data_map_array("filename"_av, filename));
+        LOG_IF(verbose, LOG_INFO, "FileValidatorService::open_file(): id=%u", file_id);
+        return file_id;
     }
 
     FileValidatorId open_text(uint32_t locale_identifier, std::string_view target_name)
     {
         auto chars = int_to_decimal_chars(locale_identifier);
-        return this->open_raw_data(target_name,
+        auto file_id = this->open_raw_data(target_name,
             data_map_array("microsoft_locale_id"_av, chars));
+        LOG_IF(verbose, LOG_INFO, "FileValidatorService::open_text(): id=%u", file_id);
+        return file_id;
     }
 
     FileValidatorId open_unicode(std::string_view target_name)
     {
-        return this->open_raw_data(target_name, data_map_array("format_id"_av, "13"_av));
-    }
-
-    using DataMap = array_view<bytes_view>;
-
-    FileValidatorId open_raw_data(std::string_view target_name, DataMap data_map)
-    {
-        return LocalFileValidatorProtocol::send_open_data(
-            this->trans, this->generate_id(), target_name, data_map);
+        auto file_id = this->open_raw_data(target_name, data_map_array("format_id"_av, "13"_av));
+        LOG_IF(verbose, LOG_INFO, "FileValidatorService::open_unicode(): id=%u", file_id);
+        return file_id;
     }
 
     void send_data(FileValidatorId file_id, bytes_view data)
     {
+        LOG_IF(verbose, LOG_INFO, "FileValidatorService::send_data(id=%u, data.len=%zu)", file_id, data.size());
         LocalFileValidatorProtocol::send_data_file(this->trans, file_id, data);
     }
 
     /// data_map is a key value list
     void send_infos(std::initializer_list<bytes_view> data_map)
     {
+        LOG_IF(verbose, LOG_INFO, "FileValidatorService::send_infos()");
         LocalFileValidatorProtocol::send_infos(this->trans, data_map);
     }
 
     void send_eof(FileValidatorId file_id)
     {
+        LOG_IF(verbose, LOG_INFO, "FileValidatorService::send_eof(id=%u)", file_id);
         using namespace LocalFileValidatorProtocol;
         send_header(this->trans, file_id, MsgType::Eof, 0);
     }
 
     void send_abort(FileValidatorId file_id)
     {
+        LOG_IF(verbose, LOG_INFO, "FileValidatorService::send_abort(id=%u)", file_id);
         using namespace LocalFileValidatorProtocol;
         send_header(this->trans, file_id, MsgType::AbortFile, 0);
     }
 
     void send_close_session()
     {
+        LOG_IF(verbose, LOG_INFO, "FileValidatorService::send_close_session()");
         using namespace LocalFileValidatorProtocol;
         send_header(this->trans, FileValidatorId(), MsgType::CloseSession, 0);
     }
@@ -470,6 +474,20 @@ struct FileValidatorService
     }
 
 private:
+    using DataMap = array_view<bytes_view>;
+
+    template<class... Ts>
+    static std::array<bytes_view, sizeof...(Ts)> data_map_array(Ts&&... xs)
+    {
+        return std::array{bytes_view(xs)...};
+    }
+
+    FileValidatorId open_raw_data(std::string_view target_name, DataMap data_map)
+    {
+        return LocalFileValidatorProtocol::send_open_data(
+            this->trans, this->generate_id(), target_name, data_map);
+    }
+
     enum class [[nodiscard]] State : uint8_t
     {
         ContinuationData,
@@ -538,6 +556,7 @@ private:
     std::string content;
     int32_t current_id = 0;
     State state = State::WaitingData;
+    bool verbose;
 
     BasicStaticBuffer<1024*16, uint16_t> buf;
 };

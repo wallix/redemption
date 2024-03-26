@@ -29,7 +29,7 @@
 RED_AUTO_TEST_CASE(file_validatorSendFile)
 {
     BufTransport trans;
-    FileValidatorService file_validator{trans};
+    FileValidatorService file_validator{trans, FileValidatorService::Verbose::No};
 
     auto filename = FIXTURES_PATH "/test_infile.txt";
     auto content = RED_REQUIRE_GET_FILE_CONTENTS(filename);
@@ -58,7 +58,7 @@ RED_AUTO_TEST_CASE(file_validatorSendFile)
 RED_AUTO_TEST_CASE(file_validatorSendText)
 {
     BufTransport trans;
-    FileValidatorService file_validator{trans};
+    FileValidatorService file_validator{trans, FileValidatorService::Verbose::No};
 
     FileValidatorId id = file_validator.open_text(0x12345678, "clamav");
     RED_CHECK(id == FileValidatorId(1));
@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(file_validatorSendText)
 RED_AUTO_TEST_CASE(file_validatorSendUnicode)
 {
     BufTransport trans;
-    FileValidatorService file_validator{trans};
+    FileValidatorService file_validator{trans, FileValidatorService::Verbose::No};
 
     FileValidatorId id = file_validator.open_unicode("clamav");
     RED_CHECK(id == FileValidatorId(1));
@@ -103,7 +103,7 @@ RED_AUTO_TEST_CASE(file_validatorSendUnicode)
 RED_AUTO_TEST_CASE(file_validatorSendInfos)
 {
     BufTransport trans;
-    FileValidatorService file_validator{trans};
+    FileValidatorService file_validator{trans, FileValidatorService::Verbose::No};
 
     file_validator.send_infos({
         "key1"_av, "value1"_av,
@@ -124,7 +124,7 @@ RED_AUTO_TEST_CASE(file_validatorSendInfos)
 RED_AUTO_TEST_CASE(file_validatorReceive)
 {
     BufTransport trans;
-    FileValidatorService file_validator{trans};
+    FileValidatorService file_validator{trans, FileValidatorService::Verbose::No};
 
     auto setbuf = [&](bytes_view data){
         trans.buf.assign(data.as_charp(), data.size());

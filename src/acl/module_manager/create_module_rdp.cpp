@@ -113,7 +113,7 @@ struct RdpData
         // TODO wait result (add delay)
         FileValidatorService service;
 
-        FileValidator(unique_fd&& fd, CtxError&& ctx_error)
+        FileValidator(unique_fd&& fd, CtxError&& ctx_error, FileValidatorService::Verbose verbose)
         : ctx_error(std::move(ctx_error))
         , trans(std::move(fd), [this](const Error & err){
             file_verification_error(
@@ -124,7 +124,7 @@ struct RdpData
             );
             return err;
         })
-        , service(this->trans)
+        , service(this->trans, verbose)
         {}
 
         ~FileValidator()
@@ -777,7 +777,11 @@ ModPack create_mod_rdp(
                     session_log,
                     mod_rdp_params.validator_params.up_target_name,
                     mod_rdp_params.validator_params.down_target_name,
-                });
+                },
+                bool(rdp_verbose & RDPVerbose::cliprdr)
+                    ? FileValidatorService::Verbose::Yes
+                    : FileValidatorService::Verbose::No
+            );
             file_validator->service.send_infos({
                 "server_ip"_av, ini.get<cfg::context::target_host>(),
                 "client_ip"_av, ini.get<cfg::globals::host>(),
