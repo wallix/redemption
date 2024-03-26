@@ -26,6 +26,7 @@
 #pragma once
 
 #include "capture/file_to_graphic_verbose.hpp"
+#include "gdi/resize_api.hpp"
 #include "mod/mod_api.hpp"
 #include "core/events.hpp"
 
@@ -38,7 +39,7 @@ namespace gdi
     class GraphicApi;
 }
 
-class ReplayMod : public mod_api
+class ReplayMod : public mod_api, private gdi::ResizeApi
 {
 public:
     using Verbose = FileToGraphicVerbose;
@@ -84,6 +85,8 @@ public:
 private:
     bool next_timestamp();
     void init_reader();
+
+    void resize(uint16_t width, uint16_t height) final;
 
     MonotonicTimePoint start_time;
 

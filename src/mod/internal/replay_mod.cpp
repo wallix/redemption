@@ -21,8 +21,6 @@ Author(s): Wallix Team
 #include "capture/cryptofile.hpp"
 #include "capture/file_to_graphic.hpp"
 #include "core/front_api.hpp"
-#include "core/events.hpp"
-#include "gdi/resize_api.hpp"
 #include "utils/timebase.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/strutils.hpp"
@@ -31,7 +29,7 @@ Author(s): Wallix Team
 #include "transport/mwrm_file_data.hpp"
 
 
-struct ReplayMod::Reader : gdi::ResizeApi
+struct ReplayMod::Reader
 {
     CryptoContext cctx;
 
@@ -39,12 +37,10 @@ struct ReplayMod::Reader : gdi::ResizeApi
 
     InMultiCryptoTransport in_trans;
     FileToGraphic reader;
-    FrontAPI& front;
-    bool wait_resize_response = false;
 
     Reader(
-        gdi::GraphicApi & drawable,
-        FrontAPI & front,
+        gdi::GraphicApi& drawable,
+        gdi::ResizeApi& resizable,
         std::string const& mwrm_filename,
         bool play_video_with_corrupted_bitmap,
         Verbose debug_capture)
@@ -82,46 +78,18 @@ struct ReplayMod::Reader : gdi::ResizeApi
         this->cctx,
         InCryptoTransport::EncryptionMode::NotEncrypted)
     , reader(this->in_trans, play_video_with_corrupted_bitmap, debug_capture)
-    , front(front)
     {
         this->start_time_replay = this->reader.get_monotonic_time();
 
         reader.add_consumer(
             &drawable, nullptr, nullptr, nullptr,
-            nullptr, nullptr, /*resize_ptr=*/this
+            nullptr, nullptr, &resizable
         );
-
-        this->server_resize(this->reader.get_wrm_info().width, this->reader.get_wrm_info().height);
     }
 
     MonotonicTimePoint::duration current_duration() const
     {
         return reader.get_monotonic_time() - start_time_replay;
-    }
-
-    void resize(uint16_t width, uint16_t height) override
-    {
-        this->server_resize(width, height);
-    }
-
-private:
-    void server_resize(uint16_t width, uint16_t height)
-    {
-        switch (this->front.server_resize({width, height, this->reader.get_wrm_info().bpp})) {
-            case FrontAPI::ResizeResult::remoteapp_wait_response:
-            case FrontAPI::ResizeResult::wait_response:
-                this->wait_resize_response = true;
-                break;
-
-            case FrontAPI::ResizeResult::instant_done:
-            case FrontAPI::ResizeResult::remoteapp:
-            case FrontAPI::ResizeResult::no_need:
-                break;
-
-            case FrontAPI::ResizeResult::fail:
-                LOG(LOG_ERR, "Older RDP client can't resize to server asked resolution, disconnecting");
-                throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
-        }
     }
 };
 
@@ -176,12 +144,6 @@ bool ReplayMod::next_timestamp()
     try {
         while ((has_order = reader.next_order())) {
             reader.interpret_order();
-            if (this->internal_reader->wait_resize_response) {
-                this->internal_reader->wait_resize_response = false;
-                this->timer_event.get_optional_event()->active_timer = false;
-                this->gdi_down_time = this->time_base_ref.monotonic_time;
-                break;
-            }
             if (previous != reader.get_monotonic_time()) {
                 break;
             }
@@ -209,10 +171,13 @@ void ReplayMod::init_reader()
 
     this->internal_reader = std::make_unique<Reader>(
         this->drawable,
-        this->front,
+        static_cast<gdi::ResizeApi&>(*this),
         this->replay_path,
         this->play_video_with_corrupted_bitmap,
         this->debug_capture);
+
+    auto& info = this->internal_reader->reader.get_wrm_info();
+    this->resize(info.width, info.height);
 }
 
 void ReplayMod::rdp_gdi_up_and_running()
@@ -235,6 +200,26 @@ void ReplayMod::rdp_gdi_down()
             timer->active_timer = false;
             this->gdi_down_time = this->time_base_ref.monotonic_time;
         }
+    }
+}
+
+void ReplayMod::resize(uint16_t width, uint16_t height)
+{
+    auto bpp = this->internal_reader->reader.get_wrm_info().bpp;
+    switch (this->front.server_resize({width, height, bpp})) {
+        case FrontAPI::ResizeResult::remoteapp_wait_response:
+        case FrontAPI::ResizeResult::wait_response:
+            this->rdp_gdi_down();
+            break;
+
+        case FrontAPI::ResizeResult::instant_done:
+        case FrontAPI::ResizeResult::remoteapp:
+        case FrontAPI::ResizeResult::no_need:
+            break;
+
+        case FrontAPI::ResizeResult::fail:
+            LOG(LOG_ERR, "Older RDP client can't resize to server asked resolution, disconnecting");
+            throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
     }
 }
 
