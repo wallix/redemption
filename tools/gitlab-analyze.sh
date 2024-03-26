@@ -198,3 +198,4 @@ if (( $fast == 0 )); then
 fi
 
 } |& tee report.txt
+exit ${PIPESTATUS[0]}
