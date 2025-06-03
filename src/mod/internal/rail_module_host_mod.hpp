@@ -68,6 +68,8 @@ public:
 
     bool server_error_encountered() const override;
 
+    void disconnect() override;
+
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
                           uint16_t height) override;
 
