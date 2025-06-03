@@ -116,7 +116,7 @@ bool RailModuleHostMod::server_error_encountered() const
 
 void RailModuleHostMod::disconnect()
 {
-    return this->module_host.get_managed_mod().disconnect();
+    this->module_host.get_managed_mod().disconnect();
 }
 
 void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t width,
